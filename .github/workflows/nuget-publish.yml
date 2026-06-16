@@ -57,7 +57,7 @@ jobs:
         library: [ NowAgent ]
         include:
           - library: NowAgent
-            libpath: ./dotnet/Devolutions.NowClient
+            libpath: ./protocols/dotnet/Devolutions.NowClient
 
     steps:
       - name: Check out ${{ github.repository }}
@@ -67,8 +67,8 @@ jobs:
         shell: pwsh
         run: |
           $PackageVersion = '${{ needs.preflight.outputs.package-version }}'
-          @("dotnet\Devolutions.NowClient\Devolutions.NowClient.csproj",
-            "dotnet\Devolutions.NowProto\Devolutions.NowProto.csproj") | ForEach-Object {
+          @("protocols\dotnet\Devolutions.NowClient\Devolutions.NowClient.csproj",
+            "protocols\dotnet\Devolutions.NowProto\Devolutions.NowProto.csproj") | ForEach-Object {
             $csprojPath = $_
             $csprojContent = Get-Content $csprojPath -Raw
             $csprojContent = $csprojContent -Replace '(<Version>).*?(</Version>)', "<Version>$PackageVersion</Version>"

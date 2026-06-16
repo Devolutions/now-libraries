@@ -1,19 +1,15 @@
-NOW-proto
-=========
+now-libraries
+=============
 
-Devolutions::Now::Agent RDP virtual channel protocol libraries and clients.
+Shared libraries for Devolutions NOW components.
 
-### Specification
+## Libraries
 
-Current protocol specification: [read](./docs/NOW-spec.md)
+- [protocols](./protocols/) contains the NOW protocol specifications, Rust crates, .NET libraries, and protocol test tools.
+- [policies](./policies/) is reserved for the UniGetUI/PEDM policy engine libraries.
 
-### Updating protocol
+## Repository Layout
 
-In order to update the protocol, the following steps should be followed:
-
-1. Update the protocol specification in `./docs/NOW-spec.md`.
-    - Bump the protocol version number.
-1. Update the Rust implementation of the protocol in `./rust/now-proto-pdu`.
-    - Bump current protocol version defined in `now_proto_pdu::channel::capset::NowProtoVersion::CURRENT`
-1. Update the C# implementation of the protocol in `./dotnet/Devolutions.NowProto`
-    - Bump current protocol version in `Devolutions.NowProto.NowProtoVersion.Current`
+- Root-level tooling and CI are shared across library families.
+- Protocol-specific documentation and source code live under `protocols/`.
+- Policy-specific documentation and source code will live under `policies/`.

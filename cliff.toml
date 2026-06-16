@@ -36,7 +36,7 @@ body = """
 {%- endif %}
 
 {%- set short_sha = commit.id | truncate(length=10, end="") %}
-{%- set commit_url = "https://github.com/Devolutions/now-proto/commit/" ~ commit.id %}
+{%- set commit_url = "https://github.com/Devolutions/now-libraries/commit/" ~ commit.id %}
 {%- set commit_link = "[" ~ short_sha ~ "](" ~ commit_url ~ ")" %}
 
 - {{ breaking }}{{ message }} ({{ commit_link }}) \
@@ -58,9 +58,9 @@ sort_commits = "oldest"
 
 commit_preprocessors = [
   # Replace issue number with the link
-  { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](https://github.com/Devolutions/now-proto/issues/${2}))"},
+  { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](https://github.com/Devolutions/now-libraries/issues/${2}))"},
   # Replace commit sha1 with the link
-  { pattern = '([a-f0-9]{10})([a-f0-9]{30})', replace = "[${0}](https://github.com/Devolutions/now-proto/commit/${1}${2})" }
+  { pattern = '([a-f0-9]{10})([a-f0-9]{30})', replace = "[${0}](https://github.com/Devolutions/now-libraries/commit/${1}${2})" }
 ]
 
 # regex for parsing and grouping commits

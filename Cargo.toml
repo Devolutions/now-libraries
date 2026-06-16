@@ -1,22 +1,22 @@
 [workspace]
 resolver = "2"
 members = [
-  "rust/*",
+  "protocols/rust/*",
   "xtask",
 ]
 
 [workspace.package]
 edition = "2021"
 license = "MIT/Apache-2.0"
-homepage = "https://github.com/Devolutions/now-proto"
-repository = "https://github.com/Devolutions/now-proto"
+homepage = "https://github.com/Devolutions/now-libraries"
+repository = "https://github.com/Devolutions/now-libraries"
 authors = ["Devolutions Inc. <infos@devolutions.net>"]
 keywords = ["rdp", "remote-desktop", "network", "client", "protocol"]
 categories = ["network-programming"]
 
 [workspace.dependencies]
-now-proto-pdu = { version = "0.1", path = "crates/now-proto-pdu" }
-now-proto-fuzzing = { version = "0.1", path = "crates/now-proto-fuzzing" }
+now-proto-pdu = { version = "0.1", path = "protocols/rust/now-proto-pdu" }
+now-proto-fuzzing = { version = "0.1", path = "protocols/rust/now-proto-fuzzing" }
 
 [profile.test.package.proptest]
 opt-level = 3
