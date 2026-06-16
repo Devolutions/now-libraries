@@ -6,7 +6,7 @@
     <AssemblyTitle>Core NOW protocol library</AssemblyTitle>
     <Copyright>© Devolutions Inc. All rights reserved.</Copyright>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/Devolutions/now-proto.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Devolutions/now-libraries.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
 
     <ImplicitUsings>enable</ImplicitUsings>

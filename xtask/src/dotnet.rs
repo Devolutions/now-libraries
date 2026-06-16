@@ -3,11 +3,14 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 const TARGET_FRAMEWORKS: &[&str] = &["net9.0", "net10.0"];
+const SOLUTION_PATH: &str = "protocols/NowProto.sln";
 
 pub fn fmt(sh: &Shell) -> anyhow::Result<()> {
     let _s = Section::new("DOTNET-FORMATTING");
 
-    let output = cmd!(sh, "dotnet format --verify-no-changes").ignore_status().output()?;
+    let output = cmd!(sh, "dotnet format {SOLUTION_PATH} --verify-no-changes")
+        .ignore_status()
+        .output()?;
 
     if !output.status.success() {
         anyhow::bail!("Bad formatting, please run 'dotnet format'");
@@ -30,7 +33,8 @@ pub fn get_dotnet_output_path(target_framework: &str) -> anyhow::Result<PathBuf>
     let arch_folder: &str = get_target_arch()?;
     let build_config = "Debug";
 
-    let output_path = Path::new("dotnet")
+    let output_path = Path::new("protocols")
+        .join("dotnet")
         .join("Devolutions.NowProto")
         .join("bin")
         .join(arch_folder)
@@ -57,7 +61,7 @@ pub fn build(sh: &Shell) -> anyhow::Result<()> {
     let _s = Section::new("DOTNET-BUILD");
 
     let platform = get_target_arch()?;
-    cmd!(sh, "dotnet build -p:Platform={platform}").run()?;
+    cmd!(sh, "dotnet build {SOLUTION_PATH} -p:Platform={platform}").run()?;
 
     if is_verbose() {
         for &target_framework in TARGET_FRAMEWORKS {
@@ -75,7 +79,7 @@ pub fn tests_run(sh: &Shell) -> anyhow::Result<()> {
 
     let platform = get_target_arch()?;
 
-    cmd!(sh, "dotnet test -p:Platform={platform}").run()?;
+    cmd!(sh, "dotnet test {SOLUTION_PATH} -p:Platform={platform}").run()?;
 
     println!("All good!");
 
