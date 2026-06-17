@@ -1,5 +1,8 @@
 # Build artifacts
 /target
+[Bb]in/
+[Oo]bj/
+*.csproj.lscache
 
 # Local cargo root
 /.cargo/local_root

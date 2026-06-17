@@ -3,17 +3,38 @@ use std::env;
 use std::path::{Path, PathBuf};
 
 const TARGET_FRAMEWORKS: &[&str] = &["net9.0", "net10.0"];
-const SOLUTION_PATH: &str = "protocols/NowProto.sln";
+
+struct DotnetSolution {
+    path: &'static str,
+    artifact_project: &'static str,
+    set_platform: bool,
+}
+
+const SOLUTIONS: &[DotnetSolution] = &[
+    DotnetSolution {
+        path: "protocols/NowProto.sln",
+        artifact_project: "protocols/dotnet/Devolutions.NowProto",
+        set_platform: true,
+    },
+    DotnetSolution {
+        path: "policies/dotnet/Devolutions.UniGetUI.Broker.Policy.slnx",
+        artifact_project: "policies/dotnet/Devolutions.UniGetUI.Broker.Policy",
+        set_platform: false,
+    },
+];
 
 pub fn fmt(sh: &Shell) -> anyhow::Result<()> {
     let _s = Section::new("DOTNET-FORMATTING");
 
-    let output = cmd!(sh, "dotnet format {SOLUTION_PATH} --verify-no-changes")
-        .ignore_status()
-        .output()?;
+    for solution in SOLUTIONS {
+        let solution_path = solution.path;
+        let output = cmd!(sh, "dotnet format {solution_path} --verify-no-changes")
+            .ignore_status()
+            .output()?;
 
-    if !output.status.success() {
-        anyhow::bail!("Bad formatting, please run 'dotnet format'");
+        if !output.status.success() {
+            anyhow::bail!("Bad formatting, please run 'dotnet format {solution_path}'");
+        }
     }
 
     println!("All good!");
@@ -29,24 +50,28 @@ pub fn get_target_arch() -> anyhow::Result<&'static str> {
     }
 }
 
-pub fn get_dotnet_output_path(target_framework: &str) -> anyhow::Result<PathBuf> {
-    let arch_folder: &str = get_target_arch()?;
+fn get_dotnet_output_path(solution: &DotnetSolution, target_framework: &str) -> anyhow::Result<PathBuf> {
     let build_config = "Debug";
 
-    let output_path = Path::new("protocols")
-        .join("dotnet")
-        .join("Devolutions.NowProto")
-        .join("bin")
-        .join(arch_folder)
-        .join(build_config)
-        .join(target_framework);
+    let mut output_path = Path::new(solution.artifact_project).join("bin");
+
+    if solution.set_platform {
+        output_path = output_path.join(get_target_arch()?);
+    }
+
+    output_path = output_path.join(build_config).join(target_framework);
 
     Ok(output_path)
 }
 
-pub fn list_files_for_target_framework(sh: &Shell, target_framework: &str) -> anyhow::Result<()> {
-    let build_path = get_dotnet_output_path(target_framework)?;
-    if !build_path.exists() {
+fn list_files_for_target_framework(
+    sh: &Shell,
+    solution: &DotnetSolution,
+    target_framework: &str,
+) -> anyhow::Result<()> {
+    let build_path = get_dotnet_output_path(solution, target_framework)?;
+    let absolute_build_path = sh.current_dir().join(&build_path);
+    if !absolute_build_path.exists() {
         anyhow::bail!("Expected build output directory does not exist: {:?}", build_path);
     }
 
@@ -60,12 +85,19 @@ pub fn list_files_for_target_framework(sh: &Shell, target_framework: &str) -> an
 pub fn build(sh: &Shell) -> anyhow::Result<()> {
     let _s = Section::new("DOTNET-BUILD");
 
-    let platform = get_target_arch()?;
-    cmd!(sh, "dotnet build {SOLUTION_PATH} -p:Platform={platform}").run()?;
+    for solution in SOLUTIONS {
+        let solution_path = solution.path;
+        if solution.set_platform {
+            let platform = get_target_arch()?;
+            cmd!(sh, "dotnet build {solution_path} -p:Platform={platform}").run()?;
+        } else {
+            cmd!(sh, "dotnet build {solution_path}").run()?;
+        }
 
-    if is_verbose() {
-        for &target_framework in TARGET_FRAMEWORKS {
-            list_files_for_target_framework(sh, target_framework)?;
+        if is_verbose() {
+            for &target_framework in TARGET_FRAMEWORKS {
+                list_files_for_target_framework(sh, solution, target_framework)?;
+            }
         }
     }
 
@@ -77,9 +109,15 @@ pub fn build(sh: &Shell) -> anyhow::Result<()> {
 pub fn tests_run(sh: &Shell) -> anyhow::Result<()> {
     let _s = Section::new("DOTNET-TESTS-RUN");
 
-    let platform = get_target_arch()?;
-
-    cmd!(sh, "dotnet test {SOLUTION_PATH} -p:Platform={platform}").run()?;
+    for solution in SOLUTIONS {
+        let solution_path = solution.path;
+        if solution.set_platform {
+            let platform = get_target_arch()?;
+            cmd!(sh, "dotnet test {solution_path} -p:Platform={platform}").run()?;
+        } else {
+            cmd!(sh, "dotnet test {solution_path}").run()?;
+        }
+    }
 
     println!("All good!");
 
