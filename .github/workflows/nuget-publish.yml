@@ -54,10 +54,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        library: [ NowAgent ]
         include:
           - library: NowAgent
             libpath: ./protocols/dotnet/Devolutions.NowClient
+            csproj-paths: |
+              protocols\dotnet\Devolutions.NowClient\Devolutions.NowClient.csproj
+              protocols\dotnet\Devolutions.NowProto\Devolutions.NowProto.csproj
+          - library: UniGetUIPolicy
+            libpath: ./policies/dotnet/Devolutions.UniGetUI.Broker.Policy
+            csproj-paths: |
+              policies\dotnet\Devolutions.UniGetUI.Broker.Policy\Devolutions.UniGetUI.Broker.Policy.csproj
 
     steps:
       - name: Check out ${{ github.repository }}
@@ -67,9 +73,10 @@ jobs:
         shell: pwsh
         run: |
           $PackageVersion = '${{ needs.preflight.outputs.package-version }}'
-          @("protocols\dotnet\Devolutions.NowClient\Devolutions.NowClient.csproj",
-            "protocols\dotnet\Devolutions.NowProto\Devolutions.NowProto.csproj") | ForEach-Object {
-            $csprojPath = $_
+          @"
+          ${{ matrix['csproj-paths'] }}
+          "@ -Split "`n" | Where-Object { -Not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object {
+            $csprojPath = $_.Trim()
             $csprojContent = Get-Content $csprojPath -Raw
             $csprojContent = $csprojContent -Replace '(<Version>).*?(</Version>)', "<Version>$PackageVersion</Version>"
             Set-Content -Path $csprojPath -Value $csprojContent -Encoding UTF8
