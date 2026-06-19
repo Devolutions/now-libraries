@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Devolutions.Broker.Policy.Tests/Devolutions.Broker.Policy.Tests.csproj"/>
+  <Project Path="Devolutions.Broker.Policy/Devolutions.Broker.Policy.csproj"/>
+</Solution>

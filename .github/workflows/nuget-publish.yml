@@ -60,10 +60,10 @@ jobs:
             csproj-paths: |
               protocols\dotnet\Devolutions.NowClient\Devolutions.NowClient.csproj
               protocols\dotnet\Devolutions.NowProto\Devolutions.NowProto.csproj
-          - library: UniGetUIPolicy
-            libpath: ./policies/dotnet/Devolutions.UniGetUI.Broker.Policy
+          - library: BrokerPolicy
+            libpath: ./policies/dotnet/Devolutions.Broker.Policy
             csproj-paths: |
-              policies\dotnet\Devolutions.UniGetUI.Broker.Policy\Devolutions.UniGetUI.Broker.Policy.csproj
+              policies\dotnet\Devolutions.Broker.Policy\Devolutions.Broker.Policy.csproj
 
     steps:
       - name: Check out ${{ github.repository }}
