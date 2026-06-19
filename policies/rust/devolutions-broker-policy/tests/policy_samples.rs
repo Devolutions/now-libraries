@@ -43,7 +43,7 @@ fn all_sample_policies_deserialize() {
 #[test]
 fn invalid_policy_unknown_field_fails_deserialization() {
     let value = serde_json::json!({
-        "$schema": "https://aka.ms/devolutions/broker-policy.schema.1.0.json",
+        "$schema": "https://devolutions.net/schemas/broker-policy.schema.1.0.json",
         "PolicyVersion": "1.0.0",
         "PolicyType": "PackageBrokerPolicy",
         "Metadata": {

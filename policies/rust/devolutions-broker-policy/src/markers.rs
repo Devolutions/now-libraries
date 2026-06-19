@@ -57,7 +57,7 @@ fixed_string_marker! {
 }
 
 /// Schema URI for package policy documents.
-pub const POLICY_SCHEMA_URI: &str = "https://aka.ms/devolutions/broker-policy.schema.1.0.json";
+pub const POLICY_SCHEMA_URI: &str = "https://devolutions.net/schemas/broker-policy.schema.1.0.json";
 
 fixed_string_marker! {
     /// Marker type for the policy `$schema` field.

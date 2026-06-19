@@ -137,7 +137,7 @@ public class PolicyTests
     {
         return $$"""
         {
-            "$schema": "https://aka.ms/devolutions/broker-policy.schema.1.0.json",
+            "$schema": "https://devolutions.net/schemas/broker-policy.schema.1.0.json",
             "PolicyVersion": "1.0.0",
             "PolicyType": "PackageBrokerPolicy",
             "Metadata": {
