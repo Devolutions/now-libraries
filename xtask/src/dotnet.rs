@@ -17,8 +17,8 @@ const SOLUTIONS: &[DotnetSolution] = &[
         set_platform: true,
     },
     DotnetSolution {
-        path: "policies/dotnet/Devolutions.UniGetUI.Broker.Policy.slnx",
-        artifact_project: "policies/dotnet/Devolutions.UniGetUI.Broker.Policy",
+        path: "policies/dotnet/Devolutions.Broker.Policy.slnx",
+        artifact_project: "policies/dotnet/Devolutions.Broker.Policy",
         set_platform: false,
     },
 ];
