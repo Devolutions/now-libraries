@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using YamlDotNet.Core;
 using YamlDotNet.RepresentationModel;
 
-namespace Devolutions.Broker.Policy;
+namespace Devolutions.NowPolicy;
 
 public static class SchemaUris
 {

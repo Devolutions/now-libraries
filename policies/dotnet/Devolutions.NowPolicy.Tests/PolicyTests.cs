@@ -5,7 +5,7 @@ using NJsonSchema;
 
 using Xunit;
 
-namespace Devolutions.Broker.Policy.Tests;
+namespace Devolutions.NowPolicy.Tests;
 
 public class PolicyTests
 {
@@ -130,7 +130,7 @@ public class PolicyTests
     private static string ResolvePolicyCrateRoot([CallerFilePath] string thisFile = "")
     {
         var testsDir = Path.GetDirectoryName(thisFile)!;
-        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", "rust", "devolutions-broker-policy"));
+        return Path.GetFullPath(Path.Combine(testsDir, "..", "..", "rust", "now-policy"));
     }
 
     private static string MinimalPolicyJson(string revision, string rules)

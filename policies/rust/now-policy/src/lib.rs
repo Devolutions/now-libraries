@@ -1,4 +1,4 @@
-//! Devolutions broker policy model and schema helpers.
+//! Devolutions NOW policy model and schema helpers.
 
 #![allow(clippy::std_instead_of_core, unused_qualifications)]
 

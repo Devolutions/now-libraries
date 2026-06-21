@@ -1,5 +1,5 @@
 [package]
-name = "devolutions-broker-policy"
+name = "now-policy"
 version = "0.1.0"
 edition = "2024"
 license.workspace = true
@@ -7,7 +7,7 @@ homepage.workspace = true
 repository.workspace = true
 authors.workspace = true
 readme = "README.md"
-description = "Devolutions broker policy model and schema"
+description = "Devolutions NOW policy model and schema"
 publish = true
 
 [lints]
@@ -24,5 +24,5 @@ thiserror = "2"
 url = "2"
 
 [[bin]]
-name = "generate-devolutions-broker-policy-schema"
+name = "generate-now-policy-schema"
 path = "tools/generate_schema.rs"

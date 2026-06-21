@@ -1,14 +1,14 @@
 //! Generates the JSON schema for the policy document.
 //!
-//! Usage: `cargo run -p devolutions-broker-policy --bin generate-devolutions-broker-policy-schema`
+//! Usage: `cargo run -p now-policy --bin generate-now-policy-schema`
 
 #![allow(clippy::print_stdout, reason = "this is a developer-facing CLI tool")]
 #![allow(clippy::std_instead_of_core, unused_crate_dependencies)]
 
 use std::path::Path;
 
-use devolutions_broker_policy::POLICY_SCHEMA_URI;
-use devolutions_broker_policy::schema::policy_schema_json;
+use now_policy::POLICY_SCHEMA_URI;
+use now_policy::schema::policy_schema_json;
 use serde_json::{Map, Value};
 
 fn main() {
