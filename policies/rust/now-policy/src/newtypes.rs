@@ -1,4 +1,4 @@
-//! Schema-validated newtypes used by package broker policy documents.
+//! Schema-validated newtypes used by NOW policy documents.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

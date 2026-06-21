@@ -4,7 +4,7 @@
 
 use std::path::{Path, PathBuf};
 
-use devolutions_broker_policy::PolicyDocument;
+use now_policy::PolicyDocument;
 
 fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/samples")
@@ -74,7 +74,7 @@ fn invalid_policy_fixture_fails_deserialization() {
 
 #[test]
 fn policy_schema_generates_valid_json() {
-    let schema = devolutions_broker_policy::schema::policy_schema_json();
+    let schema = now_policy::schema::policy_schema_json();
     assert!(schema.is_object());
     let obj = schema.as_object().unwrap();
     assert!(
@@ -85,7 +85,7 @@ fn policy_schema_generates_valid_json() {
 
 #[test]
 fn policy_match_schema_requires_at_least_one_property() {
-    let schema = devolutions_broker_policy::schema::policy_schema_json();
+    let schema = now_policy::schema::policy_schema_json();
     let min_properties = schema
         .pointer("/definitions/PolicyRule/properties/Match/minProperties")
         .and_then(serde_json::Value::as_u64);
