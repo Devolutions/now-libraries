@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Devolutions.NowPolicy;
+namespace Devolutions.Now.Policy.Model;
 
 /// <summary>Package operation type.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<Operation>))]

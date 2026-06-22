@@ -5,7 +5,7 @@ using NJsonSchema;
 
 using Xunit;
 
-namespace Devolutions.NowPolicy.Tests;
+namespace Devolutions.Now.Policy.Model.Tests;
 
 public class PolicyTests
 {
