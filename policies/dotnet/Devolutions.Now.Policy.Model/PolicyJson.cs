@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Devolutions.NowPolicy;
+namespace Devolutions.Now.Policy.Model;
 
 public static class PolicyJson
 {

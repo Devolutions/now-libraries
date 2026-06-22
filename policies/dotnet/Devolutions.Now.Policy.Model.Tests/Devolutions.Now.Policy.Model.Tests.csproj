@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <RootNamespace>Devolutions.NowPolicy.Tests</RootNamespace>
+    <RootNamespace>Devolutions.Now.Policy.Model.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Devolutions.NowPolicy/Devolutions.NowPolicy.csproj" />
+    <ProjectReference Include="../Devolutions.Now.Policy.Model/Devolutions.Now.Policy.Model.csproj" />
   </ItemGroup>
 
 </Project>

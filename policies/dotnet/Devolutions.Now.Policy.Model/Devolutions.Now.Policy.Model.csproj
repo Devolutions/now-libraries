@@ -4,16 +4,16 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Devolutions.NowPolicy</RootNamespace>
-    <AssemblyName>Devolutions.NowPolicy</AssemblyName>
+    <RootNamespace>Devolutions.Now.Policy.Model</RootNamespace>
+    <AssemblyName>Devolutions.Now.Policy.Model</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Devolutions.NowPolicy</PackageId>
+    <PackageId>Devolutions.Now.Policy.Model</PackageId>
     <Version>0.0.0.0</Version>
     <AssemblyTitle>Devolutions NOW policy model</AssemblyTitle>
-    <Description>Policy creation and parsing APIs for Devolutions Agent NOW policy documents.</Description>
+    <Description>Policy document model, creation, and parsing APIs for Devolutions Agent NOW policies.</Description>
     <Authors>Devolutions Inc.</Authors>
     <Copyright>© Devolutions Inc. All rights reserved.</Copyright>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
