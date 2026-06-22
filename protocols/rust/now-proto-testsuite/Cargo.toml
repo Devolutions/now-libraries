@@ -23,4 +23,4 @@ now-proto-pdu = { path = "../now-proto-pdu" }
 expect-test = "1"
 
 [dev-dependencies]
-rstest = "0.24"
+rstest = "0.26"
