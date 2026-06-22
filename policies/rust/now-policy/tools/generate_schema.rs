@@ -13,7 +13,7 @@ use serde_json::{Map, Value};
 
 fn main() {
     let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let out_path = crate_dir.join("schema").join("devolutions.broker-policy.schema.json");
+    let out_path = crate_dir.join("schema").join("devolutions.now-policy.schema.json");
 
     let schema = with_id(policy_schema_json(), POLICY_SCHEMA_URI);
     let json = serde_json::to_string_pretty(&schema).expect("BUG: schema serialization failed");

@@ -10,7 +10,7 @@ namespace Devolutions.NowPolicy;
 
 public static class SchemaUris
 {
-    public const string Policy = "https://devolutions.net/schemas/broker-policy.schema.1.0.json";
+    public const string Policy = "https://devolutions.net/schemas/now-policy.schema.1.0.json";
 }
 
 /// <summary>A policy document governing which package operations are allowed or denied.</summary>
