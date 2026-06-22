@@ -13,7 +13,7 @@ public class PolicyTests
 
     private static string SamplesDir => Path.Combine(PolicyCrateRoot, "assets", "samples");
 
-    private static string PolicySchema => Path.Combine(PolicyCrateRoot, "schema", "devolutions.broker-policy.schema.json");
+    private static string PolicySchema => Path.Combine(PolicyCrateRoot, "schema", "devolutions.now-policy.schema.json");
 
     public static IEnumerable<object[]> PolicySamples() =>
         Directory.GetFiles(SamplesDir, "*.policy.*").Select(f => new object[] { f });
@@ -137,7 +137,7 @@ public class PolicyTests
     {
         return $$"""
         {
-            "$schema": "https://devolutions.net/schemas/broker-policy.schema.1.0.json",
+            "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
             "PolicyVersion": "1.0.0",
             "PolicyType": "PackageBrokerPolicy",
             "Metadata": {
