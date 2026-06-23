@@ -60,10 +60,10 @@ jobs:
             csproj-paths: |
               protocols\dotnet\Devolutions.NowClient\Devolutions.NowClient.csproj
               protocols\dotnet\Devolutions.NowProto\Devolutions.NowProto.csproj
-          - library: NowPolicy
-            libpath: ./policies/dotnet/Devolutions.NowPolicy
+          - library: NowPolicyModel
+            libpath: ./policies/dotnet/Devolutions.Now.Policy.Model
             csproj-paths: |
-              policies\dotnet\Devolutions.NowPolicy\Devolutions.NowPolicy.csproj
+              policies\dotnet\Devolutions.Now.Policy.Model\Devolutions.Now.Policy.Model.csproj
 
     steps:
       - name: Check out ${{ github.repository }}
