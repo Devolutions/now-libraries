@@ -1,0 +1,16 @@
+{
+  "ResponseKind": "StatusResponse",
+  "ResponseVersion": "1.0",
+  "OperationId": "op-req-winget-git-uninstall",
+  "RequestId": "req-winget-git-uninstall",
+  "Status": "Failed",
+  "StartedAt": "2026-05-05T12:01:00Z",
+  "CompletedAt": "2026-05-05T12:01:05Z",
+  "ExitCode": 1,
+  "Stdout": "Rm91bmQgR2l0IFtHaXQuR2l0XQpUaGlzIHBhY2thZ2UncyBpbnN0YWxsZXIgcmVsaWVzIG9uIHRoZSBmb2xsb3dpbmcgZGVwZW5kZW5jaWVzLi4uClVuaW5zdGFsbCBmYWlsZWQgd2l0aCBleGl0IGNvZGU6IDE=",
+  "Server": {
+    "Transport": "HttpNamedPipe",
+    "ServerVersion": "0.1.0"
+  },
+  "Message": "winget.exe exited with code 1 (0x00000001)"
+}

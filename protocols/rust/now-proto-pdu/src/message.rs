@@ -66,7 +66,7 @@ impl<'de> Decode<'de> for NowMessage<'de> {
     fn decode(src: &mut ReadCursor<'de>) -> DecodeResult<Self> {
         let header = NowHeader::decode(src)?;
 
-        // Read all message body regardless of the remaining lefover message data.
+        // Read all message body regardless of the remaining leftover message data.
         // This is required to allow forward compatibility with future now-proto versions,
         // which may add new message fields which are encoded unconditionally.
         ensure_size!(in: src, size: header.size as usize);

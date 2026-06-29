@@ -1,0 +1,11 @@
+{
+  "ResponseKind": "StatusResponse",
+  "ResponseVersion": "1.0",
+  "OperationId": "op-req-abc-123",
+  "RequestId": "req-abc-123",
+  "Status": "Starting",
+  "Server": {
+    "Transport": "HttpNamedPipe",
+    "ServerVersion": "0.1.0"
+  }
+}

@@ -394,9 +394,18 @@ namespace Devolutions.NowClient
         /// <summary>
         /// Gracefully terminate and close the NOW-proto communication channel.
         /// </summary>
-        public async Task ForceTermiate()
+        public async Task ForceTerminate()
         {
             await _commandWriter.WriteAsync(new CommandChannelClose());
+        }
+
+        /// <summary>
+        /// Gracefully terminate and close the NOW-proto communication channel.
+        /// </summary>
+        [Obsolete("Use ForceTerminate instead.")]
+        public async Task ForceTermiate()
+        {
+            await ForceTerminate();
         }
 
         // RDM Methods

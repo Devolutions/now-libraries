@@ -10,6 +10,6 @@
 //!
 //! This is also good for execution performance.
 //! Cargo will run all tests from a single binary in parallel, but
-//! binaries themselves are run sequentally.
+//! binaries themselves are run sequentially.
 
 mod proto;

@@ -1,0 +1,77 @@
+{
+  "ResponseKind": "CapabilitiesResponse",
+  "ResponseVersion": "1.0",
+  "Server": {
+    "ServerVersion": "0.1.0",
+    "Transport": "HttpNamedPipe"
+  },
+  "Transports": [
+    "HttpNamedPipe"
+  ],
+  "Managers": [
+    {
+      "Manager": "Winget",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User",
+        "Machine"
+      ],
+      "Architectures": [
+        "X86",
+        "X64",
+        "Arm64",
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": true,
+      "SupportsCaptureOutput": true,
+      "MaxOperationTimeoutSeconds": 1800,
+      "SupportsDetails": true
+    },
+    {
+      "Manager": "PowerShell",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User",
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "MaxOperationTimeoutSeconds": 1800,
+      "SupportsDetails": false
+    },
+    {
+      "Manager": "PowerShell7",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User",
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "MaxOperationTimeoutSeconds": 1800,
+      "SupportsDetails": false
+    }
+  ],
+  "MaxRequestBodyBytes": 262144
+}

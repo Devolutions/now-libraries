@@ -64,6 +64,17 @@ jobs:
             libpath: ./policies/dotnet/Devolutions.Now.Policy.Model
             csproj-paths: |
               policies\dotnet\Devolutions.Now.Policy.Model\Devolutions.Now.Policy.Model.csproj
+          - library: NowPolicyApi
+            libpath: ./policies/dotnet/Devolutions.Now.Policy.Api
+            csproj-paths: |
+              policies\dotnet\Devolutions.Now.Policy.Model\Devolutions.Now.Policy.Model.csproj
+              policies\dotnet\Devolutions.Now.Policy.Api\Devolutions.Now.Policy.Api.csproj
+          - library: NowPolicyClient
+            libpath: ./policies/dotnet/Devolutions.Now.Policy.Client
+            csproj-paths: |
+              policies\dotnet\Devolutions.Now.Policy.Model\Devolutions.Now.Policy.Model.csproj
+              policies\dotnet\Devolutions.Now.Policy.Api\Devolutions.Now.Policy.Api.csproj
+              policies\dotnet\Devolutions.Now.Policy.Client\Devolutions.Now.Policy.Client.csproj
 
     steps:
       - name: Check out ${{ github.repository }}

@@ -4,16 +4,16 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Devolutions.Now.Policy.Model</RootNamespace>
-    <AssemblyName>Devolutions.Now.Policy.Model</AssemblyName>
+    <RootNamespace>Devolutions.Now.Policy.Api</RootNamespace>
+    <AssemblyName>Devolutions.Now.Policy.Api</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Devolutions.Now.Policy.Model</PackageId>
+    <PackageId>Devolutions.Now.Policy.Api</PackageId>
     <Version>0.0.0.0</Version>
-    <AssemblyTitle>Devolutions NOW policy model</AssemblyTitle>
-    <Description>Policy document model, creation, and parsing APIs for Devolutions Agent NOW policies.</Description>
+    <AssemblyTitle>Devolutions NOW package broker API</AssemblyTitle>
+    <Description>Request and response DTOs for the Devolutions NOW package broker API.</Description>
     <Authors>Devolutions Inc.</Authors>
     <Copyright>© Devolutions Inc. All rights reserved.</Copyright>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
@@ -26,10 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="YamlDotNet" Version="16.2.0" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <ProjectReference Include="..\Devolutions.Now.Policy.Model\Devolutions.Now.Policy.Model.csproj" />
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 

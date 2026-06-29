@@ -1,0 +1,19 @@
+{
+  "ResponseKind": "StatusResponse",
+  "ResponseVersion": "1.0",
+  "OperationId": "op-winget-vscode-install-000001",
+  "RequestId": "req-winget-vscode-install",
+  "Status": "Completed",
+  "StartedAt": "2026-05-05T12:00:02Z",
+  "CompletedAt": "2026-05-05T12:00:15Z",
+  "ExitCode": 0,
+  "Server": {
+    "Transport": "HttpNamedPipe",
+    "ServerVersion": "0.1.0"
+  },
+  "Message": "Process exited successfully.",
+  "Details": {
+    "Manager": "Winget",
+    "PackageId": "Microsoft.VisualStudioCode"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "ResponseKind": "StatusResponse",
+  "ResponseVersion": "1.0",
+  "OperationId": "op-req-long-running-op",
+  "RequestId": "req-long-running-op",
+  "Status": "Failed",
+  "StartedAt": "2026-05-05T11:00:00Z",
+  "CompletedAt": "2026-05-05T12:00:00Z",
+  "Server": {
+    "Transport": "HttpNamedPipe",
+    "ServerVersion": "0.1.0"
+  },
+  "Message": "Operation timed out after 3600 seconds."
+}
