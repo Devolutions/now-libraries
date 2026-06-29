@@ -4,16 +4,16 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>Devolutions.Now.Policy.Model</RootNamespace>
-    <AssemblyName>Devolutions.Now.Policy.Model</AssemblyName>
+    <RootNamespace>Devolutions.Now.Policy.Client</RootNamespace>
+    <AssemblyName>Devolutions.Now.Policy.Client</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>Devolutions.Now.Policy.Model</PackageId>
+    <PackageId>Devolutions.Now.Policy.Client</PackageId>
     <Version>0.0.0.0</Version>
-    <AssemblyTitle>Devolutions NOW policy model</AssemblyTitle>
-    <Description>Policy document model, creation, and parsing APIs for Devolutions Agent NOW policies.</Description>
+    <AssemblyTitle>Devolutions NOW package broker client</AssemblyTitle>
+    <Description>Client logic for communicating with the Devolutions NOW package broker API.</Description>
     <Authors>Devolutions Inc.</Authors>
     <Copyright>© Devolutions Inc. All rights reserved.</Copyright>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
@@ -26,7 +26,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="YamlDotNet" Version="16.2.0" />
+    <ProjectReference Include="..\Devolutions.Now.Policy.Api\Devolutions.Now.Policy.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

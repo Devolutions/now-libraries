@@ -1,0 +1,951 @@
+openapi: 3.1.0
+info:
+  title: Devolutions NOW Package Broker API
+  description: HTTP API exposed by a Devolutions NOW package broker facade over a Windows named pipe.
+  version: '1.0'
+paths:
+  /v1/health:
+    get:
+      summary: Health check
+      description: Returns broker readiness state.
+      responses:
+        '200':
+          description: Response body for `GET /v1/health`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /v1/capabilities:
+    get:
+      summary: Get capabilities
+      description: Returns transports, managers, and operations supported by the broker.
+      responses:
+        '200':
+          description: Response body for `GET /v1/capabilities`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilitiesResponse'
+  /v1/package-operations/evaluate:
+    post:
+      summary: Evaluate package operation
+      description: Evaluates a package operation against policy without requiring elevated execution.
+      requestBody:
+        description: Canonical request sent by a package broker client to the elevated broker.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+        required: true
+      responses:
+        '200':
+          description: Canonical response returned by the broker after evaluating a request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResponse'
+        '400':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/package-operations/execute:
+    post:
+      summary: Execute package operation
+      description: Evaluates a package operation and submits it to the implementation for execution when allowed.
+      requestBody:
+        description: Canonical request sent by a package broker client to the elevated broker.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+        required: true
+      responses:
+        '200':
+          description: Response returned after an execute request is evaluated and, when allowed, submitted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionResponse'
+        '400':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/package-operations/get-status:
+    post:
+      summary: Query package operation status
+      description: Returns the current status of a previously submitted package operation.
+      requestBody:
+        description: Request body for querying an operation status.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusRequest'
+        required: true
+      responses:
+        '200':
+          description: Response to a status query.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '400':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ApiVersion:
+      description: HTTP API version string.
+      type: string
+      pattern: ^[0-9]+\.[0-9]+$
+    Architecture:
+      description: Target architecture.
+      type: string
+      enum:
+      - X86
+      - X64
+      - Arm64
+      - Neutral
+    Base64Utf8Data:
+      description: Base64-encoded UTF-8 operation output.
+      type: string
+      maxLength: 16384
+      pattern: ^[A-Za-z0-9+/]*={0,2}$
+    CapabilitiesResponse:
+      description: Response body for `GET /v1/capabilities`.
+      type: object
+      required:
+      - Managers
+      - MaxRequestBodyBytes
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      - Transports
+      properties:
+        Managers:
+          description: Package-manager-specific capabilities.
+          type: array
+          items:
+            $ref: '#/components/schemas/ManagerCapability'
+        MaxRequestBodyBytes:
+          description: Maximum accepted request body size, in bytes.
+          type: integer
+          format: uint64
+          minimum: 0.0
+        ResponseKind:
+          description: Response discriminator.
+          $ref: '#/components/schemas/CapabilitiesResponseKind'
+        ResponseVersion:
+          description: Server-side API version used to construct the response.
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          description: Server context.
+          $ref: '#/components/schemas/ServerContext'
+        Transports:
+          description: Supported transports.
+          type: array
+          items:
+            $ref: '#/components/schemas/Transport'
+    CapabilitiesResponseKind:
+      type: string
+      pattern: ^CapabilitiesResponse$
+    ClientContext:
+      description: Context provided by the client.
+      type: object
+      required:
+      - ClientExecutablePath
+      - ClientVersion
+      - EffectiveUser
+      - RequestedElevation
+      - Transport
+      properties:
+        ClientExecutablePath:
+          description: File path of the client executable authenticated by the broker.
+          type: string
+          maxLength: 2048
+          minLength: 1
+        ClientVersion:
+          description: Version of the package broker client binary.
+          type: string
+          maxLength: 128
+          minLength: 1
+        EffectiveUser:
+          description: Windows identity of the calling user.
+          type: string
+          maxLength: 256
+          minLength: 1
+        RequestedElevation:
+          description: Elevation level requested.
+          $ref: '#/components/schemas/Elevation'
+        Transport:
+          description: Transport used by the client to access the broker.
+          $ref: '#/components/schemas/Transport'
+      additionalProperties: false
+    CommandString:
+      description: A command string.
+      type: string
+      maxLength: 2048
+      minLength: 1
+    CustomParameterString:
+      description: A custom parameter string.
+      type: string
+      maxLength: 512
+      minLength: 1
+    Decision:
+      description: Policy decision.
+      type: string
+      enum:
+      - Allow
+      - Deny
+    DecisionInfo:
+      description: Policy decision information.
+      type: object
+      required:
+      - Decision
+      - Reason
+      - RuleId
+      properties:
+        Decision:
+          description: The evaluation decision.
+          $ref: '#/components/schemas/Decision'
+        Reason:
+          description: Human-readable reason for the decision.
+          type: string
+          maxLength: 2048
+          minLength: 1
+        RuleId:
+          description: The rule that produced the decision.
+          $ref: '#/components/schemas/RuleId'
+      additionalProperties: false
+    Elevation:
+      description: Requested elevation level.
+      type: string
+      enum:
+      - Standard
+      - Elevated
+    ErrorCode:
+      description: Structured machine-readable error code.
+      type: string
+      enum:
+      - BadRequest
+      - Unauthorized
+      - Forbidden
+      - NotFound
+      - Conflict
+      - PayloadTooLarge
+      - UnsupportedMediaType
+      - ValidationFailed
+      - BrokerPaused
+      - InternalError
+      - Timeout
+    ErrorDetail:
+      description: Structured error detail, typically used for validation failures.
+      type: object
+      required:
+      - Message
+      properties:
+        Code:
+          description: Machine-stable detail code.
+          type: string
+          maxLength: 128
+          minLength: 1
+          nullable: true
+        Message:
+          description: Human-readable detail message.
+          type: string
+          maxLength: 2048
+          minLength: 1
+        Path:
+          description: JSON pointer, header name, or other location for the error.
+          type: string
+          maxLength: 512
+          minLength: 1
+          nullable: true
+    ErrorResponse:
+      description: Generic error body returned for non-2xx responses.
+      type: object
+      required:
+      - Code
+      - Message
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      properties:
+        Code:
+          description: Machine-readable error code.
+          $ref: '#/components/schemas/ErrorCode'
+        Details:
+          description: Structured error details.
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        Message:
+          description: Human-readable summary.
+          type: string
+          maxLength: 2048
+          minLength: 1
+        ResponseKind:
+          description: Response discriminator.
+          $ref: '#/components/schemas/ErrorResponseKind'
+        ResponseVersion:
+          description: Server-side API version used to construct the response.
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          description: Server context.
+          $ref: '#/components/schemas/ServerContext'
+    ErrorResponseKind:
+      type: string
+      pattern: ^ErrorResponse$
+    EvaluationResponse:
+      description: Canonical response returned by the broker after evaluating a request.
+      type: object
+      required:
+      - CompletedAt
+      - Decision
+      - Policy
+      - ReceivedAt
+      - Request
+      - RequestId
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      - WouldExecute
+      properties:
+        CompletedAt:
+          description: UTC timestamp when broker completed evaluation (RFC 3339).
+          type: string
+          format: date-time
+        Decision:
+          description: Policy decision details.
+          $ref: '#/components/schemas/DecisionInfo'
+        Diagnostics:
+          description: Optional diagnostics. Command preview is omitted unless explicitly requested.
+          $ref: '#/components/schemas/OperationDiagnostics'
+          nullable: true
+        Policy:
+          description: Summary of the policy used.
+          $ref: '#/components/schemas/ResponsePolicyInfo'
+        ReceivedAt:
+          description: UTC timestamp when broker received the request (RFC 3339).
+          type: string
+          format: date-time
+        Request:
+          description: Parsed request summary.
+          $ref: '#/components/schemas/RequestSummary'
+        RequestId:
+          description: Echoed request id.
+          $ref: '#/components/schemas/ResourceId'
+        ResponseKind:
+          description: Response discriminator.
+          $ref: '#/components/schemas/EvaluationResponseKind'
+        ResponseVersion:
+          description: Server-side API version used to construct the response.
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          description: Server context.
+          $ref: '#/components/schemas/ServerContext'
+        WouldExecute:
+          description: Whether the broker would execute a command for this decision.
+          type: boolean
+      additionalProperties: false
+    EvaluationResponseKind:
+      type: string
+      pattern: ^EvaluationResponse$
+    ExecutionResponse:
+      description: Response returned after an execute request is evaluated and, when allowed, submitted.
+      type: object
+      required:
+      - CompletedAt
+      - Decision
+      - Policy
+      - ReceivedAt
+      - Request
+      - RequestId
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      properties:
+        CompletedAt:
+          description: UTC timestamp when broker completed evaluation/submission (RFC 3339).
+          type: string
+          format: date-time
+        Decision:
+          description: Policy decision details.
+          $ref: '#/components/schemas/DecisionInfo'
+        Diagnostics:
+          description: Optional diagnostics. Command preview is omitted unless explicitly requested.
+          $ref: '#/components/schemas/OperationDiagnostics'
+          nullable: true
+        Operation:
+          description: Submitted operation. Omitted when the decision is deny.
+          $ref: '#/components/schemas/OperationSubmission'
+          nullable: true
+        Policy:
+          description: Summary of the policy used.
+          $ref: '#/components/schemas/ResponsePolicyInfo'
+        ReceivedAt:
+          description: UTC timestamp when broker received the request (RFC 3339).
+          type: string
+          format: date-time
+        Request:
+          description: Parsed request summary.
+          $ref: '#/components/schemas/RequestSummary'
+        RequestId:
+          description: Echoed request id.
+          $ref: '#/components/schemas/ResourceId'
+        ResponseKind:
+          description: Response discriminator.
+          $ref: '#/components/schemas/ExecutionResponseKind'
+        ResponseVersion:
+          description: Server-side API version used to construct the response.
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          description: Server context.
+          $ref: '#/components/schemas/ServerContext'
+      additionalProperties: false
+    ExecutionResponseKind:
+      type: string
+      pattern: ^ExecutionResponse$
+    HealthResponse:
+      description: Response body for `GET /v1/health`.
+      type: object
+      required:
+      - PolicyId
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      - Status
+      properties:
+        PolicyId:
+          description: Identifier of the active policy (empty when paused).
+          type: string
+        ResponseKind:
+          description: Response discriminator.
+          $ref: '#/components/schemas/HealthResponseKind'
+        ResponseVersion:
+          description: Server-side API version used to construct the response.
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          description: Server context.
+          $ref: '#/components/schemas/ServerContext'
+        Status:
+          description: Whether the broker is ready or paused.
+          $ref: '#/components/schemas/HealthStatus'
+    HealthResponseKind:
+      type: string
+      pattern: ^HealthResponse$
+    HealthStatus:
+      description: Broker readiness state.
+      oneOf:
+      - description: Broker has a valid policy and is serving requests.
+        type: string
+        enum:
+        - Ready
+      - description: Broker is paused (policy file missing or corrupted).
+        type: string
+        enum:
+        - Paused
+    ManagerCapability:
+      description: Package-manager-specific capability declaration.
+      type: object
+      required:
+      - Architectures
+      - Manager
+      - Operations
+      - Scopes
+      - SupportsCaptureOutput
+      - SupportsCustomInstallLocation
+      - SupportsCustomParameters
+      - SupportsDetails
+      properties:
+        Architectures:
+          description: Architectures supported for this manager.
+          type: array
+          items:
+            $ref: '#/components/schemas/Architecture'
+        Manager:
+          description: Package manager name.
+          $ref: '#/components/schemas/ManagerName'
+        MaxOperationTimeoutSeconds:
+          description: Maximum operation runtime before the broker may time out the process.
+          type: integer
+          format: uint64
+          minimum: 0.0
+          nullable: true
+        Operations:
+          description: Operations supported for this manager.
+          type: array
+          items:
+            $ref: '#/components/schemas/Operation'
+        Scopes:
+          description: Installation scopes supported for this manager.
+          type: array
+          items:
+            $ref: '#/components/schemas/Scope'
+        SupportsCaptureOutput:
+          description: Whether operation output capture is supported.
+          type: boolean
+        SupportsCustomInstallLocation:
+          description: Whether a custom install location is supported.
+          type: boolean
+        SupportsCustomParameters:
+          description: Whether arbitrary custom command-line parameters are supported.
+          type: boolean
+        SupportsDetails:
+          description: Whether operation status may include manager-specific JSON details.
+          type: boolean
+    ManagerName:
+      description: Supported package manager names.
+      type: string
+      enum:
+      - Winget
+      - PowerShell
+      - PowerShell7
+    Operation:
+      description: Package operation type.
+      type: string
+      enum:
+      - Install
+      - Update
+      - Uninstall
+    OperationDiagnostics:
+      description: Optional operation diagnostics.
+      type: object
+      properties:
+        CommandPreview:
+          description: Command that would be executed. Only present when requested by the client.
+          type: array
+          items:
+            $ref: '#/components/schemas/CommandString'
+          maxItems: 256
+      additionalProperties: false
+    OperationStatus:
+      description: Status of an asynchronous package operation.
+      oneOf:
+      - description: Process is being prepared/started.
+        type: string
+        enum:
+        - Starting
+      - description: Process is running.
+        type: string
+        enum:
+        - Running
+      - description: Process exited successfully (exit code 0).
+        type: string
+        enum:
+        - Completed
+      - description: Process failed (non-zero exit, timeout, or launch failure).
+        type: string
+        enum:
+        - Failed
+    OperationSubmission:
+      description: Execution submission returned for allowed execute requests.
+      type: object
+      required:
+      - OperationId
+      - Status
+      - SubmittedAt
+      properties:
+        OperationId:
+          description: Server-issued stable operation identifier.
+          $ref: '#/components/schemas/ResourceId'
+        Status:
+          description: Initial operation status.
+          $ref: '#/components/schemas/OperationStatus'
+        SubmittedAt:
+          description: UTC timestamp when the operation was accepted.
+          type: string
+          format: date-time
+      additionalProperties: false
+    PackageIdentifier:
+      description: Package identifier string.
+      type: string
+      maxLength: 256
+      minLength: 1
+      pattern: ^[^\\\/:*?"<>|\x01-\x1f]+$
+    PackageRequest:
+      description: Canonical request sent by a package broker client to the elevated broker.
+      type: object
+      required:
+      - Client
+      - CreatedAt
+      - Manager
+      - Operation
+      - Options
+      - Package
+      - RequestId
+      - RequestKind
+      - RequestVersion
+      - Source
+      properties:
+        CaptureOutput:
+          description: When true, the broker captures the operation's combined stdout+stderr and returns it (tail-truncated) in the status response. Off by default to avoid the overhead when the client does not need the output.
+          default: false
+          type: boolean
+        Client:
+          description: Client context.
+          $ref: '#/components/schemas/ClientContext'
+        CreatedAt:
+          description: UTC timestamp when the client created the request (RFC 3339).
+          type: string
+          format: date-time
+        IncludeCommandPreview:
+          description: When true, evaluation and execution responses may include a command preview for diagnostics. Off by default because command previews can expose paths or arguments.
+          default: false
+          type: boolean
+        Manager:
+          description: Package manager type.
+          $ref: '#/components/schemas/ManagerName'
+        Operation:
+          description: The package operation to perform.
+          $ref: '#/components/schemas/Operation'
+        Options:
+          description: Operation options.
+          $ref: '#/components/schemas/RequestOptions'
+        Package:
+          description: Package information.
+          $ref: '#/components/schemas/RequestPackage'
+        RequestId:
+          description: |-
+            Unique client-generated request id for request/response correlation.
+
+            Execute requests are idempotent by this identifier: retrying the same request id must return the existing submission rather than creating a second operation.
+          $ref: '#/components/schemas/ResourceId'
+        RequestKind:
+          description: Request discriminator.
+          $ref: '#/components/schemas/PackageRequestKind'
+        RequestVersion:
+          description: Client-side API version used to construct the request.
+          $ref: '#/components/schemas/ApiVersion'
+        Source:
+          description: Source/repository information.
+          $ref: '#/components/schemas/RequestSource'
+      additionalProperties: false
+    PackageRequestKind:
+      type: string
+      pattern: ^PackageRequest$
+    ProcessName:
+      description: A process name string.
+      type: string
+      maxLength: 128
+      minLength: 1
+    RequestOptions:
+      description: Options controlling the package operation.
+      type: object
+      required:
+      - Interactive
+      - PreRelease
+      - SkipHashCheck
+      properties:
+        CustomInstallLocation:
+          description: Custom install directory path.
+          type: string
+          maxLength: 2048
+          nullable: true
+        CustomParameters:
+          description: Additional command-line parameters.
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomParameterString'
+          maxItems: 64
+        Interactive:
+          description: Run interactively (show installer UI).
+          type: boolean
+        KillBeforeOperation:
+          description: Processes to kill before running the operation.
+          type: array
+          items:
+            $ref: '#/components/schemas/ProcessName'
+          maxItems: 64
+        NoUpgrade:
+          description: Whether to skip upgrade if an existing version is detected (for install operations).
+          default: false
+          type: boolean
+        PostOperationCommand:
+          description: Command to execute after the package operation.
+          type: string
+          maxLength: 2048
+          nullable: true
+        PreOperationCommand:
+          description: Command to execute before the package operation.
+          type: string
+          maxLength: 2048
+          nullable: true
+        PreRelease:
+          description: Allow pre-release versions.
+          type: boolean
+        Scope:
+          description: Installation scope.
+          $ref: '#/components/schemas/Scope'
+          nullable: true
+        SkipHashCheck:
+          description: Skip package hash verification.
+          type: boolean
+        UninstallPrevious:
+          description: Whether to uninstall previous version before installing update.
+          default: false
+          type: boolean
+      additionalProperties: false
+    RequestPackage:
+      description: Package information.
+      type: object
+      required:
+      - Id
+      properties:
+        Architecture:
+          description: Target architecture.
+          $ref: '#/components/schemas/Architecture'
+          nullable: true
+        Channel:
+          description: Release channel.
+          type: string
+          maxLength: 16
+          minLength: 1
+          nullable: true
+        Id:
+          description: Package identifier (e.g., "Publisher.Package" for WinGet).
+          $ref: '#/components/schemas/PackageIdentifier'
+        Version:
+          description: |-
+            Target version (for update/install operations).
+
+            A lenient version string rather than strict SemVer: real package versions are frequently not SemVer (e.g. PowerShell modules use 4-part .NET versions like `5.6.0.0`, and some winget packages use 2-part or date-based versions).
+          $ref: '#/components/schemas/VersionString'
+          nullable: true
+      additionalProperties: false
+    RequestSource:
+      description: Package source/repository information.
+      type: object
+      required:
+      - Name
+      properties:
+        Name:
+          description: Source name.
+          type: string
+          maxLength: 128
+          minLength: 1
+        Url:
+          description: Optional source URL.
+          type: string
+          maxLength: 2048
+          nullable: true
+      additionalProperties: false
+    RequestSummary:
+      description: Parsed request summary included in decision responses.
+      type: object
+      properties:
+        Manager:
+          description: Manager from the request (null if not parsed).
+          $ref: '#/components/schemas/ManagerName'
+          nullable: true
+        Operation:
+          description: Operation from the request (null if not parsed).
+          $ref: '#/components/schemas/Operation'
+          nullable: true
+        PackageId:
+          description: Package identifier from the request (null if not parsed).
+          $ref: '#/components/schemas/PackageIdentifier'
+          nullable: true
+        Source:
+          description: Source name from the request (null if not parsed).
+          type: string
+          maxLength: 256
+          minLength: 1
+          nullable: true
+      additionalProperties: false
+    ResourceId:
+      description: Resource identifier (operation IDs, request IDs).
+      type: string
+      maxLength: 128
+      pattern: ^[A-Za-z0-9][A-Za-z0-9._:\-]{0,127}$
+    ResponsePolicyInfo:
+      description: Summary of policy used for the decision.
+      type: object
+      required:
+      - Id
+      - PolicyVersion
+      - Revision
+      properties:
+        Id:
+          description: Policy document identifier.
+          $ref: '#/components/schemas/ResourceId'
+        PolicyVersion:
+          description: Policy syntax version.
+          $ref: '#/components/schemas/SemanticVersion'
+        Revision:
+          description: Policy revision number.
+          type: integer
+          format: uint32
+          maximum: 2147483647.0
+          minimum: 1.0
+      additionalProperties: false
+    RuleId:
+      description: Rule ID in responses. Includes sentinel values not valid as policy rule IDs.
+      type: string
+      maxLength: 128
+      pattern: ^(<default>|<validation-failure>|[A-Za-z0-9][A-Za-z0-9._:\-]{0,127})$
+    Scope:
+      description: Package installation scope.
+      type: string
+      enum:
+      - User
+      - Machine
+    SemanticVersion:
+      description: Semantic version string (SemVer 2.0.0).
+      type: string
+      maxLength: 128
+      pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$
+    ServerContext:
+      description: Server context included in responses.
+      type: object
+      required:
+      - ServerVersion
+      - Transport
+      properties:
+        ServerVersion:
+          description: Version of the package broker server binary.
+          type: string
+          maxLength: 128
+          minLength: 1
+        Transport:
+          description: Transport mechanism.
+          $ref: '#/components/schemas/Transport'
+      additionalProperties: false
+    StatusRequest:
+      description: Request body for querying an operation status.
+      type: object
+      required:
+      - Client
+      - OperationId
+      - RequestKind
+      - RequestVersion
+      properties:
+        Client:
+          description: Client context used to authenticate the status query.
+          $ref: '#/components/schemas/ClientContext'
+        OperationId:
+          description: Server-issued stable operation identifier.
+          $ref: '#/components/schemas/ResourceId'
+        RequestKind:
+          description: Request discriminator.
+          $ref: '#/components/schemas/StatusRequestKind'
+        RequestVersion:
+          description: Client-side API version used to construct the request.
+          $ref: '#/components/schemas/ApiVersion'
+      additionalProperties: false
+    StatusRequestKind:
+      type: string
+      pattern: ^StatusRequest$
+    StatusResponse:
+      description: Response to a status query.
+      type: object
+      required:
+      - OperationId
+      - RequestId
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      - Status
+      properties:
+        CompletedAt:
+          description: UTC timestamp when the operation completed or failed (null if still running).
+          type: string
+          format: date-time
+          nullable: true
+        Details:
+          description: Manager-specific structured status details.
+          nullable: true
+        ExitCode:
+          description: Process exit code (present when status is `completed`, or `failed` due to non-zero exit).
+          type: integer
+          format: int32
+          nullable: true
+        Message:
+          description: Human-readable message about the status. For failures this carries the short error summary (e.g. "winget.exe exited with code 0x8A150011", or a process-launch error).
+          type: string
+          maxLength: 2048
+          nullable: true
+        OperationId:
+          description: Server-issued stable operation identifier.
+          $ref: '#/components/schemas/ResourceId'
+        RequestId:
+          description: The original request id associated with the operation.
+          $ref: '#/components/schemas/ResourceId'
+        ResponseKind:
+          description: Response discriminator.
+          $ref: '#/components/schemas/StatusResponseKind'
+        ResponseVersion:
+          description: Server-side API version used to construct the response.
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          description: Server context.
+          $ref: '#/components/schemas/ServerContext'
+        StartedAt:
+          description: UTC timestamp when the process was actually launched (null if not yet started).
+          type: string
+          format: date-time
+          nullable: true
+        Status:
+          description: Current status of the operation.
+          $ref: '#/components/schemas/OperationStatus'
+        Stdout:
+          description: Captured combined stdout+stderr as base64-encoded UTF-8 data (tail-truncated to ~10 KiB before encoding). Only present when the original request opted in via `CaptureOutput`.
+          $ref: '#/components/schemas/Base64Utf8Data'
+          nullable: true
+      additionalProperties: false
+    StatusResponseKind:
+      type: string
+      pattern: ^StatusResponse$
+    Transport:
+      description: Broker transport type.
+      type: string
+      enum:
+      - HttpNamedPipe
+      - HttpLoopbackSimulator
+    VersionString:
+      description: A short constrained string for version values.
+      type: string
+      maxLength: 128
+      minLength: 1

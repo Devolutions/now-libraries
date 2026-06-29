@@ -1,4 +1,7 @@
 <Solution>
+  <Project Path="Devolutions.Now.Policy.Api/Devolutions.Now.Policy.Api.csproj"/>
+  <Project Path="Devolutions.Now.Policy.Client.Tests/Devolutions.Now.Policy.Client.Tests.csproj"/>
+  <Project Path="Devolutions.Now.Policy.Client/Devolutions.Now.Policy.Client.csproj"/>
   <Project Path="Devolutions.Now.Policy.Model.Tests/Devolutions.Now.Policy.Model.Tests.csproj"/>
   <Project Path="Devolutions.Now.Policy.Model/Devolutions.Now.Policy.Model.csproj"/>
 </Solution>

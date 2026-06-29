@@ -1,0 +1,30 @@
+{
+  "RequestKind": "PackageRequest",
+  "RequestVersion": "1.0",
+  "RequestId": "req-powershell-pester-skipcheck",
+  "CreatedAt": "2026-05-05T12:22:00Z",
+  "Operation": "Install",
+  "Manager": "PowerShell",
+  "Source": {
+    "Name": "PSGallery",
+    "Url": "https://www.powershellgallery.com/api/v2"
+  },
+  "Package": {
+    "Id": "Pester"
+  },
+  "Options": {
+    "Scope": "User",
+    "Interactive": false,
+    "SkipHashCheck": true,
+    "PreRelease": false,
+    "CustomParameters": [],
+    "KillBeforeOperation": []
+  },
+  "Client": {
+    "RequestedElevation": "Standard",
+    "EffectiveUser": "CONTOSO\\alice",
+    "ClientVersion": "3.2.0",
+    "Transport": "HttpNamedPipe",
+    "ClientExecutablePath": "C:\\Program Files\\Devolutions\\NOW\\now-client.exe"
+  }
+}

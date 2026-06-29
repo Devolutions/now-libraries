@@ -1,0 +1,29 @@
+{
+  "ResponseKind": "EvaluationResponse",
+  "ResponseVersion": "1.0",
+  "RequestId": "req-winget-vscode-skiphash",
+  "ReceivedAt": "2026-05-05T12:10:01Z",
+  "CompletedAt": "2026-05-05T12:10:01Z",
+  "Request": {
+    "Manager": "Winget",
+    "Source": "winget",
+    "PackageId": "Microsoft.VisualStudioCode",
+    "Operation": "Install"
+  },
+  "Decision": {
+    "Decision": "Deny",
+    "RuleId": "deny.integrity-bypass",
+    "Reason": "Integrity and publisher checks cannot be bypassed by brokered requests."
+  },
+  "WouldExecute": false,
+  "Policy": {
+    "Id": "contoso.desktop.standard-allowlist",
+    "Revision": 4,
+    "PolicyVersion": "1.0.0"
+  },
+  "Diagnostics": {},
+  "Server": {
+    "Transport": "HttpNamedPipe",
+    "ServerVersion": "0.1.0"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "ResponseKind": "StatusResponse",
+  "ResponseVersion": "1.0",
+  "OperationId": "op-winget-vscode-install-000001",
+  "RequestId": "req-winget-vscode-install",
+  "Status": "Running",
+  "StartedAt": "2026-05-05T12:00:02Z",
+  "Server": {
+    "Transport": "HttpNamedPipe",
+    "ServerVersion": "0.1.0"
+  }
+}
