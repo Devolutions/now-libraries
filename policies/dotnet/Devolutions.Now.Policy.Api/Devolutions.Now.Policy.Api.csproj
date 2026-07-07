@@ -7,6 +7,8 @@
     <RootNamespace>Devolutions.Now.Policy.Api</RootNamespace>
     <AssemblyName>Devolutions.Now.Policy.Api</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <IsAotCompatible>true</IsAotCompatible>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
 
   <PropertyGroup>

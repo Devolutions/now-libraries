@@ -8,13 +8,12 @@ public sealed class EvaluationResponse
     private const string Kind = BrokerApi.EvaluationResponseKind;
     private string _responseKind = Kind;
 
-    [JsonInclude]
     [JsonPropertyName("ResponseKind")]
     [JsonRequired]
     public string ResponseKind
     {
         get => _responseKind;
-        private set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
+        set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
     }
 
     [JsonPropertyName("ResponseVersion")]
@@ -54,13 +53,12 @@ public sealed class ExecutionResponse
     private const string Kind = BrokerApi.ExecutionResponseKind;
     private string _responseKind = Kind;
 
-    [JsonInclude]
     [JsonPropertyName("ResponseKind")]
     [JsonRequired]
     public string ResponseKind
     {
         get => _responseKind;
-        private set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
+        set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
     }
 
     [JsonPropertyName("ResponseVersion")]

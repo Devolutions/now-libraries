@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
@@ -162,7 +161,7 @@ public sealed class BrokerClient : IDisposable
         var capabilities = await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
         EnsureTransportSupported(capabilities, _transport.Kind, "query operation status", "/v1/package-operations/get-status");
 
-        var body = JsonSerializer.Serialize(statusRequest, BrokerJson.Options);
+        var body = BrokerJson.Serialize(statusRequest);
         EnsureRequestBodySize(body, capabilities, "/v1/package-operations/get-status");
 
         var headers = new Dictionary<string, string>
@@ -249,7 +248,7 @@ public sealed class BrokerClient : IDisposable
         var capabilities = await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
         EnsurePackageRequestSupported(request, capabilities, endpoint);
 
-        var body = JsonSerializer.Serialize(request, BrokerJson.Options);
+        var body = BrokerJson.Serialize(request);
         EnsureRequestBodySize(body, capabilities, endpoint);
 
         var headers = new Dictionary<string, string>
@@ -331,7 +330,7 @@ public sealed class BrokerClient : IDisposable
 
         try
         {
-            var value = JsonSerializer.Deserialize<TResponse>(response.Body, BrokerJson.Options);
+            var value = BrokerJson.Deserialize<TResponse>(response.Body);
             if (value is null)
             {
                 throw new BrokerClientException(
@@ -361,7 +360,7 @@ public sealed class BrokerClient : IDisposable
     {
         try
         {
-            error = JsonSerializer.Deserialize<ErrorResponse>(body, BrokerJson.Options);
+            error = BrokerJson.Deserialize<ErrorResponse>(body);
             parseError = null;
             return error is not null;
         }
@@ -476,7 +475,6 @@ public sealed class BrokerClient : IDisposable
     private static string ResolveClientExecutablePath()
     {
         return Environment.ProcessPath
-            ?? Assembly.GetEntryAssembly()?.Location
             ?? throw new InvalidOperationException("Unable to determine client executable path. Pass ClientExecutablePath explicitly.");
     }
 

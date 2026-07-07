@@ -9,13 +9,12 @@ public sealed class StatusRequest
     private const string Kind = BrokerApi.StatusRequestKind;
     private string _requestKind = Kind;
 
-    [JsonInclude]
     [JsonPropertyName("RequestKind")]
     [JsonRequired]
     public string RequestKind
     {
         get => _requestKind;
-        private set => _requestKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(RequestKind));
+        set => _requestKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(RequestKind));
     }
 
     [JsonPropertyName("RequestVersion")]
@@ -34,13 +33,12 @@ public sealed class StatusResponse
     private const string Kind = BrokerApi.StatusResponseKind;
     private string _responseKind = Kind;
 
-    [JsonInclude]
     [JsonPropertyName("ResponseKind")]
     [JsonRequired]
     public string ResponseKind
     {
         get => _responseKind;
-        private set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
+        set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
     }
 
     [JsonPropertyName("ResponseVersion")]

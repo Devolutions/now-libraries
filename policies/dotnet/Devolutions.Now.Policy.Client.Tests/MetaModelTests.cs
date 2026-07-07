@@ -15,7 +15,7 @@ public class MetaModelTests
     {
         const string json = """{"RequestKind":"StatusRequest","RequestVersion":"1.0"}""";
 
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<PackageRequest>(json, TestData.Strict));
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PackageRequest>(json));
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public class MetaModelTests
     {
         const string json = """{"RequestVersion":"1.0"}""";
 
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<PackageRequest>(json, TestData.Strict));
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PackageRequest>(json));
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class MetaModelTests
             {"ResponseKind":"ErrorResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"Status":"Ready","PolicyId":"mock.policy"}
             """;
 
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<HealthResponse>(json, TestData.Strict));
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<HealthResponse>(json));
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class MetaModelTests
     private static async Task AssertSerializesValid<T>(T dto, string componentName)
     {
         var schema = await TestData.SchemaAsync(componentName);
-        var json = JsonSerializer.Serialize(dto, BrokerJson.Options);
+        var json = BrokerJson.Serialize(dto);
 
         // Output must satisfy the schema (catches missing required fields / type drift).
         var errors = schema.Validate(json);
@@ -86,7 +86,7 @@ public class MetaModelTests
             string.Join("\n", errors.Select(e => $"  {e.Kind} at {e.Path}")));
 
         // Round-trip back through the DTO with strict mapping (catches schema fields the DTO drops).
-        var reparsed = JsonSerializer.Deserialize<T>(json, TestData.Strict);
+        var reparsed = BrokerJson.DeserializeStrict<T>(json);
         Assert.NotNull(reparsed);
     }
 }

@@ -55,7 +55,7 @@ public sealed class PolicyDocument
 
     public static PolicyDocument ParseJson(string json)
     {
-        return JsonSerializer.Deserialize<PolicyDocument>(json, PolicyJson.StrictOptions)
+        return PolicyJson.DeserializePolicyDocumentStrict(json)
             ?? throw new JsonException("policy document was null");
     }
 
@@ -73,7 +73,7 @@ public sealed class PolicyDocument
         return ParseJson(json);
     }
 
-    public string ToJson() => JsonSerializer.Serialize(this, PolicyJson.Options);
+    public string ToJson() => PolicyJson.Serialize(this);
 
     private static JsonNode? YamlToJson(YamlNode node)
     {

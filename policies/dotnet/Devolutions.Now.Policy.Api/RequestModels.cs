@@ -8,13 +8,12 @@ public sealed class PackageRequest
     private const string Kind = BrokerApi.PackageRequestKind;
     private string _requestKind = Kind;
 
-    [JsonInclude]
     [JsonPropertyName("RequestKind")]
     [JsonRequired]
     public string RequestKind
     {
         get => _requestKind;
-        private set => _requestKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(RequestKind));
+        set => _requestKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(RequestKind));
     }
 
     [JsonPropertyName("RequestVersion")]
