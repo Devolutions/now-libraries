@@ -5,11 +5,8 @@ namespace Devolutions.Now.Policy.Model;
 
 public static class PolicyJson
 {
-    public static readonly JsonSerializerOptions Options = new()
+    public static readonly JsonSerializerOptions Options = new(PolicyJsonSerializerContext.Default.Options)
     {
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new JsonStringEnumConverter() },
     };
 
     public static readonly JsonSerializerOptions StrictOptions = new(Options)
@@ -17,3 +14,15 @@ public static class PolicyJson
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
     };
 }
+
+[JsonSourceGenerationOptions(
+    WriteIndented = true,
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+[JsonSerializable(typeof(PolicyDocument))]
+[JsonSerializable(typeof(PolicyMetadata))]
+[JsonSerializable(typeof(PolicyEnforcement))]
+[JsonSerializable(typeof(PolicyRule))]
+[JsonSerializable(typeof(PolicyMatch))]
+[JsonSerializable(typeof(VersionRange))]
+[JsonSerializable(typeof(PolicyConstraints))]
+internal sealed partial class PolicyJsonSerializerContext : JsonSerializerContext;

@@ -8,13 +8,12 @@ public sealed class HealthResponse
     private const string Kind = BrokerApi.HealthResponseKind;
     private string _responseKind = Kind;
 
-    [JsonInclude]
     [JsonPropertyName("ResponseKind")]
     [JsonRequired]
     public string ResponseKind
     {
         get => _responseKind;
-        private set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
+        set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
     }
 
     [JsonPropertyName("ResponseVersion")]
@@ -37,13 +36,12 @@ public sealed class CapabilitiesResponse
     private const string Kind = BrokerApi.CapabilitiesResponseKind;
     private string _responseKind = Kind;
 
-    [JsonInclude]
     [JsonPropertyName("ResponseKind")]
     [JsonRequired]
     public string ResponseKind
     {
         get => _responseKind;
-        private set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
+        set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
     }
 
     [JsonPropertyName("ResponseVersion")]
@@ -98,13 +96,12 @@ public sealed class ErrorResponse
     private const string Kind = BrokerApi.ErrorResponseKind;
     private string _responseKind = Kind;
 
-    [JsonInclude]
     [JsonPropertyName("ResponseKind")]
     [JsonRequired]
     public string ResponseKind
     {
         get => _responseKind;
-        private set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
+        set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
     }
 
     [JsonPropertyName("ResponseVersion")]
