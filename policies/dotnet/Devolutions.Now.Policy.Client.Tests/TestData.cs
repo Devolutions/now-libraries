@@ -1,8 +1,6 @@
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 
 using NJsonSchema;
 
@@ -140,15 +138,6 @@ public static class TestData
             _ => JsonValue.Create(value),
         };
     }
-
-    /// <summary>
-    /// Strict options: deserialization fails if a sample contains a field the DTO does
-    /// not declare, ensuring the C# models cover the full wire shape.
-    /// </summary>
-    public static readonly JsonSerializerOptions Strict = new(BrokerJson.Options)
-    {
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-    };
 
     public static IEnumerable<object[]> RequestSamples() =>
         JsonFiles(Path.Combine(SamplesDir, "requests"))

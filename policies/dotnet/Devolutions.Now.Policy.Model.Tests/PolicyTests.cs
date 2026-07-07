@@ -18,6 +18,12 @@ public class PolicyTests
     public static IEnumerable<object[]> PolicySamples() =>
         Directory.GetFiles(SamplesDir, "*.policy.*").Select(f => new object[] { f });
 
+    [Fact]
+    public void Tests_run_with_reflection_json_disabled()
+    {
+        Assert.False(JsonSerializer.IsReflectionEnabledByDefault);
+    }
+
     [Theory]
     [MemberData(nameof(PolicySamples))]
     public async Task Policy_samples_parse_and_validate_against_rust_schema(string path)
@@ -50,8 +56,11 @@ public class PolicyTests
         });
 
         var schema = await JsonSchema.FromFileAsync(PolicySchema);
-        var errors = schema.Validate(policy.ToJson());
+        var json = policy.ToJson();
+        var reparsed = PolicyJson.DeserializeStrict<PolicyDocument>(json);
+        var errors = schema.Validate(json);
 
+        Assert.NotNull(reparsed);
         Assert.True(errors.Count == 0, string.Join("\n", errors.Select(e => $"  {e.Kind} at {e.Path}")));
     }
 

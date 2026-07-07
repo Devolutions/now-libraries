@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 using NJsonSchema;
 
 using Xunit;
@@ -9,8 +7,8 @@ namespace Devolutions.Now.Policy.Client.Tests;
 /// <summary>
 /// Parity tests: the hand-written C# DTOs must consume the exact sample documents the
 /// Rust crate uses, and re-serialize to output that still validates against the same
-/// schemas. Uses <see cref="TestData.Strict"/> so a sample field missing from a DTO fails
-/// the test (DTO completeness), mirroring the Rust `deny_unknown_fields` contract.
+/// schemas. Uses source-generated strict metadata so a sample field missing from a DTO
+/// fails the test (DTO completeness), mirroring the Rust `deny_unknown_fields` contract.
 /// </summary>
 public class DtoRoundTripTests
 {
@@ -54,11 +52,11 @@ public class DtoRoundTripTests
         var original = await File.ReadAllTextAsync(samplePath);
 
         // 1. Deserialize the canonical sample into the DTO (strict: every field must map).
-        var dto = JsonSerializer.Deserialize<T>(original, TestData.Strict);
+        var dto = BrokerJson.DeserializeStrict<T>(original);
         Assert.NotNull(dto);
 
         // 2. Re-serialize and validate the output against the same schema.
-        var reserialized = JsonSerializer.Serialize(dto, BrokerJson.Options);
+        var reserialized = BrokerJson.Serialize(dto);
         var errors = schema.Validate(reserialized);
 
         Assert.True(

@@ -19,6 +19,12 @@ public class BrokerClientTests
     }
 
     [Fact]
+    public void Tests_run_with_reflection_json_disabled()
+    {
+        Assert.False(JsonSerializer.IsReflectionEnabledByDefault);
+    }
+
+    [Fact]
     public async Task Evaluate_populates_client_context_and_missing_metadata_before_sending()
     {
         var transport = new FakeBrokerTransport(
