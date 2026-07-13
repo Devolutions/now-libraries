@@ -53,9 +53,6 @@ pub enum NowClientError {
     /// A tracked execution is already active on this client stream.
     #[error("NOW client already has an active tracked execution")]
     OperationInProgress,
-    /// Too many Run submissions are awaiting their terminal frame for disposal.
-    #[error("NOW Run discard queue reached its configured capacity")]
-    RunDiscardQueueFull,
     /// All nonzero NOW session IDs have been allocated by this client.
     #[error("NOW session ID space is exhausted")]
     SessionIdExhausted,

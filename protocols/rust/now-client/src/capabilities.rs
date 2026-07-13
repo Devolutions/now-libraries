@@ -40,7 +40,7 @@ impl NowCapabilities {
         self.capset.version()
     }
 
-    /// Returns the negotiated heartbeat interval, if both peers requested one.
+    /// Returns the negotiated heartbeat interval, if either peer requested one.
     pub fn heartbeat_interval(&self) -> Option<Duration> {
         self.capset.heartbeat_interval()
     }

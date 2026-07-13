@@ -17,7 +17,7 @@ pub struct NowClientConfig {
     pub command_queue_capacity: usize,
     /// Bound for unread events per tracked execution.
     pub event_queue_capacity: usize,
-    /// Maximum number of Run submissions awaiting their terminal frame for disposal.
+    /// Maximum number of recent Run submissions whose post-submission frames are discarded.
     pub run_discard_capacity: usize,
     /// Deadline for receiving the peer capability set.
     pub connect_timeout: Duration,

@@ -308,6 +308,7 @@ impl RequestSpec {
                 require(capabilities.supports_process(), "Process")?;
                 validate_filename(&request.filename)?;
                 validate_optional(&request.parameters, "parameters")?;
+                validate_directory(request.directory.as_deref())?;
                 validate_common(detached, request.stdin.as_deref(), request.timeout)?;
                 validate_tracking(capabilities, detached)?;
             }

@@ -1,10 +1,12 @@
+use core::time::Duration;
+
 use now_proto_pdu::ironrdp_core::encode_vec;
 use now_proto_pdu::{
     NowChannelCapsetMsg, NowChannelMessage, NowExecDataStreamKind, NowExecMessage, NowMessage, OwnedNowMessage,
 };
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadHalf, WriteHalf};
 use tokio::sync::{mpsc, oneshot};
 use tokio::time::{self, Instant};
 
@@ -26,17 +28,21 @@ impl NowClient {
         let shared_capabilities = Arc::new(RwLock::new(capabilities));
         let (command_sender, command_receiver) = mpsc::channel(config.command_queue_capacity);
         let worker_sender = command_sender.downgrade();
+        let (reader, writer) = tokio::io::split(stream);
         let worker = OwnedWorker {
-            stream,
+            reader,
+            writer,
             messages,
             requested_capset: config.client_capset.clone(),
             capabilities: Arc::clone(&shared_capabilities),
             command_receiver,
             command_sender: worker_sender,
             operations: HashMap::new(),
-            discarded_run_sessions: HashSet::new(),
+            discarded_run_sessions: VecDeque::new(),
             run_discard_capacity: config.run_discard_capacity,
-            next_session_id: 1,
+            next_session_id: Some(1),
+            pending_writes: VecDeque::new(),
+            write_queue_capacity: config.command_queue_capacity,
             read_buffer: vec![0; config.read_buffer_size],
         };
 
@@ -288,6 +294,31 @@ struct Operation {
     stdin_closed: bool,
 }
 
+enum PendingWriteCompletion {
+    Start {
+        session_id: u32,
+        response: oneshot::Sender<Result<u32, NowClientError>>,
+        timeout: Option<Duration>,
+    },
+    Stdin {
+        session_id: u32,
+        last: bool,
+        response: oneshot::Sender<Result<(), NowClientError>>,
+    },
+    Cancel,
+}
+
+struct PendingWrite {
+    bytes: Vec<u8>,
+    written: usize,
+    completion: PendingWriteCompletion,
+}
+
+enum WriteProgress {
+    Written(usize),
+    Flushed,
+}
+
 #[derive(Default)]
 struct BufferUpdate {
     capset_updated: bool,
@@ -321,16 +352,19 @@ enum WorkerCommand {
 }
 
 struct OwnedWorker<S> {
-    stream: S,
+    reader: ReadHalf<S>,
+    writer: WriteHalf<S>,
     messages: crate::frame::MessageBuffer,
     requested_capset: NowChannelCapsetMsg,
     capabilities: Arc<RwLock<NowCapabilities>>,
     command_receiver: mpsc::Receiver<WorkerCommand>,
     command_sender: mpsc::WeakSender<WorkerCommand>,
     operations: HashMap<u32, Operation>,
-    discarded_run_sessions: HashSet<u32>,
+    discarded_run_sessions: VecDeque<u32>,
     run_discard_capacity: usize,
-    next_session_id: u32,
+    next_session_id: Option<u32>,
+    pending_writes: VecDeque<PendingWrite>,
+    write_queue_capacity: usize,
     read_buffer: Vec<u8>,
 }
 
@@ -348,6 +382,7 @@ where
                     }
                 }
                 Err(error) => {
+                    self.fail_pending_writes(&error);
                     self.fail_all(&error);
                     return;
                 }
@@ -356,9 +391,12 @@ where
             enum Event {
                 Command(Option<WorkerCommand>),
                 Read(std::io::Result<usize>),
+                Write(std::io::Result<WriteProgress>),
                 HeartbeatTimeout,
             }
 
+            let has_pending_write = !self.pending_writes.is_empty();
+            let can_receive_command = self.pending_writes.len() < self.write_queue_capacity;
             let event = {
                 let heartbeat = async {
                     if let Some(deadline) = heartbeat_deadline {
@@ -368,26 +406,52 @@ where
                     }
                 };
                 tokio::pin!(heartbeat);
+                let reader = &mut self.reader;
+                let writer = &mut self.writer;
+                let read_buffer = &mut self.read_buffer;
+                let pending_writes = &mut self.pending_writes;
                 tokio::select! {
-                    command = self.command_receiver.recv() => Event::Command(command),
-                    read = self.stream.read(&mut self.read_buffer) => Event::Read(read),
+                    command = self.command_receiver.recv(), if can_receive_command => Event::Command(command),
+                    read = reader.read(read_buffer) => Event::Read(read),
+                    write = async {
+                        let pending = pending_writes
+                            .front()
+                            .expect("a pending write must be available when the write branch is enabled");
+                        if pending.written == pending.bytes.len() {
+                            writer.flush().await.map(|()| WriteProgress::Flushed)
+                        } else {
+                            writer
+                                .write(&pending.bytes[pending.written..])
+                                .await
+                                .map(WriteProgress::Written)
+                        }
+                    }, if has_pending_write => Event::Write(write),
                     _ = &mut heartbeat => Event::HeartbeatTimeout,
                 }
             };
 
             let result = match event {
-                Event::Command(Some(command)) => self.handle_command(command).await,
+                Event::Command(Some(command)) => self.handle_command(command),
                 Event::Command(None) => {
                     let error = NowClientError::WorkerClosed("all client handles were dropped".to_owned());
+                    self.fail_pending_writes(&error);
                     self.fail_all(&error);
                     return;
                 }
                 Event::Read(Ok(0)) => Err(NowClientError::WorkerClosed("transport reached EOF".to_owned())),
                 Event::Read(Ok(read)) => self.messages.push(&self.read_buffer[..read]),
                 Event::Read(Err(error)) => Err(error.into()),
+                Event::Write(Ok(WriteProgress::Written(0))) => Err(std::io::Error::new(
+                    std::io::ErrorKind::WriteZero,
+                    "transport accepted no bytes for a pending NOW PDU",
+                )
+                .into()),
+                Event::Write(Ok(progress)) => self.complete_pending_write(progress),
+                Event::Write(Err(error)) => Err(error.into()),
                 Event::HeartbeatTimeout => Err(NowClientError::WorkerClosed("peer heartbeat timed out".to_owned())),
             };
             if let Err(error) = result {
+                self.fail_pending_writes(&error);
                 self.fail_all(&error);
                 return;
             }
@@ -436,7 +500,7 @@ where
             NowMessage::Exec(NowExecMessage::Started(message)) => {
                 let session_id = message.session_id();
                 if !self.discarded_run_sessions.contains(&session_id) {
-                    self.emit_event(session_id, ExecutionEvent::Started);
+                    self.emit_event(session_id, ExecutionEvent::Started)?;
                 }
                 Ok(BufferUpdate::default())
             }
@@ -459,7 +523,7 @@ where
                     NowExecDataStreamKind::Stdin => None,
                 };
                 if let Some(event) = event {
-                    self.emit_event(message.session_id(), event);
+                    self.emit_event(message.session_id(), event)?;
                 }
                 Ok(BufferUpdate::default())
             }
@@ -467,7 +531,7 @@ where
                 let session_id = message.session_id();
                 match message.to_result() {
                     Ok(()) => {
-                        self.emit_event(session_id, ExecutionEvent::CancelAccepted);
+                        self.emit_event(session_id, ExecutionEvent::CancelAccepted)?;
                         if let Some(operation) = self.operations.get_mut(&session_id) {
                             operation.cancel_accepted = true;
                             if let Some(response) = operation.cancel_response.take() {
@@ -488,7 +552,7 @@ where
             }
             NowMessage::Exec(NowExecMessage::Result(message)) => {
                 let session_id = message.session_id();
-                if self.discarded_run_sessions.remove(&session_id) {
+                if self.remove_discarded_run_session(session_id) {
                     return Ok(BufferUpdate::default());
                 }
                 match message.to_result() {
@@ -516,7 +580,7 @@ where
         }
     }
 
-    async fn handle_command(&mut self, command: WorkerCommand) -> Result<(), NowClientError> {
+    fn handle_command(&mut self, command: WorkerCommand) -> Result<(), NowClientError> {
         match command {
             WorkerCommand::Start {
                 spec,
@@ -536,11 +600,7 @@ where
                     let _ = response.send(Err(NowClientError::OperationInProgress));
                     return Ok(());
                 }
-                if is_run && self.discarded_run_sessions.len() == self.run_discard_capacity {
-                    let _ = response.send(Err(NowClientError::RunDiscardQueueFull));
-                    return Ok(());
-                }
-                let session_id = match self.allocate_session_id() {
+                let session_id = match allocate_session_id(&mut self.next_session_id) {
                     Ok(session_id) => session_id,
                     Err(error) => {
                         let _ = response.send(Err(error));
@@ -566,25 +626,13 @@ where
                         return Ok(());
                     }
                 };
+                let mut bytes = Self::encode_request(request)?;
                 let stdin_closed = initial_stdin.is_some();
-
-                if let Err(error) = self.write_message(request).await {
-                    let response_error = NowClientError::WorkerClosed(error.to_string());
-                    let _ = response.send(Err(response_error));
-                    return Err(error);
-                }
                 if let Some(stdin) = initial_stdin {
-                    if let Err(error) = self
-                        .write_message(EncodedRequest {
-                            message: stdin,
-                            non_interactive: false,
-                        })
-                        .await
-                    {
-                        let response_error = NowClientError::WorkerClosed(error.to_string());
-                        let _ = response.send(Err(response_error));
-                        return Err(error);
-                    }
+                    bytes.extend(Self::encode_request(EncodedRequest {
+                        message: stdin,
+                        non_interactive: false,
+                    })?);
                 }
 
                 if let Some(registration) = registration {
@@ -599,24 +647,19 @@ where
                             stdin_closed,
                         },
                     );
-                    if let Some(timeout) = spec.timeout() {
-                        if let Some(command_sender) = self.command_sender.upgrade() {
-                            tokio::spawn(async move {
-                                time::sleep(timeout).await;
-                                let _ = command_sender
-                                    .send(WorkerCommand::Cancel {
-                                        session_id,
-                                        response: None,
-                                    })
-                                    .await;
-                            });
-                        }
-                    }
                 }
                 if is_run {
-                    self.discarded_run_sessions.insert(session_id);
+                    self.discard_run_session(session_id);
                 }
-                let _ = response.send(Ok(session_id));
+                self.pending_writes.push_back(PendingWrite {
+                    bytes,
+                    written: 0,
+                    completion: PendingWriteCompletion::Start {
+                        session_id,
+                        response,
+                        timeout: tracked.then(|| spec.timeout()).flatten(),
+                    },
+                });
                 Ok(())
             }
             WorkerCommand::SendStdin {
@@ -638,29 +681,24 @@ where
                     )));
                     return Ok(());
                 }
-                match stdin_message(session_id, data, last) {
-                    Ok(message) => match self
-                        .write_message(EncodedRequest {
-                            message,
-                            non_interactive: false,
-                        })
-                        .await
-                    {
-                        Ok(()) => {
-                            if last {
-                                if let Some(operation) = self.operations.get_mut(&session_id) {
-                                    operation.stdin_closed = true;
-                                }
-                            }
-                            let _ = response.send(Ok(()));
-                            Ok(())
-                        }
-                        Err(error) => {
-                            let response_error = NowClientError::WorkerClosed(error.to_string());
-                            let _ = response.send(Err(response_error));
-                            Err(error)
-                        }
-                    },
+                match stdin_message(session_id, data, last).and_then(|message| {
+                    Self::encode_request(EncodedRequest {
+                        message,
+                        non_interactive: false,
+                    })
+                }) {
+                    Ok(bytes) => {
+                        self.pending_writes.push_back(PendingWrite {
+                            bytes,
+                            written: 0,
+                            completion: PendingWriteCompletion::Stdin {
+                                session_id,
+                                last,
+                                response,
+                            },
+                        });
+                        Ok(())
+                    }
                     Err(error) => {
                         let _ = response.send(Err(error));
                         Ok(())
@@ -687,32 +725,33 @@ where
                 }
 
                 let message = now_proto_pdu::NowExecCancelReqMsg::new(session_id).into();
-                match self
-                    .write_message(EncodedRequest {
-                        message,
-                        non_interactive: false,
-                    })
-                    .await
-                {
-                    Ok(()) => {
+                match Self::encode_request(EncodedRequest {
+                    message,
+                    non_interactive: false,
+                }) {
+                    Ok(bytes) => {
                         if let Some(operation) = self.operations.get_mut(&session_id) {
                             operation.cancel_pending = true;
                             operation.cancel_response = response;
                         }
-                        Ok(())
+                        self.pending_writes.push_back(PendingWrite {
+                            bytes,
+                            written: 0,
+                            completion: PendingWriteCompletion::Cancel,
+                        });
                     }
                     Err(error) => {
                         if let Some(response) = response {
-                            let _ = response.send(Err(NowClientError::WorkerClosed(error.to_string())));
+                            let _ = response.send(Err(error));
                         }
-                        Err(error)
                     }
                 }
+                Ok(())
             }
         }
     }
 
-    async fn write_message(&mut self, request: EncodedRequest) -> Result<(), NowClientError> {
+    fn encode_request(request: EncodedRequest) -> Result<Vec<u8>, NowClientError> {
         let mut bytes = encode_vec(&request.message).map_err(|error| NowClientError::PduEncode(error.to_string()))?;
         if request.non_interactive {
             // now-proto-pdu 0.4.3 exposes the PowerShell non-interactive flag for decoding but
@@ -720,20 +759,102 @@ where
             let flags = u16::from_le_bytes([bytes[6], bytes[7]]) | 0x0020;
             bytes[6..8].copy_from_slice(&flags.to_le_bytes());
         }
-        self.stream.write_all(&bytes).await?;
-        self.stream.flush().await?;
+        Ok(bytes)
+    }
+
+    fn complete_pending_write(&mut self, progress: WriteProgress) -> Result<(), NowClientError> {
+        match progress {
+            WriteProgress::Written(written) => {
+                let pending = self
+                    .pending_writes
+                    .front_mut()
+                    .expect("a write completion must have a pending write");
+                pending.written += written;
+            }
+            WriteProgress::Flushed => {
+                let pending = self
+                    .pending_writes
+                    .pop_front()
+                    .expect("a flush completion must have a pending write");
+                self.finish_pending_write(pending.completion);
+            }
+        }
         Ok(())
     }
 
-    fn allocate_session_id(&mut self) -> Result<u32, NowClientError> {
-        let session_id = self.next_session_id;
-        self.next_session_id = self.next_session_id.checked_add(1).unwrap_or_default();
-        (session_id != 0)
-            .then_some(session_id)
-            .ok_or(NowClientError::SessionIdExhausted)
+    fn finish_pending_write(&mut self, completion: PendingWriteCompletion) {
+        match completion {
+            PendingWriteCompletion::Start {
+                session_id,
+                response,
+                timeout,
+            } => {
+                if let Some(timeout) = timeout {
+                    if let Some(command_sender) = self.command_sender.upgrade() {
+                        tokio::spawn(async move {
+                            time::sleep(timeout).await;
+                            let _ = command_sender
+                                .send(WorkerCommand::Cancel {
+                                    session_id,
+                                    response: None,
+                                })
+                                .await;
+                        });
+                    }
+                }
+                let _ = response.send(Ok(session_id));
+            }
+            PendingWriteCompletion::Stdin {
+                session_id,
+                last,
+                response,
+            } => {
+                if last {
+                    if let Some(operation) = self.operations.get_mut(&session_id) {
+                        operation.stdin_closed = true;
+                    }
+                }
+                let _ = response.send(Ok(()));
+            }
+            PendingWriteCompletion::Cancel => {}
+        }
     }
 
-    fn emit_event(&mut self, session_id: u32, event: ExecutionEvent) {
+    fn fail_pending_writes(&mut self, error: &NowClientError) {
+        let reason = error.to_string();
+        for pending in self.pending_writes.drain(..) {
+            match pending.completion {
+                PendingWriteCompletion::Start { response, .. } => {
+                    let _ = response.send(Err(NowClientError::WorkerClosed(reason.clone())));
+                }
+                PendingWriteCompletion::Stdin { response, .. } => {
+                    let _ = response.send(Err(NowClientError::WorkerClosed(reason.clone())));
+                }
+                PendingWriteCompletion::Cancel => {}
+            }
+        }
+    }
+
+    fn discard_run_session(&mut self, session_id: u32) {
+        if self.discarded_run_sessions.len() == self.run_discard_capacity {
+            self.discarded_run_sessions.pop_front();
+        }
+        self.discarded_run_sessions.push_back(session_id);
+    }
+
+    fn remove_discarded_run_session(&mut self, session_id: u32) -> bool {
+        let Some(position) = self
+            .discarded_run_sessions
+            .iter()
+            .position(|discarded_session_id| *discarded_session_id == session_id)
+        else {
+            return false;
+        };
+        self.discarded_run_sessions.remove(position);
+        true
+    }
+
+    fn emit_event(&mut self, session_id: u32, event: ExecutionEvent) -> Result<(), NowClientError> {
         let overflowed = match self.operations.get_mut(&session_id) {
             Some(operation) => match operation.event_sender.try_send(event) {
                 Ok(()) => false,
@@ -743,8 +864,9 @@ where
             None => false,
         };
         if overflowed {
-            self.finish(session_id, Err(NowClientError::EventQueueFull { session_id }));
+            return Err(NowClientError::EventQueueFull { session_id });
         }
+        Ok(())
     }
 
     fn finish(&mut self, session_id: u32, result: Result<ExecutionStatus, NowClientError>) {
@@ -767,6 +889,12 @@ where
             ))));
         }
     }
+}
+
+fn allocate_session_id(next_session_id: &mut Option<u32>) -> Result<u32, NowClientError> {
+    let session_id = (*next_session_id).ok_or(NowClientError::SessionIdExhausted)?;
+    *next_session_id = session_id.checked_add(1);
+    Ok(session_id)
 }
 
 async fn handshake<S>(
@@ -822,6 +950,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use core::time::Duration;
+
     use now_proto_pdu::ironrdp_core::{encode_vec, Decode, IntoOwned, ReadCursor};
     use now_proto_pdu::{
         NowChannelCapsetMsg, NowChannelHeartbeatMsg, NowExecCancelRspMsg, NowExecCapsetFlags, NowExecDataMsg,
@@ -829,7 +959,7 @@ mod tests {
     };
     use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
-    use super::{ExecutionEvent, ExecutionStatus, NowClient};
+    use super::{allocate_session_id, ExecutionEvent, ExecutionStatus, NowClient};
     use crate::{NowClientConfig, NowClientError, ProcessRequest, RunRequest};
 
     fn encode(message: impl Into<NowMessage<'static>>) -> Vec<u8> {
@@ -872,6 +1002,20 @@ mod tests {
 
     fn capset(flags: NowExecCapsetFlags) -> NowChannelCapsetMsg {
         NowChannelCapsetMsg::default().with_exec_capset(flags)
+    }
+
+    #[test]
+    fn session_id_exhaustion_is_sticky() {
+        let mut next_session_id = Some(u32::MAX);
+        assert!(matches!(allocate_session_id(&mut next_session_id), Ok(u32::MAX)));
+        assert!(matches!(
+            allocate_session_id(&mut next_session_id),
+            Err(NowClientError::SessionIdExhausted)
+        ));
+        assert!(matches!(
+            allocate_session_id(&mut next_session_id),
+            Err(NowClientError::SessionIdExhausted)
+        ));
     }
 
     #[tokio::test]
@@ -1025,6 +1169,206 @@ mod tests {
             Ok(status) => panic!("Process returned unexpected status: {status:?}"),
             Err(error) => panic!("Process must complete: {error}"),
         }
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn run_quarantine_evicts_old_sessions_without_blocking_submission() {
+        let (client_stream, mut peer_stream) = tokio::io::duplex(1024);
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(&mut peer_stream, capset(NowExecCapsetFlags::STYLE_RUN)).await;
+
+            let first_session = match read_message(&mut peer_stream).await {
+                NowMessage::Exec(NowExecMessage::Run(message)) => message.session_id(),
+                message => panic!("expected first Run request, got {message:?}"),
+            };
+            let second_session = match read_message(&mut peer_stream).await {
+                NowMessage::Exec(NowExecMessage::Run(message)) => message.session_id(),
+                message => panic!("expected second Run request, got {message:?}"),
+            };
+            assert_eq!((first_session, second_session), (1, 2));
+            write_message(&mut peer_stream, NowExecResultMsg::new_success(first_session, 0)).await;
+        });
+
+        let config = NowClientConfig {
+            run_discard_capacity: 1,
+            ..NowClientConfig::default()
+        };
+        let handle = match NowClient::connect(client_stream, config).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        assert_eq!(
+            handle
+                .run(RunRequest::new("first.exe"))
+                .await
+                .expect("first Run request must start")
+                .id(),
+            1
+        );
+        assert_eq!(
+            handle
+                .run(RunRequest::new("second.exe"))
+                .await
+                .expect("second Run request must start after eviction")
+                .id(),
+            2
+        );
+        drop(handle);
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn process_rejects_an_empty_directory_before_writing() {
+        let (client_stream, mut peer_stream) = tokio::io::duplex(1024);
+        let (release_sender, release_receiver) = tokio::sync::oneshot::channel();
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_PROCESS | NowExecCapsetFlags::IO_REDIRECTION),
+            )
+            .await;
+            let _ = release_receiver.await;
+        });
+
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        assert!(matches!(
+            handle
+                .process(ProcessRequest::new("process.exe").with_directory(""))
+                .await,
+            Err(NowClientError::InvalidRequest(_))
+        ));
+        let _ = release_sender.send(());
+        drop(handle);
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn stdin_write_does_not_block_reading_peer_output() {
+        let (client_stream, mut peer_stream) = tokio::io::duplex(64);
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_PROCESS | NowExecCapsetFlags::IO_REDIRECTION),
+            )
+            .await;
+
+            let session_id = match read_message(&mut peer_stream).await {
+                NowMessage::Exec(NowExecMessage::Process(message)) => message.session_id(),
+                message => panic!("expected Process request, got {message:?}"),
+            };
+            write_message(&mut peer_stream, NowExecStartedMsg::new(session_id)).await;
+            let stdout = match NowExecDataMsg::new(session_id, NowExecDataStreamKind::Stdout, true, vec![0xa5; 512]) {
+                Ok(message) => message,
+                Err(error) => panic!("test stdout PDU must encode: {error}"),
+            };
+            write_message(&mut peer_stream, stdout).await;
+            match read_message(&mut peer_stream).await {
+                NowMessage::Exec(NowExecMessage::Data(message)) => {
+                    assert_eq!(message.session_id(), session_id);
+                    assert_eq!(message.data(), vec![0x5a; 512]);
+                    assert!(message.is_last());
+                }
+                message => panic!("expected stdin data, got {message:?}"),
+            }
+            write_message(&mut peer_stream, NowExecResultMsg::new_success(session_id, 0)).await;
+        });
+
+        let config = NowClientConfig {
+            read_buffer_size: 32,
+            ..NowClientConfig::default()
+        };
+        let handle = match NowClient::connect(client_stream, config).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        let mut execution = match handle.process(ProcessRequest::new("process.exe")).await {
+            Ok(execution) => execution,
+            Err(error) => panic!("Process request must start: {error}"),
+        };
+        assert_eq!(execution.next_event().await, Some(ExecutionEvent::Started));
+        match tokio::time::timeout(Duration::from_secs(2), execution.send_stdin(vec![0x5a; 512], true)).await {
+            Ok(Ok(())) => {}
+            Ok(Err(error)) => panic!("stdin must be written: {error}"),
+            Err(_) => panic!("stdin write timed out while peer output was backpressured"),
+        }
+        assert_eq!(
+            execution.next_event().await,
+            Some(ExecutionEvent::Stdout {
+                data: vec![0xa5; 512],
+                last: true,
+            })
+        );
+        match execution.wait().await {
+            Ok(ExecutionStatus::Completed { exit_code: 0 }) => {}
+            Ok(status) => panic!("unexpected terminal status: {status:?}"),
+            Err(error) => panic!("Process must complete: {error}"),
+        }
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn event_queue_overflow_closes_the_worker_before_another_execution_starts() {
+        let (client_stream, mut peer_stream) = tokio::io::duplex(1024);
+        let (release_sender, release_receiver) = tokio::sync::oneshot::channel();
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_PROCESS | NowExecCapsetFlags::IO_REDIRECTION),
+            )
+            .await;
+
+            let session_id = match read_message(&mut peer_stream).await {
+                NowMessage::Exec(NowExecMessage::Process(message)) => message.session_id(),
+                message => panic!("expected Process request, got {message:?}"),
+            };
+            write_message(&mut peer_stream, NowExecStartedMsg::new(session_id)).await;
+            let stdout = match NowExecDataMsg::new(session_id, NowExecDataStreamKind::Stdout, true, vec![0x01]) {
+                Ok(message) => message,
+                Err(error) => panic!("test stdout PDU must encode: {error}"),
+            };
+            write_message(&mut peer_stream, stdout).await;
+            let _ = release_receiver.await;
+        });
+
+        let config = NowClientConfig {
+            event_queue_capacity: 1,
+            ..NowClientConfig::default()
+        };
+        let handle = match NowClient::connect(client_stream, config).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        let execution = match handle.process(ProcessRequest::new("process.exe")).await {
+            Ok(execution) => execution,
+            Err(error) => panic!("Process request must start: {error}"),
+        };
+        assert!(matches!(execution.wait().await, Err(NowClientError::WorkerClosed(_))));
+        assert!(matches!(
+            handle.process(ProcessRequest::new("second.exe")).await,
+            Err(NowClientError::WorkerClosed(_))
+        ));
+        let _ = release_sender.send(());
+        drop(handle);
         match peer.await {
             Ok(()) => {}
             Err(error) => panic!("test peer task failed: {error}"),

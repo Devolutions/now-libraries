@@ -14,6 +14,7 @@ terminal status.
 
 Run and detached requests are submission-only. Gateway may emit an immediate
 Started/Data/Result sequence for Run; the client records and discards those matching
-frames so they cannot affect the next tracked operation. This crate deliberately does
-not provide Abort, Shell submission, DVC/pipe setup, reconnect policy, or retained
-operation output.
+frames so they cannot affect the next tracked operation. This recent-session quarantine
+is bounded and evicts its oldest entry; evicted Run traffic remains harmless because
+session IDs are never reused. This crate deliberately does not provide Abort, Shell
+submission, DVC/pipe setup, reconnect policy, or retained operation output.
