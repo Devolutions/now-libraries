@@ -9,24 +9,21 @@ use tokio::sync::{mpsc, oneshot};
 use tokio::time::{self, Instant};
 
 use crate::exec::{stdin_message, EncodedRequest, RequestSpec};
-use crate::{NegotiatedCapabilities, NowClientConfig, NowClientError};
+use crate::{NowCapabilities, NowClientConfig, NowClientError};
 
 /// Entry point for connecting a Tokio byte stream to the NOW execution protocol.
 pub struct NowClient;
 
 impl NowClient {
     /// Negotiates NOW capabilities over `stream` and starts its single-owner protocol worker.
-    pub async fn connect<S>(
-        stream: S,
-        config: NowClientConfig,
-    ) -> Result<(NowClientHandle, NegotiatedCapabilities), NowClientError>
+    pub async fn connect<S>(stream: S, config: NowClientConfig) -> Result<NowClientHandle, NowClientError>
     where
         S: AsyncRead + AsyncWrite + Unpin + Send + 'static,
     {
         config.validate()?;
         let (stream, messages, peer_capset) = handshake(stream, &config).await?;
-        let capabilities = NegotiatedCapabilities::negotiate(&config.client_capset, &peer_capset)?;
-        let shared_capabilities = Arc::new(RwLock::new(capabilities.clone()));
+        let capabilities = NowCapabilities::negotiate(&config.client_capset, &peer_capset)?;
+        let shared_capabilities = Arc::new(RwLock::new(capabilities));
         let (command_sender, command_receiver) = mpsc::channel(config.command_queue_capacity);
         let worker_sender = command_sender.downgrade();
         let worker = OwnedWorker {
@@ -47,14 +44,11 @@ impl NowClient {
             worker.run().await;
         });
 
-        Ok((
-            NowClientHandle {
-                command_sender,
-                capabilities: shared_capabilities,
-                event_queue_capacity: config.event_queue_capacity,
-            },
-            capabilities,
-        ))
+        Ok(NowClientHandle {
+            command_sender,
+            capabilities: shared_capabilities,
+            event_queue_capacity: config.event_queue_capacity,
+        })
     }
 }
 
@@ -62,13 +56,13 @@ impl NowClient {
 #[derive(Clone)]
 pub struct NowClientHandle {
     command_sender: mpsc::Sender<WorkerCommand>,
-    capabilities: Arc<RwLock<NegotiatedCapabilities>>,
+    capabilities: Arc<RwLock<NowCapabilities>>,
     event_queue_capacity: usize,
 }
 
 impl NowClientHandle {
     /// Returns the latest negotiated capabilities, including capset refreshes from the peer.
-    pub fn capabilities(&self) -> NegotiatedCapabilities {
+    pub fn capabilities(&self) -> NowCapabilities {
         self.capabilities
             .read()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -77,98 +71,95 @@ impl NowClientHandle {
 
     /// Submits an untracked Run request.
     pub async fn run(&self, request: crate::RunRequest) -> Result<DetachedExecution, NowClientError> {
-        match self.submit(RequestSpec::Run(request)).await? {
-            ExecutionSubmission::Detached(execution) => Ok(execution),
-            ExecutionSubmission::Tracked(_) => Err(NowClientError::Protocol(
-                "Run request unexpectedly started a tracked operation".to_owned(),
-            )),
-        }
+        let session_id = self.start(RequestSpec::Run(request), None, false).await?;
+        Ok(DetachedExecution { session_id })
     }
 
-    /// Submits a Process request.
-    pub async fn process(&self, request: crate::ProcessRequest) -> Result<ExecutionSubmission, NowClientError> {
+    /// Submits a tracked Process request.
+    pub async fn process(&self, request: crate::ProcessRequest) -> Result<Execution, NowClientError> {
         self.submit(RequestSpec::Process(request)).await
     }
 
-    /// Submits a Batch request.
-    pub async fn batch(&self, request: crate::BatchRequest) -> Result<ExecutionSubmission, NowClientError> {
+    /// Submits a detached Process request.
+    pub async fn process_detached(&self, request: crate::ProcessRequest) -> Result<DetachedExecution, NowClientError> {
+        self.submit_detached(RequestSpec::Process(request)).await
+    }
+
+    /// Submits a tracked Batch request.
+    pub async fn batch(&self, request: crate::BatchRequest) -> Result<Execution, NowClientError> {
         self.submit(RequestSpec::Batch(request)).await
     }
 
-    /// Submits a Windows PowerShell request.
-    pub async fn win_ps(&self, request: crate::WinPsRequest) -> Result<ExecutionSubmission, NowClientError> {
+    /// Submits a detached Batch request.
+    pub async fn batch_detached(&self, request: crate::BatchRequest) -> Result<DetachedExecution, NowClientError> {
+        self.submit_detached(RequestSpec::Batch(request)).await
+    }
+
+    /// Submits a tracked Windows PowerShell request.
+    pub async fn win_ps(&self, request: crate::WinPsRequest) -> Result<Execution, NowClientError> {
         self.submit(RequestSpec::WinPs(request)).await
     }
 
-    /// Submits a PowerShell 7 request.
-    pub async fn pwsh(&self, request: crate::PwshRequest) -> Result<ExecutionSubmission, NowClientError> {
+    /// Submits a detached Windows PowerShell request.
+    pub async fn win_ps_detached(&self, request: crate::WinPsRequest) -> Result<DetachedExecution, NowClientError> {
+        self.submit_detached(RequestSpec::WinPs(request)).await
+    }
+
+    /// Submits a tracked PowerShell 7 request.
+    pub async fn pwsh(&self, request: crate::PwshRequest) -> Result<Execution, NowClientError> {
         self.submit(RequestSpec::Pwsh(request)).await
     }
 
-    async fn submit(&self, spec: RequestSpec) -> Result<ExecutionSubmission, NowClientError> {
-        let tracked = spec.is_tracked();
-        let (start_sender, start_receiver) = oneshot::channel();
-        let (registration, events, terminal) = if tracked {
-            let (event_sender, event_receiver) = mpsc::channel(self.event_queue_capacity);
-            let (terminal_sender, terminal_receiver) = oneshot::channel();
-            (
+    /// Submits a detached PowerShell 7 request.
+    pub async fn pwsh_detached(&self, request: crate::PwshRequest) -> Result<DetachedExecution, NowClientError> {
+        self.submit_detached(RequestSpec::Pwsh(request)).await
+    }
+
+    async fn submit(&self, spec: RequestSpec) -> Result<Execution, NowClientError> {
+        let (event_sender, events) = mpsc::channel(self.event_queue_capacity);
+        let (terminal_sender, terminal) = oneshot::channel();
+        let session_id = self
+            .start(
+                spec,
                 Some(OperationRegistration {
                     event_sender,
                     terminal_sender,
                 }),
-                Some(event_receiver),
-                Some(terminal_receiver),
+                false,
             )
-        } else {
-            (None, None, None)
-        };
+            .await?;
+        Ok(Execution {
+            session_id,
+            events,
+            terminal,
+            command_sender: self.command_sender.clone(),
+        })
+    }
 
+    async fn submit_detached(&self, spec: RequestSpec) -> Result<DetachedExecution, NowClientError> {
+        let session_id = self.start(spec, None, true).await?;
+        Ok(DetachedExecution { session_id })
+    }
+
+    async fn start(
+        &self,
+        spec: RequestSpec,
+        registration: Option<OperationRegistration>,
+        detached: bool,
+    ) -> Result<u32, NowClientError> {
+        let (start_sender, start_receiver) = oneshot::channel();
         self.command_sender
             .send(WorkerCommand::Start {
                 spec,
                 registration,
+                detached,
                 response: start_sender,
             })
             .await
             .map_err(|_| NowClientError::WorkerClosed("command queue is closed".to_owned()))?;
-        let session_id = start_receiver
+        start_receiver
             .await
-            .map_err(|_| NowClientError::WorkerClosed("worker stopped while starting operation".to_owned()))??;
-
-        if tracked {
-            let events = events.ok_or_else(|| {
-                NowClientError::Protocol("tracked operation did not receive an event receiver".to_owned())
-            })?;
-            let terminal = terminal.ok_or_else(|| {
-                NowClientError::Protocol("tracked operation did not receive a terminal receiver".to_owned())
-            })?;
-            Ok(ExecutionSubmission::Tracked(Execution {
-                session_id,
-                events,
-                terminal,
-                command_sender: self.command_sender.clone(),
-            }))
-        } else {
-            Ok(ExecutionSubmission::Detached(DetachedExecution { session_id }))
-        }
-    }
-}
-
-/// Either a tracked execution handle or a detached submission identity.
-pub enum ExecutionSubmission {
-    /// A tracked operation that emits output and has a terminal result.
-    Tracked(Execution),
-    /// A detached operation that only reports local submission.
-    Detached(DetachedExecution),
-}
-
-impl ExecutionSubmission {
-    /// Returns the NOW session identity allocated for the submission.
-    pub fn id(&self) -> u32 {
-        match self {
-            Self::Tracked(execution) => execution.id(),
-            Self::Detached(execution) => execution.id(),
-        }
+            .map_err(|_| NowClientError::WorkerClosed("worker stopped while starting operation".to_owned()))?
     }
 }
 
@@ -314,6 +305,7 @@ enum WorkerCommand {
     Start {
         spec: RequestSpec,
         registration: Option<OperationRegistration>,
+        detached: bool,
         response: oneshot::Sender<Result<u32, NowClientError>>,
     },
     SendStdin {
@@ -332,7 +324,7 @@ struct OwnedWorker<S> {
     stream: S,
     messages: crate::frame::MessageBuffer,
     requested_capset: NowChannelCapsetMsg,
-    capabilities: Arc<RwLock<NegotiatedCapabilities>>,
+    capabilities: Arc<RwLock<NowCapabilities>>,
     command_receiver: mpsc::Receiver<WorkerCommand>,
     command_sender: mpsc::WeakSender<WorkerCommand>,
     operations: HashMap<u32, Operation>,
@@ -409,7 +401,7 @@ where
             .map(|interval| Instant::now() + interval.saturating_mul(2))
     }
 
-    fn capabilities(&self) -> NegotiatedCapabilities {
+    fn capabilities(&self) -> NowCapabilities {
         self.capabilities
             .read()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -428,7 +420,7 @@ where
     fn dispatch_message(&mut self, message: OwnedNowMessage) -> Result<BufferUpdate, NowClientError> {
         match message {
             NowMessage::Channel(NowChannelMessage::Capset(capset)) => {
-                let capabilities = NegotiatedCapabilities::negotiate(&self.requested_capset, &capset)?;
+                let capabilities = NowCapabilities::negotiate(&self.requested_capset, &capset)?;
                 *self
                     .capabilities
                     .write()
@@ -529,11 +521,12 @@ where
             WorkerCommand::Start {
                 spec,
                 registration,
+                detached,
                 response,
             } => {
-                let tracked = spec.is_tracked();
+                let tracked = registration.is_some();
                 let is_run = spec.is_run();
-                if tracked != registration.is_some() {
+                if (is_run && (tracked || detached)) || (!is_run && tracked == detached) {
                     let _ = response.send(Err(NowClientError::Protocol(
                         "worker received inconsistent operation registration".to_owned(),
                     )));
@@ -547,16 +540,23 @@ where
                     let _ = response.send(Err(NowClientError::RunDiscardQueueFull));
                     return Ok(());
                 }
-                let session_id = self.allocate_session_id();
-                let request = match spec.build(session_id, &self.capabilities()) {
+                let session_id = match self.allocate_session_id() {
+                    Ok(session_id) => session_id,
+                    Err(error) => {
+                        let _ = response.send(Err(error));
+                        return Ok(());
+                    }
+                };
+                let request = match spec.build(session_id, &self.capabilities(), detached) {
                     Ok(request) => request,
                     Err(error) => {
                         let _ = response.send(Err(error));
                         return Ok(());
                     }
                 };
-                let initial_stdin = match spec
-                    .initial_stdin()
+                let initial_stdin = match tracked
+                    .then(|| spec.initial_stdin())
+                    .flatten()
                     .map(|data| stdin_message(session_id, data.to_vec(), true))
                     .transpose()
                 {
@@ -725,20 +725,12 @@ where
         Ok(())
     }
 
-    fn allocate_session_id(&mut self) -> u32 {
-        loop {
-            let session_id = self.next_session_id;
-            self.next_session_id = self.next_session_id.wrapping_add(1);
-            if self.next_session_id == 0 {
-                self.next_session_id = 1;
-            }
-            if session_id != 0
-                && !self.operations.contains_key(&session_id)
-                && !self.discarded_run_sessions.contains(&session_id)
-            {
-                return session_id;
-            }
-        }
+    fn allocate_session_id(&mut self) -> Result<u32, NowClientError> {
+        let session_id = self.next_session_id;
+        self.next_session_id = self.next_session_id.checked_add(1).unwrap_or_default();
+        (session_id != 0)
+            .then_some(session_id)
+            .ok_or(NowClientError::SessionIdExhausted)
     }
 
     fn emit_event(&mut self, session_id: u32, event: ExecutionEvent) {
@@ -837,7 +829,7 @@ mod tests {
     };
     use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
-    use super::{ExecutionEvent, ExecutionStatus, ExecutionSubmission, NowClient};
+    use super::{ExecutionEvent, ExecutionStatus, NowClient};
     use crate::{NowClientConfig, NowClientError, ProcessRequest, RunRequest};
 
     fn encode(message: impl Into<NowMessage<'static>>) -> Vec<u8> {
@@ -923,12 +915,11 @@ mod tests {
             client_capset: capset(NowExecCapsetFlags::STYLE_RUN),
             ..NowClientConfig::default()
         };
-        let (handle, capabilities) = match NowClient::connect(client_stream, config).await {
-            Ok(connection) => connection,
+        let handle = match NowClient::connect(client_stream, config).await {
+            Ok(handle) => handle,
             Err(error) => panic!("handshake must succeed: {error}"),
         };
-        assert!(capabilities.supports_run());
-        assert!(!capabilities.supports_process());
+        assert!(handle.capabilities().supports_run());
         assert!(!handle.capabilities().supports_process());
         drop(handle);
         match peer.await {
@@ -995,8 +986,8 @@ mod tests {
             write_message(&mut peer_stream, NowExecResultMsg::new_success(process_session, 17)).await;
         });
 
-        let (handle, _) = match NowClient::connect(client_stream, NowClientConfig::default()).await {
-            Ok(connection) => connection,
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
             Err(error) => panic!("handshake must succeed: {error}"),
         };
         let run = match handle.run(RunRequest::new("run.exe")).await {
@@ -1008,10 +999,10 @@ mod tests {
             .process(ProcessRequest::new("process.exe").with_stdin(vec![0x01, 0xff]))
             .await
         {
-            Ok(ExecutionSubmission::Tracked(execution)) => execution,
-            Ok(ExecutionSubmission::Detached(_)) => panic!("default process request must be tracked"),
+            Ok(execution) => execution,
             Err(error) => panic!("Process request must start: {error}"),
         };
+        assert_eq!(process.id(), 2);
         match handle.process(ProcessRequest::new("second.exe")).await {
             Err(NowClientError::OperationInProgress) => {}
             Ok(_) => panic!("second tracked execution must be rejected"),
@@ -1034,6 +1025,38 @@ mod tests {
             Ok(status) => panic!("Process returned unexpected status: {status:?}"),
             Err(error) => panic!("Process must complete: {error}"),
         }
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn detached_submission_is_explicit_and_untracked() {
+        let (client_stream, mut peer_stream) = tokio::io::duplex(1024);
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(&mut peer_stream, capset(NowExecCapsetFlags::STYLE_PROCESS)).await;
+
+            match read_message(&mut peer_stream).await {
+                NowMessage::Exec(NowExecMessage::Process(message)) => {
+                    assert_eq!(message.session_id(), 1);
+                    assert!(message.is_detached());
+                }
+                message => panic!("expected detached Process request, got {message:?}"),
+            }
+        });
+
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        let submission = match handle.process_detached(ProcessRequest::new("process.exe")).await {
+            Ok(submission) => submission,
+            Err(error) => panic!("detached Process request must start: {error}"),
+        };
+        assert_eq!(submission.id(), 1);
+        drop(handle);
         match peer.await {
             Ok(()) => {}
             Err(error) => panic!("test peer task failed: {error}"),
@@ -1064,13 +1087,12 @@ mod tests {
             write_message(&mut peer_stream, NowExecResultMsg::new_success(session_id, 0)).await;
         });
 
-        let (handle, _) = match NowClient::connect(client_stream, NowClientConfig::default()).await {
-            Ok(connection) => connection,
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
             Err(error) => panic!("handshake must succeed: {error}"),
         };
         let mut execution = match handle.process(ProcessRequest::new("process.exe")).await {
-            Ok(ExecutionSubmission::Tracked(execution)) => execution,
-            Ok(ExecutionSubmission::Detached(_)) => panic!("default process request must be tracked"),
+            Ok(execution) => execution,
             Err(error) => panic!("Process request must start: {error}"),
         };
         assert_eq!(execution.next_event().await, Some(ExecutionEvent::Started));

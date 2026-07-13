@@ -6,13 +6,12 @@ use now_proto_pdu::{
     NowExecWinPsMsg, NowMessage,
 };
 
-use crate::{NegotiatedCapabilities, NowClientError};
+use crate::{NowCapabilities, NowClientError};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct CommonRequest {
     command: String,
     directory: Option<String>,
-    detached: bool,
     stdin: Option<Vec<u8>>,
     timeout: Option<Duration>,
 }
@@ -22,7 +21,6 @@ impl CommonRequest {
         Self {
             command: command.into(),
             directory: None,
-            detached: false,
             stdin: None,
             timeout: None,
         }
@@ -59,7 +57,6 @@ pub struct ProcessRequest {
     filename: String,
     parameters: Option<String>,
     directory: Option<String>,
-    detached: bool,
     stdin: Option<Vec<u8>>,
     timeout: Option<Duration>,
 }
@@ -71,7 +68,6 @@ impl ProcessRequest {
             filename: filename.into(),
             parameters: None,
             directory: None,
-            detached: false,
             stdin: None,
             timeout: None,
         }
@@ -88,13 +84,6 @@ impl ProcessRequest {
     #[must_use]
     pub fn with_directory(mut self, directory: impl Into<String>) -> Self {
         self.directory = Some(directory.into());
-        self
-    }
-
-    /// Requests detached execution.
-    #[must_use]
-    pub fn detached(mut self) -> Self {
-        self.detached = true;
         self
     }
 
@@ -131,13 +120,6 @@ impl BatchRequest {
     #[must_use]
     pub fn with_directory(mut self, directory: impl Into<String>) -> Self {
         self.common.directory = Some(directory.into());
-        self
-    }
-
-    /// Requests detached execution.
-    #[must_use]
-    pub fn detached(mut self) -> Self {
-        self.common.detached = true;
         self
     }
 
@@ -178,13 +160,6 @@ impl PowerShellRequest {
     #[must_use]
     pub fn with_directory(mut self, directory: impl Into<String>) -> Self {
         self.common.directory = Some(directory.into());
-        self
-    }
-
-    /// Requests detached execution.
-    #[must_use]
-    pub fn detached(mut self) -> Self {
-        self.common.detached = true;
         self
     }
 
@@ -240,15 +215,6 @@ impl RequestSpec {
         matches!(self, Self::Run(_))
     }
 
-    pub(crate) fn is_tracked(&self) -> bool {
-        match self {
-            Self::Run(_) => false,
-            Self::Process(request) => !request.detached,
-            Self::Batch(request) => !request.common.detached,
-            Self::WinPs(request) | Self::Pwsh(request) => !request.common.detached,
-        }
-    }
-
     pub(crate) fn initial_stdin(&self) -> Option<&[u8]> {
         match self {
             Self::Run(_) => None,
@@ -270,9 +236,10 @@ impl RequestSpec {
     pub(crate) fn build(
         &self,
         session_id: u32,
-        capabilities: &NegotiatedCapabilities,
+        capabilities: &NowCapabilities,
+        detached: bool,
     ) -> Result<EncodedRequest, NowClientError> {
-        self.validate(capabilities)?;
+        self.validate(capabilities, detached)?;
 
         match self {
             Self::Run(request) => {
@@ -296,7 +263,7 @@ impl RequestSpec {
                 if capabilities.supports_unicode_console() {
                     message = message.with_encoding_utf8();
                 }
-                if request.detached {
+                if detached {
                     message = message.with_detached();
                 } else {
                     message = message.with_io_redirection();
@@ -315,7 +282,7 @@ impl RequestSpec {
                 if capabilities.supports_unicode_console() {
                     message = message.with_raw_encoding().with_unicode_console();
                 }
-                if common.detached {
+                if detached {
                     message = message.with_detached();
                 } else {
                     message = message.with_io_redirection();
@@ -325,12 +292,12 @@ impl RequestSpec {
                     non_interactive: false,
                 })
             }
-            Self::WinPs(request) => build_power_shell(session_id, request, false, capabilities),
-            Self::Pwsh(request) => build_power_shell(session_id, request, true, capabilities),
+            Self::WinPs(request) => build_power_shell(session_id, request, false, capabilities, detached),
+            Self::Pwsh(request) => build_power_shell(session_id, request, true, capabilities, detached),
         }
     }
 
-    fn validate(&self, capabilities: &NegotiatedCapabilities) -> Result<(), NowClientError> {
+    fn validate(&self, capabilities: &NowCapabilities, detached: bool) -> Result<(), NowClientError> {
         match self {
             Self::Run(request) => {
                 require(capabilities.supports_run(), "Run")?;
@@ -341,20 +308,20 @@ impl RequestSpec {
                 require(capabilities.supports_process(), "Process")?;
                 validate_filename(&request.filename)?;
                 validate_optional(&request.parameters, "parameters")?;
-                validate_common(request.detached, request.stdin.as_deref(), request.timeout)?;
-                validate_tracking(capabilities, request.detached)?;
+                validate_common(detached, request.stdin.as_deref(), request.timeout)?;
+                validate_tracking(capabilities, detached)?;
             }
             Self::Batch(request) => {
                 require(capabilities.supports_batch(), "Batch")?;
-                validate_common_request(&request.common, capabilities)?;
+                validate_common_request(&request.common, capabilities, detached)?;
             }
             Self::WinPs(request) => {
                 require(capabilities.supports_win_ps(), "WinPs")?;
-                validate_common_request(&request.common, capabilities)?;
+                validate_common_request(&request.common, capabilities, detached)?;
             }
             Self::Pwsh(request) => {
                 require(capabilities.supports_pwsh(), "Pwsh")?;
-                validate_common_request(&request.common, capabilities)?;
+                validate_common_request(&request.common, capabilities, detached)?;
             }
         }
         Ok(())
@@ -362,7 +329,7 @@ impl RequestSpec {
 }
 
 macro_rules! apply_power_shell_options {
-    ($message:ident, $common:ident, $request:ident, $capabilities:ident) => {
+    ($message:ident, $common:ident, $request:ident, $capabilities:ident, $detached:ident) => {
         if let Some(directory) = &$common.directory {
             $message = pdu($message.with_directory(directory.clone()))?;
         }
@@ -372,7 +339,7 @@ macro_rules! apply_power_shell_options {
         if $capabilities.supports_unicode_console() {
             $message = $message.with_raw_encoding().with_unicode_console();
         }
-        if $common.detached {
+        if $detached {
             $message = $message.with_detached();
         } else {
             $message = $message.with_io_redirection();
@@ -384,19 +351,20 @@ fn build_power_shell(
     session_id: u32,
     request: &PowerShellRequest,
     pwsh: bool,
-    capabilities: &NegotiatedCapabilities,
+    capabilities: &NowCapabilities,
+    detached: bool,
 ) -> Result<EncodedRequest, NowClientError> {
     let common = &request.common;
     if pwsh {
         let mut message = pdu(NowExecPwshMsg::new(session_id, common.command.clone()))?;
-        apply_power_shell_options!(message, common, request, capabilities);
+        apply_power_shell_options!(message, common, request, capabilities, detached);
         Ok(EncodedRequest {
             message: message.into(),
             non_interactive: request.non_interactive,
         })
     } else {
         let mut message = pdu(NowExecWinPsMsg::new(session_id, common.command.clone()))?;
-        apply_power_shell_options!(message, common, request, capabilities);
+        apply_power_shell_options!(message, common, request, capabilities, detached);
         Ok(EncodedRequest {
             message: message.into(),
             non_interactive: request.non_interactive,
@@ -406,12 +374,13 @@ fn build_power_shell(
 
 fn validate_common_request(
     request: &CommonRequest,
-    capabilities: &NegotiatedCapabilities,
+    capabilities: &NowCapabilities,
+    detached: bool,
 ) -> Result<(), NowClientError> {
     validate_command(&request.command)?;
     validate_directory(request.directory.as_deref())?;
-    validate_common(request.detached, request.stdin.as_deref(), request.timeout)?;
-    validate_tracking(capabilities, request.detached)
+    validate_common(detached, request.stdin.as_deref(), request.timeout)?;
+    validate_tracking(capabilities, detached)
 }
 
 fn validate_common(detached: bool, stdin: Option<&[u8]>, timeout: Option<Duration>) -> Result<(), NowClientError> {
@@ -433,7 +402,7 @@ fn validate_common(detached: bool, stdin: Option<&[u8]>, timeout: Option<Duratio
     Ok(())
 }
 
-fn validate_tracking(capabilities: &NegotiatedCapabilities, detached: bool) -> Result<(), NowClientError> {
+fn validate_tracking(capabilities: &NowCapabilities, detached: bool) -> Result<(), NowClientError> {
     if detached {
         require(capabilities.supports_detached(), "detached execution")
     } else {

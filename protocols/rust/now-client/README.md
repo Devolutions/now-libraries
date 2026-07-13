@@ -4,11 +4,13 @@
 channel. It accepts a caller-provided Tokio `AsyncRead + AsyncWrite` byte stream;
 consumers create DVCs, pipes, sockets, and replacement clients after reconnects.
 
-Connect with `NowClient::connect`, then use the returned handle for Run, Process,
-Batch, Windows PowerShell, or PowerShell 7. The client defensively negotiates
-capabilities, applies bounded frame/command/event queues, and permits **one tracked
-execution at a time per stream**. Tracked operations expose raw `Vec<u8>` stdout/stderr
-chunks, stdin forwarding, normal cancellation, and terminal status.
+Connect with `NowClient::connect`, then query negotiated `NowCapabilities` from the
+returned handle. `process`, `batch`, `win_ps`, and `pwsh` submit tracked executions;
+their `_detached` counterparts submit detached executions. `run` is submission-only.
+The client defensively negotiates capabilities, applies bounded frame/command/event
+queues, and permits **one tracked execution at a time per stream**. Tracked operations
+expose raw `Vec<u8>` stdout/stderr chunks, stdin forwarding, normal cancellation, and
+terminal status.
 
 Run and detached requests are submission-only. Gateway may emit an immediate
 Started/Data/Result sequence for Run; the client records and discards those matching

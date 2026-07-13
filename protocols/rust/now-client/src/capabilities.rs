@@ -9,11 +9,11 @@ use crate::NowClientError;
 /// The value is always calculated as an intersection with the local advertised capset,
 /// even if the peer echoes unsupported flags.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct NegotiatedCapabilities {
+pub struct NowCapabilities {
     capset: NowChannelCapsetMsg,
 }
 
-impl NegotiatedCapabilities {
+impl NowCapabilities {
     pub(crate) fn negotiate(
         requested: &NowChannelCapsetMsg,
         peer: &NowChannelCapsetMsg,

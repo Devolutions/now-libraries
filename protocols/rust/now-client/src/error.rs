@@ -56,6 +56,9 @@ pub enum NowClientError {
     /// Too many Run submissions are awaiting their terminal frame for disposal.
     #[error("NOW Run discard queue reached its configured capacity")]
     RunDiscardQueueFull,
+    /// All nonzero NOW session IDs have been allocated by this client.
+    #[error("NOW session ID space is exhausted")]
+    SessionIdExhausted,
     /// A remote NOW result or cancellation response reported an error status.
     #[error("remote NOW operation {session_id} failed: {error}")]
     RemoteStatus {
