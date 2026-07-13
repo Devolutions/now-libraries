@@ -1,0 +1,21 @@
+[package]
+name = "now-client"
+version = "0.1.0"
+readme = "README.md"
+description = "High-level Tokio client for NOW execution channels"
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+publish = true
+
+[lints]
+workspace = true
+
+[dependencies]
+now-proto-pdu = { workspace = true, features = ["std"] }
+thiserror = "2"
+tokio = { version = "1.52", features = ["io-util", "macros", "rt", "sync", "time"] }

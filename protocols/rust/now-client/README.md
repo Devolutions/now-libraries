@@ -1,0 +1,17 @@
+# NOW client
+
+`now-client` is a high-level, transport-agnostic Rust client for the NOW execution
+channel. It accepts a caller-provided Tokio `AsyncRead + AsyncWrite` byte stream;
+consumers create DVCs, pipes, sockets, and replacement clients after reconnects.
+
+Connect with `NowClient::connect`, then use the returned handle for Run, Process,
+Batch, Windows PowerShell, or PowerShell 7. The client defensively negotiates
+capabilities, applies bounded frame/command/event queues, and permits **one tracked
+execution at a time per stream**. Tracked operations expose raw `Vec<u8>` stdout/stderr
+chunks, stdin forwarding, normal cancellation, and terminal status.
+
+Run and detached requests are submission-only. Gateway may emit an immediate
+Started/Data/Result sequence for Run; the client records and discards those matching
+frames so they cannot affect the next tracked operation. This crate deliberately does
+not provide Abort, Shell submission, DVC/pipe setup, reconnect policy, or retained
+operation output.

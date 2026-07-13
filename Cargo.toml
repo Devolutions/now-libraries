@@ -16,7 +16,7 @@ keywords = ["rdp", "remote-desktop", "network", "client", "protocol"]
 categories = ["network-programming"]
 
 [workspace.dependencies]
-now-proto-pdu = { version = "0.1", path = "protocols/rust/now-proto-pdu" }
+now-proto-pdu = { version = "=0.4.3", path = "protocols/rust/now-proto-pdu" }
 now-proto-fuzzing = { version = "0.1", path = "protocols/rust/now-proto-fuzzing" }
 
 [profile.test.package.proptest]
