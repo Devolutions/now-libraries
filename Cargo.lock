@@ -608,6 +608,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
+name = "now-client"
+version = "0.1.0"
+dependencies = [
+ "now-proto-pdu",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
 name = "now-policy"
 version = "0.1.0"
 dependencies = [
@@ -1063,6 +1072,7 @@ version = "1.52.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8fc7f01b389ac15039e4dc9531aa973a135d7a4135281b12d7c1bc79fd57fffe"
 dependencies = [
+ "bytes",
  "pin-project-lite",
  "tokio-macros",
 ]
