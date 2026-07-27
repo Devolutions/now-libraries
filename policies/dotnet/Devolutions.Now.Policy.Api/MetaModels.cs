@@ -58,6 +58,13 @@ public sealed class CapabilitiesResponse
 
     [JsonPropertyName("MaxRequestBodyBytes")]
     public long MaxRequestBodyBytes { get; set; }
+
+    /// <summary>Capability entry advertised for <paramref name="manager"/>, if any.</summary>
+    public ManagerCapability? GetManagerCapability(ManagerName manager)
+        => Managers.FirstOrDefault(capability => capability.Manager == manager);
+
+    /// <summary>Whether the broker advertises support for <paramref name="manager"/>.</summary>
+    public bool SupportsManager(ManagerName manager) => GetManagerCapability(manager) is not null;
 }
 
 public sealed class ManagerCapability

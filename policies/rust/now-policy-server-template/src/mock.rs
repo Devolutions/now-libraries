@@ -120,44 +120,148 @@ fn server_context() -> ServerContext {
 }
 
 fn default_manager_capabilities() -> Vec<ManagerCapability> {
+    fn manager(
+        manager: ManagerName,
+        scopes: Vec<Scope>,
+        architectures: Vec<Architecture>,
+        supports_custom_install_location: bool,
+        supports_details: bool,
+    ) -> ManagerCapability {
+        ManagerCapability {
+            manager,
+            operations: vec![Operation::Install, Operation::Update, Operation::Uninstall],
+            scopes,
+            architectures,
+            supports_custom_parameters: true,
+            supports_custom_install_location,
+            supports_capture_output: true,
+            supports_details,
+            max_operation_timeout_seconds: Some(1800),
+        }
+    }
+
+    let all_architectures = || {
+        vec![
+            Architecture::X86,
+            Architecture::X64,
+            Architecture::Arm64,
+            Architecture::Neutral,
+        ]
+    };
+
     vec![
-        ManagerCapability {
-            manager: ManagerName::Winget,
-            operations: vec![Operation::Install, Operation::Update, Operation::Uninstall],
-            scopes: vec![Scope::User, Scope::Machine],
-            architectures: vec![
-                Architecture::X86,
-                Architecture::X64,
-                Architecture::Arm64,
-                Architecture::Neutral,
-            ],
-            supports_custom_parameters: true,
-            supports_custom_install_location: true,
-            supports_capture_output: true,
-            supports_details: true,
-            max_operation_timeout_seconds: Some(1800),
-        },
-        ManagerCapability {
-            manager: ManagerName::PowerShell,
-            operations: vec![Operation::Install, Operation::Update, Operation::Uninstall],
-            scopes: vec![Scope::User, Scope::Machine],
-            architectures: vec![Architecture::Neutral],
-            supports_custom_parameters: true,
-            supports_custom_install_location: false,
-            supports_capture_output: true,
-            supports_details: false,
-            max_operation_timeout_seconds: Some(1800),
-        },
-        ManagerCapability {
-            manager: ManagerName::PowerShell7,
-            operations: vec![Operation::Install, Operation::Update, Operation::Uninstall],
-            scopes: vec![Scope::User, Scope::Machine],
-            architectures: vec![Architecture::Neutral],
-            supports_custom_parameters: true,
-            supports_custom_install_location: false,
-            supports_capture_output: true,
-            supports_details: false,
-            max_operation_timeout_seconds: Some(1800),
-        },
+        manager(
+            ManagerName::Winget,
+            vec![Scope::User, Scope::Machine],
+            all_architectures(),
+            true,
+            true,
+        ),
+        manager(
+            ManagerName::PowerShell,
+            vec![Scope::User, Scope::Machine],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::PowerShell7,
+            vec![Scope::User, Scope::Machine],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Apt,
+            vec![Scope::Machine],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Bun,
+            vec![Scope::User],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Cargo,
+            vec![Scope::User],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Chocolatey,
+            vec![Scope::Machine],
+            all_architectures(),
+            true,
+            false,
+        ),
+        manager(
+            ManagerName::Dnf,
+            vec![Scope::Machine],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Dotnet,
+            vec![Scope::User, Scope::Machine],
+            vec![Architecture::Neutral],
+            true,
+            false,
+        ),
+        manager(
+            ManagerName::Flatpak,
+            vec![Scope::User, Scope::Machine],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Homebrew,
+            vec![Scope::User],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Npm,
+            vec![Scope::User, Scope::Machine],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Pacman,
+            vec![Scope::Machine],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Pip,
+            vec![Scope::User, Scope::Machine],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Scoop,
+            vec![Scope::User, Scope::Machine],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(
+            ManagerName::Snap,
+            vec![Scope::Machine],
+            vec![Architecture::Neutral],
+            false,
+            false,
+        ),
+        manager(ManagerName::Vcpkg, vec![Scope::User], all_architectures(), false, false),
     ]
 }

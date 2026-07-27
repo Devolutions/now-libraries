@@ -171,6 +171,27 @@ public class BrokerClientTests
     }
 
     [Fact]
+    public async Task Evaluate_rejects_manager_not_advertised_by_broker_before_sending()
+    {
+        // The broker does not advertise Chocolatey in its capabilities.
+        var transport = new FakeBrokerTransport(CapabilitiesResponse);
+        var client = CreateClient(transport);
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.Evaluate(new PackageOperationRequest
+        {
+            Operation = Operation.Install,
+            Manager = ManagerName.Chocolatey,
+            Source = new RequestSource { Name = "chocolatey" },
+            Package = new RequestPackage { Id = "git" },
+        }));
+
+        Assert.Equal(BrokerClientErrorKind.UnsupportedCapability, exception.Kind);
+        Assert.Contains("does not advertise support", exception.Message);
+        Assert.Single(transport.Requests);
+        Assert.Equal("/v1/capabilities", transport.Requests[0].Path);
+    }
+
+    [Fact]
     public async Task GetHealth_throws_typed_error_for_broker_error_response()
     {
         var transport = new FakeBrokerTransport(new BrokerTransportResponse

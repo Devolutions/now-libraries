@@ -62,7 +62,7 @@ discriminators automatically while the client fills `RequestVersion` at the top 
 and `ResponseVersion`; this is required for further protocol evolution and allows the client to
 switch transport from HTTP to other mechanisms without changing the wire schema.
 
-Before sending package operation and status requests, the client implicitly queries `GetCapabilities` once and caches the result. The cached capabilities are used as a local preflight gate: unsupported transports, package managers, operations, scopes, architectures, request body sizes, custom parameters, custom install locations, or captured output requests fail before the client sends the operation/status request.
+Before sending package operation and status requests, the client implicitly queries `GetCapabilities` once and caches the result. The cached capabilities are used as a local preflight gate: unsupported transports, package managers, operations, scopes, architectures, request body sizes, custom parameters, custom install locations, or captured output requests fail before the client sends the operation/status request. Use `CapabilitiesResponse.SupportsManager(ManagerName)` or `GetManagerCapability(ManagerName)` to check package manager support ahead of time.
 
 Before sending package operation requests, the client fills missing request metadata:
 

@@ -21,6 +21,20 @@ public enum ManagerName
     Winget,
     PowerShell,
     PowerShell7,
+    Apt,
+    Bun,
+    Cargo,
+    Chocolatey,
+    Dnf,
+    Dotnet,
+    Flatpak,
+    Homebrew,
+    Npm,
+    Pacman,
+    Pip,
+    Scoop,
+    Snap,
+    Vcpkg,
 }
 
 /// <summary>Installation scope.</summary>
