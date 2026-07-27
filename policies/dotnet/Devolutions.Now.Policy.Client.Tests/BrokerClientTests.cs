@@ -212,26 +212,6 @@ public class BrokerClientTests
     }
 
     [Fact]
-    public async Task Evaluate_rejects_broker_with_incompatible_major_api_version_before_sending()
-    {
-        // Broker advertises API 2.0: a different major version than this client understands.
-        var transport = new FakeBrokerTransport(CapabilitiesResponse.Replace("\"ResponseVersion\":\"1.0\"", "\"ResponseVersion\":\"2.0\""));
-        var client = CreateClient(transport);
-
-        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.Evaluate(new PackageOperationRequest
-        {
-            Operation = Operation.Install,
-            Manager = ManagerName.Winget,
-            Source = new RequestSource { Name = "winget" },
-            Package = new RequestPackage { Id = "Git.Git" },
-        }));
-
-        Assert.Equal(BrokerClientErrorKind.UnsupportedApiVersion, exception.Kind);
-        Assert.Contains("incompatible", exception.Message);
-        Assert.Single(transport.Requests);
-    }
-
-    [Fact]
     public async Task GetHealth_throws_typed_error_for_broker_error_response()
     {
         var transport = new FakeBrokerTransport(new BrokerTransportResponse

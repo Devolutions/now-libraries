@@ -69,19 +69,13 @@ public sealed class CapabilitiesResponse
     /// <summary>
     /// Classify support for <paramref name="manager"/>, distinguishing a broker
     /// whose protocol version predates the manager from one that merely does not
-    /// advertise it in its capabilities, and from one whose API version is
-    /// incompatible altogether.
+    /// advertise it in its capabilities. A different major API version is not
+    /// handled here: such a broker fails much earlier, when parsing the
+    /// response envelope.
     /// </summary>
     public ManagerSupport GetManagerSupport(ManagerName manager)
     {
-        if (!BrokerApi.TryParseApiVersion(ResponseVersion, out var major, out var minor)
-            || !BrokerApi.TryParseApiVersion(manager.GetMinimumApiVersion(), out var requiredMajor, out var requiredMinor)
-            || major != requiredMajor)
-        {
-            return ManagerSupport.IncompatibleApiVersion;
-        }
-
-        if (minor < requiredMinor)
+        if (!BrokerApi.ApiVersionSupports(ResponseVersion, manager.GetMinimumApiVersion()))
         {
             return ManagerSupport.RequiresNewerApiVersion;
         }
@@ -104,13 +98,6 @@ public enum ManagerSupport
     /// request validation on the broker. See <see cref="BrokerApi.GetMinimumApiVersion"/>.
     /// </summary>
     RequiresNewerApiVersion,
-
-    /// <summary>
-    /// The broker advertises an API version with a different major version than
-    /// the manager's requirement (e.g. a 2.x broker checked against a 1.x
-    /// requirement), or a malformed version; compatibility cannot be established.
-    /// </summary>
-    IncompatibleApiVersion,
 
     /// <summary>
     /// The broker advertises a recent-enough API version but does not advertise

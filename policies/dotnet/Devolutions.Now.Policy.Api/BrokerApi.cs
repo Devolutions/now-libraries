@@ -68,10 +68,7 @@ public static class BrokerApi
             && minor >= requiredMinor;
     }
 
-    /// <summary>
-    /// Parse a wire API version of the form "major.minor" (e.g. "1.1").
-    /// </summary>
-    public static bool TryParseApiVersion(string value, out int major, out int minor)
+    private static bool TryParseApiVersion(string value, out int major, out int minor)
     {
         major = 0;
         minor = 0;
