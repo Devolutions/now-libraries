@@ -2,7 +2,7 @@
   "ResponseKind": "HealthResponse",
   "ResponseVersion": "1.1",
   "Server": {
-    "ServerVersion": "0.2.0",
+    "ServerVersion": "0.1.0",
     "Transport": "HttpNamedPipe"
   },
   "Status": "Ready",

@@ -173,7 +173,7 @@ public class BrokerClientTests
     [Fact]
     public async Task Evaluate_rejects_manager_requiring_newer_broker_api_version_before_sending()
     {
-        // Broker speaks API 1.0; Chocolatey was introduced in 1.1.
+        // Broker advertises API 1.0; Chocolatey was introduced in 1.1.
         var transport = new FakeBrokerTransport(CapabilitiesResponse);
         var client = CreateClient(transport);
 
@@ -194,7 +194,7 @@ public class BrokerClientTests
     [Fact]
     public async Task Evaluate_reports_missing_capability_distinctly_when_broker_api_version_is_new_enough()
     {
-        // Broker speaks API 1.1 but does not advertise Chocolatey.
+        // Broker advertises API 1.1 but does not advertise Chocolatey.
         var transport = new FakeBrokerTransport(CapabilitiesResponse.Replace("\"ResponseVersion\":\"1.0\"", "\"ResponseVersion\":\"1.1\""));
         var client = CreateClient(transport);
 
@@ -208,6 +208,26 @@ public class BrokerClientTests
 
         Assert.Equal(BrokerClientErrorKind.UnsupportedCapability, exception.Kind);
         Assert.Contains("does not advertise support", exception.Message);
+        Assert.Single(transport.Requests);
+    }
+
+    [Fact]
+    public async Task Evaluate_rejects_broker_with_incompatible_major_api_version_before_sending()
+    {
+        // Broker advertises API 2.0: a different major version than this client understands.
+        var transport = new FakeBrokerTransport(CapabilitiesResponse.Replace("\"ResponseVersion\":\"1.0\"", "\"ResponseVersion\":\"2.0\""));
+        var client = CreateClient(transport);
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.Evaluate(new PackageOperationRequest
+        {
+            Operation = Operation.Install,
+            Manager = ManagerName.Winget,
+            Source = new RequestSource { Name = "winget" },
+            Package = new RequestPackage { Id = "Git.Git" },
+        }));
+
+        Assert.Equal(BrokerClientErrorKind.UnsupportedApiVersion, exception.Kind);
+        Assert.Contains("incompatible", exception.Message);
         Assert.Single(transport.Requests);
     }
 

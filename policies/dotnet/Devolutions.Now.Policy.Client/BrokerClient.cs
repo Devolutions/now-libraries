@@ -378,14 +378,21 @@ public sealed class BrokerClient : IDisposable
 
         // Never send a manager the broker's protocol version cannot parse: an older
         // broker would reject the unknown enum value as an opaque validation failure.
-        if (capabilities.GetManagerSupport(request.Manager) == ManagerSupport.RequiresNewerApiVersion)
+        switch (capabilities.GetManagerSupport(request.Manager))
         {
-            throw new BrokerClientException(
-                BrokerClientErrorKind.UnsupportedApiVersion,
-                $"Package manager '{request.Manager}' requires broker API version " +
-                $"{request.Manager.GetMinimumApiVersion()} or newer, but the broker speaks version " +
-                $"{capabilities.ResponseVersion}.",
-                endpoint);
+            case ManagerSupport.RequiresNewerApiVersion:
+                throw new BrokerClientException(
+                    BrokerClientErrorKind.UnsupportedApiVersion,
+                    $"Package manager '{request.Manager}' requires broker API version " +
+                    $"{request.Manager.GetMinimumApiVersion()} or newer, but the broker advertises version " +
+                    $"{capabilities.ResponseVersion}.",
+                    endpoint);
+            case ManagerSupport.IncompatibleApiVersion:
+                throw new BrokerClientException(
+                    BrokerClientErrorKind.UnsupportedApiVersion,
+                    $"The broker advertises API version '{capabilities.ResponseVersion}', which is " +
+                    $"incompatible with this client's API version {BrokerApi.Version}.",
+                    endpoint);
         }
 
         var manager = capabilities.Managers.FirstOrDefault(manager => manager.Manager == request.Manager);

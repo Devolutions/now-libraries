@@ -10,7 +10,11 @@ namespace Devolutions.Now.Policy.Model;
 
 public static class SchemaUris
 {
-    public const string Policy = "https://devolutions.net/schemas/now-policy.schema.1.0.json";
+    /// <summary>Current policy schema URI (1.1 syntax, adds the expanded manager set).</summary>
+    public const string Policy = "https://devolutions.net/schemas/now-policy.schema.1.1.json";
+
+    /// <summary>Original 1.0 policy schema URI, still accepted on read.</summary>
+    public const string PolicyV1_0 = "https://devolutions.net/schemas/now-policy.schema.1.0.json";
 }
 
 /// <summary>A policy document governing which package operations are allowed or denied.</summary>
@@ -20,7 +24,7 @@ public sealed class PolicyDocument
     public string Schema { get; set; } = SchemaUris.Policy;
 
     [JsonPropertyName("PolicyVersion")]
-    public string PolicyVersion { get; set; } = "1.0.0";
+    public string PolicyVersion { get; set; } = "1.1.0";
 
     [JsonPropertyName("PolicyType")]
     public string PolicyType { get; set; } = "PackageBrokerPolicy";

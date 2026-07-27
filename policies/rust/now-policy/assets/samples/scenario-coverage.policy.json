@@ -1,6 +1,6 @@
 {
-  "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
-  "PolicyVersion": "1.0.0",
+  "$schema": "https://devolutions.net/schemas/now-policy.schema.1.1.json",
+  "PolicyVersion": "1.1.0",
   "PolicyType": "PackageBrokerPolicy",
   "Metadata": {
     "Id": "contoso.desktop.scenario-coverage",
