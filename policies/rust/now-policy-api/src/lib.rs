@@ -21,7 +21,7 @@ pub use execute::*;
 pub use health::*;
 pub use status::*;
 
-pub const API_VERSION_STR: &str = "1.0";
+pub const API_VERSION_STR: &str = "1.1";
 pub const DEFAULT_PIPE_NAME: &str = "Devolutions.Now.PackageBroker.v1";
 
 pub const PACKAGE_REQUEST_KIND: &str = "PackageRequest";
@@ -470,6 +470,24 @@ impl ApiVersion {
         }
 
         Ok(Self(s.to_owned()))
+    }
+
+    /// Numeric `(major, minor)` components, or `None` when the value is not a
+    /// well-formed API version.
+    pub fn major_minor(&self) -> Option<(u64, u64)> {
+        let (major, minor) = self.0.split_once('.')?;
+        Some((major.parse().ok()?, minor.parse().ok()?))
+    }
+
+    /// Whether this version (e.g. a server's advertised version) supports a
+    /// feature introduced in `required` (same major, minor at least as new).
+    pub fn supports(&self, required: &ApiVersion) -> bool {
+        match (self.major_minor(), required.major_minor()) {
+            (Some((major, minor)), Some((required_major, required_minor))) => {
+                major == required_major && minor >= required_minor
+            }
+            _ => false,
+        }
     }
 }
 

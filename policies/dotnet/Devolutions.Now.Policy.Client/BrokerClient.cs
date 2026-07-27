@@ -376,6 +376,18 @@ public sealed class BrokerClient : IDisposable
     {
         EnsureTransportSupported(capabilities, _transport.Kind, $"send package operation requests to {endpoint}", endpoint);
 
+        // Never send a manager the broker's protocol version cannot parse: an older
+        // broker would reject the unknown enum value as an opaque validation failure.
+        if (capabilities.GetManagerSupport(request.Manager) == ManagerSupport.RequiresNewerApiVersion)
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.UnsupportedApiVersion,
+                $"Package manager '{request.Manager}' requires broker API version " +
+                $"{request.Manager.GetMinimumApiVersion()} or newer, but the broker speaks version " +
+                $"{capabilities.ResponseVersion}.",
+                endpoint);
+        }
+
         var manager = capabilities.Managers.FirstOrDefault(manager => manager.Manager == request.Manager);
         if (manager is null)
         {

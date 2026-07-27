@@ -1,8 +1,8 @@
 {
   "ResponseKind": "CapabilitiesResponse",
-  "ResponseVersion": "1.0",
+  "ResponseVersion": "1.1",
   "Server": {
-    "ServerVersion": "0.1.0",
+    "ServerVersion": "0.2.0",
     "Transport": "HttpNamedPipe"
   },
   "Transports": [
@@ -29,8 +29,8 @@
       "SupportsCustomParameters": true,
       "SupportsCustomInstallLocation": true,
       "SupportsCaptureOutput": true,
-      "MaxOperationTimeoutSeconds": 1800,
-      "SupportsDetails": true
+      "SupportsDetails": true,
+      "MaxOperationTimeoutSeconds": 1800
     },
     {
       "Manager": "PowerShell",
@@ -49,8 +49,8 @@
       "SupportsCustomParameters": true,
       "SupportsCustomInstallLocation": false,
       "SupportsCaptureOutput": true,
-      "MaxOperationTimeoutSeconds": 1800,
-      "SupportsDetails": false
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
     },
     {
       "Manager": "PowerShell7",
@@ -69,8 +69,285 @@
       "SupportsCustomParameters": true,
       "SupportsCustomInstallLocation": false,
       "SupportsCaptureOutput": true,
-      "MaxOperationTimeoutSeconds": 1800,
-      "SupportsDetails": false
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Apt",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Bun",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Cargo",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Chocolatey",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "Machine"
+      ],
+      "Architectures": [
+        "X86",
+        "X64",
+        "Arm64",
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": true,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Dnf",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Dotnet",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User",
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": true,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Flatpak",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User",
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Homebrew",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Npm",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User",
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Pacman",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Pip",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User",
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Scoop",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User",
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Snap",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "Machine"
+      ],
+      "Architectures": [
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
+    },
+    {
+      "Manager": "Vcpkg",
+      "Operations": [
+        "Install",
+        "Update",
+        "Uninstall"
+      ],
+      "Scopes": [
+        "User"
+      ],
+      "Architectures": [
+        "X86",
+        "X64",
+        "Arm64",
+        "Neutral"
+      ],
+      "SupportsCustomParameters": true,
+      "SupportsCustomInstallLocation": false,
+      "SupportsCaptureOutput": true,
+      "SupportsDetails": false,
+      "MaxOperationTimeoutSeconds": 1800
     }
   ],
   "MaxRequestBodyBytes": 262144

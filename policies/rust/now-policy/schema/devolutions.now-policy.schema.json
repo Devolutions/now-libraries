@@ -46,7 +46,21 @@
       "enum": [
         "Winget",
         "PowerShell",
-        "PowerShell7"
+        "PowerShell7",
+        "Apt",
+        "Bun",
+        "Cargo",
+        "Chocolatey",
+        "Dnf",
+        "Dotnet",
+        "Flatpak",
+        "Homebrew",
+        "Npm",
+        "Pacman",
+        "Pip",
+        "Scoop",
+        "Snap",
+        "Vcpkg"
       ],
       "type": "string"
     },

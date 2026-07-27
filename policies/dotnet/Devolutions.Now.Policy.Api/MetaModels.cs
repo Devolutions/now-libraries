@@ -58,6 +58,50 @@ public sealed class CapabilitiesResponse
 
     [JsonPropertyName("MaxRequestBodyBytes")]
     public long MaxRequestBodyBytes { get; set; }
+
+    /// <summary>Capability entry advertised for <paramref name="manager"/>, if any.</summary>
+    public ManagerCapability? GetManagerCapability(ManagerName manager)
+        => Managers.FirstOrDefault(capability => capability.Manager == manager);
+
+    /// <summary>Whether the broker advertises support for <paramref name="manager"/>.</summary>
+    public bool SupportsManager(ManagerName manager) => GetManagerCapability(manager) is not null;
+
+    /// <summary>
+    /// Classify support for <paramref name="manager"/>, distinguishing a broker
+    /// whose protocol version predates the manager from one that merely does not
+    /// advertise it in its capabilities.
+    /// </summary>
+    public ManagerSupport GetManagerSupport(ManagerName manager)
+    {
+        if (!BrokerApi.ApiVersionSupports(ResponseVersion, manager.GetMinimumApiVersion()))
+        {
+            return ManagerSupport.RequiresNewerApiVersion;
+        }
+
+        return SupportsManager(manager) ? ManagerSupport.Supported : ManagerSupport.NotAdvertised;
+    }
+}
+
+/// <summary>
+/// Result of checking whether a package manager can be used with a broker,
+/// distinguishing protocol-version gaps from missing capability advertisement.
+/// </summary>
+public enum ManagerSupport
+{
+    /// <summary>The broker advertises a capability entry for the manager.</summary>
+    Supported,
+
+    /// <summary>
+    /// The broker's API version predates the manager; sending it would fail
+    /// request validation on the broker. See <see cref="BrokerApi.GetMinimumApiVersion"/>.
+    /// </summary>
+    RequiresNewerApiVersion,
+
+    /// <summary>
+    /// The broker speaks a recent-enough API version but does not advertise
+    /// the manager in its capabilities.
+    /// </summary>
+    NotAdvertised,
 }
 
 public sealed class ManagerCapability

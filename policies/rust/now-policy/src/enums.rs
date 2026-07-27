@@ -37,6 +37,20 @@ pub enum ManagerName {
     Winget,
     PowerShell,
     PowerShell7,
+    Apt,
+    Bun,
+    Cargo,
+    Chocolatey,
+    Dnf,
+    Dotnet,
+    Flatpak,
+    Homebrew,
+    Npm,
+    Pacman,
+    Pip,
+    Scoop,
+    Snap,
+    Vcpkg,
 }
 
 /// Policy decision.
@@ -80,6 +94,20 @@ impl std::fmt::Display for ManagerName {
             Self::Winget => f.write_str("Winget"),
             Self::PowerShell => f.write_str("PowerShell"),
             Self::PowerShell7 => f.write_str("PowerShell7"),
+            Self::Apt => f.write_str("Apt"),
+            Self::Bun => f.write_str("Bun"),
+            Self::Cargo => f.write_str("Cargo"),
+            Self::Chocolatey => f.write_str("Chocolatey"),
+            Self::Dnf => f.write_str("Dnf"),
+            Self::Dotnet => f.write_str("Dotnet"),
+            Self::Flatpak => f.write_str("Flatpak"),
+            Self::Homebrew => f.write_str("Homebrew"),
+            Self::Npm => f.write_str("Npm"),
+            Self::Pacman => f.write_str("Pacman"),
+            Self::Pip => f.write_str("Pip"),
+            Self::Scoop => f.write_str("Scoop"),
+            Self::Snap => f.write_str("Snap"),
+            Self::Vcpkg => f.write_str("Vcpkg"),
         }
     }
 }

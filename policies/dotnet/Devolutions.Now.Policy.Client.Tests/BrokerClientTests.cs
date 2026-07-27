@@ -171,6 +171,47 @@ public class BrokerClientTests
     }
 
     [Fact]
+    public async Task Evaluate_rejects_manager_requiring_newer_broker_api_version_before_sending()
+    {
+        // Broker speaks API 1.0; Chocolatey was introduced in 1.1.
+        var transport = new FakeBrokerTransport(CapabilitiesResponse);
+        var client = CreateClient(transport);
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.Evaluate(new PackageOperationRequest
+        {
+            Operation = Operation.Install,
+            Manager = ManagerName.Chocolatey,
+            Source = new RequestSource { Name = "chocolatey" },
+            Package = new RequestPackage { Id = "git" },
+        }));
+
+        Assert.Equal(BrokerClientErrorKind.UnsupportedApiVersion, exception.Kind);
+        Assert.Contains("requires broker API version 1.1", exception.Message);
+        Assert.Single(transport.Requests);
+        Assert.Equal("/v1/capabilities", transport.Requests[0].Path);
+    }
+
+    [Fact]
+    public async Task Evaluate_reports_missing_capability_distinctly_when_broker_api_version_is_new_enough()
+    {
+        // Broker speaks API 1.1 but does not advertise Chocolatey.
+        var transport = new FakeBrokerTransport(CapabilitiesResponse.Replace("\"ResponseVersion\":\"1.0\"", "\"ResponseVersion\":\"1.1\""));
+        var client = CreateClient(transport);
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.Evaluate(new PackageOperationRequest
+        {
+            Operation = Operation.Install,
+            Manager = ManagerName.Chocolatey,
+            Source = new RequestSource { Name = "chocolatey" },
+            Package = new RequestPackage { Id = "git" },
+        }));
+
+        Assert.Equal(BrokerClientErrorKind.UnsupportedCapability, exception.Kind);
+        Assert.Contains("does not advertise support", exception.Message);
+        Assert.Single(transport.Requests);
+    }
+
+    [Fact]
     public async Task GetHealth_throws_typed_error_for_broker_error_response()
     {
         var transport = new FakeBrokerTransport(new BrokerTransportResponse

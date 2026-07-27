@@ -44,7 +44,29 @@ macro_rules! bidirectional_newtype_conversion {
 bidirectional_enum_conversion!(Operation, now_policy::Operation, [Install, Update, Uninstall]);
 bidirectional_enum_conversion!(Scope, now_policy::Scope, [User, Machine]);
 bidirectional_enum_conversion!(Architecture, now_policy::Architecture, [X86, X64, Arm64, Neutral]);
-bidirectional_enum_conversion!(ManagerName, now_policy::ManagerName, [Winget, PowerShell, PowerShell7]);
+bidirectional_enum_conversion!(
+    ManagerName,
+    now_policy::ManagerName,
+    [
+        Winget,
+        PowerShell,
+        PowerShell7,
+        Apt,
+        Bun,
+        Cargo,
+        Chocolatey,
+        Dnf,
+        Dotnet,
+        Flatpak,
+        Homebrew,
+        Npm,
+        Pacman,
+        Pip,
+        Scoop,
+        Snap,
+        Vcpkg,
+    ]
+);
 bidirectional_enum_conversion!(Decision, now_policy::Decision, [Allow, Deny]);
 bidirectional_enum_conversion!(Elevation, now_policy::Elevation, [Standard, Elevated]);
 
