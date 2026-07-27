@@ -92,33 +92,3 @@ fn policy_match_schema_requires_at_least_one_property() {
 
     assert_eq!(min_properties, Some(1));
 }
-
-#[test]
-fn legacy_1_0_schema_uri_is_accepted_and_upgraded_on_write() {
-    // corporate-allowlist still declares the 1.0 schema URI.
-    let path = samples_dir().join("corporate-allowlist.policy.json");
-    let raw = std::fs::read_to_string(&path).unwrap();
-    assert!(raw.contains(now_policy::POLICY_SCHEMA_URI_V1_0));
-
-    let policy = load_policy(&path);
-    let serialized = serde_json::to_string(&policy).unwrap();
-    assert!(
-        serialized.contains(now_policy::POLICY_SCHEMA_URI),
-        "re-serialized policies must declare the current schema URI"
-    );
-}
-
-#[test]
-fn unknown_schema_uri_is_rejected() {
-    let value = serde_json::json!({
-        "$schema": "https://devolutions.net/schemas/now-policy.schema.9.9.json",
-        "PolicyVersion": "1.0.0",
-        "PolicyType": "PackageBrokerPolicy",
-        "Metadata": { "Id": "test", "Publisher": "test", "Revision": 1 },
-        "Enforcement": { "DefaultDecision": "Deny", "RulePrecedence": "PriorityThenDeny" },
-        "Rules": []
-    });
-
-    let error = serde_json::from_value::<PolicyDocument>(value).unwrap_err();
-    assert!(error.to_string().contains("expected"), "unexpected error: {error}");
-}

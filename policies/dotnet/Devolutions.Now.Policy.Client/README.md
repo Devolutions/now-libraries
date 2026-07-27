@@ -62,9 +62,7 @@ discriminators automatically while the client fills `RequestVersion` at the top 
 and `ResponseVersion`; this is required for further protocol evolution and allows the client to
 switch transport from HTTP to other mechanisms without changing the wire schema.
 
-Before sending package operation and status requests, the client implicitly queries `GetCapabilities` once and caches the result. The cached capabilities are used as a local preflight gate: unsupported transports, package managers, operations, scopes, architectures, request body sizes, custom parameters, custom install locations, or captured output requests fail before the client sends the operation/status request.
-
-Package managers are additionally gated by the broker's advertised protocol version: a manager introduced in a newer API version than the broker's `ResponseVersion` is rejected locally with `BrokerClientErrorKind.UnsupportedApiVersion` (the request is never sent, since an older broker would fail to parse the unknown manager value). This is distinct from `BrokerClientErrorKind.UnsupportedCapability`, which means the broker understands the manager but does not advertise support for it. Use `CapabilitiesResponse.GetManagerSupport(ManagerName)` to check manager support (`Supported`, `RequiresNewerApiVersion`, or `NotAdvertised`) ahead of time.
+Before sending package operation and status requests, the client implicitly queries `GetCapabilities` once and caches the result. The cached capabilities are used as a local preflight gate: unsupported transports, package managers, operations, scopes, architectures, request body sizes, custom parameters, custom install locations, or captured output requests fail before the client sends the operation/status request. Use `CapabilitiesResponse.SupportsManager(ManagerName)` or `GetManagerCapability(ManagerName)` to check package manager support ahead of time.
 
 Before sending package operation requests, the client fills missing request metadata:
 

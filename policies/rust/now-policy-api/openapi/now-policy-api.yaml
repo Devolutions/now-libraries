@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Devolutions NOW Package Broker API
   description: HTTP API exposed by a Devolutions NOW package broker facade over a Windows named pipe.
-  version: '1.1'
+  version: '1.0'
 paths:
   /v1/health:
     get:

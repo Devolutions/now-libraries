@@ -65,45 +65,6 @@ public sealed class CapabilitiesResponse
 
     /// <summary>Whether the broker advertises support for <paramref name="manager"/>.</summary>
     public bool SupportsManager(ManagerName manager) => GetManagerCapability(manager) is not null;
-
-    /// <summary>
-    /// Classify support for <paramref name="manager"/>, distinguishing a broker
-    /// whose protocol version predates the manager from one that merely does not
-    /// advertise it in its capabilities. A different major API version is not
-    /// handled here: such a broker fails much earlier, when parsing the
-    /// response envelope.
-    /// </summary>
-    public ManagerSupport GetManagerSupport(ManagerName manager)
-    {
-        if (!BrokerApi.ApiVersionSupports(ResponseVersion, manager.GetMinimumApiVersion()))
-        {
-            return ManagerSupport.RequiresNewerApiVersion;
-        }
-
-        return SupportsManager(manager) ? ManagerSupport.Supported : ManagerSupport.NotAdvertised;
-    }
-}
-
-/// <summary>
-/// Result of checking whether a package manager can be used with a broker,
-/// distinguishing protocol-version gaps from missing capability advertisement.
-/// </summary>
-public enum ManagerSupport
-{
-    /// <summary>The broker advertises a capability entry for the manager.</summary>
-    Supported,
-
-    /// <summary>
-    /// The broker's API version predates the manager; sending it would fail
-    /// request validation on the broker. See <see cref="BrokerApi.GetMinimumApiVersion"/>.
-    /// </summary>
-    RequiresNewerApiVersion,
-
-    /// <summary>
-    /// The broker advertises a recent-enough API version but does not advertise
-    /// the manager in its capabilities.
-    /// </summary>
-    NotAdvertised,
 }
 
 public sealed class ManagerCapability

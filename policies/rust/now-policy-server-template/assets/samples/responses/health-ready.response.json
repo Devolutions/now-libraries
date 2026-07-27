@@ -1,6 +1,6 @@
 {
   "ResponseKind": "HealthResponse",
-  "ResponseVersion": "1.1",
+  "ResponseVersion": "1.0",
   "Server": {
     "ServerVersion": "0.1.0",
     "Transport": "HttpNamedPipe"

@@ -31,21 +31,6 @@ pub struct CapabilitiesResponse {
     pub max_request_body_bytes: u64,
 }
 
-/// Result of checking whether a package manager can be used with a broker,
-/// distinguishing protocol-version gaps from missing capability advertisement.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ManagerSupport {
-    /// The broker advertises a capability entry for the manager.
-    Supported,
-    /// The broker's API version predates the manager; sending it would fail
-    /// request validation on the broker. `required` is the minimum broker API
-    /// version that understands the manager.
-    RequiresNewerApiVersion { required: ApiVersion },
-    /// The broker advertises a recent-enough API version but does not
-    /// advertise the manager in its capabilities.
-    NotAdvertised,
-}
-
 impl CapabilitiesResponse {
     /// Capability entry advertised for `manager`, if any.
     pub fn manager_capability(&self, manager: ManagerName) -> Option<&ManagerCapability> {
@@ -55,24 +40,6 @@ impl CapabilitiesResponse {
     /// Whether the broker advertises support for `manager`.
     pub fn supports_manager(&self, manager: ManagerName) -> bool {
         self.manager_capability(manager).is_some()
-    }
-
-    /// Classify support for `manager`, distinguishing a broker that is too old
-    /// to understand the manager from one that merely does not advertise it.
-    ///
-    /// A different major API version is not handled here: such a broker fails
-    /// much earlier, when parsing the response envelope.
-    pub fn manager_support(&self, manager: ManagerName) -> ManagerSupport {
-        let required = manager.minimum_api_version();
-        if !self.response_version.supports(&required) {
-            return ManagerSupport::RequiresNewerApiVersion { required };
-        }
-
-        if self.supports_manager(manager) {
-            ManagerSupport::Supported
-        } else {
-            ManagerSupport::NotAdvertised
-        }
     }
 }
 
@@ -144,65 +111,24 @@ mod tests {
     }
 
     #[test]
-    fn managers_added_in_1_1_are_version_gated_behind_older_brokers() {
-        // The old broker even (implausibly) advertises Chocolatey: the version
-        // gate must win over capability advertisement.
-        let old_broker = capabilities(
-            "1.0",
+    fn supports_manager_reflects_advertised_capabilities() {
+        let broker = capabilities(
+            API_VERSION_STR,
             vec![
                 manager_capability(ManagerName::Winget),
                 manager_capability(ManagerName::Chocolatey),
             ],
         );
 
+        assert!(broker.supports_manager(ManagerName::Winget));
+        assert!(broker.supports_manager(ManagerName::Chocolatey));
+        assert!(!broker.supports_manager(ManagerName::Scoop));
+        assert!(broker.manager_capability(ManagerName::Scoop).is_none());
         assert_eq!(
-            old_broker.manager_support(ManagerName::Winget),
-            ManagerSupport::Supported
+            broker
+                .manager_capability(ManagerName::Chocolatey)
+                .map(|capability| capability.manager),
+            Some(ManagerName::Chocolatey)
         );
-        assert!(old_broker.supports_manager(ManagerName::Chocolatey));
-        assert_eq!(
-            old_broker.manager_support(ManagerName::Chocolatey),
-            ManagerSupport::RequiresNewerApiVersion { required: "1.1".into() }
-        );
-    }
-
-    #[test]
-    fn current_broker_distinguishes_not_advertised_from_version_gap() {
-        let broker = capabilities(API_VERSION_STR, vec![manager_capability(ManagerName::Chocolatey)]);
-
-        assert_eq!(
-            broker.manager_support(ManagerName::Chocolatey),
-            ManagerSupport::Supported
-        );
-        assert_eq!(
-            broker.manager_support(ManagerName::Scoop),
-            ManagerSupport::NotAdvertised
-        );
-        assert_eq!(
-            broker.manager_support(ManagerName::Winget),
-            ManagerSupport::NotAdvertised
-        );
-    }
-
-    #[test]
-    fn all_managers_have_a_valid_minimum_api_version() {
-        for &manager in ManagerName::ALL {
-            let required = manager.minimum_api_version();
-            assert!(required.major_minor().is_some(), "{manager} minimum version must parse");
-            assert!(
-                ApiVersion::from(API_VERSION_STR).supports(&required),
-                "{manager} must be usable with the current API version"
-            );
-        }
-    }
-
-    #[test]
-    fn api_version_supports_compares_major_and_minor() {
-        let v1_1 = ApiVersion::from("1.1");
-        assert!(v1_1.supports(&"1.0".into()));
-        assert!(v1_1.supports(&"1.1".into()));
-        assert!(!v1_1.supports(&"1.2".into()));
-        assert!(!v1_1.supports(&"2.0".into()));
-        assert!(!ApiVersion::from("2.0").supports(&"1.1".into()));
     }
 }
