@@ -545,14 +545,8 @@ version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef0875b98275068b88652e49ba2e0a1150a1390aad69d26c942c8c59e8ec918e"
 dependencies = [
- "ironrdp-error 0.2.0",
+ "ironrdp-error",
 ]
-
-[[package]]
-name = "ironrdp-error"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a9d7794e854eef2f13fdf79c8502bcc567a75a15fd0522885f37739386a4cef"
 
 [[package]]
 name = "ironrdp-error"
@@ -679,7 +673,7 @@ version = "0.4.4"
 dependencies = [
  "bitflags",
  "ironrdp-core",
- "ironrdp-error 0.1.3",
+ "ironrdp-error",
  "uuid",
 ]
 
