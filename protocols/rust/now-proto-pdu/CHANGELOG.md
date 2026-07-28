@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [[0.4.4](https://github.com/Devolutions/now-libraries/compare/now-proto-pdu-v0.4.3...now-proto-pdu-v0.4.4)] - 2026-07-27
+
+### <!-- 6 -->Documentation
+
+- Fix spelling error in `NowMessage` decoding code comment ([#76](https://github.com/Devolutions/now-libraries/issues/76)) ([5d343c5f2e](https://github.com/Devolutions/now-libraries/commit/5d343c5f2e611511762812c61238dfec0699daf2))
+
+
 ## [[0.4.3](https://github.com/Devolutions/now-proto/compare/now-proto-pdu-v0.4.2...now-proto-pdu-v0.4.3)] - 2026-05-15
 
 ### <!-- 1 -->Features
