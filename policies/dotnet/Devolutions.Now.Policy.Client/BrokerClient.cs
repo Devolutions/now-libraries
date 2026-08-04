@@ -110,7 +110,11 @@ public sealed class BrokerClient : IDisposable
 
     /// <summary>
     /// Submit a package operation and poll until it reaches a terminal status
-    /// (<see cref="OperationStatus.Completed"/> or <see cref="OperationStatus.Failed"/>).
+    /// (<see cref="OperationStatus.Completed"/>, <see cref="OperationStatus.Failed"/>,
+    /// or <see cref="OperationStatus.Canceled"/>).
+    /// When <paramref name="cancellationToken"/> is canceled after the operation was submitted,
+    /// a best-effort broker-side cancelation is issued before the
+    /// <see cref="OperationCanceledException"/> is propagated.
     /// </summary>
     public async Task<StatusResponse> ExecuteAndWait(
         PackageOperationRequest request,
@@ -137,17 +141,77 @@ public sealed class BrokerClient : IDisposable
                 "/v1/package-operations/execute");
         }
 
-        while (true)
+        var operationId = executeResponse.Operation.OperationId;
+
+        try
         {
-            await Task.Delay(pollIntervalMs, cancellationToken).ConfigureAwait(false);
-
-            var status = await QueryStatus(new OperationStatusQuery { OperationId = executeResponse.Operation.OperationId }, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (status.Status is OperationStatus.Completed or OperationStatus.Failed)
+            while (true)
             {
-                return status;
+                await Task.Delay(pollIntervalMs, cancellationToken).ConfigureAwait(false);
+
+                var status = await QueryStatus(new OperationStatusQuery { OperationId = operationId }, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (status.Status is OperationStatus.Completed or OperationStatus.Failed or OperationStatus.Canceled)
+                {
+                    return status;
+                }
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            await TryCancelOperation(operationId).ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    /// <summary>Request cancelation of a previously submitted package operation.</summary>
+    /// <remarks>
+    /// Cancelation is asynchronous: a successful response with
+    /// <see cref="OperationStatus.Canceling"/> means the broker accepted the request and is
+    /// terminating the operation. Poll <see cref="QueryStatus"/> until a terminal status is reached.
+    /// </remarks>
+    public async Task<CancelResponse> Cancel(
+        OperationCancelQuery request,
+        CancellationToken cancellationToken = default)
+    {
+        var cancelRequest = CreateCancelRequest(request);
+
+        var capabilities = await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
+        EnsureTransportSupported(capabilities, _transport.Kind, "cancel operation", "/v1/package-operations/cancel");
+
+        var body = BrokerJson.Serialize(cancelRequest);
+        EnsureRequestBodySize(body, capabilities, "/v1/package-operations/cancel");
+
+        var headers = new Dictionary<string, string>
+        {
+            ["Content-Type"] = JsonMediaType,
+            ["Accept"] = JsonMediaType,
+        };
+
+        var response = await SendRequest(
+            "POST",
+            "/v1/package-operations/cancel",
+            body,
+            headers,
+            cancellationToken).ConfigureAwait(false);
+
+        return DeserializeResponse<CancelResponse>(response, "cancel", "/v1/package-operations/cancel");
+    }
+
+    private async Task TryCancelOperation(string operationId)
+    {
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var response = await Cancel(new OperationCancelQuery { OperationId = operationId }, timeout.Token)
+                .ConfigureAwait(false);
+            Trace?.Invoke($"Requested broker-side cancelation of operation {operationId}: {response.Status}");
+        }
+        catch (Exception ex) when (ex is BrokerClientException or OperationCanceledException)
+        {
+            // Best-effort: the caller is already canceling; do not mask the original cancelation.
+            Trace?.Invoke($"Failed to cancel broker operation {operationId}: {ex.Message}");
         }
     }
 
@@ -230,6 +294,19 @@ public sealed class BrokerClient : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(request.OperationId);
 
         return new StatusRequest
+        {
+            RequestVersion = BrokerApi.Version,
+            OperationId = request.OperationId,
+            Client = CreateClientContext(),
+        };
+    }
+
+    private CancelRequest CreateCancelRequest(OperationCancelQuery request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.OperationId);
+
+        return new CancelRequest
         {
             RequestVersion = BrokerApi.Version,
             OperationId = request.OperationId,

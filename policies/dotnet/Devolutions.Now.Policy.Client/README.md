@@ -27,6 +27,7 @@ The main surface is `BrokerClient`:
 - `Execute` sends `POST /v1/package-operations/execute`.
 - `ExecuteAndWait` submits an operation and polls status until a terminal state.
 - `QueryStatus` sends `POST /v1/package-operations/get-status`.
+- `Cancel` sends `POST /v1/package-operations/cancel` to request cancelation of an in-flight operation.
 
 Transport is abstracted behind `IBrokerTransport`, which exchanges HTTP-style `BrokerTransportRequest` and `BrokerTransportResponse` values. `NamedPipeBrokerTransport` is the default implementation and sends HTTP/1.1 over a Windows named pipe. Tests and future transports can inject their own transport through `BrokerClientOptions.Transport`.
 
@@ -55,6 +56,7 @@ The public client methods accept client-facing wrapper types instead of raw wire
 
 - `PackageOperationRequest` omits `ClientContext` and lets the client fill it.
 - `OperationStatusQuery` omits `ClientContext` and only requires the operation id.
+- `OperationCancelQuery` omits `ClientContext` and only requires the operation id.
 
 For transport-independent message identification, request DTOs serialize fixed `RequestKind`
 discriminators automatically while the client fills `RequestVersion` at the top level of

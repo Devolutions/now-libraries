@@ -23,6 +23,11 @@ public class DtoRoundTripTests
         => await AssertRoundTrip<StatusRequest>(path, await TestData.SchemaAsync("StatusRequest"));
 
     [Theory]
+    [MemberData(nameof(TestData.CancelRequestSamples), MemberType = typeof(TestData))]
+    public async Task CancelRequest_round_trips_and_validates(string path)
+        => await AssertRoundTrip<CancelRequest>(path, await TestData.SchemaAsync("CancelRequest"));
+
+    [Theory]
     [MemberData(nameof(TestData.ResponseSamples), MemberType = typeof(TestData))]
     public async Task EvaluationResponse_round_trips_and_validates(string path)
         => await AssertRoundTrip<EvaluationResponse>(path, await TestData.SchemaAsync("EvaluationResponse"));
@@ -36,6 +41,11 @@ public class DtoRoundTripTests
     [MemberData(nameof(TestData.StatusResponseSamples), MemberType = typeof(TestData))]
     public async Task StatusResponse_round_trips_and_validates(string path)
         => await AssertRoundTrip<StatusResponse>(path, await TestData.SchemaAsync("StatusResponse"));
+
+    [Theory]
+    [MemberData(nameof(TestData.CancelResponseSamples), MemberType = typeof(TestData))]
+    public async Task CancelResponse_round_trips_and_validates(string path)
+        => await AssertRoundTrip<CancelResponse>(path, await TestData.SchemaAsync("CancelResponse"));
 
     [Theory]
     [MemberData(nameof(TestData.HealthResponseSamples), MemberType = typeof(TestData))]

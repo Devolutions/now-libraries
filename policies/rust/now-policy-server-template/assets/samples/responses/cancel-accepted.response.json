@@ -1,0 +1,12 @@
+{
+  "ResponseKind": "CancelResponse",
+  "ResponseVersion": "1.0",
+  "OperationId": "op-winget-vscode-install-000001",
+  "RequestId": "req-winget-vscode-install",
+  "Status": "Canceling",
+  "Server": {
+    "Transport": "HttpNamedPipe",
+    "ServerVersion": "0.1.0"
+  },
+  "Message": "Cancelation requested; the operation is being terminated."
+}

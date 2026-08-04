@@ -142,6 +142,7 @@ public static class TestData
     public static IEnumerable<object[]> RequestSamples() =>
         JsonFiles(Path.Combine(SamplesDir, "requests"))
             .Where(f => !Path.GetFileName(f).StartsWith("status-", StringComparison.Ordinal))
+            .Where(f => !Path.GetFileName(f).StartsWith("cancel-", StringComparison.Ordinal))
             .Where(f => !IsInvalidRequestSample(f))
             .Select(f => new object[] { f });
 
@@ -150,9 +151,15 @@ public static class TestData
             .Where(f => Path.GetFileName(f).StartsWith("status-", StringComparison.Ordinal))
             .Select(f => new object[] { f });
 
+    public static IEnumerable<object[]> CancelRequestSamples() =>
+        JsonFiles(Path.Combine(SamplesDir, "requests"))
+            .Where(f => Path.GetFileName(f).StartsWith("cancel-", StringComparison.Ordinal))
+            .Select(f => new object[] { f });
+
     public static IEnumerable<object[]> ResponseSamples() =>
         JsonFiles(Path.Combine(SamplesDir, "responses"))
             .Where(f => !Path.GetFileName(f).StartsWith("status-", StringComparison.Ordinal))
+            .Where(f => !Path.GetFileName(f).StartsWith("cancel-", StringComparison.Ordinal))
             .Where(f => !Path.GetFileName(f).StartsWith("execution-", StringComparison.Ordinal))
             .Where(f => !Path.GetFileName(f).StartsWith("health-", StringComparison.Ordinal))
             .Where(f => !Path.GetFileName(f).StartsWith("capabilities", StringComparison.Ordinal))
@@ -166,6 +173,11 @@ public static class TestData
     public static IEnumerable<object[]> StatusResponseSamples() =>
         JsonFiles(Path.Combine(SamplesDir, "responses"))
             .Where(f => Path.GetFileName(f).StartsWith("status-", StringComparison.Ordinal))
+            .Select(f => new object[] { f });
+
+    public static IEnumerable<object[]> CancelResponseSamples() =>
+        JsonFiles(Path.Combine(SamplesDir, "responses"))
+            .Where(f => Path.GetFileName(f).StartsWith("cancel-", StringComparison.Ordinal))
             .Select(f => new object[] { f });
 
     public static IEnumerable<object[]> HealthResponseSamples() =>

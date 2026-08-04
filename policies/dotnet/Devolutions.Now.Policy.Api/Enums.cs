@@ -87,6 +87,8 @@ public enum OperationStatus
     Running,
     Completed,
     Failed,
+    Canceling,
+    Canceled,
 }
 
 /// <summary>Broker readiness state reported by the health endpoint.</summary>

@@ -85,10 +85,21 @@ pub enum OperationStatus {
     Starting,
     /// Process is running.
     Running,
+    /// Cancelation was requested; the process is being terminated.
+    Canceling,
     /// Process exited successfully (exit code 0).
     Completed,
     /// Process failed (non-zero exit, timeout, or launch failure).
     Failed,
+    /// Operation was canceled at the client's request.
+    Canceled,
+}
+
+impl OperationStatus {
+    /// Whether this status is terminal (the operation will not change state anymore).
+    pub fn is_terminal(self) -> bool {
+        matches!(self, Self::Completed | Self::Failed | Self::Canceled)
+    }
 }
 
 /// Structured machine-readable error code.

@@ -5,10 +5,10 @@ use std::path::{Path, PathBuf};
 use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use now_policy_server_template::{
-    API_VERSION_STR, CapabilitiesResponse, CapabilitiesResponseKind, DEFAULT_PIPE_NAME, EvaluationResponse,
-    ExecutionResponse, HealthResponse, HealthResponseKind, HealthStatus, MAX_REQUEST_BODY_BYTES, ManagerName,
-    MockPackageBrokerServer, Operation, PackageBrokerServer, PackageRequest, Scope, StatusRequest, StatusRequestKind,
-    StatusResponse, Transport, api_router,
+    API_VERSION_STR, CancelRequest, CancelRequestKind, CancelResponse, CapabilitiesResponse, CapabilitiesResponseKind,
+    DEFAULT_PIPE_NAME, EvaluationResponse, ExecutionResponse, HealthResponse, HealthResponseKind, HealthStatus,
+    MAX_REQUEST_BODY_BYTES, ManagerName, MockPackageBrokerServer, Operation, PackageBrokerServer, PackageRequest,
+    Scope, StatusRequest, StatusRequestKind, StatusResponse, Transport, api_router,
 };
 use tower::ServiceExt;
 
@@ -60,6 +60,9 @@ fn assert_response_sample_deserializes(path: &Path) {
     if name.starts_with("status-") {
         let _: StatusResponse = serde_json::from_value(load_json_file(path))
             .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
+    } else if name.starts_with("cancel-") {
+        let _: CancelResponse = serde_json::from_value(load_json_file(path))
+            .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
     } else if name.starts_with("execution-") {
         let _: ExecutionResponse = serde_json::from_value(load_json_file(path))
             .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
@@ -89,6 +92,9 @@ fn all_sample_requests_deserialize() {
         let name = path.file_name().unwrap().to_string_lossy();
         if name.starts_with("status-") {
             let _: StatusRequest = serde_json::from_value(load_json_file(&path))
+                .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
+        } else if name.starts_with("cancel-") {
+            let _: CancelRequest = serde_json::from_value(load_json_file(&path))
                 .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
         } else if is_invalid_request_fixture(&path) {
             assert!(
@@ -292,6 +298,38 @@ async fn api_router_dispatches_status_request_body_to_package_broker_server() {
     let actual_status: StatusResponse = serde_json::from_slice(&body).unwrap();
     assert_eq!(actual_status.operation_id, expected_status.operation_id);
     assert_eq!(actual_status.status, expected_status.status);
+}
+
+#[tokio::test]
+async fn api_router_dispatches_cancel_request_body_to_package_broker_server() {
+    let request_path = samples_dir().join("requests/cancel-running.request.json");
+    let cancel_path = samples_dir().join("responses/cancel-accepted.response.json");
+
+    let request: CancelRequest = serde_json::from_value(load_json_file(&request_path)).unwrap();
+    let expected_cancel: CancelResponse = serde_json::from_value(load_json_file(&cancel_path)).unwrap();
+    let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME).with_cancel_response(expected_cancel.clone()));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/v1/package-operations/cancel")
+                .header("content-type", "application/json")
+                .body(Body::from(serde_json::to_vec(&request).unwrap()))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let actual_cancel: CancelResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(actual_cancel.operation_id, expected_cancel.operation_id);
+    assert_eq!(
+        actual_cancel.status,
+        now_policy_server_template::OperationStatus::Canceling
+    );
 }
 
 #[tokio::test]

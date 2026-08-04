@@ -11,12 +11,14 @@ public static class BrokerApi
 
     public const string PackageRequestKind = "PackageRequest";
     public const string StatusRequestKind = "StatusRequest";
+    public const string CancelRequestKind = "CancelRequest";
 
     public const string HealthResponseKind = "HealthResponse";
     public const string CapabilitiesResponseKind = "CapabilitiesResponse";
     public const string EvaluationResponseKind = "EvaluationResponse";
     public const string ExecutionResponseKind = "ExecutionResponse";
     public const string StatusResponseKind = "StatusResponse";
+    public const string CancelResponseKind = "CancelResponse";
     public const string ErrorResponseKind = "ErrorResponse";
 
     internal static string ValidateMessageKind(string? value, string expected, string propertyName)

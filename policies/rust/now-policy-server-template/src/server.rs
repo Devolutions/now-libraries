@@ -14,8 +14,8 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
 use now_policy_api::{
-    API_VERSION_STR, CapabilitiesResponse, ErrorCode, ErrorResponse, EvaluationResponse, ExecutionResponse,
-    HealthResponse, PackageRequest, StatusRequest, StatusResponse,
+    API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, ErrorCode, ErrorResponse,
+    EvaluationResponse, ExecutionResponse, HealthResponse, PackageRequest, StatusRequest, StatusResponse,
 };
 use schemars::SchemaGenerator;
 
@@ -29,6 +29,7 @@ pub trait PackageBrokerServer: Send + Sync {
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
+    async fn cancel(&self, request: CancelRequest) -> Result<CancelResponse, ErrorResponse>;
 }
 
 /// Shared package broker server object used by the reusable HTTP router.
@@ -64,6 +65,10 @@ fn api_routes() -> ApiRouter<SharedPackageBrokerServer> {
         .api_route(
             "/v1/package-operations/get-status",
             post_with(status_handler, status_docs).layer(axum::extract::DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
+        )
+        .api_route(
+            "/v1/package-operations/cancel",
+            post_with(cancel_handler, cancel_docs).layer(axum::extract::DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
         )
 }
 
@@ -156,6 +161,13 @@ async fn status_handler(
     broker_result(server.status(request).await)
 }
 
+async fn cancel_handler(
+    State(server): State<SharedPackageBrokerServer>,
+    Json(request): Json<CancelRequest>,
+) -> Response {
+    broker_result(server.cancel(request).await)
+}
+
 fn broker_result<T: Serialize>(result: Result<T, ErrorResponse>) -> Response {
     match result {
         Ok(response) => (StatusCode::OK, Json(response)).into_response(),
@@ -214,6 +226,17 @@ fn status_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
     op.summary("Query package operation status")
         .description("Returns the current status of a previously submitted package operation.")
         .response::<200, Json<StatusResponse>>()
+        .response::<400, Json<ErrorResponse>>()
+        .response::<404, Json<ErrorResponse>>()
+}
+
+fn cancel_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
+    op.summary("Cancel package operation")
+        .description(
+            "Requests cancelation of a previously submitted package operation. \
+             Cancelation is asynchronous: poll the status endpoint until the operation reaches a terminal status.",
+        )
+        .response::<200, Json<CancelResponse>>()
         .response::<400, Json<ErrorResponse>>()
         .response::<404, Json<ErrorResponse>>()
 }
