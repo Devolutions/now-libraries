@@ -208,9 +208,10 @@ public sealed class BrokerClient : IDisposable
                 .ConfigureAwait(false);
             Trace?.Invoke($"Requested broker-side cancelation of operation {operationId}: {response.Status}");
         }
-        catch (Exception ex) when (ex is BrokerClientException or OperationCanceledException)
+        catch (Exception ex)
         {
-            // Best-effort: the caller is already canceling; do not mask the original cancelation.
+            // Best-effort: the caller is already canceling; never mask the original cancelation,
+            // regardless of what the (possibly user-provided) transport throws.
             Trace?.Invoke($"Failed to cancel broker operation {operationId}: {ex.Message}");
         }
     }

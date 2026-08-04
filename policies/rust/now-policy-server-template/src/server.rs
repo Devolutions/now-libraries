@@ -14,8 +14,8 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
 use now_policy_api::{
-    API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, ErrorCode, ErrorResponse,
-    EvaluationResponse, ExecutionResponse, HealthResponse, PackageRequest, StatusRequest, StatusResponse,
+    API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, ErrorCode, ErrorResponse, EvaluationResponse,
+    ExecutionResponse, HealthResponse, PackageRequest, StatusRequest, StatusResponse,
 };
 use schemars::SchemaGenerator;
 
