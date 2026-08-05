@@ -18,7 +18,7 @@ default = []
 policy-compat = ["dep:now-policy", "now-policy-api/policy-compat"]
 
 [dependencies]
-aide = { version = "0.14", features = ["axum", "axum-json"] }
+aide = { version = "0.15", features = ["axum", "axum-json"] }
 async-trait = "0.1"
 axum = { version = "0.8", default-features = false, features = ["json"] }
 now-policy-api = { version = "0.3", path = "../now-policy-api" }
