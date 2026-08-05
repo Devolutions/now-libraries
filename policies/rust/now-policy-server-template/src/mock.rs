@@ -6,10 +6,10 @@ use async_trait::async_trait;
 
 use crate::server::{MAX_REQUEST_BODY_BYTES, PackageBrokerServer};
 use now_policy_api::{
-    API_VERSION_STR, Architecture, CapabilitiesResponse, CapabilitiesResponseKind, ErrorCode, ErrorResponse,
-    ErrorResponseKind, EvaluationResponse, ExecutionResponse, HealthResponse, HealthResponseKind, HealthStatus,
-    ManagerCapability, ManagerName, Operation, PackageRequest, Scope, ServerContext, StatusRequest, StatusResponse,
-    Transport,
+    API_VERSION_STR, Architecture, CancelRequest, CancelResponse, CapabilitiesResponse, CapabilitiesResponseKind,
+    ErrorCode, ErrorResponse, ErrorResponseKind, EvaluationResponse, ExecutionResponse, HealthResponse,
+    HealthResponseKind, HealthStatus, ManagerCapability, ManagerName, Operation, PackageRequest, Scope, ServerContext,
+    StatusRequest, StatusResponse, Transport,
 };
 
 /// Deterministic mock broker backed by caller-provided sample responses.
@@ -20,6 +20,7 @@ pub struct MockPackageBrokerServer {
     evaluation_responses: BTreeMap<String, EvaluationResponse>,
     execution_responses: BTreeMap<String, ExecutionResponse>,
     status_responses: BTreeMap<String, StatusResponse>,
+    cancel_responses: BTreeMap<String, CancelResponse>,
 }
 
 impl MockPackageBrokerServer {
@@ -44,6 +45,7 @@ impl MockPackageBrokerServer {
             evaluation_responses: BTreeMap::new(),
             execution_responses: BTreeMap::new(),
             status_responses: BTreeMap::new(),
+            cancel_responses: BTreeMap::new(),
         }
     }
 
@@ -64,6 +66,13 @@ impl MockPackageBrokerServer {
     #[must_use]
     pub fn with_status_response(mut self, response: StatusResponse) -> Self {
         self.status_responses
+            .insert(response.operation_id.to_string(), response);
+        self
+    }
+
+    #[must_use]
+    pub fn with_cancel_response(mut self, response: CancelResponse) -> Self {
+        self.cancel_responses
             .insert(response.operation_id.to_string(), response);
         self
     }
@@ -106,6 +115,13 @@ impl PackageBrokerServer for MockPackageBrokerServer {
 
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse> {
         self.status_responses
+            .get(&request.operation_id.to_string())
+            .cloned()
+            .ok_or_else(|| self.missing_response(&request.operation_id))
+    }
+
+    async fn cancel(&self, request: CancelRequest) -> Result<CancelResponse, ErrorResponse> {
+        self.cancel_responses
             .get(&request.operation_id.to_string())
             .cloned()
             .ok_or_else(|| self.missing_response(&request.operation_id))

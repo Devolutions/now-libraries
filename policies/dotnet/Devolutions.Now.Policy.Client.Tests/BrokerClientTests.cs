@@ -150,6 +150,94 @@ public class BrokerClientTests
     }
 
     [Fact]
+    public async Task Cancel_populates_client_context()
+    {
+        var transport = new FakeBrokerTransport(
+            CapabilitiesResponse,
+            """
+            {"ResponseKind":"CancelResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"OperationId":"operation:123","RequestId":"b6cd88d1-9e32-49dd-b53f-e9dad34ad915","Status":"Canceling","Message":"cancelation requested"}
+            """);
+        var client = CreateClient(transport);
+
+        var response = await client.Cancel(new OperationCancelQuery { OperationId = "operation:123" });
+        var sent = transport.Requests[1];
+        using var sentBody = JsonDocument.Parse(sent.Body!);
+
+        Assert.Equal("/v1/capabilities", transport.Requests[0].Path);
+        Assert.Equal("/v1/package-operations/cancel", sent.Path);
+        Assert.Equal(BrokerApi.CancelRequestKind, sentBody.RootElement.GetProperty("RequestKind").GetString());
+        Assert.Equal(BrokerApi.Version, sentBody.RootElement.GetProperty("RequestVersion").GetString());
+        Assert.Equal("operation:123", sentBody.RootElement.GetProperty("OperationId").GetString());
+        Assert.Equal(OperationStatus.Canceling, response.Status);
+
+        var clientContext = sentBody.RootElement.GetProperty("Client");
+        Assert.Equal("HttpNamedPipe", clientContext.GetProperty("Transport").GetString());
+        Assert.Equal("DEVOLUTIONS\\bob", clientContext.GetProperty("EffectiveUser").GetString());
+    }
+
+    [Fact]
+    public async Task ExecuteAndWait_treats_canceled_status_as_terminal()
+    {
+        var transport = new FakeBrokerTransport(
+            CapabilitiesResponse,
+            """
+            {"ResponseKind":"ExecutionResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Allow","RuleId":"<default>","Reason":"allowed"},"Policy":{"Id":"mock.policy","Revision":1,"PolicyVersion":"1.0.0"},"Operation":{"OperationId":"operation:123","Status":"Starting","SubmittedAt":"2026-06-29T12:00:02Z"}}
+            """,
+            """
+            {"ResponseKind":"StatusResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"OperationId":"operation:123","RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","Status":"Canceled","Message":"operation was canceled"}
+            """);
+        var client = CreateClient(transport);
+
+        var status = await client.ExecuteAndWait(
+            new PackageOperationRequest
+            {
+                Operation = Operation.Install,
+                Manager = ManagerName.Winget,
+                Source = new RequestSource { Name = "winget" },
+                Package = new RequestPackage { Id = "Microsoft.VisualStudioCode" },
+            },
+            pollIntervalMs: 1);
+
+        Assert.Equal(OperationStatus.Canceled, status.Status);
+    }
+
+    [Fact]
+    public async Task ExecuteAndWait_requests_broker_cancelation_when_token_is_canceled()
+    {
+        var transport = new FakeBrokerTransport(
+            CapabilitiesResponse,
+            """
+            {"ResponseKind":"ExecutionResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Allow","RuleId":"<default>","Reason":"allowed"},"Policy":{"Id":"mock.policy","Revision":1,"PolicyVersion":"1.0.0"},"Operation":{"OperationId":"operation:123","Status":"Starting","SubmittedAt":"2026-06-29T12:00:02Z"}}
+            """,
+            """
+            {"ResponseKind":"CancelResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"OperationId":"operation:123","RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","Status":"Canceling"}
+            """);
+        var client = CreateClient(transport);
+        using var cts = new CancellationTokenSource();
+
+        var pending = client.ExecuteAndWait(
+            new PackageOperationRequest
+            {
+                Operation = Operation.Install,
+                Manager = ManagerName.Winget,
+                Source = new RequestSource { Name = "winget" },
+                Package = new RequestPackage { Id = "Microsoft.VisualStudioCode" },
+            },
+            cts.Token,
+            pollIntervalMs: 300_000);
+
+        // Wait for the execute request to be sent, then cancel while the client is between polls.
+        while (transport.Requests.Count < 2)
+        {
+            await Task.Delay(1);
+        }
+        cts.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
+        Assert.Equal("/v1/package-operations/cancel", transport.Requests[^1].Path);
+    }
+
+    [Fact]
     public async Task Evaluate_rejects_unsupported_capability_before_operation_request()
     {
         var transport = new FakeBrokerTransport(CapabilitiesResponse);

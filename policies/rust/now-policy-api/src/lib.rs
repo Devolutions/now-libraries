@@ -4,6 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 pub mod api;
+pub mod cancel;
 pub mod capabilities;
 pub mod enums;
 pub mod evaluate;
@@ -14,6 +15,7 @@ mod policy_compat;
 pub mod status;
 
 pub use api::*;
+pub use cancel::*;
 pub use capabilities::*;
 pub use enums::*;
 pub use evaluate::*;
@@ -26,12 +28,14 @@ pub const DEFAULT_PIPE_NAME: &str = "Devolutions.Now.PackageBroker.v1";
 
 pub const PACKAGE_REQUEST_KIND: &str = "PackageRequest";
 pub const STATUS_REQUEST_KIND: &str = "StatusRequest";
+pub const CANCEL_REQUEST_KIND: &str = "CancelRequest";
 
 pub const HEALTH_RESPONSE_KIND: &str = "HealthResponse";
 pub const CAPABILITIES_RESPONSE_KIND: &str = "CapabilitiesResponse";
 pub const EVALUATION_RESPONSE_KIND: &str = "EvaluationResponse";
 pub const EXECUTION_RESPONSE_KIND: &str = "ExecutionResponse";
 pub const STATUS_RESPONSE_KIND: &str = "StatusResponse";
+pub const CANCEL_RESPONSE_KIND: &str = "CancelResponse";
 pub const ERROR_RESPONSE_KIND: &str = "ErrorResponse";
 
 macro_rules! fixed_string_marker {
@@ -89,11 +93,13 @@ macro_rules! fixed_string_marker {
 
 fixed_string_marker!(PackageRequestKind, PACKAGE_REQUEST_KIND);
 fixed_string_marker!(StatusRequestKind, STATUS_REQUEST_KIND);
+fixed_string_marker!(CancelRequestKind, CANCEL_REQUEST_KIND);
 fixed_string_marker!(HealthResponseKind, HEALTH_RESPONSE_KIND);
 fixed_string_marker!(CapabilitiesResponseKind, CAPABILITIES_RESPONSE_KIND);
 fixed_string_marker!(EvaluationResponseKind, EVALUATION_RESPONSE_KIND);
 fixed_string_marker!(ExecutionResponseKind, EXECUTION_RESPONSE_KIND);
 fixed_string_marker!(StatusResponseKind, STATUS_RESPONSE_KIND);
+fixed_string_marker!(CancelResponseKind, CANCEL_RESPONSE_KIND);
 fixed_string_marker!(ErrorResponseKind, ERROR_RESPONSE_KIND);
 
 /// Error returned when a broker protocol newtype fails deserialization validation.

@@ -40,22 +40,26 @@ public static class BrokerJson
     private static JsonTypeInfo<T> TypeInfo<T>() =>
         typeof(T) == typeof(PackageRequest) ? Cast<T>(BrokerJsonSerializerContext.Default.PackageRequest) :
         typeof(T) == typeof(StatusRequest) ? Cast<T>(BrokerJsonSerializerContext.Default.StatusRequest) :
+        typeof(T) == typeof(CancelRequest) ? Cast<T>(BrokerJsonSerializerContext.Default.CancelRequest) :
         typeof(T) == typeof(HealthResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.HealthResponse) :
         typeof(T) == typeof(CapabilitiesResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.CapabilitiesResponse) :
         typeof(T) == typeof(EvaluationResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.EvaluationResponse) :
         typeof(T) == typeof(ExecutionResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.ExecutionResponse) :
         typeof(T) == typeof(StatusResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.StatusResponse) :
+        typeof(T) == typeof(CancelResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.CancelResponse) :
         typeof(T) == typeof(ErrorResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.ErrorResponse) :
         throw new NotSupportedException($"Broker JSON serialization for {typeof(T).FullName} is not source-generated.");
 
     private static JsonTypeInfo<T> StrictTypeInfo<T>() =>
         typeof(T) == typeof(PackageRequest) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.PackageRequest) :
         typeof(T) == typeof(StatusRequest) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.StatusRequest) :
+        typeof(T) == typeof(CancelRequest) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.CancelRequest) :
         typeof(T) == typeof(HealthResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.HealthResponse) :
         typeof(T) == typeof(CapabilitiesResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.CapabilitiesResponse) :
         typeof(T) == typeof(EvaluationResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.EvaluationResponse) :
         typeof(T) == typeof(ExecutionResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.ExecutionResponse) :
         typeof(T) == typeof(StatusResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.StatusResponse) :
+        typeof(T) == typeof(CancelResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.CancelResponse) :
         typeof(T) == typeof(ErrorResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.ErrorResponse) :
         throw new NotSupportedException($"Strict broker JSON deserialization for {typeof(T).FullName} is not source-generated.");
 
@@ -68,11 +72,13 @@ public static class BrokerJson
     WriteIndented = false)]
 [JsonSerializable(typeof(PackageRequest))]
 [JsonSerializable(typeof(StatusRequest))]
+[JsonSerializable(typeof(CancelRequest))]
 [JsonSerializable(typeof(HealthResponse))]
 [JsonSerializable(typeof(CapabilitiesResponse))]
 [JsonSerializable(typeof(EvaluationResponse))]
 [JsonSerializable(typeof(ExecutionResponse))]
 [JsonSerializable(typeof(StatusResponse))]
+[JsonSerializable(typeof(CancelResponse))]
 [JsonSerializable(typeof(ErrorResponse))]
 [JsonSerializable(typeof(JsonNode))]
 [JsonSerializable(typeof(JsonObject))]
@@ -85,11 +91,13 @@ internal sealed partial class BrokerJsonSerializerContext : JsonSerializerContex
     UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(PackageRequest))]
 [JsonSerializable(typeof(StatusRequest))]
+[JsonSerializable(typeof(CancelRequest))]
 [JsonSerializable(typeof(HealthResponse))]
 [JsonSerializable(typeof(CapabilitiesResponse))]
 [JsonSerializable(typeof(EvaluationResponse))]
 [JsonSerializable(typeof(ExecutionResponse))]
 [JsonSerializable(typeof(StatusResponse))]
+[JsonSerializable(typeof(CancelResponse))]
 [JsonSerializable(typeof(ErrorResponse))]
 [JsonSerializable(typeof(JsonNode))]
 [JsonSerializable(typeof(JsonObject))]

@@ -134,6 +134,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /v1/package-operations/cancel:
+    post:
+      summary: Cancel package operation
+      description: 'Requests cancelation of a previously submitted package operation. Cancelation is asynchronous: poll the status endpoint until the operation reaches a terminal status.'
+      requestBody:
+        description: Request body for canceling a previously submitted operation.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelRequest'
+        required: true
+      responses:
+        '200':
+          description: |-
+            Response to a cancel request.
+
+            Cancelation is asynchronous and idempotent: the broker acknowledges the request by moving a non-terminal operation to `Canceling` and reports the resulting status. Clients should poll the status endpoint until the operation reaches a terminal status (`Canceled`, or `Completed`/`Failed` when the process ends first).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelResponse'
+        '400':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     ApiVersion:
@@ -153,6 +186,75 @@ components:
       type: string
       maxLength: 16384
       pattern: ^[A-Za-z0-9+/]*={0,2}$
+    CancelRequest:
+      description: Request body for canceling a previously submitted operation.
+      type: object
+      required:
+      - Client
+      - OperationId
+      - RequestKind
+      - RequestVersion
+      properties:
+        Client:
+          description: Client context used to authenticate the cancel request.
+          $ref: '#/components/schemas/ClientContext'
+        OperationId:
+          description: Server-issued stable operation identifier.
+          $ref: '#/components/schemas/ResourceId'
+        RequestKind:
+          description: Request discriminator.
+          $ref: '#/components/schemas/CancelRequestKind'
+        RequestVersion:
+          description: Client-side API version used to construct the request.
+          $ref: '#/components/schemas/ApiVersion'
+      additionalProperties: false
+    CancelRequestKind:
+      type: string
+      pattern: ^CancelRequest$
+    CancelResponse:
+      description: |-
+        Response to a cancel request.
+
+        Cancelation is asynchronous and idempotent: the broker acknowledges the request by moving a non-terminal operation to `Canceling` and reports the resulting status. Clients should poll the status endpoint until the operation reaches a terminal status (`Canceled`, or `Completed`/`Failed` when the process ends first).
+      type: object
+      required:
+      - OperationId
+      - RequestId
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      - Status
+      properties:
+        Message:
+          description: Human-readable message about the cancelation outcome.
+          type: string
+          maxLength: 2048
+          nullable: true
+        OperationId:
+          description: Server-issued stable operation identifier.
+          $ref: '#/components/schemas/ResourceId'
+        RequestId:
+          description: The original request id associated with the operation.
+          $ref: '#/components/schemas/ResourceId'
+        ResponseKind:
+          description: Response discriminator.
+          $ref: '#/components/schemas/CancelResponseKind'
+        ResponseVersion:
+          description: Server-side API version used to construct the response.
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          description: Server context.
+          $ref: '#/components/schemas/ServerContext'
+        Status:
+          description: |-
+            Status of the operation after the cancel request was applied.
+
+            `Canceling` when the cancelation was accepted for an in-flight operation; the terminal status when the operation already finished.
+          $ref: '#/components/schemas/OperationStatus'
+      additionalProperties: false
+    CancelResponseKind:
+      type: string
+      pattern: ^CancelResponse$
     CapabilitiesResponse:
       description: Response body for `GET /v1/capabilities`.
       type: object
@@ -586,6 +688,10 @@ components:
         type: string
         enum:
         - Running
+      - description: Cancelation was requested; the process is being terminated.
+        type: string
+        enum:
+        - Canceling
       - description: Process exited successfully (exit code 0).
         type: string
         enum:
@@ -594,6 +700,10 @@ components:
         type: string
         enum:
         - Failed
+      - description: Operation was canceled at the client's request.
+        type: string
+        enum:
+        - Canceled
     OperationSubmission:
       description: Execution submission returned for allowed execute requests.
       type: object
