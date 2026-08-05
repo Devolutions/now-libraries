@@ -16,6 +16,28 @@ The client is used to:
 - submit package operations for elevated execution;
 - poll asynchronous operation status until completion or failure.
 
+Execution responses additionally return a per-operation event channel descriptor (`OperationSubmission.EventChannel`) whenever the broker supports event channels. The channel carries the `NOW_BROKER` frame protocol: status change notifications pushed by the broker and, when the operation was submitted with `CaptureOutput`, stdout/stderr data. The frame codec (`EventFrame`, `EventFrameDecoder`) lives in `Devolutions.Now.Policy.Api`; see `policies/docs/event-channel-protocol.md` for the wire specification.
+
+To consume the channel, pass the execution response to `BrokerClient.OpenEventChannel`; it connects to the advertised local pipe and returns an `OperationEventChannel`:
+
+```csharp
+var execution = await client.Execute(request);
+await using var channel = await client.OpenEventChannel(execution);
+
+await foreach (var frame in channel.ReadEvents())
+{
+    switch (frame)
+    {
+        case EventFrame.Stdout stdout: Console.Out.Write(stdout.Data); break;
+        case EventFrame.Stderr stderr: Console.Error.Write(stderr.Data); break;
+        case EventFrame.StatusUpdated: /* issue QueryStatus */ break;
+        case EventFrame.Finish: /* operation finished; enumeration completes */ break;
+    }
+}
+```
+
+`ReadEvents` skips unknown frame kinds and completes after `Finish` or when the broker closes the channel; `ReadFrame` exposes the raw frame stream, including `EventFrame.Unknown`.
+
 Architecture
 ------------
 
@@ -28,6 +50,7 @@ The main surface is `BrokerClient`:
 - `ExecuteAndWait` submits an operation and polls status until a terminal state.
 - `QueryStatus` sends `POST /v1/package-operations/get-status`.
 - `Cancel` sends `POST /v1/package-operations/cancel` to request cancelation of an in-flight operation.
+- `OpenEventChannel` connects to the per-operation event channel advertised in an `ExecutionResponse` and returns an `OperationEventChannel` frame reader.
 
 Transport is abstracted behind `IBrokerTransport`, which exchanges HTTP-style `BrokerTransportRequest` and `BrokerTransportResponse` values. `NamedPipeBrokerTransport` is the default implementation and sends HTTP/1.1 over a Windows named pipe. Tests and future transports can inject their own transport through `BrokerClientOptions.Transport`.
 

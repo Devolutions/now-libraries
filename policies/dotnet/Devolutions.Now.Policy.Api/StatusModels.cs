@@ -70,11 +70,4 @@ public sealed class StatusResponse
 
     [JsonPropertyName("Details")]
     public JsonNode? Details { get; set; }
-
-    /// <summary>
-    /// Captured combined stdout+stderr of the operation as base64-encoded UTF-8 data (tail-truncated to ~10 KiB before encoding).
-    /// Only present when the request opted in via <see cref="PackageRequest.CaptureOutput"/>.
-    /// </summary>
-    [JsonPropertyName("Stdout")]
-    public string? Stdout { get; set; }
 }

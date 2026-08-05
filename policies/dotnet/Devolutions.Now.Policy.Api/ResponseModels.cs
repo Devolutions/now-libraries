@@ -157,4 +157,13 @@ public sealed class OperationSubmission
 
     [JsonPropertyName("SubmittedAt")]
     public DateTimeOffset SubmittedAt { get; set; }
+
+    /// <summary>
+    /// Per-operation event channel carrying <c>NOW_BROKER</c> event frames (status change
+    /// notifications and, when the execute request opted in via
+    /// <see cref="PackageRequest.CaptureOutput"/>, stdout/stderr data). Present whenever
+    /// the broker supports event channels; absent otherwise.
+    /// </summary>
+    [JsonPropertyName("EventChannel")]
+    public EventChannel? EventChannel { get; set; }
 }

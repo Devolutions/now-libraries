@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use super::api::{ClientContext, ServerContext};
 use super::enums::OperationStatus;
-use super::{ApiVersion, Base64Utf8Data, ResourceId, StatusRequestKind, StatusResponseKind};
+use super::{ApiVersion, ResourceId, StatusRequestKind, StatusResponseKind};
 
 /// Request body for querying an operation status.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -72,9 +72,4 @@ pub struct StatusResponse {
     /// Manager-specific structured status details.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub details: Option<serde_json::Value>,
-
-    /// Captured combined stdout+stderr as base64-encoded UTF-8 data (tail-truncated to ~10 KiB before encoding).
-    /// Only present when the original request opted in via `CaptureOutput`.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub stdout: Option<Base64Utf8Data>,
 }

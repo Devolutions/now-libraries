@@ -55,9 +55,12 @@ pub struct PackageRequest {
     #[serde(default)]
     pub include_command_preview: bool,
 
-    /// When true, the broker captures the operation's combined stdout+stderr and returns
-    /// it (tail-truncated) in the status response. Off by default to avoid the overhead
-    /// when the client does not need the output.
+    /// When true, the operation's stdout/stderr data is pushed over the
+    /// per-operation event channel (see the `EventChannel` descriptor in the
+    /// execution response). The channel itself is opened unconditionally when
+    /// supported and always carries status change notifications; this flag only
+    /// controls whether output data frames are sent. Off by default to avoid the
+    /// overhead when the client does not need the output.
     #[serde(default)]
     pub capture_output: bool,
 }

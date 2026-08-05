@@ -245,6 +245,45 @@ public sealed class BrokerClient : IDisposable
         return DeserializeResponse<StatusResponse>(response, "status", "/v1/package-operations/get-status");
     }
 
+    /// <summary>
+    /// Connect to the per-operation event channel advertised in an execution response and
+    /// return a reader for <c>NOW_BROKER</c> event frames (stdout/stderr data and status
+    /// change notifications).
+    /// </summary>
+    /// <exception cref="BrokerClientException">
+    /// The response carries no event channel descriptor, the channel kind is not
+    /// supported, or the connection failed.
+    /// </exception>
+    public async Task<OperationEventChannel> OpenEventChannel(
+        ExecutionResponse response,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+
+        var descriptor = response.Operation?.EventChannel
+            ?? throw new BrokerClientException(
+                BrokerClientErrorKind.InvalidResponse,
+                "The execution response does not carry an event channel descriptor; "
+                + "the broker likely does not support event channels.");
+
+        if (descriptor.Kind != EventChannelKind.LocalPipe)
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.UnsupportedCapability,
+                $"Unsupported event channel kind '{descriptor.Kind}'.");
+        }
+
+        if (string.IsNullOrWhiteSpace(descriptor.Path))
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.InvalidResponse,
+                "The event channel descriptor carries an empty path.");
+        }
+
+        Trace?.Invoke($"Connecting to operation event channel pipe '{descriptor.Path}'.");
+        return await OperationEventChannel.ConnectLocalPipe(descriptor.Path, cancellationToken).ConfigureAwait(false);
+    }
+
     public void Dispose()
     {
         _transport.Dispose();

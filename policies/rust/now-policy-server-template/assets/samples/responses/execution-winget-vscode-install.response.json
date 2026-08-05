@@ -23,7 +23,11 @@
   "Operation": {
     "OperationId": "op-winget-vscode-install-000001",
     "Status": "Starting",
-    "SubmittedAt": "2026-05-05T12:00:01Z"
+    "SubmittedAt": "2026-05-05T12:00:01Z",
+    "EventChannel": {
+      "Kind": "LocalPipe",
+      "Path": "Devolutions.Now.PackageBroker.Operation.op-winget-vscode-install-000001"
+    }
   },
   "Diagnostics": {
     "CommandPreview": [

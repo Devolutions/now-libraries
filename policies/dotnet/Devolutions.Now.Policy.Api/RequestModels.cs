@@ -51,8 +51,11 @@ public sealed class PackageRequest
     public bool IncludeCommandPreview { get; set; }
 
     /// <summary>
-    /// When true, the broker captures the operation's combined stdout+stderr and returns it
-    /// (tail-truncated) in the status response. Off by default to avoid the overhead when not needed.
+    /// When true, the operation's stdout/stderr data is pushed over the per-operation
+    /// event channel (see <see cref="OperationSubmission.EventChannel"/>). The channel
+    /// itself is opened unconditionally when supported and always carries status change
+    /// notifications; this flag only controls whether output data frames are sent. Off
+    /// by default to avoid the overhead when the client does not need the output.
     /// </summary>
     [JsonPropertyName("CaptureOutput")]
     public bool CaptureOutput { get; set; }
