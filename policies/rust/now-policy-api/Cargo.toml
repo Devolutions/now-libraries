@@ -18,7 +18,6 @@ default = []
 policy-compat = ["dep:now-policy"]
 
 [dependencies]
-base64 = "0.22"
 chrono = { version = "0.4", features = ["serde"] }
 derive_more = { version = "2", features = ["as_ref", "deref", "display", "from"] }
 now-policy = { version = "0.2", path = "../now-policy", optional = true }

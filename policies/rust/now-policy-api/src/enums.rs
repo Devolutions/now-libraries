@@ -102,6 +102,14 @@ impl OperationStatus {
     }
 }
 
+/// Transport kind of a per-operation event channel.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema, strum::Display)]
+#[schemars(rename = "EventChannelKind")]
+pub enum EventChannelKind {
+    /// Local named pipe carrying `NOW_BROKER` event frames.
+    LocalPipe,
+}
+
 /// Structured machine-readable error code.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ErrorCode")]

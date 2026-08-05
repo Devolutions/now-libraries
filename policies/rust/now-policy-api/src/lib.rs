@@ -8,6 +8,7 @@ pub mod cancel;
 pub mod capabilities;
 pub mod enums;
 pub mod evaluate;
+pub mod event_channel;
 pub mod execute;
 pub mod health;
 #[cfg(feature = "policy-compat")]
@@ -19,6 +20,7 @@ pub use cancel::*;
 pub use capabilities::*;
 pub use enums::*;
 pub use evaluate::*;
+pub use event_channel::*;
 pub use execute::*;
 pub use health::*;
 pub use status::*;
@@ -538,53 +540,5 @@ impl<'de> Deserialize<'de> for CommandString {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
         Self::parse(&s).map_err(serde::de::Error::custom)
-    }
-}
-
-/// Base64-encoded UTF-8 operation output.
-#[derive(
-    Debug, Clone, PartialEq, Eq, Serialize, JsonSchema, derive_more::AsRef, derive_more::Deref, derive_more::From,
-)]
-#[as_ref(str)]
-#[deref(forward)]
-pub struct Base64Utf8Data(#[schemars(length(max = 16384), regex(pattern = r"^[A-Za-z0-9+/]*={0,2}$"))] pub String);
-
-impl Base64Utf8Data {
-    pub fn parse(s: &str) -> Result<Self, ModelValidationError> {
-        if s.len() > 16384 {
-            return Err(ModelValidationError::Invalid {
-                type_name: "Base64Utf8Data",
-                reason: format!("length {} exceeds maximum 16384", s.len()),
-            });
-        }
-
-        use base64::Engine;
-        let decoded =
-            base64::engine::general_purpose::STANDARD
-                .decode(s)
-                .map_err(|e| ModelValidationError::Invalid {
-                    type_name: "Base64Utf8Data",
-                    reason: e.to_string(),
-                })?;
-
-        core::str::from_utf8(&decoded).map_err(|e| ModelValidationError::Invalid {
-            type_name: "Base64Utf8Data",
-            reason: e.to_string(),
-        })?;
-
-        Ok(Self(s.to_owned()))
-    }
-}
-
-impl<'de> Deserialize<'de> for Base64Utf8Data {
-    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let s = String::deserialize(deserializer)?;
-        Self::parse(&s).map_err(serde::de::Error::custom)
-    }
-}
-
-impl From<&str> for Base64Utf8Data {
-    fn from(s: &str) -> Self {
-        Self(s.to_owned())
     }
 }

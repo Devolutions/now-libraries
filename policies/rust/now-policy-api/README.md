@@ -24,6 +24,7 @@ Library structure overview:
 - `execute.rs` contains execution response models for `POST /v1/package-operations/execute`.
 - `evaluate.rs` contains evaluation response models for `POST /v1/package-operations/evaluate`.
 - `status.rs` contains status request/response models for `POST /v1/package-operations/get-status`.
+- `event_channel.rs` contains the per-operation event channel descriptor returned in execution responses and the `NOW_BROKER` binary frame protocol codec (see `policies/docs/event-channel-protocol.md`).
 - `health.rs` contains health endpoint models for `GET /v1/health`.
 - `capabilities.rs` contains capability endpoint models for `GET /v1/capabilities`.
 - `enums.rs` contains shared protocol enums.

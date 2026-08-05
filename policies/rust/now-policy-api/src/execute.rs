@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use super::api::{DecisionInfo, OperationDiagnostics, RequestSummary, ResponsePolicyInfo, ServerContext};
 use super::enums::OperationStatus;
+use super::event_channel::EventChannel;
 use super::{ApiVersion, ExecutionResponseKind, ResourceId};
 
 /// Response returned after an execute request is evaluated and, when allowed, submitted.
@@ -66,4 +67,11 @@ pub struct OperationSubmission {
 
     /// UTC timestamp when the operation was accepted.
     pub submitted_at: DateTime<Utc>,
+
+    /// Per-operation event channel carrying `NOW_BROKER` event frames (status
+    /// change notifications and, when the execute request opted in via
+    /// `CaptureOutput`, stdout/stderr data). Present whenever the broker
+    /// supports event channels; absent otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub event_channel: Option<EventChannel>,
 }

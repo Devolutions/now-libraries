@@ -179,6 +179,44 @@ fn request_kind_marker_rejects_wrong_value() {
     );
 }
 
+#[test]
+fn event_channel_frame_sample_decodes() {
+    use now_policy_server_template::{EventFrame, EventFrameDecoder};
+
+    let bytes = std::fs::read(samples_dir().join("frames/event-channel.frames.bin")).unwrap();
+
+    let mut decoder = EventFrameDecoder::new();
+    decoder.extend(&bytes);
+    let mut frames = Vec::new();
+    while let Some(frame) = decoder.next_frame().unwrap() {
+        frames.push(frame);
+    }
+
+    assert_eq!(
+        frames,
+        [
+            EventFrame::Hello {
+                version_major: 1,
+                version_minor: 0
+            },
+            EventFrame::StatusUpdated,
+            EventFrame::Stdout("hello \u{03c0}\n".to_owned()),
+            EventFrame::Stderr("oops\n".to_owned()),
+            EventFrame::StdoutOverflow { bytes_skipped: 4096 },
+            EventFrame::StderrOverflow { bytes_skipped: 16 },
+            EventFrame::Unknown {
+                kind: 0x7fff,
+                body: vec![1, 2, 3]
+            },
+            EventFrame::Finish,
+        ]
+    );
+
+    // The fixture must round-trip byte-for-byte through the encoder.
+    let reencoded: Vec<u8> = frames.iter().flat_map(|f| f.encode().unwrap()).collect();
+    assert_eq!(reencoded, bytes);
+}
+
 #[tokio::test]
 async fn mock_server_returns_registered_fixture_responses() {
     let request_path = samples_dir().join("requests/winget-vscode-install.request.json");
@@ -204,6 +242,13 @@ async fn mock_server_returns_registered_fixture_responses() {
         executed.operation.as_ref().map(|op| &op.operation_id),
         execution.operation.as_ref().map(|op| &op.operation_id)
     );
+
+    let event_channel = executed.operation.unwrap().event_channel.unwrap();
+    assert_eq!(
+        event_channel.kind,
+        now_policy_server_template::EventChannelKind::LocalPipe
+    );
+    assert!(!event_channel.path.is_empty());
 
     let status_request = StatusRequest {
         request_kind: StatusRequestKind,

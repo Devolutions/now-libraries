@@ -181,11 +181,6 @@ components:
       - X64
       - Arm64
       - Neutral
-    Base64Utf8Data:
-      description: Base64-encoded UTF-8 operation output.
-      type: string
-      maxLength: 16384
-      pattern: ^[A-Za-z0-9+/]*={0,2}$
     CancelRequest:
       description: Request body for canceling a previously submitted operation.
       type: object
@@ -495,6 +490,29 @@ components:
     EvaluationResponseKind:
       type: string
       pattern: ^EvaluationResponse$
+    EventChannel:
+      description: Descriptor of a per-operation event channel returned in the execution response.
+      type: object
+      required:
+      - Kind
+      - Path
+      properties:
+        Kind:
+          description: Transport kind of the channel.
+          $ref: '#/components/schemas/EventChannelKind'
+        Path:
+          description: Transport-specific path. For the `LocalPipe` kind this is the pipe name/path the client should connect to.
+          type: string
+          maxLength: 1024
+          minLength: 1
+      additionalProperties: false
+    EventChannelKind:
+      description: Transport kind of a per-operation event channel.
+      oneOf:
+      - description: Local named pipe carrying `NOW_BROKER` event frames.
+        type: string
+        enum:
+        - LocalPipe
     ExecutionResponse:
       description: Response returned after an execute request is evaluated and, when allowed, submitted.
       type: object
@@ -712,6 +730,10 @@ components:
       - Status
       - SubmittedAt
       properties:
+        EventChannel:
+          description: Per-operation event channel carrying `NOW_BROKER` event frames (status change notifications and, when the execute request opted in via `CaptureOutput`, stdout/stderr data). Present whenever the broker supports event channels; absent otherwise.
+          $ref: '#/components/schemas/EventChannel'
+          nullable: true
         OperationId:
           description: Server-issued stable operation identifier.
           $ref: '#/components/schemas/ResourceId'
@@ -745,7 +767,7 @@ components:
       - Source
       properties:
         CaptureOutput:
-          description: When true, the broker captures the operation's combined stdout+stderr and returns it (tail-truncated) in the status response. Off by default to avoid the overhead when the client does not need the output.
+          description: When true, the operation's stdout/stderr data is pushed over the per-operation event channel (see the `EventChannel` descriptor in the execution response). The channel itself is opened unconditionally when supported and always carries status change notifications; this flag only controls whether output data frames are sent. Off by default to avoid the overhead when the client does not need the output.
           default: false
           type: boolean
         Client:
@@ -1054,10 +1076,6 @@ components:
         Status:
           description: Current status of the operation.
           $ref: '#/components/schemas/OperationStatus'
-        Stdout:
-          description: Captured combined stdout+stderr as base64-encoded UTF-8 data (tail-truncated to ~10 KiB before encoding). Only present when the original request opted in via `CaptureOutput`.
-          $ref: '#/components/schemas/Base64Utf8Data'
-          nullable: true
       additionalProperties: false
     StatusResponseKind:
       type: string

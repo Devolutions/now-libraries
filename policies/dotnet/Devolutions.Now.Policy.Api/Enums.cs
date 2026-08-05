@@ -115,3 +115,11 @@ public enum ErrorCode
     InternalError,
     Timeout,
 }
+
+/// <summary>Transport kind of a per-operation event channel.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<EventChannelKind>))]
+public enum EventChannelKind
+{
+    /// <summary>Local named pipe carrying <c>NOW_BROKER</c> event frames.</summary>
+    LocalPipe,
+}
