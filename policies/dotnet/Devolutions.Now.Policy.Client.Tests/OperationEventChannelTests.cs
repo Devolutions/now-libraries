@@ -143,8 +143,10 @@ public class OperationEventChannelTests
         await Assert.ThrowsAsync<EventFrameException>(() => channel.ReadFrame());
     }
 
+    // Keep the name short: on macOS named pipes map to unix domain socket paths
+    // (temp dir + "CoreFxPipe_" prefix) limited to 104 characters.
     private static string RandomPipeName() =>
-        $"Devolutions.Now.Policy.Tests.EventChannel.{Guid.NewGuid():N}";
+        $"nowec-{Guid.NewGuid():N}"[..22];
 
     private static ExecutionResponse CreateExecutionResponse(string? pipeName) => new()
     {
