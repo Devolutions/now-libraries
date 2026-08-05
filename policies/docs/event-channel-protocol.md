@@ -56,8 +56,10 @@ NOW_BROKER_FRAME
 ```
 
 - `frame_size` is the body length in bytes; it excludes the 6-byte header.
-- `frame_size` MUST NOT exceed **65536** (64 KiB). Encoders split larger
-  output into multiple frames; decoders MUST treat a larger value as a fatal
+- `frame_size` MUST NOT exceed **65536** (64 KiB). Producers MUST split larger
+  output into multiple frames before encoding (the reference `Encode`
+  implementations reject oversized bodies rather than splitting them);
+  decoders MUST treat a larger value as a fatal
   protocol error and close the channel.
 - A decode error (oversized frame, malformed body, invalid UTF-8) is not
   recoverable: the client SHOULD close the channel and fall back to

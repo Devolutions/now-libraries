@@ -143,6 +143,34 @@ public class OperationEventChannelTests
         await Assert.ThrowsAsync<EventFrameException>(() => channel.ReadFrame());
     }
 
+    [Fact]
+    public async Task ReadFrame_rejects_stream_that_does_not_start_with_hello()
+    {
+        var pipeName = RandomPipeName();
+        var bytes = new EventFrame.Stdout("data before hello\n").Encode();
+        using var server = ServeFixtureBytes(pipeName, bytes);
+        using var client = CreateClient();
+
+        await using var channel = await client.OpenEventChannel(CreateExecutionResponse(pipeName));
+
+        var ex = await Assert.ThrowsAsync<EventFrameException>(() => channel.ReadFrame());
+        Assert.Contains("Hello", ex.Message);
+    }
+
+    [Fact]
+    public async Task ReadFrame_rejects_unsupported_protocol_major_version()
+    {
+        var pipeName = RandomPipeName();
+        var bytes = new EventFrame.Hello((ushort)(EventChannelProtocol.VersionMajor + 1), 0).Encode();
+        using var server = ServeFixtureBytes(pipeName, bytes);
+        using var client = CreateClient();
+
+        await using var channel = await client.OpenEventChannel(CreateExecutionResponse(pipeName));
+
+        var ex = await Assert.ThrowsAsync<EventFrameException>(() => channel.ReadFrame());
+        Assert.Contains("major version", ex.Message);
+    }
+
     // Keep the name short: on macOS named pipes map to unix domain socket paths
     // (temp dir + "CoreFxPipe_" prefix) limited to 104 characters.
     private static string RandomPipeName() =>

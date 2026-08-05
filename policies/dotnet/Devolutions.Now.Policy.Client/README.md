@@ -16,7 +16,7 @@ The client is used to:
 - submit package operations for elevated execution;
 - poll asynchronous operation status until completion or failure.
 
-Operations submitted with `CaptureOutput` additionally return a per-operation event channel descriptor (`OperationSubmission.EventChannel`) that carries the `NOW_BROKER` frame protocol: stdout/stderr data and status change notifications pushed by the broker. The frame codec (`EventFrame`, `EventFrameDecoder`) lives in `Devolutions.Now.Policy.Api`; see `policies/docs/event-channel-protocol.md` for the wire specification.
+Execution responses additionally return a per-operation event channel descriptor (`OperationSubmission.EventChannel`) whenever the broker supports event channels. The channel carries the `NOW_BROKER` frame protocol: status change notifications pushed by the broker and, when the operation was submitted with `CaptureOutput`, stdout/stderr data. The frame codec (`EventFrame`, `EventFrameDecoder`) lives in `Devolutions.Now.Policy.Api`; see `policies/docs/event-channel-protocol.md` for the wire specification.
 
 To consume the channel, pass the execution response to `BrokerClient.OpenEventChannel`; it connects to the advertised local pipe and returns an `OperationEventChannel`:
 

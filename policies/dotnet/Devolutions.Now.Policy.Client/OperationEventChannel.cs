@@ -24,6 +24,7 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
     private readonly Stream _stream;
     private readonly EventFrameDecoder _decoder = new();
     private readonly byte[] _readBuffer = new byte[ReadBufferSize];
+    private bool _helloReceived;
 
     internal OperationEventChannel(Stream stream)
     {
@@ -71,8 +72,9 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
     /// <see cref="EventFrame.Unknown"/> and should be ignored by the caller.
     /// </summary>
     /// <exception cref="EventFrameException">
-    /// The frame stream is corrupt or the channel was closed mid-frame; the channel
-    /// should be disposed.
+    /// The frame stream is corrupt, the channel was closed mid-frame, the stream does
+    /// not start with a <c>Hello</c> frame, or the advertised protocol major version is
+    /// unsupported; the channel should be disposed.
     /// </exception>
     /// <exception cref="IOException">The transport failed.</exception>
     public async Task<EventFrame?> ReadFrame(CancellationToken cancellationToken = default)
@@ -81,6 +83,7 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
         {
             if (_decoder.TryReadFrame(out var frame))
             {
+                EnforceHandshake(frame!);
                 return frame;
             }
 
@@ -97,6 +100,29 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
 
             _decoder.Extend(_readBuffer.AsSpan(0, bytesRead));
         }
+    }
+
+    private void EnforceHandshake(EventFrame frame)
+    {
+        if (_helloReceived)
+        {
+            return;
+        }
+
+        if (frame is not EventFrame.Hello hello)
+        {
+            throw new EventFrameException(
+                $"The event channel did not start with a Hello frame (got kind 0x{frame.Kind:x4}).");
+        }
+
+        if (hello.VersionMajor != EventChannelProtocol.VersionMajor)
+        {
+            throw new EventFrameException(
+                $"Unsupported event channel protocol major version {hello.VersionMajor}; "
+                + $"this client supports version {EventChannelProtocol.VersionMajor}.");
+        }
+
+        _helloReceived = true;
     }
 
     /// <summary>

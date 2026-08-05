@@ -264,7 +264,7 @@ public sealed class BrokerClient : IDisposable
             ?? throw new BrokerClientException(
                 BrokerClientErrorKind.InvalidResponse,
                 "The execution response does not carry an event channel descriptor; "
-                + "the operation was likely submitted without output capture.");
+                + "the broker likely does not support event channels.");
 
         if (descriptor.Kind != EventChannelKind.LocalPipe)
         {
