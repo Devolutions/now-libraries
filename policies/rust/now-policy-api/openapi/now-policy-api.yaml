@@ -746,11 +746,14 @@ components:
           format: date-time
       additionalProperties: false
     PackageIdentifier:
-      description: Package identifier string.
+      description: |-
+        Package identifier string.
+
+        Allows `/` and `:` so that scoped npm/Bun packages (`@scope/package`), npm aliases (`alias:@scope/package@^1.0.0`) and vcpkg triplets (`curl:x64-windows`) are accepted. Rejects control characters, `\`, `"`, `<`, `>`, `|`, and the wildcard characters `*` and `?` (policy-side package identifier matching is wildcard-based, so wildcards in request identifiers would be ambiguous).
       type: string
       maxLength: 256
       minLength: 1
-      pattern: ^[^\\\/:*?"<>|\x01-\x1f]+$
+      pattern: ^[^\\*?"<>|\x00-\x1f\x7f]+$
     PackageRequest:
       description: Canonical request sent by a package broker client to the elevated broker.
       type: object

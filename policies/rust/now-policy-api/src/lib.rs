@@ -398,6 +398,12 @@ impl From<&str> for RuleId {
 }
 
 /// Package identifier string.
+///
+/// Allows `/` and `:` so that scoped npm/Bun packages (`@scope/package`), npm aliases
+/// (`alias:@scope/package@^1.0.0`) and vcpkg triplets (`curl:x64-windows`) are accepted.
+/// Rejects control characters, `\`, `"`, `<`, `>`, `|`, and the wildcard characters
+/// `*` and `?` (policy-side package identifier matching is wildcard-based, so wildcards
+/// in request identifiers would be ambiguous).
 #[derive(
     Debug,
     Clone,
@@ -414,7 +420,7 @@ impl From<&str> for RuleId {
 #[deref(forward)]
 #[display("{_0}")]
 pub struct PackageIdentifier(
-    #[schemars(length(min = 1, max = 256), regex(pattern = r#"^[^\\\/:*?"<>|\x01-\x1f]+$"#))] pub String,
+    #[schemars(length(min = 1, max = 256), regex(pattern = r#"^[^\\*?"<>|\x00-\x1f\x7f]+$"#))] pub String,
 );
 
 impl PackageIdentifier {
@@ -435,15 +441,14 @@ impl PackageIdentifier {
 
         if s.bytes().any(|b| {
             b == b'\\'
-                || b == b'/'
-                || b == b':'
                 || b == b'*'
                 || b == b'?'
                 || b == b'"'
                 || b == b'<'
                 || b == b'>'
                 || b == b'|'
-                || (0x01..=0x1f).contains(&b)
+                || b <= 0x1f
+                || b == 0x7f
         }) {
             return Err(ModelValidationError::Invalid {
                 type_name: "PackageIdentifier",
@@ -540,5 +545,136 @@ impl<'de> Deserialize<'de> for CommandString {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
         Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn package_identifier_accepts_manager_specific_identifiers() {
+        let valid = [
+            // WinGet.
+            "Microsoft.VisualStudioCode",
+            // Scoped npm/Bun packages.
+            "@scope/package",
+            "@babel/core",
+            // npm aliases.
+            "babel-core-legacy:@babel/core@^7.20.0",
+            "my-alias:lodash@~4.17.21",
+            // vcpkg triplets and features.
+            "curl:x64-windows",
+            "curl[ssl]:x64-windows",
+            // Other managers (pip extras, chocolatey, scoop buckets, dotnet, cargo).
+            "requests[socks]",
+            "git.install",
+            "extras/vscode",
+            "dotnet-ef",
+            "serde_json",
+        ];
+
+        for id in valid {
+            PackageIdentifier::parse(id).unwrap_or_else(|e| panic!("{id:?} should be valid: {e}"));
+
+            let json = serde_json::to_string(id).expect("string should serialize to JSON");
+            let deserialized: PackageIdentifier =
+                serde_json::from_str(&json).unwrap_or_else(|e| panic!("{id:?} should deserialize: {e}"));
+            assert_eq!(deserialized.0, id);
+        }
+    }
+
+    #[test]
+    fn package_identifier_rejects_forbidden_input() {
+        let invalid = [
+            "",
+            "foo\\bar",
+            "foo*",
+            "foo?",
+            "foo\"bar",
+            "foo<bar",
+            "foo>bar",
+            "foo|bar",
+            "foo\r\nbar",
+            "foo\tbar",
+            "foo\u{0}bar",
+            "foo\u{7f}bar",
+            &"a".repeat(257),
+        ];
+
+        for id in invalid {
+            PackageIdentifier::parse(id).expect_err(&format!("{id:?} should be rejected"));
+
+            let json = serde_json::to_string(id).expect("string should serialize to JSON");
+            serde_json::from_str::<PackageIdentifier>(&json)
+                .expect_err(&format!("{id:?} should be rejected during deserialization"));
+        }
+    }
+
+    #[test]
+    fn package_request_deserializes_scoped_and_aliased_identifiers() {
+        let identifiers = [
+            "@scope/package",
+            "babel-core-legacy:@babel/core@^7.20.0",
+            "curl:x64-windows",
+        ];
+
+        for id in identifiers {
+            let json = serde_json::json!({
+                "RequestKind": "PackageRequest",
+                "RequestVersion": "1.0",
+                "RequestId": "req-scoped-install",
+                "CreatedAt": "2026-05-05T12:00:00Z",
+                "Operation": "Install",
+                "Manager": "Npm",
+                "Source": { "Name": "npm" },
+                "Package": { "Id": id },
+                "Options": {
+                    "Interactive": false,
+                    "SkipHashCheck": false,
+                    "PreRelease": false
+                },
+                "Client": {
+                    "RequestedElevation": "Elevated",
+                    "EffectiveUser": "CONTOSO\\alice",
+                    "ClientVersion": "3.2.0",
+                    "Transport": "HttpNamedPipe",
+                    "ClientExecutablePath": "C:\\Program Files\\Devolutions\\NOW\\now-client.exe"
+                }
+            });
+
+            let request: PackageRequest = serde_json::from_value(json)
+                .unwrap_or_else(|e| panic!("PackageRequest with id {id:?} should deserialize: {e}"));
+            assert_eq!(request.package.id.0, id);
+        }
+    }
+
+    #[test]
+    fn package_request_rejects_invalid_identifier() {
+        let json = serde_json::json!({
+            "RequestKind": "PackageRequest",
+            "RequestVersion": "1.0",
+            "RequestId": "req-invalid-id",
+            "CreatedAt": "2026-05-05T12:00:00Z",
+            "Operation": "Install",
+            "Manager": "Winget",
+            "Source": { "Name": "winget" },
+            "Package": { "Id": "evil|package\r\n" },
+            "Options": {
+                "Interactive": false,
+                "SkipHashCheck": false,
+                "PreRelease": false
+            },
+            "Client": {
+                "RequestedElevation": "Elevated",
+                "EffectiveUser": "CONTOSO\\alice",
+                "ClientVersion": "3.2.0",
+                "Transport": "HttpNamedPipe",
+                "ClientExecutablePath": "C:\\Program Files\\Devolutions\\NOW\\now-client.exe"
+            }
+        });
+
+        serde_json::from_value::<PackageRequest>(json)
+            .expect_err("PackageRequest with forbidden identifier characters should be rejected");
     }
 }
