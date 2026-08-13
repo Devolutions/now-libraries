@@ -399,8 +399,8 @@ impl From<&str> for RuleId {
 
 /// Package identifier string.
 ///
-/// Validated against an explicit allowlist of characters actually used by the
-/// supported package managers: ASCII alphanumerics plus `. - _ + @ / : ^ ~ = [ ] ,`.
+/// Validated against an explicit allowlist of characters: ASCII alphanumerics
+/// plus `. - _ + @ / : ^ ~ = [ ] , < > ? * |`.
 ///
 /// - `.`, `-`, `_`, `+`: winget (`Notepad++.Notepad++`), chocolatey, pip, cargo,
 ///   dotnet, apt/dnf/pacman (`g++`, `libstdc++6`), PowerShell modules;
@@ -411,15 +411,18 @@ impl From<&str> for RuleId {
 /// - `:`: npm aliases (`alias:@scope/package@^1.0.0`), vcpkg triplets
 ///   (`curl:x64-windows`);
 ///
-/// - `^`, `~`, `=`: version pins/ranges inside npm aliases and pip specifiers;
+/// - `^`, `~`, `=`, `<`, `>`, `|`: version pins/ranges in npm aliases and pip
+///   specifiers (`>=7 <8` without the space, `||` alternation);
 ///
 /// - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras
-///   (`requests[socks]`).
+///   (`requests[socks]`);
 ///
-/// Everything else — including whitespace, control characters, wildcards
-/// (`*`, `?`; policy-side package identifier matching is wildcard-based, so
-/// wildcards in request identifiers would be ambiguous), shell metacharacters,
-/// and non-ASCII — is rejected.
+/// - `*`, `?`: wildcards. Note: policy-side package identifier matching is
+///   wildcard-based, so wildcards in request identifiers may behave
+///   surprisingly when matched against policy rules.
+///
+/// Everything else — whitespace, control characters, `"`, `\`, shell
+/// metacharacters, and non-ASCII — is rejected.
 #[derive(
     Debug,
     Clone,
@@ -436,7 +439,7 @@ impl From<&str> for RuleId {
 #[deref(forward)]
 #[display("{_0}")]
 pub struct PackageIdentifier(
-    #[schemars(length(min = 1, max = 256), regex(pattern = r"^[A-Za-z0-9._+@/:^~=\[\],-]+$"))] pub String,
+    #[schemars(length(min = 1, max = 256), regex(pattern = r"^[A-Za-z0-9._+@/:^~=\[\],<>?*|-]+$"))] pub String,
 );
 
 impl PackageIdentifier {
@@ -459,12 +462,28 @@ impl PackageIdentifier {
             b.is_ascii_alphanumeric()
                 || matches!(
                     b,
-                    b'.' | b'-' | b'_' | b'+' | b'@' | b'/' | b':' | b'^' | b'~' | b'=' | b'[' | b']' | b','
+                    b'.' | b'-'
+                        | b'_'
+                        | b'+'
+                        | b'@'
+                        | b'/'
+                        | b':'
+                        | b'^'
+                        | b'~'
+                        | b'='
+                        | b'['
+                        | b']'
+                        | b','
+                        | b'<'
+                        | b'>'
+                        | b'?'
+                        | b'*'
+                        | b'|'
                 )
         }) {
             return Err(ModelValidationError::Invalid {
                 type_name: "PackageIdentifier",
-                reason: "must contain only ASCII alphanumerics or '. - _ + @ / : ^ ~ = [ ] ,'".to_owned(),
+                reason: "must contain only ASCII alphanumerics or '. - _ + @ / : ^ ~ = [ ] , < > ? * |'".to_owned(),
             });
         }
 
@@ -592,6 +611,12 @@ mod tests {
             "dotnet-ef",
             "serde_json",
             "g++",
+            // Version range operators and wildcards.
+            "ranged:react@>=18.2.0",
+            "either:foo@1.0.0||2.0.0",
+            "Microsoft.*",
+            "some?id",
+            "spec<2.0",
         ];
 
         for id in valid {
@@ -609,12 +634,7 @@ mod tests {
         let invalid = [
             "",
             "foo\\bar",
-            "foo*",
-            "foo?",
             "foo\"bar",
-            "foo<bar",
-            "foo>bar",
-            "foo|bar",
             "foo\r\nbar",
             "foo\tbar",
             "foo bar",
@@ -692,7 +712,7 @@ mod tests {
             "Operation": "Install",
             "Manager": "Winget",
             "Source": { "Name": "winget" },
-            "Package": { "Id": "evil|package\r\n" },
+            "Package": { "Id": "evil;package\r\n" },
             "Options": {
                 "Interactive": false,
                 "SkipHashCheck": false,

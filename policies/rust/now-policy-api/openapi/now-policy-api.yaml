@@ -749,7 +749,7 @@ components:
       description: |-
         Package identifier string.
 
-        Validated against an explicit allowlist of characters actually used by the supported package managers: ASCII alphanumerics plus `. - _ + @ / : ^ ~ = [ ] ,`.
+        Validated against an explicit allowlist of characters: ASCII alphanumerics plus `. - _ + @ / : ^ ~ = [ ] , < > ? * |`.
 
         - `.`, `-`, `_`, `+`: winget (`Notepad++.Notepad++`), chocolatey, pip, cargo, dotnet, apt/dnf/pacman (`g++`, `libstdc++6`), PowerShell modules;
 
@@ -757,15 +757,17 @@ components:
 
         - `:`: npm aliases (`alias:@scope/package@^1.0.0`), vcpkg triplets (`curl:x64-windows`);
 
-        - `^`, `~`, `=`: version pins/ranges inside npm aliases and pip specifiers;
+        - `^`, `~`, `=`, `<`, `>`, `|`: version pins/ranges in npm aliases and pip specifiers (`>=7 <8` without the space, `||` alternation);
 
-        - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras (`requests[socks]`).
+        - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras (`requests[socks]`);
 
-        Everything else — including whitespace, control characters, wildcards (`*`, `?`; policy-side package identifier matching is wildcard-based, so wildcards in request identifiers would be ambiguous), shell metacharacters, and non-ASCII — is rejected.
+        - `*`, `?`: wildcards. Note: policy-side package identifier matching is wildcard-based, so wildcards in request identifiers may behave surprisingly when matched against policy rules.
+
+        Everything else — whitespace, control characters, `"`, `\`, shell metacharacters, and non-ASCII — is rejected.
       type: string
       maxLength: 256
       minLength: 1
-      pattern: ^[A-Za-z0-9._+@/:^~=\[\],-]+$
+      pattern: ^[A-Za-z0-9._+@/:^~=\[\],<>?*|-]+$
     PackageRequest:
       description: Canonical request sent by a package broker client to the elevated broker.
       type: object
