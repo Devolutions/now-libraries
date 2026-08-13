@@ -630,7 +630,7 @@ mod tests {
             "foo;bar",
             "foo{bar}",
             "foo`bar",
-            "caf\u{e9}",
+            "gr\u{fc}n",
             &"a".repeat(257),
         ];
 
