@@ -414,7 +414,12 @@ impl From<&str> for RuleId {
 /// - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras
 ///   (`requests[socks]`);
 ///
-/// - `#`, `$`, `%`, `{`, `}`: additional identifier punctuation.
+/// - `#`, `$`, `%`, `{`, `}`: additional identifier punctuation (accepted by
+///   product decision for forward compatibility). Caveat: these characters
+///   carry expansion semantics in some shells (`${VAR}`, `%VAR%`, brace
+///   expansion), so downstream command builders must pass identifiers as
+///   discrete process arguments and never interpolate them into a shell
+///   command line.
 ///
 /// Version range/pin operators (`<`, `>`, `=`, `!`, `|`, `^`, `~`) are
 /// rejected: the broker matches against a specific, exact version carried in

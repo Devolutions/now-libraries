@@ -759,7 +759,7 @@ components:
 
         - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras (`requests[socks]`);
 
-        - `#`, `$`, `%`, `{`, `}`: additional identifier punctuation.
+        - `#`, `$`, `%`, `{`, `}`: additional identifier punctuation (accepted by product decision for forward compatibility). Caveat: these characters carry expansion semantics in some shells (`${VAR}`, `%VAR%`, brace expansion), so downstream command builders must pass identifiers as discrete process arguments and never interpolate them into a shell command line.
 
         Version range/pin operators (`<`, `>`, `=`, `!`, `|`, `^`, `~`) are rejected: the broker matches against a specific, exact version carried in the request's separate `Package.Version` field, so range expressions do not belong in the identifier (npm aliases must use exact versions, e.g. `alias:pkg@7.20.0`). The wildcards `*` and `?` are also rejected: policy-side package identifier matching is wildcard-based, so wildcards in request identifiers would be ambiguous. Everything else — whitespace, control characters, `"`, `\`, backtick, `& ' ( ) ;`, and non-ASCII — is rejected as well.
       type: string
