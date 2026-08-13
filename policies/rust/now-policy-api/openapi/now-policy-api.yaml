@@ -749,7 +749,7 @@ components:
       description: |-
         Package identifier string.
 
-        Validated against an explicit allowlist of characters: ASCII alphanumerics plus `. - _ + @ / : ^ ~ = [ ] , < > |`.
+        Validated against an explicit allowlist of characters: ASCII alphanumerics plus `. - _ + @ / : ^ ~ = [ ] , < > | # $ % { }`.
 
         - `.`, `-`, `_`, `+`: winget (`Notepad++.Notepad++`), chocolatey, pip, cargo, dotnet, apt/dnf/pacman (`g++`, `libstdc++6`), PowerShell modules;
 
@@ -759,13 +759,15 @@ components:
 
         - `^`, `~`, `=`, `<`, `>`, `|`: version pins/ranges in npm aliases and pip specifiers (`>=7 <8` without the space, `||` alternation);
 
-        - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras (`requests[socks]`).
+        - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras (`requests[socks]`);
 
-        The wildcards `*` and `?` are rejected: policy-side package identifier matching is wildcard-based, so wildcards in request identifiers would be ambiguous. Everything else — whitespace, control characters, `"`, `\`, backtick, `! # $ % & ' ( ) ; { }`, and non-ASCII — is also rejected.
+        - `#`, `$`, `%`, `{`, `}`: additional identifier punctuation.
+
+        The wildcards `*` and `?` are rejected: policy-side package identifier matching is wildcard-based, so wildcards in request identifiers would be ambiguous. Everything else — whitespace, control characters, `"`, `\`, backtick, `! & ' ( ) ;`, and non-ASCII — is also rejected.
       type: string
       maxLength: 256
       minLength: 1
-      pattern: ^[A-Za-z0-9._+@/:^~=\[\],<>|-]+$
+      pattern: ^[A-Za-z0-9._+@/:^~=\[\],<>|#$%{}-]+$
     PackageRequest:
       description: Canonical request sent by a package broker client to the elevated broker.
       type: object

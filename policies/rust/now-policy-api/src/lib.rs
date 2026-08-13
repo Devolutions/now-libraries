@@ -400,7 +400,7 @@ impl From<&str> for RuleId {
 /// Package identifier string.
 ///
 /// Validated against an explicit allowlist of characters: ASCII alphanumerics
-/// plus `. - _ + @ / : ^ ~ = [ ] , < > |`.
+/// plus `. - _ + @ / : ^ ~ = [ ] , < > | # $ % { }`.
 ///
 /// - `.`, `-`, `_`, `+`: winget (`Notepad++.Notepad++`), chocolatey, pip, cargo,
 ///   dotnet, apt/dnf/pacman (`g++`, `libstdc++6`), PowerShell modules;
@@ -415,12 +415,14 @@ impl From<&str> for RuleId {
 ///   specifiers (`>=7 <8` without the space, `||` alternation);
 ///
 /// - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras
-///   (`requests[socks]`).
+///   (`requests[socks]`);
+///
+/// - `#`, `$`, `%`, `{`, `}`: additional identifier punctuation.
 ///
 /// The wildcards `*` and `?` are rejected: policy-side package identifier
 /// matching is wildcard-based, so wildcards in request identifiers would be
 /// ambiguous. Everything else — whitespace, control characters, `"`, `\`,
-/// backtick, `! # $ % & ' ( ) ; { }`, and non-ASCII — is also rejected.
+/// backtick, `! & ' ( ) ;`, and non-ASCII — is also rejected.
 #[derive(
     Debug,
     Clone,
@@ -437,7 +439,11 @@ impl From<&str> for RuleId {
 #[deref(forward)]
 #[display("{_0}")]
 pub struct PackageIdentifier(
-    #[schemars(length(min = 1, max = 256), regex(pattern = r"^[A-Za-z0-9._+@/:^~=\[\],<>|-]+$"))] pub String,
+    #[schemars(
+        length(min = 1, max = 256),
+        regex(pattern = r"^[A-Za-z0-9._+@/:^~=\[\],<>|#$%{}-]+$")
+    )]
+    pub String,
 );
 
 impl PackageIdentifier {
@@ -475,11 +481,17 @@ impl PackageIdentifier {
                         | b'<'
                         | b'>'
                         | b'|'
+                        | b'#'
+                        | b'$'
+                        | b'%'
+                        | b'{'
+                        | b'}'
                 )
         }) {
             return Err(ModelValidationError::Invalid {
                 type_name: "PackageIdentifier",
-                reason: "must contain only ASCII alphanumerics or '. - _ + @ / : ^ ~ = [ ] , < > |'".to_owned(),
+                reason: "must contain only ASCII alphanumerics or '. - _ + @ / : ^ ~ = [ ] , < > | # $ % { }'"
+                    .to_owned(),
             });
         }
 
@@ -611,6 +623,11 @@ mod tests {
             "ranged:react@>=18.2.0",
             "either:foo@1.0.0||2.0.0",
             "spec<2.0",
+            // Additional identifier punctuation.
+            "foo#bar",
+            "foo$bar",
+            "foo%20bar",
+            "foo{bar}",
         ];
 
         for id in valid {
@@ -637,14 +654,10 @@ mod tests {
             "foo\u{0}bar",
             "foo\u{7f}bar",
             "foo!bar",
-            "foo#bar",
-            "foo$bar",
-            "foo%bar",
             "foo&bar",
             "foo'bar",
             "foo(bar)",
             "foo;bar",
-            "foo{bar}",
             "foo`bar",
             "gr\u{fc}n",
             &"a".repeat(257),
