@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [[0.3.1](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.3.0...now-policy-api-v0.3.1)] - 2026-08-13
+
+### <!-- 4 -->Bug Fixes
+
+- Allow '/' and ':' in PackageIdentifier ([#91](https://github.com/Devolutions/now-libraries/issues/91)) ([0bac944c46](https://github.com/Devolutions/now-libraries/commit/0bac944c464b6c54f951eb80c2085baa301273b7)) 
+
+
+
 ## [[0.3.0](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.2.0...now-policy-api-v0.3.0)] - 2026-08-05
 
 ### <!-- 1 -->Features
