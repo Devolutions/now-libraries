@@ -400,7 +400,7 @@ impl From<&str> for RuleId {
 /// Package identifier string.
 ///
 /// Validated against an explicit allowlist of characters: ASCII alphanumerics
-/// plus `. - _ + @ / : ^ ~ = [ ] , < > | # $ % { }`.
+/// plus `. - _ + @ / : [ ] , # $ % { }`.
 ///
 /// - `.`, `-`, `_`, `+`: winget (`Notepad++.Notepad++`), chocolatey, pip, cargo,
 ///   dotnet, apt/dnf/pacman (`g++`, `libstdc++6`), PowerShell modules;
@@ -408,21 +408,23 @@ impl From<&str> for RuleId {
 /// - `@`, `/`: scoped npm/Bun packages (`@scope/package`), homebrew and scoop
 ///   `tap/formula` paths, versioned formulas (`python@3.11`);
 ///
-/// - `:`: npm aliases (`alias:@scope/package@^1.0.0`), vcpkg triplets
+/// - `:`: npm aliases (`alias:@scope/package@1.0.0`), vcpkg triplets
 ///   (`curl:x64-windows`);
-///
-/// - `^`, `~`, `=`, `<`, `>`, `|`: version pins/ranges in npm aliases and pip
-///   specifiers (`>=7 <8` without the space, `||` alternation);
 ///
 /// - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras
 ///   (`requests[socks]`);
 ///
 /// - `#`, `$`, `%`, `{`, `}`: additional identifier punctuation.
 ///
-/// The wildcards `*` and `?` are rejected: policy-side package identifier
-/// matching is wildcard-based, so wildcards in request identifiers would be
-/// ambiguous. Everything else — whitespace, control characters, `"`, `\`,
-/// backtick, `! & ' ( ) ;`, and non-ASCII — is also rejected.
+/// Version range/pin operators (`<`, `>`, `=`, `!`, `|`, `^`, `~`) are
+/// rejected: the broker matches against a specific, exact version carried in
+/// the request's separate `Package.Version` field, so range expressions do
+/// not belong in the identifier (npm aliases must use exact versions, e.g.
+/// `alias:pkg@7.20.0`). The wildcards `*` and `?` are also rejected:
+/// policy-side package identifier matching is wildcard-based, so wildcards in
+/// request identifiers would be ambiguous. Everything else — whitespace,
+/// control characters, `"`, `\`, backtick, `& ' ( ) ;`, and non-ASCII — is
+/// rejected as well.
 #[derive(
     Debug,
     Clone,
@@ -439,11 +441,7 @@ impl From<&str> for RuleId {
 #[deref(forward)]
 #[display("{_0}")]
 pub struct PackageIdentifier(
-    #[schemars(
-        length(min = 1, max = 256),
-        regex(pattern = r"^[A-Za-z0-9._+@/:^~=\[\],<>|#$%{}-]+$")
-    )]
-    pub String,
+    #[schemars(length(min = 1, max = 256), regex(pattern = r"^[A-Za-z0-9._+@/:\[\],#$%{}-]+$"))] pub String,
 );
 
 impl PackageIdentifier {
@@ -472,15 +470,9 @@ impl PackageIdentifier {
                         | b'@'
                         | b'/'
                         | b':'
-                        | b'^'
-                        | b'~'
-                        | b'='
                         | b'['
                         | b']'
                         | b','
-                        | b'<'
-                        | b'>'
-                        | b'|'
                         | b'#'
                         | b'$'
                         | b'%'
@@ -490,8 +482,7 @@ impl PackageIdentifier {
         }) {
             return Err(ModelValidationError::Invalid {
                 type_name: "PackageIdentifier",
-                reason: "must contain only ASCII alphanumerics or '. - _ + @ / : ^ ~ = [ ] , < > | # $ % { }'"
-                    .to_owned(),
+                reason: "must contain only ASCII alphanumerics or '. - _ + @ / : [ ] , # $ % { }'".to_owned(),
             });
         }
 
@@ -600,10 +591,10 @@ mod tests {
             // Scoped npm/Bun packages.
             "@scope/package",
             "@babel/core",
-            // npm aliases.
-            "babel-core-legacy:@babel/core@^7.20.0",
-            "my-alias:lodash@~4.17.21",
-            "pinned:react@=18.2.0",
+            // npm aliases (exact versions only).
+            "babel-core-legacy:@babel/core@7.20.0",
+            "my-alias:lodash@4.17.21",
+            "pinned:react@18.2.0",
             // vcpkg triplets and features.
             "curl:x64-windows",
             "curl[ssl]:x64-windows",
@@ -611,18 +602,13 @@ mod tests {
             // Homebrew/scoop tap paths and versioned formulas.
             "extras/vscode",
             "homebrew/core/python@3.11",
-            // pip extras and version pins.
+            // pip extras.
             "requests[socks]",
-            "requests==2.32.0",
             // Chocolatey, dotnet, cargo, apt-style names.
             "git.install",
             "dotnet-ef",
             "serde_json",
             "g++",
-            // Version range operators.
-            "ranged:react@>=18.2.0",
-            "either:foo@1.0.0||2.0.0",
-            "spec<2.0",
             // Additional identifier punctuation.
             "foo#bar",
             "foo$bar",
@@ -653,12 +639,20 @@ mod tests {
             "foo bar",
             "foo\u{0}bar",
             "foo\u{7f}bar",
-            "foo!bar",
             "foo&bar",
             "foo'bar",
             "foo(bar)",
             "foo;bar",
             "foo`bar",
+            // Version range/pin operators (exact versions only, carried in Package.Version).
+            "babel-core-legacy:@babel/core@^7.20.0",
+            "my-alias:lodash@~4.17.21",
+            "pinned:react@=18.2.0",
+            "requests==2.32.0",
+            "requests!=2.32.0",
+            "ranged:react@>=18.2.0",
+            "either:foo@1.0.0||2.0.0",
+            "spec<2.0",
             "gr\u{fc}n",
             &"a".repeat(257),
         ];
@@ -676,7 +670,7 @@ mod tests {
     fn package_request_deserializes_scoped_and_aliased_identifiers() {
         let identifiers = [
             "@scope/package",
-            "babel-core-legacy:@babel/core@^7.20.0",
+            "babel-core-legacy:@babel/core@7.20.0",
             "curl:x64-windows",
             "curl[ssl]:x64-windows",
         ];
