@@ -749,11 +749,23 @@ components:
       description: |-
         Package identifier string.
 
-        Allows `/` and `:` so that scoped npm/Bun packages (`@scope/package`), npm aliases (`alias:@scope/package@^1.0.0`) and vcpkg triplets (`curl:x64-windows`) are accepted. Rejects control characters, `\`, `"`, `<`, `>`, `|`, and the wildcard characters `*` and `?` (policy-side package identifier matching is wildcard-based, so wildcards in request identifiers would be ambiguous).
+        Validated against an explicit allowlist of characters actually used by the supported package managers: ASCII alphanumerics plus `. - _ + @ / : ^ ~ = [ ] ,`.
+
+        - `.`, `-`, `_`, `+`: winget (`Notepad++.Notepad++`), chocolatey, pip, cargo, dotnet, apt/dnf/pacman (`g++`, `libstdc++6`), PowerShell modules;
+
+        - `@`, `/`: scoped npm/Bun packages (`@scope/package`), homebrew and scoop `tap/formula` paths, versioned formulas (`python@3.11`);
+
+        - `:`: npm aliases (`alias:@scope/package@^1.0.0`), vcpkg triplets (`curl:x64-windows`);
+
+        - `^`, `~`, `=`: version pins/ranges inside npm aliases and pip specifiers;
+
+        - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras (`requests[socks]`).
+
+        Everything else — including whitespace, control characters, wildcards (`*`, `?`; policy-side package identifier matching is wildcard-based, so wildcards in request identifiers would be ambiguous), shell metacharacters, and non-ASCII — is rejected.
       type: string
       maxLength: 256
       minLength: 1
-      pattern: ^[^\\*?"<>|\x00-\x1f\x7f]+$
+      pattern: ^[A-Za-z0-9._+@/:^~=\[\],-]+$
     PackageRequest:
       description: Canonical request sent by a package broker client to the elevated broker.
       type: object

@@ -399,11 +399,27 @@ impl From<&str> for RuleId {
 
 /// Package identifier string.
 ///
-/// Allows `/` and `:` so that scoped npm/Bun packages (`@scope/package`), npm aliases
-/// (`alias:@scope/package@^1.0.0`) and vcpkg triplets (`curl:x64-windows`) are accepted.
-/// Rejects control characters, `\`, `"`, `<`, `>`, `|`, and the wildcard characters
-/// `*` and `?` (policy-side package identifier matching is wildcard-based, so wildcards
-/// in request identifiers would be ambiguous).
+/// Validated against an explicit allowlist of characters actually used by the
+/// supported package managers: ASCII alphanumerics plus `. - _ + @ / : ^ ~ = [ ] ,`.
+///
+/// - `.`, `-`, `_`, `+`: winget (`Notepad++.Notepad++`), chocolatey, pip, cargo,
+///   dotnet, apt/dnf/pacman (`g++`, `libstdc++6`), PowerShell modules;
+///
+/// - `@`, `/`: scoped npm/Bun packages (`@scope/package`), homebrew and scoop
+///   `tap/formula` paths, versioned formulas (`python@3.11`);
+///
+/// - `:`: npm aliases (`alias:@scope/package@^1.0.0`), vcpkg triplets
+///   (`curl:x64-windows`);
+///
+/// - `^`, `~`, `=`: version pins/ranges inside npm aliases and pip specifiers;
+///
+/// - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras
+///   (`requests[socks]`).
+///
+/// Everything else — including whitespace, control characters, wildcards
+/// (`*`, `?`; policy-side package identifier matching is wildcard-based, so
+/// wildcards in request identifiers would be ambiguous), shell metacharacters,
+/// and non-ASCII — is rejected.
 #[derive(
     Debug,
     Clone,
@@ -420,7 +436,7 @@ impl From<&str> for RuleId {
 #[deref(forward)]
 #[display("{_0}")]
 pub struct PackageIdentifier(
-    #[schemars(length(min = 1, max = 256), regex(pattern = r#"^[^\\*?"<>|\x00-\x1f\x7f]+$"#))] pub String,
+    #[schemars(length(min = 1, max = 256), regex(pattern = r"^[A-Za-z0-9._+@/:^~=\[\],-]+$"))] pub String,
 );
 
 impl PackageIdentifier {
@@ -439,20 +455,16 @@ impl PackageIdentifier {
             });
         }
 
-        if s.bytes().any(|b| {
-            b == b'\\'
-                || b == b'*'
-                || b == b'?'
-                || b == b'"'
-                || b == b'<'
-                || b == b'>'
-                || b == b'|'
-                || b <= 0x1f
-                || b == 0x7f
+        if !s.bytes().all(|b| {
+            b.is_ascii_alphanumeric()
+                || matches!(
+                    b,
+                    b'.' | b'-' | b'_' | b'+' | b'@' | b'/' | b':' | b'^' | b'~' | b'=' | b'[' | b']' | b','
+                )
         }) {
             return Err(ModelValidationError::Invalid {
                 type_name: "PackageIdentifier",
-                reason: "contains forbidden characters".to_owned(),
+                reason: "must contain only ASCII alphanumerics or '. - _ + @ / : ^ ~ = [ ] ,'".to_owned(),
             });
         }
 
@@ -557,21 +569,29 @@ mod tests {
         let valid = [
             // WinGet.
             "Microsoft.VisualStudioCode",
+            "Notepad++.Notepad++",
             // Scoped npm/Bun packages.
             "@scope/package",
             "@babel/core",
             // npm aliases.
             "babel-core-legacy:@babel/core@^7.20.0",
             "my-alias:lodash@~4.17.21",
+            "pinned:react@=18.2.0",
             // vcpkg triplets and features.
             "curl:x64-windows",
             "curl[ssl]:x64-windows",
-            // Other managers (pip extras, chocolatey, scoop buckets, dotnet, cargo).
-            "requests[socks]",
-            "git.install",
+            "curl[ssl,http2]:x64-windows",
+            // Homebrew/scoop tap paths and versioned formulas.
             "extras/vscode",
+            "homebrew/core/python@3.11",
+            // pip extras and version pins.
+            "requests[socks]",
+            "requests==2.32.0",
+            // Chocolatey, dotnet, cargo, apt-style names.
+            "git.install",
             "dotnet-ef",
             "serde_json",
+            "g++",
         ];
 
         for id in valid {
@@ -597,8 +617,20 @@ mod tests {
             "foo|bar",
             "foo\r\nbar",
             "foo\tbar",
+            "foo bar",
             "foo\u{0}bar",
             "foo\u{7f}bar",
+            "foo!bar",
+            "foo#bar",
+            "foo$bar",
+            "foo%bar",
+            "foo&bar",
+            "foo'bar",
+            "foo(bar)",
+            "foo;bar",
+            "foo{bar}",
+            "foo`bar",
+            "caf\u{e9}",
             &"a".repeat(257),
         ];
 
@@ -617,6 +649,7 @@ mod tests {
             "@scope/package",
             "babel-core-legacy:@babel/core@^7.20.0",
             "curl:x64-windows",
+            "curl[ssl]:x64-windows",
         ];
 
         for id in identifiers {
