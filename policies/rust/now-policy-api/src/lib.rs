@@ -398,6 +398,38 @@ impl From<&str> for RuleId {
 }
 
 /// Package identifier string.
+///
+/// Validated against an explicit allowlist of characters: ASCII alphanumerics
+/// plus `. - _ + @ / : [ ] , # $ % { }`.
+///
+/// - `.`, `-`, `_`, `+`: winget (`Notepad++.Notepad++`), chocolatey, pip, cargo,
+///   dotnet, apt/dnf/pacman (`g++`, `libstdc++6`), PowerShell modules;
+///
+/// - `@`, `/`: scoped npm/Bun packages (`@scope/package`), homebrew and scoop
+///   `tap/formula` paths, versioned formulas (`python@3.11`);
+///
+/// - `:`: npm aliases (`alias:@scope/package@1.0.0`), vcpkg triplets
+///   (`curl:x64-windows`);
+///
+/// - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras
+///   (`requests[socks]`);
+///
+/// - `#`, `$`, `%`, `{`, `}`: additional identifier punctuation (accepted by
+///   product decision for forward compatibility). Caveat: these characters
+///   carry expansion semantics in some shells (`${VAR}`, `%VAR%`, brace
+///   expansion), so downstream command builders must pass identifiers as
+///   discrete process arguments and never interpolate them into a shell
+///   command line.
+///
+/// Version range/pin operators (`<`, `>`, `=`, `!`, `|`, `^`, `~`) are
+/// rejected: the broker matches against a specific, exact version carried in
+/// the request's separate `Package.Version` field, so range expressions do
+/// not belong in the identifier (npm aliases must use exact versions, e.g.
+/// `alias:pkg@7.20.0`). The wildcards `*` and `?` are also rejected:
+/// policy-side package identifier matching is wildcard-based, so wildcards in
+/// request identifiers would be ambiguous. Everything else — whitespace,
+/// control characters, `"`, `\`, backtick, `& ' ( ) ;`, and non-ASCII — is
+/// rejected as well.
 #[derive(
     Debug,
     Clone,
@@ -414,7 +446,7 @@ impl From<&str> for RuleId {
 #[deref(forward)]
 #[display("{_0}")]
 pub struct PackageIdentifier(
-    #[schemars(length(min = 1, max = 256), regex(pattern = r#"^[^\\\/:*?"<>|\x01-\x1f]+$"#))] pub String,
+    #[schemars(length(min = 1, max = 256), regex(pattern = r"^[A-Za-z0-9._+@/:\[\],#$%{}-]+$"))] pub String,
 );
 
 impl PackageIdentifier {
@@ -433,21 +465,29 @@ impl PackageIdentifier {
             });
         }
 
-        if s.bytes().any(|b| {
-            b == b'\\'
-                || b == b'/'
-                || b == b':'
-                || b == b'*'
-                || b == b'?'
-                || b == b'"'
-                || b == b'<'
-                || b == b'>'
-                || b == b'|'
-                || (0x01..=0x1f).contains(&b)
+        if !s.bytes().all(|b| {
+            b.is_ascii_alphanumeric()
+                || matches!(
+                    b,
+                    b'.' | b'-'
+                        | b'_'
+                        | b'+'
+                        | b'@'
+                        | b'/'
+                        | b':'
+                        | b'['
+                        | b']'
+                        | b','
+                        | b'#'
+                        | b'$'
+                        | b'%'
+                        | b'{'
+                        | b'}'
+                )
         }) {
             return Err(ModelValidationError::Invalid {
                 type_name: "PackageIdentifier",
-                reason: "contains forbidden characters".to_owned(),
+                reason: "must contain only ASCII alphanumerics or '. - _ + @ / : [ ] , # $ % { }'".to_owned(),
             });
         }
 
@@ -540,5 +580,162 @@ impl<'de> Deserialize<'de> for CommandString {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
         Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn package_identifier_accepts_manager_specific_identifiers() {
+        let valid = [
+            // WinGet.
+            "Microsoft.VisualStudioCode",
+            "Notepad++.Notepad++",
+            // Scoped npm/Bun packages.
+            "@scope/package",
+            "@babel/core",
+            // npm aliases (exact versions only).
+            "babel-core-legacy:@babel/core@7.20.0",
+            "my-alias:lodash@4.17.21",
+            "pinned:react@18.2.0",
+            // vcpkg triplets and features.
+            "curl:x64-windows",
+            "curl[ssl]:x64-windows",
+            "curl[ssl,http2]:x64-windows",
+            // Homebrew/scoop tap paths and versioned formulas.
+            "extras/vscode",
+            "homebrew/core/python@3.11",
+            // pip extras.
+            "requests[socks]",
+            // Chocolatey, dotnet, cargo, apt-style names.
+            "git.install",
+            "dotnet-ef",
+            "serde_json",
+            "g++",
+            // Additional identifier punctuation.
+            "foo#bar",
+            "foo$bar",
+            "foo%20bar",
+            "foo{bar}",
+        ];
+
+        for id in valid {
+            PackageIdentifier::parse(id).unwrap_or_else(|e| panic!("{id:?} should be valid: {e}"));
+
+            let json = serde_json::to_string(id).expect("string should serialize to JSON");
+            let deserialized: PackageIdentifier =
+                serde_json::from_str(&json).unwrap_or_else(|e| panic!("{id:?} should deserialize: {e}"));
+            assert_eq!(deserialized.0, id);
+        }
+    }
+
+    #[test]
+    fn package_identifier_rejects_forbidden_input() {
+        let invalid = [
+            "",
+            "foo\\bar",
+            "foo\"bar",
+            "foo*",
+            "foo?",
+            "foo\r\nbar",
+            "foo\tbar",
+            "foo bar",
+            "foo\u{0}bar",
+            "foo\u{7f}bar",
+            "foo&bar",
+            "foo'bar",
+            "foo(bar)",
+            "foo;bar",
+            "foo`bar",
+            // Version range/pin operators (exact versions only, carried in Package.Version).
+            "babel-core-legacy:@babel/core@^7.20.0",
+            "my-alias:lodash@~4.17.21",
+            "pinned:react@=18.2.0",
+            "requests==2.32.0",
+            "requests!=2.32.0",
+            "ranged:react@>=18.2.0",
+            "either:foo@1.0.0||2.0.0",
+            "spec<2.0",
+            "gr\u{fc}n",
+            &"a".repeat(257),
+        ];
+
+        for id in invalid {
+            PackageIdentifier::parse(id).expect_err(&format!("{id:?} should be rejected"));
+
+            let json = serde_json::to_string(id).expect("string should serialize to JSON");
+            serde_json::from_str::<PackageIdentifier>(&json)
+                .expect_err(&format!("{id:?} should be rejected during deserialization"));
+        }
+    }
+
+    #[test]
+    fn package_request_deserializes_scoped_and_aliased_identifiers() {
+        let identifiers = [
+            "@scope/package",
+            "babel-core-legacy:@babel/core@7.20.0",
+            "curl:x64-windows",
+            "curl[ssl]:x64-windows",
+        ];
+
+        for id in identifiers {
+            let json = serde_json::json!({
+                "RequestKind": "PackageRequest",
+                "RequestVersion": "1.0",
+                "RequestId": "req-scoped-install",
+                "CreatedAt": "2026-05-05T12:00:00Z",
+                "Operation": "Install",
+                "Manager": "Npm",
+                "Source": { "Name": "npm" },
+                "Package": { "Id": id },
+                "Options": {
+                    "Interactive": false,
+                    "SkipHashCheck": false,
+                    "PreRelease": false
+                },
+                "Client": {
+                    "RequestedElevation": "Elevated",
+                    "EffectiveUser": "CONTOSO\\alice",
+                    "ClientVersion": "3.2.0",
+                    "Transport": "HttpNamedPipe",
+                    "ClientExecutablePath": "C:\\Program Files\\Devolutions\\NOW\\now-client.exe"
+                }
+            });
+
+            let request: PackageRequest = serde_json::from_value(json)
+                .unwrap_or_else(|e| panic!("PackageRequest with id {id:?} should deserialize: {e}"));
+            assert_eq!(request.package.id.0, id);
+        }
+    }
+
+    #[test]
+    fn package_request_rejects_invalid_identifier() {
+        let json = serde_json::json!({
+            "RequestKind": "PackageRequest",
+            "RequestVersion": "1.0",
+            "RequestId": "req-invalid-id",
+            "CreatedAt": "2026-05-05T12:00:00Z",
+            "Operation": "Install",
+            "Manager": "Winget",
+            "Source": { "Name": "winget" },
+            "Package": { "Id": "evil;package\r\n" },
+            "Options": {
+                "Interactive": false,
+                "SkipHashCheck": false,
+                "PreRelease": false
+            },
+            "Client": {
+                "RequestedElevation": "Elevated",
+                "EffectiveUser": "CONTOSO\\alice",
+                "ClientVersion": "3.2.0",
+                "Transport": "HttpNamedPipe",
+                "ClientExecutablePath": "C:\\Program Files\\Devolutions\\NOW\\now-client.exe"
+            }
+        });
+
+        serde_json::from_value::<PackageRequest>(json)
+            .expect_err("PackageRequest with forbidden identifier characters should be rejected");
     }
 }
