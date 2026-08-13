@@ -763,7 +763,7 @@ components:
 
         - `*`, `?`: wildcards. Note: policy-side package identifier matching is wildcard-based, so wildcards in request identifiers may behave surprisingly when matched against policy rules.
 
-        Everything else — whitespace, control characters, `"`, `\`, shell metacharacters, and non-ASCII — is rejected.
+        Everything else — whitespace, control characters, `"`, `\`, backtick, `! # $ % & ' ( ) ; { }`, and non-ASCII — is rejected.
       type: string
       maxLength: 256
       minLength: 1

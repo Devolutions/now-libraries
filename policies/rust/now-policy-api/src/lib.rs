@@ -421,8 +421,8 @@ impl From<&str> for RuleId {
 ///   wildcard-based, so wildcards in request identifiers may behave
 ///   surprisingly when matched against policy rules.
 ///
-/// Everything else — whitespace, control characters, `"`, `\`, shell
-/// metacharacters, and non-ASCII — is rejected.
+/// Everything else — whitespace, control characters, `"`, `\`, backtick,
+/// `! # $ % & ' ( ) ; { }`, and non-ASCII — is rejected.
 #[derive(
     Debug,
     Clone,
