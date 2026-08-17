@@ -19,9 +19,11 @@ public sealed class PolicyResponse
     }
 
     [JsonPropertyName("ResponseVersion")]
+    [JsonRequired]
     public string ResponseVersion { get; set; } = BrokerApi.Version;
 
     [JsonPropertyName("Server")]
+    [JsonRequired]
     public ServerContext Server { get; set; } = new();
 
     [JsonPropertyName("Policy")]
@@ -122,9 +124,11 @@ public sealed class ExecutionResponse
 public sealed class ServerContext
 {
     [JsonPropertyName("ServerVersion")]
+    [JsonRequired]
     public string ServerVersion { get; set; } = "";
 
     [JsonPropertyName("Transport")]
+    [JsonRequired]
     public Transport Transport { get; set; }
 }
 

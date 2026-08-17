@@ -284,8 +284,7 @@ fn policy_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         )
         .response::<200, Json<PolicyResponse>>()
         .response::<404, Json<ErrorResponse>>()
-        .response::<500, Json<ErrorResponse>>()
-        .response::<503, Json<ErrorResponse>>()
+        .default_response::<Json<ErrorResponse>>()
 }
 
 fn evaluate_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
@@ -360,5 +359,20 @@ mod tests {
                 "component collision must not rename {name}"
             );
         }
+    }
+
+    #[test]
+    fn policy_openapi_documents_structured_errors_for_other_statuses() {
+        let api = serde_json::to_value(openapi()).expect("OpenAPI should serialize");
+        let responses = &api["paths"]["/v1/policy"]["get"]["responses"];
+
+        assert_eq!(
+            responses["default"]["content"]["application/json"]["schema"]["$ref"],
+            "#/components/schemas/ErrorResponse"
+        );
+        assert_eq!(
+            responses["404"]["content"]["application/json"]["schema"]["$ref"],
+            "#/components/schemas/ErrorResponse"
+        );
     }
 }

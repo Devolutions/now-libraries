@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 using Devolutions.Now.Policy.Client;
 
@@ -351,6 +352,31 @@ public class BrokerClientTests
     }
 
     [Theory]
+    [InlineData("ResponseVersion")]
+    [InlineData("Server")]
+    [InlineData("Server.ServerVersion")]
+    [InlineData("Server.Transport")]
+    [InlineData("Policy.$schema")]
+    [InlineData("Policy.Metadata.Id")]
+    [InlineData("Policy.Enforcement.DefaultDecision")]
+    [InlineData("Policy.Rules")]
+    [InlineData("Policy.Rules.0.Match")]
+    public async Task GetPolicy_rejects_missing_required_property(string propertyPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        RemoveProperty(document, propertyPath);
+        var client = CreateClient(new FakeBrokerTransport(document.ToJsonString()));
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.Equal(200, exception.StatusCode);
+    }
+
+    [Theory]
     [InlineData("")]
     [InlineData("<html>not found</html>")]
     public async Task GetPolicy_identifies_legacy_unstructured_not_found(string body)
@@ -387,6 +413,20 @@ public class BrokerClientTests
         ClientExecutablePath = "C:\\Tools\\client.exe",
         ClientVersion = "9.8.7",
     });
+
+    private static void RemoveProperty(JsonNode document, string propertyPath)
+    {
+        var segments = propertyPath.Split('.');
+        var parent = document;
+        foreach (var segment in segments[..^1])
+        {
+            parent = int.TryParse(segment, out var index)
+                ? parent.AsArray()[index]!
+                : parent[segment]!;
+        }
+
+        Assert.True(parent.AsObject().Remove(segments[^1]), $"missing fixture property {propertyPath}");
+    }
 
     private sealed class FakeBrokerTransport : IBrokerTransport
     {

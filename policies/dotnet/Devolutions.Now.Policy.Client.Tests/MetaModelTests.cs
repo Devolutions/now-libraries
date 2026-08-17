@@ -1,5 +1,7 @@
 using System.Text.Json;
 
+using Devolutions.Now.Policy.Model;
+
 using Xunit;
 
 namespace Devolutions.Now.Policy.Client.Tests;
@@ -55,6 +57,67 @@ public class MetaModelTests
             """;
 
         Assert.Throws<JsonException>(() => BrokerJson.Deserialize<PolicyResponse>(json));
+    }
+
+    [Fact]
+    public void Public_json_options_source_generate_all_broker_dtos()
+    {
+        Type[] dtoTypes =
+        [
+            typeof(PackageRequest),
+            typeof(RequestSource),
+            typeof(RequestPackage),
+            typeof(RequestOptions),
+            typeof(ClientContext),
+            typeof(PolicyResponse),
+            typeof(EvaluationResponse),
+            typeof(ExecutionResponse),
+            typeof(ServerContext),
+            typeof(RequestSummary),
+            typeof(DecisionInfo),
+            typeof(ResponsePolicyInfo),
+            typeof(OperationDiagnostics),
+            typeof(OperationSubmission),
+            typeof(StatusRequest),
+            typeof(StatusResponse),
+            typeof(CancelRequest),
+            typeof(CancelResponse),
+            typeof(HealthResponse),
+            typeof(CapabilitiesResponse),
+            typeof(ManagerCapability),
+            typeof(ErrorResponse),
+            typeof(ErrorDetail),
+            typeof(EventChannel),
+            typeof(PolicyDocument),
+            typeof(PolicyMetadata),
+            typeof(PolicyEnforcement),
+            typeof(PolicyRule),
+            typeof(PolicyMatch),
+            typeof(VersionRange),
+            typeof(PolicyConstraints),
+        ];
+
+        foreach (var dtoType in dtoTypes)
+        {
+            Assert.NotNull(BrokerJson.Options.GetTypeInfo(dtoType));
+            Assert.NotNull(BrokerJson.PrettyOptions.GetTypeInfo(dtoType));
+        }
+    }
+
+    [Fact]
+    public void Public_json_options_round_trip_policy_response_without_reflection()
+    {
+        var json = File.ReadAllText(Path.Combine(TestData.SamplesDir, "responses", "policy.response.json"));
+        var response = JsonSerializer.Deserialize<PolicyResponse>(json, BrokerJson.Options);
+
+        Assert.NotNull(response);
+
+        var compact = JsonSerializer.Serialize(response, BrokerJson.Options);
+        var pretty = JsonSerializer.Serialize(response, BrokerJson.PrettyOptions);
+
+        Assert.NotNull(JsonSerializer.Deserialize<PolicyResponse>(compact, BrokerJson.Options));
+        Assert.NotNull(JsonSerializer.Deserialize<PolicyResponse>(pretty, BrokerJson.PrettyOptions));
+        Assert.Contains(Environment.NewLine, pretty);
     }
 
     [Fact]

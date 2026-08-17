@@ -19,14 +19,9 @@ public static class BrokerJson
     /// (via explicit <c>[JsonPropertyName]</c> attributes), PascalCase enum values, and
     /// null optionals omitted (mirroring the Rust <c>skip_serializing_if = "Option::is_none"</c>).
     /// </summary>
-    public static readonly JsonSerializerOptions Options = new(BrokerJsonSerializerContext.Default.Options)
-    {
-    };
+    public static readonly JsonSerializerOptions Options = CreateOptions(writeIndented: false);
 
-    public static readonly JsonSerializerOptions PrettyOptions = new(Options)
-    {
-        WriteIndented = true,
-    };
+    public static readonly JsonSerializerOptions PrettyOptions = CreateOptions(writeIndented: true);
 
     public static string Serialize<T>(T value) =>
         JsonSerializer.Serialize(value, TypeInfo<T>());
@@ -67,6 +62,15 @@ public static class BrokerJson
 
     private static JsonTypeInfo<T> Cast<T>(JsonTypeInfo jsonTypeInfo) =>
         (JsonTypeInfo<T>)jsonTypeInfo;
+
+    private static JsonSerializerOptions CreateOptions(bool writeIndented) =>
+        new(BrokerJsonSerializerContext.Default.Options)
+        {
+            TypeInfoResolver = JsonTypeInfoResolver.Combine(
+                BrokerJsonSerializerContext.Default,
+                BrokerPolicyJsonSerializerContext.Default),
+            WriteIndented = writeIndented,
+        };
 }
 
 [JsonSourceGenerationOptions(
