@@ -17,6 +17,8 @@ use now_policy_api::{
     API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, ErrorCode, ErrorResponse, EvaluationResponse,
     ExecutionResponse, HealthResponse, PackageRequest, StatusRequest, StatusResponse,
 };
+#[cfg(feature = "policy-compat")]
+use now_policy_api::{ErrorResponseKind, PolicyResponse};
 use schemars::SchemaGenerator;
 
 pub const MAX_REQUEST_BODY_BYTES: usize = 256 * 1024;
@@ -26,6 +28,17 @@ pub const MAX_REQUEST_BODY_BYTES: usize = 256 * 1024;
 pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
+    #[cfg(feature = "policy-compat")]
+    async fn policy(&self) -> Result<PolicyResponse, ErrorResponse> {
+        Err(ErrorResponse {
+            response_kind: ErrorResponseKind,
+            response_version: API_VERSION_STR.into(),
+            server: self.capabilities().await.server,
+            code: ErrorCode::NotFound,
+            message: "active policy inspection is not supported".to_owned(),
+            details: Vec::new(),
+        })
+    }
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
@@ -49,9 +62,14 @@ pub fn api_router_from_shared(server: SharedPackageBrokerServer) -> ApiRouter<()
 }
 
 fn api_routes() -> ApiRouter<SharedPackageBrokerServer> {
-    ApiRouter::new()
+    let router = ApiRouter::new()
         .api_route("/v1/health", get_with(health_handler, health_docs))
-        .api_route("/v1/capabilities", get_with(capabilities_handler, capabilities_docs))
+        .api_route("/v1/capabilities", get_with(capabilities_handler, capabilities_docs));
+
+    #[cfg(feature = "policy-compat")]
+    let router = router.api_route("/v1/policy", get_with(policy_handler, policy_docs));
+
+    router
         .api_route(
             "/v1/package-operations/evaluate",
             post_with(evaluate_handler, evaluate_docs)
@@ -106,11 +124,19 @@ fn openapi_schema_generator() -> SchemaGenerator {
 
 #[cfg(feature = "policy-compat")]
 fn register_policy_schema(api: &mut OpenApi) {
+    use std::collections::BTreeMap;
+
     use aide::openapi::{Components, SchemaObject};
     use now_policy::PolicyDocument;
     use schemars::schema::Schema;
 
     let root = openapi_schema_generator().into_root_schema_for::<PolicyDocument>();
+    let renames: BTreeMap<_, _> = root
+        .definitions
+        .keys()
+        .map(|name| (name.clone(), format!("PolicyModel{name}")))
+        .collect();
+    let root_schema = rewrite_policy_schema_refs(Schema::Object(root.schema), &renames);
 
     let components = api.components.get_or_insert_with(Components::default);
 
@@ -118,18 +144,60 @@ fn register_policy_schema(api: &mut OpenApi) {
         .schemas
         .entry("PolicyDocument".to_owned())
         .or_insert_with(|| SchemaObject {
-            json_schema: Schema::Object(root.schema),
+            json_schema: root_schema,
             external_docs: None,
             example: None,
         });
 
     for (name, schema) in root.definitions {
-        components.schemas.entry(name).or_insert_with(|| SchemaObject {
-            json_schema: schema,
-            external_docs: None,
-            example: None,
-        });
+        let component_name = renames
+            .get(&name)
+            .expect("BUG: every policy schema definition should have a namespaced component");
+        components
+            .schemas
+            .entry(component_name.clone())
+            .or_insert_with(|| SchemaObject {
+                json_schema: rewrite_policy_schema_refs(schema, &renames),
+                external_docs: None,
+                example: None,
+            });
     }
+}
+
+#[cfg(feature = "policy-compat")]
+fn rewrite_policy_schema_refs(
+    schema: schemars::schema::Schema,
+    renames: &std::collections::BTreeMap<String, String>,
+) -> schemars::schema::Schema {
+    fn rewrite(value: &mut serde_json::Value, renames: &std::collections::BTreeMap<String, String>) {
+        match value {
+            serde_json::Value::String(reference) => {
+                for prefix in ["#/components/schemas/", "#/definitions/"] {
+                    if let Some(name) = reference.strip_prefix(prefix)
+                        && let Some(replacement) = renames.get(name)
+                    {
+                        *reference = format!("#/components/schemas/{replacement}");
+                        break;
+                    }
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for value in values {
+                    rewrite(value, renames);
+                }
+            }
+            serde_json::Value::Object(values) => {
+                for value in values.values_mut() {
+                    rewrite(value, renames);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let mut value = serde_json::to_value(schema).expect("BUG: policy schema should serialize");
+    rewrite(&mut value, renames);
+    serde_json::from_value(value).expect("BUG: rewritten policy schema should deserialize")
 }
 
 async fn health_handler(State(server): State<SharedPackageBrokerServer>) -> Json<HealthResponse> {
@@ -138,6 +206,11 @@ async fn health_handler(State(server): State<SharedPackageBrokerServer>) -> Json
 
 async fn capabilities_handler(State(server): State<SharedPackageBrokerServer>) -> Json<CapabilitiesResponse> {
     Json(server.capabilities().await)
+}
+
+#[cfg(feature = "policy-compat")]
+async fn policy_handler(State(server): State<SharedPackageBrokerServer>) -> Response {
+    broker_result(server.policy().await)
 }
 
 async fn evaluate_handler(
@@ -203,6 +276,18 @@ fn capabilities_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .response::<200, Json<CapabilitiesResponse>>()
 }
 
+#[cfg(feature = "policy-compat")]
+fn policy_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
+    op.summary("Get active policy")
+        .description(
+            "Returns the active parsed policy document. A 404 response means policy inspection is unsupported.",
+        )
+        .response::<200, Json<PolicyResponse>>()
+        .response::<404, Json<ErrorResponse>>()
+        .response::<500, Json<ErrorResponse>>()
+        .response::<503, Json<ErrorResponse>>()
+}
+
 fn evaluate_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
     op.summary("Evaluate package operation")
         .description("Evaluates a package operation against policy without requiring elevated execution.")
@@ -239,4 +324,41 @@ fn cancel_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .response::<200, Json<CancelResponse>>()
         .response::<400, Json<ErrorResponse>>()
         .response::<404, Json<ErrorResponse>>()
+}
+
+#[cfg(all(test, feature = "policy-compat"))]
+mod tests {
+    use super::openapi;
+
+    #[test]
+    fn policy_schemas_do_not_rename_existing_api_components() {
+        let api = openapi();
+        let schemas = &api.components.expect("OpenAPI components should exist").schemas;
+
+        for name in [
+            "Architecture",
+            "CustomParameterString",
+            "Decision",
+            "Elevation",
+            "ManagerName",
+            "Operation",
+            "ResourceId",
+            "Scope",
+            "SemanticVersion",
+            "VersionString",
+        ] {
+            assert!(
+                schemas.contains_key(name),
+                "existing API component {name} should remain"
+            );
+            assert!(
+                schemas.contains_key(&format!("PolicyModel{name}")),
+                "embedded policy component {name} should be namespaced"
+            );
+            assert!(
+                !schemas.contains_key(&format!("{name}2")),
+                "component collision must not rename {name}"
+            );
+        }
+    }
 }

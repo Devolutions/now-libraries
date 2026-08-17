@@ -26,6 +26,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CapabilitiesResponse'
+  /v1/policy:
+    get:
+      summary: Get active policy
+      description: Returns the active parsed policy document. A 404 response means policy inspection is unsupported.
+      responses:
+        '200':
+          description: Response body for `GET /v1/policy`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '404':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /v1/package-operations/evaluate:
     post:
       summary: Evaluate package operation
@@ -827,6 +856,30 @@ components:
     PackageRequestKind:
       type: string
       pattern: ^PackageRequest$
+    PolicyResponse:
+      description: Response body for `GET /v1/policy`.
+      type: object
+      required:
+      - Policy
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      properties:
+        Policy:
+          description: Active parsed policy document.
+          $ref: '#/components/schemas/PolicyDocument'
+        ResponseKind:
+          description: Response discriminator.
+          $ref: '#/components/schemas/PolicyResponseKind'
+        ResponseVersion:
+          description: Server-side API version used to construct the response.
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          description: Server context.
+          $ref: '#/components/schemas/ServerContext'
+    PolicyResponseKind:
+      type: string
+      pattern: ^PolicyResponse$
     ProcessName:
       description: A process name string.
       type: string
@@ -1102,6 +1155,465 @@ components:
       - HttpNamedPipe
       - HttpLoopbackSimulator
     VersionString:
+      description: A short constrained string for version values.
+      type: string
+      maxLength: 128
+      minLength: 1
+    PolicyDocument:
+      title: PolicyDocument
+      description: A policy document governing which package operations are allowed or denied.
+      type: object
+      required:
+      - $schema
+      - Enforcement
+      - Metadata
+      - PolicyType
+      - PolicyVersion
+      - Rules
+      properties:
+        $schema:
+          description: Policy schema URI constant.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPolicySchemaUri'
+        Enforcement:
+          description: Enforcement configuration.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPolicyEnforcement'
+        Metadata:
+          description: Policy metadata.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPolicyMetadata'
+        PolicyType:
+          description: Must be `"PackageBrokerPolicy"`.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPackageBrokerPolicy'
+        PolicyVersion:
+          description: Policy syntax version (semver).
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelSemanticVersion'
+        Rules:
+          description: Ordered list of policy rules (may be empty; enforcement defaults apply).
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelPolicyRule'
+          maxItems: 1024
+      additionalProperties: false
+    PolicyModelArchitecture:
+      description: Target architecture.
+      type: string
+      enum:
+      - X86
+      - X64
+      - Arm64
+      - Neutral
+    PolicyModelCustomParameterString:
+      description: A custom parameter string.
+      type: string
+      maxLength: 512
+      minLength: 1
+    PolicyModelDecision:
+      description: Policy decision.
+      type: string
+      enum:
+      - Allow
+      - Deny
+    PolicyModelElevation:
+      description: Requested elevation level.
+      type: string
+      enum:
+      - Standard
+      - Elevated
+    PolicyModelHttpUrl:
+      description: |-
+        HTTP(S) URL string.
+
+        Validated at deserialization time using the `url` crate.
+      type: string
+      maxLength: 2048
+      pattern: ^([Hh][Tt][Tt][Pp][Ss]?)://.+$
+    PolicyModelManagerName:
+      description: Supported package manager names.
+      type: string
+      enum:
+      - Winget
+      - PowerShell
+      - PowerShell7
+      - Apt
+      - Bun
+      - Cargo
+      - Chocolatey
+      - Dnf
+      - Dotnet
+      - Flatpak
+      - Homebrew
+      - Npm
+      - Pacman
+      - Pip
+      - Scoop
+      - Snap
+      - Vcpkg
+    PolicyModelOperation:
+      description: Package operation type.
+      type: string
+      enum:
+      - Install
+      - Update
+      - Uninstall
+    PolicyModelPackageBrokerPolicy:
+      type: string
+      enum:
+      - PackageBrokerPolicy
+    PolicyModelPolicyConstraints:
+      description: Constraints applied after a rule matches.
+      type: object
+      properties:
+        AllowCustomInstallLocation:
+          description: Allow custom install location.
+          type: boolean
+        AllowCustomParameters:
+          description: Allow custom parameters.
+          type: boolean
+        AllowInteractive:
+          description: Allow interactive mode.
+          type: boolean
+        AllowKillBeforeOperation:
+          description: Allow killing processes before operation.
+          type: boolean
+        AllowPrePostCommands:
+          description: Allow pre/post operation commands.
+          type: boolean
+        AllowPreRelease:
+          description: Allow pre-release versions.
+          type: boolean
+        AllowSkipHashCheck:
+          description: Allow skipping hash verification.
+          type: boolean
+        AllowUninstallPrevious:
+          description: Allow uninstalling previous version before installing update.
+          type: boolean
+        AllowUpgrade:
+          description: Allow skipping upgrade on install operations if an existing version is detected (for install operations).
+          type: boolean
+        AllowedCustomParameterPatterns:
+          description: Glob patterns for allowed custom parameters.
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelCustomParameterString'
+          maxItems: 128
+        AllowedCustomParameters:
+          description: Exact allowed custom parameters.
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelCustomParameterString'
+          maxItems: 128
+        AllowedInstallLocationPatterns:
+          description: Glob patterns for allowed install locations.
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelStringPattern'
+          maxItems: 64
+        DeniedCustomParameters:
+          description: Denied custom parameters (deny takes precedence over allow).
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelCustomParameterString'
+          maxItems: 128
+      additionalProperties: false
+    PolicyModelPolicyEnforcement:
+      description: Enforcement configuration.
+      type: object
+      required:
+      - DefaultDecision
+      - RulePrecedence
+      properties:
+        AuditMode:
+          description: When true, broker logs decisions but does not enforce.
+          type: boolean
+          nullable: true
+        DefaultDecision:
+          description: Decision when no rule matches.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelDecision'
+        RulePrecedence:
+          description: Rule precedence strategy (must be "PriorityThenDeny").
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelRulePrecedence'
+      additionalProperties: false
+    PolicyModelPolicyMatch:
+      description: Match criteria for a policy rule. All specified fields must match. At least one field must be present.
+      type: object
+      properties:
+        Architectures:
+          description: Allowed architectures.
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelArchitecture'
+          maxItems: 5
+          uniqueItems: true
+        Elevation:
+          description: Allowed elevation levels.
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelElevation'
+          maxItems: 2
+          uniqueItems: true
+        HasCustomInstallLocation:
+          description: Whether request has custom install location.
+          type: array
+          items:
+            type: boolean
+          maxItems: 2
+          uniqueItems: true
+        HasCustomParameters:
+          description: Whether request has custom parameters.
+          type: array
+          items:
+            type: boolean
+          maxItems: 2
+          uniqueItems: true
+        HasKillBeforeOperation:
+          description: Whether request has kill-before-operation entries.
+          type: array
+          items:
+            type: boolean
+          maxItems: 2
+          uniqueItems: true
+        HasPrePostCommands:
+          description: Whether request has pre/post operation commands.
+          type: array
+          items:
+            type: boolean
+          maxItems: 2
+          uniqueItems: true
+        HasUninstallPrevious:
+          description: Whether request has uninstall-previous flag set.
+          type: array
+          items:
+            type: boolean
+          uniqueItems: true
+        Interactive:
+          description: Allowed interactive values.
+          type: array
+          items:
+            type: boolean
+          maxItems: 2
+          uniqueItems: true
+        Managers:
+          description: Allowed managers.
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelManagerName'
+          maxItems: 16
+          uniqueItems: true
+        Operations:
+          description: Allowed operations.
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelOperation'
+          maxItems: 3
+          uniqueItems: true
+        PackageIdentifiers:
+          description: Package identifier patterns (wildcard).
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelStringPattern'
+          maxItems: 1024
+          uniqueItems: true
+        PackageNames:
+          description: Package name patterns (wildcard).
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelStringPattern'
+          maxItems: 1024
+          uniqueItems: true
+        PreRelease:
+          description: Allowed preRelease values.
+          type: array
+          items:
+            type: boolean
+          maxItems: 2
+          uniqueItems: true
+        Scopes:
+          description: Allowed scopes.
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelScope'
+          maxItems: 2
+          uniqueItems: true
+        SkipHashCheck:
+          description: Allowed skipHashCheck values.
+          type: array
+          items:
+            type: boolean
+          maxItems: 2
+          uniqueItems: true
+        Sources:
+          description: Source patterns (wildcard).
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelStringPattern'
+          maxItems: 128
+          uniqueItems: true
+        VersionRange:
+          description: Semantic version range.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelVersionRange'
+          nullable: true
+        Versions:
+          description: Exact version list.
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelVersionString'
+          maxItems: 256
+          uniqueItems: true
+      additionalProperties: false
+    PolicyModelPolicyMetadata:
+      description: Policy metadata.
+      type: object
+      required:
+      - Id
+      - PublishedAt
+      - Publisher
+      - Revision
+      properties:
+        Description:
+          description: Human-readable description.
+          type: string
+          maxLength: 512
+          nullable: true
+        Id:
+          description: Unique policy identifier.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelResourceId'
+        PublishedAt:
+          description: ISO 8601 publication timestamp (RFC 3339).
+          type: string
+          format: date-time
+        Publisher:
+          description: Organization that published the policy.
+          type: string
+          maxLength: 128
+          minLength: 1
+        Revision:
+          description: Monotonically increasing revision number.
+          type: integer
+          format: uint32
+          maximum: 2147483647.0
+          minimum: 1.0
+        SupportUrl:
+          description: URL for support or documentation.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelHttpUrl'
+          nullable: true
+        ValidFrom:
+          description: Policy becomes active at this time.
+          type: string
+          format: date-time
+          nullable: true
+        ValidUntil:
+          description: Policy expires at this time.
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: false
+    PolicyModelPolicyRule:
+      description: A single policy rule.
+      type: object
+      required:
+      - Decision
+      - Id
+      - Match
+      - Priority
+      properties:
+        Constraints:
+          description: Additional constraints applied after matching. When absent, no constraints are enforced beyond the match criteria.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPolicyConstraints'
+          nullable: true
+        Decision:
+          description: Decision if this rule matches.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelDecision'
+        Enabled:
+          description: Whether the rule is active.
+          default: true
+          type: boolean
+        Id:
+          description: Unique rule identifier.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelResourceId'
+        Match:
+          description: Match criteria — request must satisfy all specified fields. At least one criterion must be present.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPolicyMatch'
+          minProperties: 1
+        Priority:
+          description: Priority (lower = higher precedence).
+          type: integer
+          format: uint32
+          maximum: 2147483647.0
+          minimum: 0.0
+        Reason:
+          description: Reason reported to the client.
+          type: string
+          maxLength: 512
+          nullable: true
+      additionalProperties: false
+    PolicyModelPolicySchemaUri:
+      type: string
+      enum:
+      - https://devolutions.net/schemas/now-policy.schema.1.0.json
+    PolicyModelResourceId:
+      description: Resource identifier (policy IDs, rule IDs, request IDs, audit IDs).
+      type: string
+      maxLength: 128
+      pattern: ^[A-Za-z0-9][A-Za-z0-9._:\-]{0,127}$
+    PolicyModelRulePrecedence:
+      description: Rule precedence strategy — always PriorityThenDeny.
+      type: string
+      enum:
+      - PriorityThenDeny
+    PolicyModelScope:
+      description: Package installation scope.
+      type: string
+      enum:
+      - User
+      - Machine
+    PolicyModelSemanticVersion:
+      description: |-
+        Semantic version string (SemVer 2.0.0).
+
+        Validated at deserialization time using the `semver` crate.
+      type: string
+      maxLength: 128
+      pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$
+    PolicyModelStringPattern:
+      description: Case-insensitive exact value or wildcard pattern.
+      type: string
+      maxLength: 256
+      minLength: 1
+    PolicyModelVersionRange:
+      description: Semantic version range for matching.
+      type: object
+      properties:
+        IncludePrerelease:
+          description: Whether to include pre-release versions.
+          default: false
+          type: boolean
+        MaxVersion:
+          description: Maximum version (inclusive).
+          type: string
+          maxLength: 128
+          minLength: 1
+          nullable: true
+        MinVersion:
+          description: Minimum version (inclusive).
+          type: string
+          maxLength: 128
+          minLength: 1
+          nullable: true
+      additionalProperties: false
+    PolicyModelVersionString:
       description: A short constrained string for version values.
       type: string
       maxLength: 128

@@ -19,6 +19,7 @@ public static class BrokerApi
     public const string ExecutionResponseKind = "ExecutionResponse";
     public const string StatusResponseKind = "StatusResponse";
     public const string CancelResponseKind = "CancelResponse";
+    public const string PolicyResponseKind = "PolicyResponse";
     public const string ErrorResponseKind = "ErrorResponse";
 
     internal static string ValidateMessageKind(string? value, string expected, string propertyName)

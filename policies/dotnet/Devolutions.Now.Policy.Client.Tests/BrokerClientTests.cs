@@ -300,6 +300,75 @@ public class BrokerClientTests
     }
 
     [Fact]
+    public async Task GetPolicy_sends_json_get_and_deserializes_response()
+    {
+        var body = await File.ReadAllTextAsync(Path.Combine(TestData.SamplesDir, "responses", "policy.response.json"));
+        var transport = new FakeBrokerTransport(body);
+        var client = CreateClient(transport);
+
+        var response = await client.GetPolicy();
+
+        var request = Assert.Single(transport.Requests);
+        Assert.Equal("GET", request.Method);
+        Assert.Equal("/v1/policy", request.Path);
+        Assert.Null(request.Body);
+        Assert.Equal("application/json", request.Headers["Accept"]);
+        Assert.Equal(BrokerApi.PolicyResponseKind, response.ResponseKind);
+        Assert.Equal("contoso.desktop.standard-allowlist", response.Policy.Metadata.Id);
+        Assert.Equal(4u, response.Policy.Metadata.Revision);
+    }
+
+    [Fact]
+    public async Task GetPolicy_propagates_cancellation()
+    {
+        var transport = new FakeBrokerTransport(Array.Empty<string>());
+        var client = CreateClient(transport);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.GetPolicy(cancellation.Token));
+        Assert.Empty(transport.Requests);
+    }
+
+    [Fact]
+    public async Task GetPolicy_preserves_structured_unsupported_error()
+    {
+        var transport = new FakeBrokerTransport(new BrokerTransportResponse
+        {
+            StatusCode = 404,
+            Body = """
+                {"ResponseKind":"ErrorResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"Code":"NotFound","Message":"active policy inspection is not supported"}
+                """,
+        });
+        var client = CreateClient(transport);
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.BrokerError, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.Equal(404, exception.StatusCode);
+        Assert.Equal(ErrorCode.NotFound, exception.BrokerError?.Code);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("<html>not found</html>")]
+    public async Task GetPolicy_identifies_legacy_unstructured_not_found(string body)
+    {
+        var transport = new FakeBrokerTransport(new BrokerTransportResponse { StatusCode = 404, Body = body });
+        var client = CreateClient(transport);
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.True(
+            exception.Kind is BrokerClientErrorKind.EmptyResponse or BrokerClientErrorKind.BrokerError,
+            $"unexpected legacy 404 error kind: {exception.Kind}");
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.Equal(404, exception.StatusCode);
+        Assert.Null(exception.BrokerError);
+    }
+
+    [Fact]
     public void Constructor_can_resolve_effective_user_automatically()
     {
         using var client = new BrokerClient(new BrokerClientOptions
@@ -340,6 +409,7 @@ public class BrokerClientTests
         public Task<BrokerTransportResponse> Send(BrokerTransportRequest request, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(request);
+            cancellationToken.ThrowIfCancellationRequested();
             Requests.Add(request);
             if (_responses.Count == 0)
             {

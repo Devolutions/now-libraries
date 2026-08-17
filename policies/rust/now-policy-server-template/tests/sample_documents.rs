@@ -12,6 +12,42 @@ use now_policy_server_template::{
 };
 use tower::ServiceExt;
 
+#[cfg(feature = "policy-compat")]
+use now_policy_server_template::{
+    ErrorCode, ErrorResponse, ErrorResponseKind, PolicyResponse, PolicyResponseKind, ServerContext,
+};
+
+#[cfg(feature = "policy-compat")]
+struct DefaultPolicyServer(MockPackageBrokerServer);
+
+#[cfg(feature = "policy-compat")]
+#[async_trait::async_trait]
+impl PackageBrokerServer for DefaultPolicyServer {
+    async fn health(&self) -> HealthResponse {
+        self.0.health().await
+    }
+
+    async fn capabilities(&self) -> CapabilitiesResponse {
+        self.0.capabilities().await
+    }
+
+    async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse> {
+        self.0.evaluate(request).await
+    }
+
+    async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse> {
+        self.0.execute(request).await
+    }
+
+    async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse> {
+        self.0.status(request).await
+    }
+
+    async fn cancel(&self, request: CancelRequest) -> Result<CancelResponse, ErrorResponse> {
+        self.0.cancel(request).await
+    }
+}
+
 fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/samples")
 }
@@ -72,6 +108,12 @@ fn assert_response_sample_deserializes(path: &Path) {
     } else if name.starts_with("capabilities") {
         let _: CapabilitiesResponse = serde_json::from_value(load_json_file(path))
             .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
+    } else if name.starts_with("policy") {
+        #[cfg(feature = "policy-compat")]
+        {
+            let _: PolicyResponse = serde_json::from_value(load_json_file(path))
+                .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
+        }
     } else {
         let _: EvaluationResponse = serde_json::from_value(load_json_file(path))
             .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
@@ -150,6 +192,31 @@ fn capabilities_response_sample_matches_api_contract() {
     assert_eq!(winget.scopes, vec![Scope::User, Scope::Machine]);
     assert!(winget.supports_capture_output);
     assert!(winget.supports_details);
+}
+
+#[cfg(feature = "policy-compat")]
+#[test]
+fn policy_response_sample_matches_api_contract() {
+    let content = load_text_file(&response_sample_path("policy.response.json"));
+    let policy: PolicyResponse = serde_json::from_str(&content).unwrap();
+
+    assert_eq!(policy.response_kind, PolicyResponseKind);
+    assert_eq!(&*policy.response_version, API_VERSION_STR);
+    assert_eq!(policy.server.transport, Transport::HttpNamedPipe);
+    assert_eq!(&*policy.policy.metadata.id, "contoso.desktop.standard-allowlist");
+    assert_eq!(policy.policy.metadata.revision, 4);
+    assert_eq!(policy.policy.rules.len(), 5);
+}
+
+#[cfg(feature = "policy-compat")]
+#[test]
+fn policy_response_embeds_the_canonical_policy_fixture() {
+    let response = load_json_file(&response_sample_path("policy.response.json"));
+    let policy_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../now-policy/assets/samples/corporate-allowlist.policy.json");
+    let policy = load_json_file(&policy_path);
+
+    assert_eq!(response.get("Policy"), Some(&policy));
 }
 
 #[test]
@@ -286,6 +353,32 @@ async fn mock_health_and_capabilities_match_response_samples() {
     assert_eq!(actual_capabilities.managers.len(), expected_capabilities.managers.len());
 }
 
+#[cfg(feature = "policy-compat")]
+#[tokio::test]
+async fn mock_server_returns_registered_policy_response() {
+    let content = load_text_file(&response_sample_path("policy.response.json"));
+    let expected: PolicyResponse = serde_json::from_str(&content).unwrap();
+    let server = MockPackageBrokerServer::new(DEFAULT_PIPE_NAME).with_policy_response(expected.clone());
+
+    let actual = server.policy().await.unwrap();
+
+    assert_eq!(actual.response_kind, expected.response_kind);
+    assert_eq!(&*actual.policy.metadata.id, &*expected.policy.metadata.id);
+    assert_eq!(actual.policy.metadata.revision, expected.policy.metadata.revision);
+}
+
+#[cfg(feature = "policy-compat")]
+#[tokio::test]
+async fn package_broker_server_default_policy_method_is_source_compatible() {
+    let server = DefaultPolicyServer(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME));
+
+    let error = server.policy().await.unwrap_err();
+
+    assert_eq!(error.code, ErrorCode::NotFound);
+    assert_eq!(error.response_kind, ErrorResponseKind);
+    assert_eq!(error.server.transport, Transport::HttpNamedPipe);
+}
+
 #[tokio::test]
 async fn api_router_dispatches_to_package_broker_server() {
     let request_path = samples_dir().join("requests/winget-vscode-install.request.json");
@@ -396,6 +489,112 @@ async fn api_router_maps_broker_errors_to_http_status() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[cfg(feature = "policy-compat")]
+#[tokio::test]
+async fn api_router_returns_active_policy_as_json() {
+    let content = load_text_file(&response_sample_path("policy.response.json"));
+    let expected: PolicyResponse = serde_json::from_str(&content).unwrap();
+    let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME).with_policy_response(expected.clone()));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/v1/policy")
+                .header("accept", "application/json")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.headers().get("content-type").unwrap(), "application/json");
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let actual: PolicyResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(actual.response_kind, PolicyResponseKind);
+    assert_eq!(&*actual.policy.metadata.id, &*expected.policy.metadata.id);
+}
+
+#[cfg(feature = "policy-compat")]
+#[tokio::test]
+async fn api_router_returns_structured_not_found_when_policy_inspection_is_unsupported() {
+    let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/v1/policy")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let error: ErrorResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(error.response_kind, ErrorResponseKind);
+    assert_eq!(error.code, ErrorCode::NotFound);
+}
+
+#[cfg(feature = "policy-compat")]
+#[tokio::test]
+async fn api_router_preserves_supported_policy_failure() {
+    let error = ErrorResponse {
+        response_kind: ErrorResponseKind,
+        response_version: API_VERSION_STR.into(),
+        server: ServerContext {
+            server_version: "0.1.0".to_owned(),
+            transport: Transport::HttpNamedPipe,
+        },
+        code: ErrorCode::BrokerPaused,
+        message: "active policy is temporarily unavailable".to_owned(),
+        details: Vec::new(),
+    };
+    let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME).with_policy_error(error));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/v1/policy")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    let error: ErrorResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(error.code, ErrorCode::BrokerPaused);
+}
+
+#[cfg(feature = "policy-compat")]
+#[tokio::test]
+async fn api_router_does_not_expose_a_policy_write_route() {
+    let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/v1/policy")
+                .header("content-type", "application/json")
+                .body(Body::from("{}"))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::METHOD_NOT_ALLOWED);
 }
 
 #[tokio::test]

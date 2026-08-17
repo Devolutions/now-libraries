@@ -72,6 +72,14 @@ public sealed class BrokerClient : IDisposable
         return _capabilities;
     }
 
+    /// <summary>Get the broker's active parsed policy document.</summary>
+    public async Task<PolicyResponse> GetPolicy(CancellationToken cancellationToken = default)
+    {
+        var headers = new Dictionary<string, string> { ["Accept"] = JsonMediaType };
+        var response = await SendRequest("GET", "/v1/policy", null, headers, cancellationToken).ConfigureAwait(false);
+        return DeserializeResponse<PolicyResponse>(response, "policy", "/v1/policy");
+    }
+
     /// <summary>Evaluate a package operation against policy without executing it (dry-run).</summary>
     public async Task<EvaluationResponse> Evaluate(PackageOperationRequest request, CancellationToken cancellationToken = default)
     {

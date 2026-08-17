@@ -35,3 +35,4 @@ tower = { version = "0.5", features = ["util"] }
 [[bin]]
 name = "generate-now-policy-api-openapi"
 path = "tools/generate_openapi.rs"
+required-features = ["policy-compat"]

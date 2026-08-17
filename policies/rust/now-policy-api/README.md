@@ -27,6 +27,7 @@ Library structure overview:
 - `event_channel.rs` contains the per-operation event channel descriptor returned in execution responses and the `NOW_BROKER` binary frame protocol codec (see `policies/docs/event-channel-protocol.md`).
 - `health.rs` contains health endpoint models for `GET /v1/health`.
 - `capabilities.rs` contains capability endpoint models for `GET /v1/capabilities`.
+- `policy.rs`, enabled by `policy-compat`, contains the active `PolicyDocument` response for `GET /v1/policy`.
 - `enums.rs` contains shared protocol enums.
 - `lib.rs` contains constrained string newtypes, validation helpers, etc.
 - `policy_compat.rs` is enabled by the `policy-compat` feature and maps selected API model types to the `now-policy` crate's package policy types.
@@ -49,8 +50,10 @@ The route-aware generator lives in `now-policy-server-template`, because OpenAPI
 Regenerate it with:
 
 ```powershell
-cargo run -p now-policy-server-template --bin generate-now-policy-api-openapi --locked
+cargo run -p now-policy-server-template --features policy-compat --bin generate-now-policy-api-openapi --locked
 ```
+
+The generator requires `policy-compat` so the published document always contains the policy inspection route and canonical `PolicyDocument` schema.
 
 Validation
 ----------

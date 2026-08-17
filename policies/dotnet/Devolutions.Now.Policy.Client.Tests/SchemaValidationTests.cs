@@ -32,6 +32,8 @@ public class SchemaValidationTests
         Assert.Equal(BrokerApi.Version, new HealthResponse().ResponseVersion);
         Assert.Equal(BrokerApi.CapabilitiesResponseKind, new CapabilitiesResponse().ResponseKind);
         Assert.Equal(BrokerApi.Version, new CapabilitiesResponse().ResponseVersion);
+        Assert.Equal(BrokerApi.PolicyResponseKind, new PolicyResponse().ResponseKind);
+        Assert.Equal(BrokerApi.Version, new PolicyResponse().ResponseVersion);
         Assert.Equal(BrokerApi.ErrorResponseKind, new ErrorResponse().ResponseKind);
         Assert.Equal(BrokerApi.Version, new ErrorResponse().ResponseVersion);
     }
@@ -70,6 +72,11 @@ public class SchemaValidationTests
     [MemberData(nameof(TestData.CapabilitiesResponseSamples), MemberType = typeof(TestData))]
     public async Task Capabilities_response_samples_are_schema_valid(string path)
         => await AssertValid(path, await TestData.SchemaAsync("CapabilitiesResponse"));
+
+    [Theory]
+    [MemberData(nameof(TestData.PolicyResponseSamples), MemberType = typeof(TestData))]
+    public async Task Policy_response_samples_are_schema_valid(string path)
+        => await AssertValid(path, await TestData.SchemaAsync("PolicyResponse"));
 
     [Fact]
     public async Task Invalid_request_is_rejected_by_schema()

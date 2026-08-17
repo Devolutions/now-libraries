@@ -38,6 +38,15 @@ public class MetaModelTests
     }
 
     [Fact]
+    public void PolicyResponseKind_rejects_wrong_value_on_deserialization()
+    {
+        var json = File.ReadAllText(Path.Combine(TestData.SamplesDir, "responses", "policy.response.json"))
+            .Replace(BrokerApi.PolicyResponseKind, BrokerApi.ErrorResponseKind, StringComparison.Ordinal);
+
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyResponse>(json));
+    }
+
+    [Fact]
     public async Task ErrorResponse_serializes_to_schema_valid_output()
     {
         var full = new ErrorResponse

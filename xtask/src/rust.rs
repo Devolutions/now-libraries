@@ -22,6 +22,11 @@ pub fn lints(sh: &Shell) -> anyhow::Result<()> {
         "{CARGO} clippy --workspace --all-targets --locked --keep-going -- -D warnings"
     )
     .run()?;
+    cmd!(
+        sh,
+        "{CARGO} clippy -p now-policy-api -p now-policy-server-template --all-targets --all-features --locked -- -D warnings"
+    )
+    .run()?;
 
     println!("All good!");
 
@@ -42,6 +47,11 @@ pub fn tests_run(sh: &Shell) -> anyhow::Result<()> {
     let _s = Section::new("RUST-TESTS-RUN");
 
     cmd!(sh, "{CARGO} test --workspace --locked").run()?;
+    cmd!(
+        sh,
+        "{CARGO} test -p now-policy-api -p now-policy-server-template --all-features --locked"
+    )
+    .run()?;
 
     println!("All good!");
 

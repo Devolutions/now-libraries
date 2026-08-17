@@ -12,6 +12,8 @@ pub mod event_channel;
 pub mod execute;
 pub mod health;
 #[cfg(feature = "policy-compat")]
+pub mod policy;
+#[cfg(feature = "policy-compat")]
 mod policy_compat;
 pub mod status;
 
@@ -23,6 +25,8 @@ pub use evaluate::*;
 pub use event_channel::*;
 pub use execute::*;
 pub use health::*;
+#[cfg(feature = "policy-compat")]
+pub use policy::*;
 pub use status::*;
 
 pub const API_VERSION_STR: &str = "1.0";
@@ -38,6 +42,8 @@ pub const EVALUATION_RESPONSE_KIND: &str = "EvaluationResponse";
 pub const EXECUTION_RESPONSE_KIND: &str = "ExecutionResponse";
 pub const STATUS_RESPONSE_KIND: &str = "StatusResponse";
 pub const CANCEL_RESPONSE_KIND: &str = "CancelResponse";
+#[cfg(feature = "policy-compat")]
+pub const POLICY_RESPONSE_KIND: &str = "PolicyResponse";
 pub const ERROR_RESPONSE_KIND: &str = "ErrorResponse";
 
 macro_rules! fixed_string_marker {
@@ -102,6 +108,8 @@ fixed_string_marker!(EvaluationResponseKind, EVALUATION_RESPONSE_KIND);
 fixed_string_marker!(ExecutionResponseKind, EXECUTION_RESPONSE_KIND);
 fixed_string_marker!(StatusResponseKind, STATUS_RESPONSE_KIND);
 fixed_string_marker!(CancelResponseKind, CANCEL_RESPONSE_KIND);
+#[cfg(feature = "policy-compat")]
+fixed_string_marker!(PolicyResponseKind, POLICY_RESPONSE_KIND);
 fixed_string_marker!(ErrorResponseKind, ERROR_RESPONSE_KIND);
 
 /// Error returned when a broker protocol newtype fails deserialization validation.

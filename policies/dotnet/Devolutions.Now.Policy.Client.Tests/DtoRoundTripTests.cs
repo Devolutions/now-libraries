@@ -57,6 +57,11 @@ public class DtoRoundTripTests
     public async Task CapabilitiesResponse_round_trips_and_validates(string path)
         => await AssertRoundTrip<CapabilitiesResponse>(path, await TestData.SchemaAsync("CapabilitiesResponse"));
 
+    [Theory]
+    [MemberData(nameof(TestData.PolicyResponseSamples), MemberType = typeof(TestData))]
+    public async Task PolicyResponse_round_trips_and_validates(string path)
+        => await AssertRoundTrip<PolicyResponse>(path, await TestData.SchemaAsync("PolicyResponse"));
+
     private static async Task AssertRoundTrip<T>(string samplePath, JsonSchema schema)
     {
         var original = await File.ReadAllTextAsync(samplePath);

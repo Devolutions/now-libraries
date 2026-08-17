@@ -163,6 +163,7 @@ public static class TestData
             .Where(f => !Path.GetFileName(f).StartsWith("execution-", StringComparison.Ordinal))
             .Where(f => !Path.GetFileName(f).StartsWith("health-", StringComparison.Ordinal))
             .Where(f => !Path.GetFileName(f).StartsWith("capabilities", StringComparison.Ordinal))
+            .Where(f => !Path.GetFileName(f).StartsWith("policy", StringComparison.Ordinal))
             .Select(f => new object[] { f });
 
     public static IEnumerable<object[]> ExecutionResponseSamples() =>
@@ -188,6 +189,11 @@ public static class TestData
     public static IEnumerable<object[]> CapabilitiesResponseSamples() =>
         JsonFiles(Path.Combine(SamplesDir, "responses"))
             .Where(f => Path.GetFileName(f).StartsWith("capabilities", StringComparison.Ordinal))
+            .Select(f => new object[] { f });
+
+    public static IEnumerable<object[]> PolicyResponseSamples() =>
+        JsonFiles(Path.Combine(SamplesDir, "responses"))
+            .Where(f => Path.GetFileName(f).StartsWith("policy", StringComparison.Ordinal))
             .Select(f => new object[] { f });
 
     private static IEnumerable<string> JsonFiles(string dir) =>
