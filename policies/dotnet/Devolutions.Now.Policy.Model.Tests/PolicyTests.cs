@@ -155,6 +155,34 @@ public class PolicyTests
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
     }
 
+    [Theory]
+    [InlineData("$schema")]
+    [InlineData("PolicyVersion")]
+    [InlineData("PolicyType")]
+    [InlineData("Metadata")]
+    [InlineData("Enforcement")]
+    [InlineData("Rules")]
+    [InlineData("Metadata.Id")]
+    [InlineData("Metadata.Publisher")]
+    [InlineData("Metadata.Revision")]
+    [InlineData("Metadata.PublishedAt")]
+    [InlineData("Enforcement.DefaultDecision")]
+    [InlineData("Enforcement.RulePrecedence")]
+    [InlineData("Rules.0.Id")]
+    [InlineData("Rules.0.Priority")]
+    [InlineData("Rules.0.Decision")]
+    [InlineData("Rules.0.Match")]
+    public void Null_rust_required_property_is_rejected_by_parser(string propertyPath)
+    {
+        var path = Path.Combine(SamplesDir, "corporate-allowlist.policy.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))
+            ?? throw new InvalidOperationException("policy sample should parse");
+
+        SetPropertyToNull(document, propertyPath);
+
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
     private static PolicyDocument ParsePolicy(string path)
     {
         var content = File.ReadAllText(path);
@@ -205,5 +233,26 @@ public class PolicyTests
         }
 
         Assert.True(parent.AsObject().Remove(segments[^1]), $"missing fixture property {propertyPath}");
+    }
+
+    private static void SetPropertyToNull(JsonNode document, string propertyPath)
+    {
+        var (parent, propertyName) = ResolveProperty(document, propertyPath);
+        Assert.NotNull(parent[propertyName]);
+        parent[propertyName] = null;
+    }
+
+    private static (JsonObject Parent, string PropertyName) ResolveProperty(JsonNode document, string propertyPath)
+    {
+        var segments = propertyPath.Split('.');
+        var parent = document;
+        foreach (var segment in segments[..^1])
+        {
+            parent = int.TryParse(segment, out var index)
+                ? parent.AsArray()[index]!
+                : parent[segment]!;
+        }
+
+        return (parent.AsObject(), segments[^1]);
     }
 }

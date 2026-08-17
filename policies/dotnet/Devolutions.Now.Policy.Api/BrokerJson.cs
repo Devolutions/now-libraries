@@ -75,6 +75,7 @@ public static class BrokerJson
 
 [JsonSourceGenerationOptions(
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
     WriteIndented = false)]
 [JsonSerializable(typeof(PackageRequest))]
 [JsonSerializable(typeof(StatusRequest))]
@@ -93,6 +94,7 @@ internal sealed partial class BrokerJsonSerializerContext : JsonSerializerContex
 
 [JsonSourceGenerationOptions(
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
     WriteIndented = false,
     UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(PackageRequest))]
@@ -112,12 +114,14 @@ internal sealed partial class BrokerJsonStrictSerializerContext : JsonSerializer
 
 [JsonSourceGenerationOptions(
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
     WriteIndented = false)]
 [JsonSerializable(typeof(PolicyResponse))]
 internal sealed partial class BrokerPolicyJsonSerializerContext : JsonSerializerContext;
 
 [JsonSourceGenerationOptions(
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
     WriteIndented = false,
     UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(PolicyResponse))]

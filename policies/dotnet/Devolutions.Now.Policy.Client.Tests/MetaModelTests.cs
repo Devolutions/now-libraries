@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 using Devolutions.Now.Policy.Model;
 
@@ -57,6 +58,30 @@ public class MetaModelTests
             """;
 
         Assert.Throws<JsonException>(() => BrokerJson.Deserialize<PolicyResponse>(json));
+    }
+
+    [Theory]
+    [InlineData("ResponseVersion")]
+    [InlineData("Server")]
+    [InlineData("Server.ServerVersion")]
+    [InlineData("Policy")]
+    [InlineData("Policy.Metadata")]
+    [InlineData("Policy.Metadata.Id")]
+    [InlineData("Policy.Enforcement.DefaultDecision")]
+    [InlineData("Policy.Rules")]
+    [InlineData("Policy.Rules.0.Match")]
+    [InlineData("Policy.Rules.0.Match.Operations")]
+    public void PolicyResponse_rejects_null_non_nullable_property(string propertyPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        SetPropertyToNull(document, propertyPath);
+        var json = document.ToJsonString();
+
+        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<PolicyResponse>(json));
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyResponse>(json));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<PolicyResponse>(json, BrokerJson.Options));
     }
 
     [Fact]
@@ -155,6 +180,22 @@ public class MetaModelTests
         ServerVersion = "0.1.0",
         Transport = Transport.HttpNamedPipe,
     };
+
+    private static void SetPropertyToNull(JsonNode document, string propertyPath)
+    {
+        var segments = propertyPath.Split('.');
+        var parent = document;
+        foreach (var segment in segments[..^1])
+        {
+            parent = int.TryParse(segment, out var index)
+                ? parent.AsArray()[index]!
+                : parent[segment]!;
+        }
+
+        var property = parent.AsObject();
+        Assert.NotNull(property[segments[^1]]);
+        property[segments[^1]] = null;
+    }
 
     private static async Task AssertSerializesValid<T>(T dto, string componentName)
     {

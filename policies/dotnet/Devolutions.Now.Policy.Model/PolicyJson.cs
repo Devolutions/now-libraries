@@ -56,7 +56,8 @@ public static class PolicyJson
 
 [JsonSourceGenerationOptions(
     WriteIndented = true,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true)]
 [JsonSerializable(typeof(PolicyDocument))]
 [JsonSerializable(typeof(PolicyMetadata))]
 [JsonSerializable(typeof(PolicyEnforcement))]
@@ -69,6 +70,7 @@ internal sealed partial class PolicyJsonSerializerContext : JsonSerializerContex
 [JsonSourceGenerationOptions(
     WriteIndented = true,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
     UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(PolicyDocument))]
 [JsonSerializable(typeof(PolicyMetadata))]

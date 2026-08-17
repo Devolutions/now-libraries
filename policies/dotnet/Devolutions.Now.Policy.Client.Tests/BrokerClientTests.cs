@@ -377,6 +377,32 @@ public class BrokerClientTests
     }
 
     [Theory]
+    [InlineData("ResponseVersion")]
+    [InlineData("Server")]
+    [InlineData("Server.ServerVersion")]
+    [InlineData("Policy")]
+    [InlineData("Policy.Metadata")]
+    [InlineData("Policy.Metadata.Id")]
+    [InlineData("Policy.Enforcement.DefaultDecision")]
+    [InlineData("Policy.Rules")]
+    [InlineData("Policy.Rules.0.Match")]
+    [InlineData("Policy.Rules.0.Match.Operations")]
+    public async Task GetPolicy_rejects_null_non_nullable_property(string propertyPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        SetPropertyToNull(document, propertyPath);
+        var client = CreateClient(new FakeBrokerTransport(document.ToJsonString()));
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.Equal(200, exception.StatusCode);
+    }
+
+    [Theory]
     [InlineData("")]
     [InlineData("<html>not found</html>")]
     public async Task GetPolicy_identifies_legacy_unstructured_not_found(string body)
@@ -426,6 +452,22 @@ public class BrokerClientTests
         }
 
         Assert.True(parent.AsObject().Remove(segments[^1]), $"missing fixture property {propertyPath}");
+    }
+
+    private static void SetPropertyToNull(JsonNode document, string propertyPath)
+    {
+        var segments = propertyPath.Split('.');
+        var parent = document;
+        foreach (var segment in segments[..^1])
+        {
+            parent = int.TryParse(segment, out var index)
+                ? parent.AsArray()[index]!
+                : parent[segment]!;
+        }
+
+        var property = parent.AsObject();
+        Assert.NotNull(property[segments[^1]]);
+        property[segments[^1]] = null;
     }
 
     private sealed class FakeBrokerTransport : IBrokerTransport
