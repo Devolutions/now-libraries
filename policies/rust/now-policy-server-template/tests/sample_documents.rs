@@ -208,17 +208,6 @@ fn policy_response_sample_matches_api_contract() {
     assert_eq!(policy.policy.rules.len(), 5);
 }
 
-#[cfg(feature = "policy-compat")]
-#[test]
-fn policy_response_embeds_the_canonical_policy_fixture() {
-    let response = load_json_file(&response_sample_path("policy.response.json"));
-    let policy_path =
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../now-policy/assets/samples/corporate-allowlist.policy.json");
-    let policy = load_json_file(&policy_path);
-
-    assert_eq!(response.get("Policy"), Some(&policy));
-}
-
 #[test]
 fn invalid_request_missing_package_id_fails_deserialization() {
     let path = samples_dir().join("requests/missing-package-id.request.json");

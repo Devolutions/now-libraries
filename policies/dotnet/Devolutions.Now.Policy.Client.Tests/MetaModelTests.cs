@@ -47,6 +47,17 @@ public class MetaModelTests
     }
 
     [Fact]
+    public void PolicyResponse_requires_policy_on_deserialization()
+    {
+        const string json =
+            """
+            {"ResponseKind":"PolicyResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"}}
+            """;
+
+        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<PolicyResponse>(json));
+    }
+
+    [Fact]
     public async Task ErrorResponse_serializes_to_schema_valid_output()
     {
         var full = new ErrorResponse

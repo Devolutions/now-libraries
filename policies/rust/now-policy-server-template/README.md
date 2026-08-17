@@ -39,12 +39,16 @@ Runtime implementations implement:
 pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
+    // The trait provides a structured NotFound default for this feature-gated method.
+    #[cfg(feature = "policy-compat")]
     async fn policy(&self) -> Result<PolicyResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
 }
 ```
+
+Implementations built with `policy-compat` override `policy` to return the active policy. Implementations that do not override it inherit the structured 404 response; builds without the feature do not expose the method or route.
 
 Then they pass the implementation to `api_router` or `api_router_from_shared`. The template owns the HTTP paths:
 

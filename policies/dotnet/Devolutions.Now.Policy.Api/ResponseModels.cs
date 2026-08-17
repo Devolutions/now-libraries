@@ -25,6 +25,7 @@ public sealed class PolicyResponse
     public ServerContext Server { get; set; } = new();
 
     [JsonPropertyName("Policy")]
+    [JsonRequired]
     public PolicyDocument Policy { get; set; } = new();
 }
 
