@@ -19,16 +19,74 @@ public static class PolicyJson
         JsonSerializer.Serialize(value, PolicyJsonSerializerContext.Default.PolicyDocument);
 
     public static PolicyDocument? DeserializePolicyDocument(string json) =>
-        JsonSerializer.Deserialize(json, PolicyJsonSerializerContext.Default.PolicyDocument);
+        Validate(JsonSerializer.Deserialize(json, PolicyJsonSerializerContext.Default.PolicyDocument));
 
     public static PolicyDocument? DeserializePolicyDocumentStrict(string json) =>
-        JsonSerializer.Deserialize(json, PolicyJsonStrictSerializerContext.Default.PolicyDocument);
+        Validate(JsonSerializer.Deserialize(json, PolicyJsonStrictSerializerContext.Default.PolicyDocument));
 
     public static string Serialize<T>(T value) =>
         JsonSerializer.Serialize(value, TypeInfo<T>());
 
-    public static T? DeserializeStrict<T>(string json) =>
-        JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
+    public static T? DeserializeStrict<T>(string json)
+    {
+        var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
+        if (value is PolicyDocument policy)
+        {
+            ValidateRequiredCollectionElements(policy);
+        }
+
+        return value;
+    }
+
+    internal static void ValidateRequiredCollectionElements(PolicyDocument policy)
+    {
+        RejectNullElements(policy.Rules, "$.Rules");
+
+        for (var ruleIndex = 0; ruleIndex < policy.Rules.Count; ruleIndex++)
+        {
+            var rule = policy.Rules[ruleIndex];
+            var matchPath = $"$.Rules[{ruleIndex}].Match";
+            RejectNullElements(rule.Match.Sources, $"{matchPath}.Sources");
+            RejectNullElements(rule.Match.PackageIdentifiers, $"{matchPath}.PackageIdentifiers");
+            RejectNullElements(rule.Match.PackageNames, $"{matchPath}.PackageNames");
+            RejectNullElements(rule.Match.Versions, $"{matchPath}.Versions");
+
+            if (rule.Constraints is { } constraints)
+            {
+                var constraintsPath = $"$.Rules[{ruleIndex}].Constraints";
+                RejectNullElements(
+                    constraints.AllowedInstallLocationPatterns,
+                    $"{constraintsPath}.AllowedInstallLocationPatterns");
+                RejectNullElements(constraints.AllowedCustomParameters, $"{constraintsPath}.AllowedCustomParameters");
+                RejectNullElements(
+                    constraints.AllowedCustomParameterPatterns,
+                    $"{constraintsPath}.AllowedCustomParameterPatterns");
+                RejectNullElements(constraints.DeniedCustomParameters, $"{constraintsPath}.DeniedCustomParameters");
+            }
+        }
+    }
+
+    private static PolicyDocument? Validate(PolicyDocument? policy)
+    {
+        if (policy is not null)
+        {
+            ValidateRequiredCollectionElements(policy);
+        }
+
+        return policy;
+    }
+
+    private static void RejectNullElements<T>(IReadOnlyList<T> values, string path)
+        where T : class
+    {
+        for (var index = 0; index < values.Count; index++)
+        {
+            if (values[index] is null)
+            {
+                throw new JsonException($"The JSON value at {path}[{index}] must not be null.");
+            }
+        }
+    }
 
     private static JsonTypeInfo<T> TypeInfo<T>() =>
         typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicyJsonSerializerContext.Default.PolicyDocument) :

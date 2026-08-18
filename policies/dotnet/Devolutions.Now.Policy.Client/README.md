@@ -45,7 +45,7 @@ The main surface is `BrokerClient`:
 
 - `IsAvailable` probes the health endpoint.
 - `GetHealth` and `GetCapabilities` query broker metadata.
-- `GetPolicy` sends `GET /v1/policy` and returns the active parsed `PolicyDocument` after strict source-generated validation of the successful response.
+- `GetPolicy` sends `GET /v1/policy` and returns a `PolicyResponse` containing the active parsed `PolicyDocument` after strict validation of the successful response.
 - `Evaluate` sends `POST /v1/package-operations/evaluate`.
 - `Execute` sends `POST /v1/package-operations/execute`.
 - `ExecuteAndWait` submits an operation and polls status until a terminal state.

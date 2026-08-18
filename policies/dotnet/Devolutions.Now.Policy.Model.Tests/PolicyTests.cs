@@ -183,6 +183,20 @@ public class PolicyTests
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
     }
 
+    [Theory]
+    [InlineData("Rules.0")]
+    [InlineData("Rules.3.Match.Sources.0")]
+    [InlineData("Rules.3.Match.PackageIdentifiers.0")]
+    public void Null_policy_collection_element_is_rejected_by_parser(string elementPath)
+    {
+        var path = Path.Combine(SamplesDir, "corporate-allowlist.policy.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))
+            ?? throw new InvalidOperationException("policy sample should parse");
+        SetPropertyToNull(document, elementPath);
+
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
     private static PolicyDocument ParsePolicy(string path)
     {
         var content = File.ReadAllText(path);
@@ -237,13 +251,6 @@ public class PolicyTests
 
     private static void SetPropertyToNull(JsonNode document, string propertyPath)
     {
-        var (parent, propertyName) = ResolveProperty(document, propertyPath);
-        Assert.NotNull(parent[propertyName]);
-        parent[propertyName] = null;
-    }
-
-    private static (JsonObject Parent, string PropertyName) ResolveProperty(JsonNode document, string propertyPath)
-    {
         var segments = propertyPath.Split('.');
         var parent = document;
         foreach (var segment in segments[..^1])
@@ -253,6 +260,15 @@ public class PolicyTests
                 : parent[segment]!;
         }
 
-        return (parent.AsObject(), segments[^1]);
+        if (int.TryParse(segments[^1], out var finalIndex))
+        {
+            Assert.NotNull(parent.AsArray()[finalIndex]);
+            parent.AsArray()[finalIndex] = null;
+        }
+        else
+        {
+            Assert.NotNull(parent.AsObject()[segments[^1]]);
+            parent.AsObject()[segments[^1]] = null;
+        }
     }
 }

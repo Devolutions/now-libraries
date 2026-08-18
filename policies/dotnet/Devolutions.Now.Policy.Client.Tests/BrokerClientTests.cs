@@ -344,6 +344,19 @@ public class BrokerClientTests
         await AssertInvalidPolicyResponse(document);
     }
 
+    [Theory]
+    [InlineData("Policy.Rules.0")]
+    [InlineData("Policy.Rules.3.Match.Sources.0")]
+    public async Task GetPolicy_rejects_null_collection_element(string elementPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        SetPropertyToNull(document, elementPath);
+
+        await AssertInvalidPolicyResponse(document);
+    }
+
     [Fact]
     public async Task GetPolicy_propagates_cancellation()
     {
@@ -501,9 +514,16 @@ public class BrokerClientTests
                 : parent[segment]!;
         }
 
-        var property = parent.AsObject();
-        Assert.NotNull(property[segments[^1]]);
-        property[segments[^1]] = null;
+        if (int.TryParse(segments[^1], out var finalIndex))
+        {
+            Assert.NotNull(parent.AsArray()[finalIndex]);
+            parent.AsArray()[finalIndex] = null;
+        }
+        else
+        {
+            Assert.NotNull(parent.AsObject()[segments[^1]]);
+            parent.AsObject()[segments[^1]] = null;
+        }
     }
 
     private static JsonNode ResolveNode(JsonNode document, string propertyPath)

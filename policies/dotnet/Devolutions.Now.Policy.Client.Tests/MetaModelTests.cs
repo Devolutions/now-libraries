@@ -84,6 +84,19 @@ public class MetaModelTests
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<PolicyResponse>(json, BrokerJson.Options));
     }
 
+    [Theory]
+    [InlineData("Policy.Rules.0")]
+    [InlineData("Policy.Rules.3.Match.Sources.0")]
+    public void Strict_policy_response_rejects_null_collection_element(string elementPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        SetPropertyToNull(document, elementPath);
+
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyResponse>(document.ToJsonString()));
+    }
+
     [Fact]
     public void Public_json_options_source_generate_all_broker_dtos()
     {
@@ -192,9 +205,16 @@ public class MetaModelTests
                 : parent[segment]!;
         }
 
-        var property = parent.AsObject();
-        Assert.NotNull(property[segments[^1]]);
-        property[segments[^1]] = null;
+        if (int.TryParse(segments[^1], out var finalIndex))
+        {
+            Assert.NotNull(parent.AsArray()[finalIndex]);
+            parent.AsArray()[finalIndex] = null;
+        }
+        else
+        {
+            Assert.NotNull(parent.AsObject()[segments[^1]]);
+            parent.AsObject()[segments[^1]] = null;
+        }
     }
 
     private static async Task AssertSerializesValid<T>(T dto, string componentName)

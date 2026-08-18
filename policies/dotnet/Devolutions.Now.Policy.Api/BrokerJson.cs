@@ -3,6 +3,8 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
+using Devolutions.Now.Policy.Model;
+
 namespace Devolutions.Now.Policy.Api;
 
 /// <summary>Canonical schema URI used in the <c>$schema</c> field of policy documents.</summary>
@@ -29,8 +31,16 @@ public static class BrokerJson
     public static T? Deserialize<T>(string json) =>
         JsonSerializer.Deserialize(json, TypeInfo<T>());
 
-    public static T? DeserializeStrict<T>(string json) =>
-        JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
+    public static T? DeserializeStrict<T>(string json)
+    {
+        var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
+        if (value is PolicyResponse response)
+        {
+            PolicyJson.ValidateRequiredCollectionElements(response.Policy);
+        }
+
+        return value;
+    }
 
     private static JsonTypeInfo<T> TypeInfo<T>() =>
         typeof(T) == typeof(PackageRequest) ? Cast<T>(BrokerJsonSerializerContext.Default.PackageRequest) :
