@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Devolutions.Now.Policy.Api;
@@ -5,14 +6,36 @@ namespace Devolutions.Now.Policy.Api;
 // Enum members are spelled exactly as they appear on the wire (PascalCase), so the
 // default JsonStringEnumConverter round-trips them without a naming policy.
 
-internal sealed class StringOnlyEnumConverter<TEnum> : JsonStringEnumConverter<TEnum>
+internal class ExactCaseStringEnumConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
-    public StringOnlyEnumConverter()
-        : base(namingPolicy: null, allowIntegerValues: false)
+    public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
+        if (reader.TokenType != JsonTokenType.String)
+        {
+            throw new JsonException($"Expected a string value for {typeof(TEnum).Name}.");
+        }
+
+        var name = reader.GetString();
+        if (name is null ||
+            !Enum.TryParse<TEnum>(name, ignoreCase: false, out var value) ||
+            Enum.GetName(value) != name)
+        {
+            throw new JsonException($"'{name}' is not a canonical {typeof(TEnum).Name} value.");
+        }
+
+        return value;
+    }
+
+    public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options)
+    {
+        var name = Enum.GetName(value)
+            ?? throw new JsonException($"'{value}' is not a defined {typeof(TEnum).Name} value.");
+        writer.WriteStringValue(name);
     }
 }
+
+internal sealed class ExactCaseTransportConverter : ExactCaseStringEnumConverter<Transport>;
 
 /// <summary>Package operation type.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<Operation>))]
@@ -81,7 +104,7 @@ public enum Decision
 }
 
 /// <summary>Broker transport type.</summary>
-[JsonConverter(typeof(StringOnlyEnumConverter<Transport>))]
+[JsonConverter(typeof(JsonStringEnumConverter<Transport>))]
 public enum Transport
 {
     HttpNamedPipe,

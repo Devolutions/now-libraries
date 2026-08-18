@@ -123,6 +123,7 @@ internal sealed partial class BrokerJsonSerializerContext : JsonSerializerContex
 internal sealed partial class BrokerJsonStrictSerializerContext : JsonSerializerContext;
 
 [JsonSourceGenerationOptions(
+    Converters = new[] { typeof(ExactCaseTransportConverter) },
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     RespectNullableAnnotations = true,
     WriteIndented = false)]
@@ -130,6 +131,7 @@ internal sealed partial class BrokerJsonStrictSerializerContext : JsonSerializer
 internal sealed partial class BrokerPolicyJsonSerializerContext : JsonSerializerContext;
 
 [JsonSourceGenerationOptions(
+    Converters = new[] { typeof(ExactCaseTransportConverter) },
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     RespectNullableAnnotations = true,
     WriteIndented = false,

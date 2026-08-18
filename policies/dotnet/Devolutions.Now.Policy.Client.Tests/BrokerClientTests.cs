@@ -345,6 +345,22 @@ public class BrokerClientTests
     }
 
     [Theory]
+    [InlineData("Server.Transport", "httpnamedpipe")]
+    [InlineData("Policy.Enforcement.DefaultDecision", "deny")]
+    [InlineData("Policy.Enforcement.RulePrecedence", "prioritythendeny")]
+    [InlineData("Policy.Rules.0.Decision", "deny")]
+    [InlineData("Policy.Rules.0.Match.Operations.0", "install")]
+    public async Task GetPolicy_rejects_noncanonical_enum_casing(string propertyPath, string value)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        SetPropertyValue(document, propertyPath, value);
+
+        await AssertInvalidPolicyResponse(document);
+    }
+
+    [Theory]
     [InlineData("Policy.Rules.0")]
     [InlineData("Policy.Rules.3.Match.Sources.0")]
     public async Task GetPolicy_rejects_null_collection_element(string elementPath)
@@ -369,15 +385,17 @@ public class BrokerClientTests
         Assert.Empty(transport.Requests);
     }
 
-    [Fact]
-    public async Task GetPolicy_preserves_structured_unsupported_error()
+    [Theory]
+    [InlineData("HttpNamedPipe")]
+    [InlineData("httpnamedpipe")]
+    public async Task GetPolicy_preserves_structured_unsupported_error(string transportValue)
     {
         var transport = new FakeBrokerTransport(new BrokerTransportResponse
         {
             StatusCode = 404,
             Body = """
                 {"ResponseKind":"ErrorResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"Code":"NotFound","Message":"active policy inspection is not supported"}
-                """,
+                """.Replace("HttpNamedPipe", transportValue, StringComparison.Ordinal),
         });
         var client = CreateClient(transport);
 
@@ -504,6 +522,9 @@ public class BrokerClientTests
     }
 
     private static void SetPropertyToNull(JsonNode document, string propertyPath)
+        => SetPropertyValue(document, propertyPath, null);
+
+    private static void SetPropertyValue(JsonNode document, string propertyPath, JsonNode? value)
     {
         var segments = propertyPath.Split('.');
         var parent = document;
@@ -517,12 +538,12 @@ public class BrokerClientTests
         if (int.TryParse(segments[^1], out var finalIndex))
         {
             Assert.NotNull(parent.AsArray()[finalIndex]);
-            parent.AsArray()[finalIndex] = null;
+            parent.AsArray()[finalIndex] = value;
         }
         else
         {
             Assert.NotNull(parent.AsObject()[segments[^1]]);
-            parent.AsObject()[segments[^1]] = null;
+            parent.AsObject()[segments[^1]] = value;
         }
     }
 

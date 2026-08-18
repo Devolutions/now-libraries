@@ -1,18 +1,39 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Devolutions.Now.Policy.Model;
 
-internal sealed class StringOnlyEnumConverter<TEnum> : JsonStringEnumConverter<TEnum>
+internal sealed class ExactCaseStringEnumConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
-    public StringOnlyEnumConverter()
-        : base(namingPolicy: null, allowIntegerValues: false)
+    public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
+        if (reader.TokenType != JsonTokenType.String)
+        {
+            throw new JsonException($"Expected a string value for {typeof(TEnum).Name}.");
+        }
+
+        var name = reader.GetString();
+        if (name is null ||
+            !Enum.TryParse<TEnum>(name, ignoreCase: false, out var value) ||
+            Enum.GetName(value) != name)
+        {
+            throw new JsonException($"'{name}' is not a canonical {typeof(TEnum).Name} value.");
+        }
+
+        return value;
+    }
+
+    public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options)
+    {
+        var name = Enum.GetName(value)
+            ?? throw new JsonException($"'{value}' is not a defined {typeof(TEnum).Name} value.");
+        writer.WriteStringValue(name);
     }
 }
 
 /// <summary>Package operation type.</summary>
-[JsonConverter(typeof(StringOnlyEnumConverter<Operation>))]
+[JsonConverter(typeof(ExactCaseStringEnumConverter<Operation>))]
 public enum Operation
 {
     Install,
@@ -21,7 +42,7 @@ public enum Operation
 }
 
 /// <summary>Supported package manager names.</summary>
-[JsonConverter(typeof(StringOnlyEnumConverter<ManagerName>))]
+[JsonConverter(typeof(ExactCaseStringEnumConverter<ManagerName>))]
 public enum ManagerName
 {
     Winget,
@@ -44,7 +65,7 @@ public enum ManagerName
 }
 
 /// <summary>Installation scope.</summary>
-[JsonConverter(typeof(StringOnlyEnumConverter<Scope>))]
+[JsonConverter(typeof(ExactCaseStringEnumConverter<Scope>))]
 public enum Scope
 {
     User,
@@ -52,7 +73,7 @@ public enum Scope
 }
 
 /// <summary>Target architecture.</summary>
-[JsonConverter(typeof(StringOnlyEnumConverter<Architecture>))]
+[JsonConverter(typeof(ExactCaseStringEnumConverter<Architecture>))]
 public enum Architecture
 {
     X86,
@@ -62,7 +83,7 @@ public enum Architecture
 }
 
 /// <summary>Requested elevation level.</summary>
-[JsonConverter(typeof(StringOnlyEnumConverter<Elevation>))]
+[JsonConverter(typeof(ExactCaseStringEnumConverter<Elevation>))]
 public enum Elevation
 {
     Standard,
@@ -70,7 +91,7 @@ public enum Elevation
 }
 
 /// <summary>Policy decision.</summary>
-[JsonConverter(typeof(StringOnlyEnumConverter<Decision>))]
+[JsonConverter(typeof(ExactCaseStringEnumConverter<Decision>))]
 public enum Decision
 {
     Allow,
@@ -78,7 +99,7 @@ public enum Decision
 }
 
 /// <summary>Rule precedence strategy.</summary>
-[JsonConverter(typeof(StringOnlyEnumConverter<RulePrecedence>))]
+[JsonConverter(typeof(ExactCaseStringEnumConverter<RulePrecedence>))]
 public enum RulePrecedence
 {
     PriorityThenDeny,
