@@ -77,7 +77,11 @@ public sealed class BrokerClient : IDisposable
     {
         var headers = new Dictionary<string, string> { ["Accept"] = JsonMediaType };
         var response = await SendRequest("GET", "/v1/policy", null, headers, cancellationToken).ConfigureAwait(false);
-        return DeserializeResponse<PolicyResponse>(response, "policy", "/v1/policy");
+        return DeserializeResponse<PolicyResponse>(
+            response,
+            "policy",
+            "/v1/policy",
+            strictSuccessBody: true);
     }
 
     /// <summary>Evaluate a package operation against policy without executing it (dry-run).</summary>
@@ -422,7 +426,11 @@ public sealed class BrokerClient : IDisposable
         return _capabilities;
     }
 
-    private TResponse DeserializeResponse<TResponse>(BrokerTransportResponse response, string context, string endpoint)
+    private TResponse DeserializeResponse<TResponse>(
+        BrokerTransportResponse response,
+        string context,
+        string endpoint,
+        bool strictSuccessBody = false)
     {
         if (string.IsNullOrWhiteSpace(response.Body))
         {
@@ -455,7 +463,9 @@ public sealed class BrokerClient : IDisposable
 
         try
         {
-            var value = BrokerJson.Deserialize<TResponse>(response.Body);
+            var value = strictSuccessBody
+                ? BrokerJson.DeserializeStrict<TResponse>(response.Body)
+                : BrokerJson.Deserialize<TResponse>(response.Body);
             if (value is null)
             {
                 throw new BrokerClientException(

@@ -319,6 +319,31 @@ public class BrokerClientTests
         Assert.Equal(4u, response.Policy.Metadata.Revision);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("Policy.Metadata")]
+    public async Task GetPolicy_rejects_unmapped_property(string objectPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        var target = string.IsNullOrEmpty(objectPath) ? document : ResolveNode(document, objectPath);
+        target.AsObject()["Unexpected"] = true;
+
+        await AssertInvalidPolicyResponse(document);
+    }
+
+    [Fact]
+    public async Task GetPolicy_rejects_integer_policy_enum_token()
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        ResolveNode(document, "Policy.Rules.0.Match.Operations").AsArray()[0] = 0;
+
+        await AssertInvalidPolicyResponse(document);
+    }
+
     [Fact]
     public async Task GetPolicy_propagates_cancellation()
     {
@@ -440,6 +465,17 @@ public class BrokerClientTests
         ClientVersion = "9.8.7",
     });
 
+    private static async Task AssertInvalidPolicyResponse(JsonNode document)
+    {
+        var client = CreateClient(new FakeBrokerTransport(document.ToJsonString()));
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.Equal(200, exception.StatusCode);
+    }
+
     private static void RemoveProperty(JsonNode document, string propertyPath)
     {
         var segments = propertyPath.Split('.');
@@ -468,6 +504,19 @@ public class BrokerClientTests
         var property = parent.AsObject();
         Assert.NotNull(property[segments[^1]]);
         property[segments[^1]] = null;
+    }
+
+    private static JsonNode ResolveNode(JsonNode document, string propertyPath)
+    {
+        var node = document;
+        foreach (var segment in propertyPath.Split('.'))
+        {
+            node = int.TryParse(segment, out var index)
+                ? node.AsArray()[index]!
+                : node[segment]!;
+        }
+
+        return node;
     }
 
     private sealed class FakeBrokerTransport : IBrokerTransport

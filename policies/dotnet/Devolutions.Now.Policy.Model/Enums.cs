@@ -2,8 +2,17 @@ using System.Text.Json.Serialization;
 
 namespace Devolutions.Now.Policy.Model;
 
+internal sealed class StringOnlyEnumConverter<TEnum> : JsonStringEnumConverter<TEnum>
+    where TEnum : struct, Enum
+{
+    public StringOnlyEnumConverter()
+        : base(namingPolicy: null, allowIntegerValues: false)
+    {
+    }
+}
+
 /// <summary>Package operation type.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<Operation>))]
+[JsonConverter(typeof(StringOnlyEnumConverter<Operation>))]
 public enum Operation
 {
     Install,
@@ -12,7 +21,7 @@ public enum Operation
 }
 
 /// <summary>Supported package manager names.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<ManagerName>))]
+[JsonConverter(typeof(StringOnlyEnumConverter<ManagerName>))]
 public enum ManagerName
 {
     Winget,
@@ -35,7 +44,7 @@ public enum ManagerName
 }
 
 /// <summary>Installation scope.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<Scope>))]
+[JsonConverter(typeof(StringOnlyEnumConverter<Scope>))]
 public enum Scope
 {
     User,
@@ -43,7 +52,7 @@ public enum Scope
 }
 
 /// <summary>Target architecture.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<Architecture>))]
+[JsonConverter(typeof(StringOnlyEnumConverter<Architecture>))]
 public enum Architecture
 {
     X86,
@@ -53,7 +62,7 @@ public enum Architecture
 }
 
 /// <summary>Requested elevation level.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<Elevation>))]
+[JsonConverter(typeof(StringOnlyEnumConverter<Elevation>))]
 public enum Elevation
 {
     Standard,
@@ -61,7 +70,7 @@ public enum Elevation
 }
 
 /// <summary>Policy decision.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<Decision>))]
+[JsonConverter(typeof(StringOnlyEnumConverter<Decision>))]
 public enum Decision
 {
     Allow,
@@ -69,7 +78,7 @@ public enum Decision
 }
 
 /// <summary>Rule precedence strategy.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<RulePrecedence>))]
+[JsonConverter(typeof(StringOnlyEnumConverter<RulePrecedence>))]
 public enum RulePrecedence
 {
     PriorityThenDeny,

@@ -5,6 +5,15 @@ namespace Devolutions.Now.Policy.Api;
 // Enum members are spelled exactly as they appear on the wire (PascalCase), so the
 // default JsonStringEnumConverter round-trips them without a naming policy.
 
+internal sealed class StringOnlyEnumConverter<TEnum> : JsonStringEnumConverter<TEnum>
+    where TEnum : struct, Enum
+{
+    public StringOnlyEnumConverter()
+        : base(namingPolicy: null, allowIntegerValues: false)
+    {
+    }
+}
+
 /// <summary>Package operation type.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<Operation>))]
 public enum Operation
@@ -72,7 +81,7 @@ public enum Decision
 }
 
 /// <summary>Broker transport type.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<Transport>))]
+[JsonConverter(typeof(StringOnlyEnumConverter<Transport>))]
 public enum Transport
 {
     HttpNamedPipe,
