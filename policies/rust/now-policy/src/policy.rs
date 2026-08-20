@@ -3,9 +3,7 @@
 use std::collections::BTreeSet;
 
 use chrono::{DateTime, Utc};
-use schemars::JsonSchema;
-use schemars::r#gen::SchemaGenerator;
-use schemars::schema::{ObjectValidation, Schema, SchemaObject, SubschemaValidation};
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -154,25 +152,18 @@ fn deserialize_non_empty_match<'de, D: serde::Deserializer<'de>>(deserializer: D
 struct NonEmptyPolicyMatchSchema;
 
 impl JsonSchema for NonEmptyPolicyMatchSchema {
-    fn is_referenceable() -> bool {
-        false
+    fn inline_schema() -> bool {
+        true
     }
 
-    fn schema_name() -> String {
-        "NonEmptyPolicyMatch".to_owned()
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "NonEmptyPolicyMatch".into()
     }
 
     fn json_schema(generator: &mut SchemaGenerator) -> Schema {
-        Schema::Object(SchemaObject {
-            object: Some(Box::new(ObjectValidation {
-                min_properties: Some(1),
-                ..Default::default()
-            })),
-            subschemas: Some(Box::new(SubschemaValidation {
-                all_of: Some(vec![generator.subschema_for::<PolicyMatch>()]),
-                ..Default::default()
-            })),
-            ..Default::default()
+        json_schema!({
+            "minProperties": 1,
+            "allOf": [generator.subschema_for::<PolicyMatch>()],
         })
     }
 }

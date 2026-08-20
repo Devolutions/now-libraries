@@ -73,20 +73,14 @@ macro_rules! fixed_string_marker {
         }
 
         impl JsonSchema for $name {
-            fn schema_name() -> String {
-                stringify!($name).to_owned()
+            fn schema_name() -> std::borrow::Cow<'static, str> {
+                stringify!($name).into()
             }
 
-            fn json_schema(_gen: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
-                schemars::schema::Schema::Object(schemars::schema::SchemaObject {
-                    instance_type: Some(schemars::schema::SingleOrVec::Single(Box::new(
-                        schemars::schema::InstanceType::String,
-                    ))),
-                    string: Some(Box::new(schemars::schema::StringValidation {
-                        pattern: Some(format!("^{}$", $value)),
-                        ..Default::default()
-                    })),
-                    ..Default::default()
+            fn json_schema(_gen: &mut schemars::SchemaGenerator) -> schemars::Schema {
+                schemars::json_schema!({
+                    "type": "string",
+                    "pattern": format!("^{}$", $value),
                 })
             }
         }
