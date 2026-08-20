@@ -86,9 +86,12 @@ fn policy_schema_generates_valid_json() {
 #[test]
 fn policy_match_schema_requires_at_least_one_property() {
     let schema = now_policy::schema::policy_schema_json();
-    let min_properties = schema
-        .pointer("/definitions/PolicyRule/properties/Match/minProperties")
-        .and_then(serde_json::Value::as_u64);
+    let min_properties = [
+        "/definitions/PolicyRule/properties/Match/minProperties",
+        "/$defs/PolicyRule/properties/Match/minProperties",
+    ]
+    .into_iter()
+    .find_map(|path| schema.pointer(path).and_then(serde_json::Value::as_u64));
 
     assert_eq!(min_properties, Some(1));
 }

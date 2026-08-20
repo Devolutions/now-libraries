@@ -6,9 +6,7 @@
 )]
 
 use now_policy::PolicyDocument;
-use schemars::JsonSchema;
-use schemars::r#gen::SchemaGenerator;
-use schemars::schema::{Schema, SchemaObject};
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Serialize};
 
 use super::api::ServerContext;
@@ -34,8 +32,7 @@ pub struct PolicyResponse {
 }
 
 fn policy_document_schema(_generator: &mut SchemaGenerator) -> Schema {
-    Schema::Object(SchemaObject {
-        reference: Some("#/components/schemas/PolicyDocument".to_owned()),
-        ..SchemaObject::default()
+    schemars::json_schema!({
+        "$ref": "#/components/schemas/PolicyDocument",
     })
 }

@@ -117,7 +117,7 @@ pub fn openapi() -> OpenApi {
 }
 
 fn openapi_schema_generator() -> SchemaGenerator {
-    use schemars::r#gen::SchemaSettings;
+    use schemars::generate::SchemaSettings;
 
     SchemaSettings::openapi3().into()
 }
@@ -128,28 +128,25 @@ fn register_policy_schema(api: &mut OpenApi) {
 
     use aide::openapi::{Components, SchemaObject};
     use now_policy::PolicyDocument;
-    use schemars::schema::Schema;
 
-    let root = openapi_schema_generator().into_root_schema_for::<PolicyDocument>();
-    let renames: BTreeMap<_, _> = root
-        .definitions
+    let mut generator = openapi_schema_generator();
+    let _ = generator.subschema_for::<PolicyDocument>();
+    let definitions = generator.take_definitions(true);
+    let renames: BTreeMap<_, _> = definitions
         .keys()
-        .map(|name| (name.clone(), format!("PolicyModel{name}")))
+        .map(|name| {
+            let component_name = if name == "PolicyDocument" {
+                name.clone()
+            } else {
+                format!("PolicyModel{name}")
+            };
+            (name.clone(), component_name)
+        })
         .collect();
-    let root_schema = rewrite_policy_schema_refs(Schema::Object(root.schema), &renames);
 
     let components = api.components.get_or_insert_with(Components::default);
 
-    components
-        .schemas
-        .entry("PolicyDocument".to_owned())
-        .or_insert_with(|| SchemaObject {
-            json_schema: root_schema,
-            external_docs: None,
-            example: None,
-        });
-
-    for (name, schema) in root.definitions {
+    for (name, schema) in definitions {
         let component_name = renames
             .get(&name)
             .expect("BUG: every policy schema definition should have a namespaced component");
@@ -166,13 +163,13 @@ fn register_policy_schema(api: &mut OpenApi) {
 
 #[cfg(feature = "policy-compat")]
 fn rewrite_policy_schema_refs(
-    schema: schemars::schema::Schema,
+    schema: serde_json::Value,
     renames: &std::collections::BTreeMap<String, String>,
-) -> schemars::schema::Schema {
+) -> schemars::Schema {
     fn rewrite(value: &mut serde_json::Value, renames: &std::collections::BTreeMap<String, String>) {
         match value {
             serde_json::Value::String(reference) => {
-                for prefix in ["#/components/schemas/", "#/definitions/"] {
+                for prefix in ["#/components/schemas/", "#/$defs/", "#/definitions/"] {
                     if let Some(name) = reference.strip_prefix(prefix)
                         && let Some(replacement) = renames.get(name)
                     {
@@ -195,9 +192,9 @@ fn rewrite_policy_schema_refs(
         }
     }
 
-    let mut value = serde_json::to_value(schema).expect("BUG: policy schema should serialize");
+    let mut value = schema;
     rewrite(&mut value, renames);
-    serde_json::from_value(value).expect("BUG: rewritten policy schema should deserialize")
+    schemars::Schema::try_from(value).expect("BUG: rewritten policy schema should remain valid")
 }
 
 async fn health_handler(State(server): State<SharedPackageBrokerServer>) -> Json<HealthResponse> {
