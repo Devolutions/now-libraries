@@ -17,7 +17,7 @@ use now_policy_api::{
     API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, ErrorCode, ErrorResponse, EvaluationResponse,
     ExecutionResponse, HealthResponse, PackageRequest, StatusRequest, StatusResponse,
 };
-use schemars::{Schema, SchemaGenerator};
+use schemars::SchemaGenerator;
 
 pub const MAX_REQUEST_BODY_BYTES: usize = 256 * 1024;
 
@@ -108,6 +108,7 @@ fn openapi_schema_generator() -> SchemaGenerator {
 fn register_policy_schema(api: &mut OpenApi) {
     use aide::openapi::{Components, SchemaObject};
     use now_policy::PolicyDocument;
+    use schemars::Schema;
 
     let mut generator = openapi_schema_generator();
     let _ = generator.subschema_for::<PolicyDocument>();
