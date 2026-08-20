@@ -1,8 +1,6 @@
 //! Marker types -- zero-size structs that serialize to a fixed string constant.
 
-use schemars::JsonSchema;
-use schemars::r#gen::SchemaGenerator;
-use schemars::schema::{InstanceType, Schema, SchemaObject, SingleOrVec};
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use serde::{Deserialize, Serialize};
 
 macro_rules! fixed_string_marker {
@@ -35,17 +33,15 @@ macro_rules! fixed_string_marker {
         }
 
         impl JsonSchema for $name {
-            fn schema_name() -> String {
-                stringify!($name).to_owned()
+            fn schema_name() -> std::borrow::Cow<'static, str> {
+                stringify!($name).into()
             }
 
             fn json_schema(_gen: &mut SchemaGenerator) -> Schema {
-                SchemaObject {
-                    instance_type: Some(SingleOrVec::Single(Box::new(InstanceType::String))),
-                    enum_values: Some(vec![serde_json::Value::String($value.to_owned())]),
-                    ..Default::default()
-                }
-                .into()
+                json_schema!({
+                    "type": "string",
+                    "enum": [$value],
+                })
             }
         }
     };

@@ -99,7 +99,7 @@ pub fn openapi() -> OpenApi {
 }
 
 fn openapi_schema_generator() -> SchemaGenerator {
-    use schemars::r#gen::SchemaSettings;
+    use schemars::generate::SchemaSettings;
 
     SchemaSettings::openapi3().into()
 }
@@ -108,24 +108,17 @@ fn openapi_schema_generator() -> SchemaGenerator {
 fn register_policy_schema(api: &mut OpenApi) {
     use aide::openapi::{Components, SchemaObject};
     use now_policy::PolicyDocument;
-    use schemars::schema::Schema;
+    use schemars::Schema;
 
-    let root = openapi_schema_generator().into_root_schema_for::<PolicyDocument>();
+    let mut generator = openapi_schema_generator();
+    let _ = generator.subschema_for::<PolicyDocument>();
+    let definitions = generator.take_definitions(true);
 
     let components = api.components.get_or_insert_with(Components::default);
 
-    components
-        .schemas
-        .entry("PolicyDocument".to_owned())
-        .or_insert_with(|| SchemaObject {
-            json_schema: Schema::Object(root.schema),
-            external_docs: None,
-            example: None,
-        });
-
-    for (name, schema) in root.definitions {
+    for (name, schema) in definitions {
         components.schemas.entry(name).or_insert_with(|| SchemaObject {
-            json_schema: schema,
+            json_schema: Schema::try_from(schema).expect("schemars generated an invalid schema"),
             external_docs: None,
             example: None,
         });
