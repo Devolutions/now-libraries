@@ -309,7 +309,7 @@ async fn mock_server_returns_registered_policy_response() {
     let expected: PolicyResponse = serde_json::from_str(&content).unwrap();
     let server = MockPackageBrokerServer::new(DEFAULT_PIPE_NAME).with_policy_response(expected.clone());
 
-    let actual = server.policy().await.unwrap();
+    let actual = server.active_policy().await.unwrap();
 
     assert_eq!(actual.response_kind, expected.response_kind);
     assert_eq!(&*actual.policy.metadata.id, &*expected.policy.metadata.id);

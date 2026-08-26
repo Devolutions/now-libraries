@@ -117,7 +117,7 @@ impl PackageBrokerServer for MockPackageBrokerServer {
         self.capabilities.clone()
     }
 
-    async fn policy(&self) -> Result<PolicyResponse, ErrorResponse> {
+    async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse> {
         if let Some(response) = &self.policy_response {
             return Ok(response.clone());
         }

@@ -26,7 +26,7 @@ pub const MAX_REQUEST_BODY_BYTES: usize = 256 * 1024;
 pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
-    async fn policy(&self) -> Result<PolicyResponse, ErrorResponse>;
+    async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
@@ -187,7 +187,7 @@ async fn capabilities_handler(State(server): State<SharedPackageBrokerServer>) -
 }
 
 async fn policy_handler(State(server): State<SharedPackageBrokerServer>) -> Response {
-    broker_result(server.policy().await)
+    broker_result(server.active_policy().await)
 }
 
 async fn evaluate_handler(

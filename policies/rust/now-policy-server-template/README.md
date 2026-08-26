@@ -39,14 +39,14 @@ Runtime implementations implement:
 pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
-    async fn policy(&self) -> Result<PolicyResponse, ErrorResponse>;
+    async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
 }
 ```
 
-Implementations return the active policy from `policy`. A broker with no active policy may return a structured `NotFound` error.
+Implementations return the active policy from `active_policy`. A broker with no active policy may return a structured `NotFound` error.
 
 Then they pass the implementation to `api_router` or `api_router_from_shared`. The template owns the HTTP paths:
 
