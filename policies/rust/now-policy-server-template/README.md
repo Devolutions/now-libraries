@@ -39,8 +39,6 @@ Runtime implementations implement:
 pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
-    // The trait provides a structured NotFound default for this feature-gated method.
-    #[cfg(feature = "policy-compat")]
     async fn policy(&self) -> Result<PolicyResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
@@ -48,13 +46,13 @@ pub trait PackageBrokerServer: Send + Sync {
 }
 ```
 
-Implementations built with `policy-compat` override `policy` to return the active policy. Implementations that do not override it inherit the structured 404 response; builds without the feature do not expose the method or route.
+Implementations return the active policy from `policy`. A broker with no active policy may return a structured `NotFound` error.
 
 Then they pass the implementation to `api_router` or `api_router_from_shared`. The template owns the HTTP paths:
 
 - `GET /v1/health`
 - `GET /v1/capabilities`
-- `GET /v1/policy` (with `policy-compat`)
+- `GET /v1/policy`
 - `POST /v1/package-operations/evaluate`
 - `POST /v1/package-operations/execute`
 - `POST /v1/package-operations/get-status`
@@ -86,10 +84,10 @@ OpenAPI generation lives here because it requires the HTTP route binding from `s
 Regenerate it with:
 
 ```powershell
-cargo run -p now-policy-server-template --features policy-compat --bin generate-now-policy-api-openapi --locked
+cargo run -p now-policy-server-template --bin generate-now-policy-api-openapi --locked
 ```
 
-The generator requires `policy-compat`; the generated route and components include the policy response and policy document schema from `now-policy`.
+The generated route and components include the policy response and policy document schema from `now-policy`.
 
 Validation
 ----------

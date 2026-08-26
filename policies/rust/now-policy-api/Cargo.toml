@@ -13,14 +13,10 @@ publish = true
 [lints]
 workspace = true
 
-[features]
-default = []
-policy-compat = ["dep:now-policy"]
-
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
 derive_more = { version = "2", features = ["as_ref", "deref", "display", "from"] }
-now-policy = { version = "0.2", path = "../now-policy", optional = true }
+now-policy = { version = "0.2", path = "../now-policy" }
 schemars = { version = "0.9", features = ["chrono04"] }
 semver = "1"
 serde = { version = "1", features = ["derive"] }

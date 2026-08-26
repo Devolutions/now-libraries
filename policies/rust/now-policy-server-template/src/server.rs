@@ -15,10 +15,8 @@ use serde::Serialize;
 
 use now_policy_api::{
     API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, ErrorCode, ErrorResponse, EvaluationResponse,
-    ExecutionResponse, HealthResponse, PackageRequest, StatusRequest, StatusResponse,
+    ExecutionResponse, HealthResponse, PackageRequest, PolicyResponse, StatusRequest, StatusResponse,
 };
-#[cfg(feature = "policy-compat")]
-use now_policy_api::{ErrorResponseKind, PolicyResponse};
 use schemars::SchemaGenerator;
 
 pub const MAX_REQUEST_BODY_BYTES: usize = 256 * 1024;
@@ -28,17 +26,7 @@ pub const MAX_REQUEST_BODY_BYTES: usize = 256 * 1024;
 pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
-    #[cfg(feature = "policy-compat")]
-    async fn policy(&self) -> Result<PolicyResponse, ErrorResponse> {
-        Err(ErrorResponse {
-            response_kind: ErrorResponseKind,
-            response_version: API_VERSION_STR.into(),
-            server: self.capabilities().await.server,
-            code: ErrorCode::NotFound,
-            message: "active policy inspection is not supported".to_owned(),
-            details: Vec::new(),
-        })
-    }
+    async fn policy(&self) -> Result<PolicyResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
@@ -62,14 +50,10 @@ pub fn api_router_from_shared(server: SharedPackageBrokerServer) -> ApiRouter<()
 }
 
 fn api_routes() -> ApiRouter<SharedPackageBrokerServer> {
-    let router = ApiRouter::new()
+    ApiRouter::new()
         .api_route("/v1/health", get_with(health_handler, health_docs))
-        .api_route("/v1/capabilities", get_with(capabilities_handler, capabilities_docs));
-
-    #[cfg(feature = "policy-compat")]
-    let router = router.api_route("/v1/policy", get_with(policy_handler, policy_docs));
-
-    router
+        .api_route("/v1/capabilities", get_with(capabilities_handler, capabilities_docs))
+        .api_route("/v1/policy", get_with(policy_handler, policy_docs))
         .api_route(
             "/v1/package-operations/evaluate",
             post_with(evaluate_handler, evaluate_docs)
@@ -111,7 +95,6 @@ pub fn openapi() -> OpenApi {
     });
 
     let _ = api_routes().finish_api(&mut api);
-    #[cfg(feature = "policy-compat")]
     register_policy_schema(&mut api);
     api
 }
@@ -122,7 +105,6 @@ fn openapi_schema_generator() -> SchemaGenerator {
     SchemaSettings::openapi3().into()
 }
 
-#[cfg(feature = "policy-compat")]
 fn register_policy_schema(api: &mut OpenApi) {
     use std::collections::BTreeMap;
 
@@ -161,7 +143,6 @@ fn register_policy_schema(api: &mut OpenApi) {
     }
 }
 
-#[cfg(feature = "policy-compat")]
 fn rewrite_policy_schema_refs(
     schema: serde_json::Value,
     renames: &std::collections::BTreeMap<String, String>,
@@ -205,7 +186,6 @@ async fn capabilities_handler(State(server): State<SharedPackageBrokerServer>) -
     Json(server.capabilities().await)
 }
 
-#[cfg(feature = "policy-compat")]
 async fn policy_handler(State(server): State<SharedPackageBrokerServer>) -> Response {
     broker_result(server.policy().await)
 }
@@ -273,12 +253,9 @@ fn capabilities_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .response::<200, Json<CapabilitiesResponse>>()
 }
 
-#[cfg(feature = "policy-compat")]
 fn policy_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
     op.summary("Get active policy")
-        .description(
-            "Returns the active parsed policy document. A 404 response means policy inspection is unsupported.",
-        )
+        .description("Returns the active parsed policy document. A 404 response means no active policy is configured.")
         .response::<200, Json<PolicyResponse>>()
         .response::<404, Json<ErrorResponse>>()
         .default_response::<Json<ErrorResponse>>()
@@ -322,7 +299,7 @@ fn cancel_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .response::<404, Json<ErrorResponse>>()
 }
 
-#[cfg(all(test, feature = "policy-compat"))]
+#[cfg(test)]
 mod tests {
     use super::openapi;
 

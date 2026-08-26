@@ -6,47 +6,12 @@ use axum::body::{Body, to_bytes};
 use axum::http::{Request, StatusCode};
 use now_policy_server_template::{
     API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, CapabilitiesResponseKind, DEFAULT_PIPE_NAME,
-    EvaluationResponse, ExecutionResponse, HealthResponse, HealthResponseKind, HealthStatus, MAX_REQUEST_BODY_BYTES,
-    ManagerName, MockPackageBrokerServer, Operation, PackageBrokerServer, PackageRequest, Scope, StatusRequest,
+    ErrorCode, ErrorResponse, ErrorResponseKind, EvaluationResponse, ExecutionResponse, HealthResponse,
+    HealthResponseKind, HealthStatus, MAX_REQUEST_BODY_BYTES, ManagerName, MockPackageBrokerServer, Operation,
+    PackageBrokerServer, PackageRequest, PolicyResponse, PolicyResponseKind, Scope, ServerContext, StatusRequest,
     StatusRequestKind, StatusResponse, Transport, api_router,
 };
 use tower::ServiceExt;
-
-#[cfg(feature = "policy-compat")]
-use now_policy_server_template::{
-    ErrorCode, ErrorResponse, ErrorResponseKind, PolicyResponse, PolicyResponseKind, ServerContext,
-};
-
-#[cfg(feature = "policy-compat")]
-struct DefaultPolicyServer(MockPackageBrokerServer);
-
-#[cfg(feature = "policy-compat")]
-#[async_trait::async_trait]
-impl PackageBrokerServer for DefaultPolicyServer {
-    async fn health(&self) -> HealthResponse {
-        self.0.health().await
-    }
-
-    async fn capabilities(&self) -> CapabilitiesResponse {
-        self.0.capabilities().await
-    }
-
-    async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse> {
-        self.0.evaluate(request).await
-    }
-
-    async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse> {
-        self.0.execute(request).await
-    }
-
-    async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse> {
-        self.0.status(request).await
-    }
-
-    async fn cancel(&self, request: CancelRequest) -> Result<CancelResponse, ErrorResponse> {
-        self.0.cancel(request).await
-    }
-}
 
 fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/samples")
@@ -109,11 +74,8 @@ fn assert_response_sample_deserializes(path: &Path) {
         let _: CapabilitiesResponse = serde_json::from_value(load_json_file(path))
             .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
     } else if name.starts_with("policy") {
-        #[cfg(feature = "policy-compat")]
-        {
-            let _: PolicyResponse = serde_json::from_value(load_json_file(path))
-                .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
-        }
+        let _: PolicyResponse = serde_json::from_value(load_json_file(path))
+            .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
     } else {
         let _: EvaluationResponse = serde_json::from_value(load_json_file(path))
             .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
@@ -194,7 +156,6 @@ fn capabilities_response_sample_matches_api_contract() {
     assert!(winget.supports_details);
 }
 
-#[cfg(feature = "policy-compat")]
 #[test]
 fn policy_response_sample_matches_api_contract() {
     let content = load_text_file(&response_sample_path("policy.response.json"));
@@ -342,7 +303,6 @@ async fn mock_health_and_capabilities_match_response_samples() {
     assert_eq!(actual_capabilities.managers.len(), expected_capabilities.managers.len());
 }
 
-#[cfg(feature = "policy-compat")]
 #[tokio::test]
 async fn mock_server_returns_registered_policy_response() {
     let content = load_text_file(&response_sample_path("policy.response.json"));
@@ -354,18 +314,6 @@ async fn mock_server_returns_registered_policy_response() {
     assert_eq!(actual.response_kind, expected.response_kind);
     assert_eq!(&*actual.policy.metadata.id, &*expected.policy.metadata.id);
     assert_eq!(actual.policy.metadata.revision, expected.policy.metadata.revision);
-}
-
-#[cfg(feature = "policy-compat")]
-#[tokio::test]
-async fn package_broker_server_default_policy_method_is_source_compatible() {
-    let server = DefaultPolicyServer(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME));
-
-    let error = server.policy().await.unwrap_err();
-
-    assert_eq!(error.code, ErrorCode::NotFound);
-    assert_eq!(error.response_kind, ErrorResponseKind);
-    assert_eq!(error.server.transport, Transport::HttpNamedPipe);
 }
 
 #[tokio::test]
@@ -480,7 +428,6 @@ async fn api_router_maps_broker_errors_to_http_status() {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
-#[cfg(feature = "policy-compat")]
 #[tokio::test]
 async fn api_router_returns_active_policy_as_json() {
     let content = load_text_file(&response_sample_path("policy.response.json"));
@@ -508,9 +455,8 @@ async fn api_router_returns_active_policy_as_json() {
     assert_eq!(&*actual.policy.metadata.id, &*expected.policy.metadata.id);
 }
 
-#[cfg(feature = "policy-compat")]
 #[tokio::test]
-async fn api_router_returns_structured_not_found_when_policy_inspection_is_unsupported() {
+async fn api_router_returns_structured_not_found_when_no_policy_is_configured() {
     let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME));
 
     let response = app
@@ -532,7 +478,6 @@ async fn api_router_returns_structured_not_found_when_policy_inspection_is_unsup
     assert_eq!(error.code, ErrorCode::NotFound);
 }
 
-#[cfg(feature = "policy-compat")]
 #[tokio::test]
 async fn api_router_preserves_supported_policy_failure() {
     let error = ErrorResponse {
@@ -566,7 +511,6 @@ async fn api_router_preserves_supported_policy_failure() {
     assert_eq!(error.code, ErrorCode::BrokerPaused);
 }
 
-#[cfg(feature = "policy-compat")]
 #[tokio::test]
 async fn api_router_does_not_expose_a_policy_write_route() {
     let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME));

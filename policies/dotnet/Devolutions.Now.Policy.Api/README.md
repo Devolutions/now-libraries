@@ -44,7 +44,7 @@ policies\rust\now-policy-api\openapi\now-policy-api.yaml
 Regenerate it with:
 
 ```powershell
-cargo run -p now-policy-server-template --features policy-compat --bin generate-now-policy-api-openapi --locked
+cargo run -p now-policy-server-template --bin generate-now-policy-api-openapi --locked
 ```
 
 After schema changes, run the .NET client tests to verify these DTOs still match the Rust contract.

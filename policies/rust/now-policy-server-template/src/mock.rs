@@ -5,13 +5,11 @@ use std::collections::BTreeMap;
 use async_trait::async_trait;
 
 use crate::server::{MAX_REQUEST_BODY_BYTES, PackageBrokerServer};
-#[cfg(feature = "policy-compat")]
-use now_policy_api::PolicyResponse;
 use now_policy_api::{
     API_VERSION_STR, Architecture, CancelRequest, CancelResponse, CapabilitiesResponse, CapabilitiesResponseKind,
     ErrorCode, ErrorResponse, ErrorResponseKind, EvaluationResponse, ExecutionResponse, HealthResponse,
-    HealthResponseKind, HealthStatus, ManagerCapability, ManagerName, Operation, PackageRequest, Scope, ServerContext,
-    StatusRequest, StatusResponse, Transport,
+    HealthResponseKind, HealthStatus, ManagerCapability, ManagerName, Operation, PackageRequest, PolicyResponse, Scope,
+    ServerContext, StatusRequest, StatusResponse, Transport,
 };
 
 /// Deterministic mock broker backed by caller-provided sample responses.
@@ -19,9 +17,7 @@ use now_policy_api::{
 pub struct MockPackageBrokerServer {
     health: HealthResponse,
     capabilities: CapabilitiesResponse,
-    #[cfg(feature = "policy-compat")]
     policy_response: Option<PolicyResponse>,
-    #[cfg(feature = "policy-compat")]
     policy_error: Option<ErrorResponse>,
     evaluation_responses: BTreeMap<String, EvaluationResponse>,
     execution_responses: BTreeMap<String, ExecutionResponse>,
@@ -48,9 +44,7 @@ impl MockPackageBrokerServer {
                 managers: default_manager_capabilities(),
                 max_request_body_bytes: MAX_REQUEST_BODY_BYTES as u64,
             },
-            #[cfg(feature = "policy-compat")]
             policy_response: None,
-            #[cfg(feature = "policy-compat")]
             policy_error: None,
             evaluation_responses: BTreeMap::new(),
             execution_responses: BTreeMap::new(),
@@ -66,7 +60,6 @@ impl MockPackageBrokerServer {
         self
     }
 
-    #[cfg(feature = "policy-compat")]
     #[must_use]
     pub fn with_policy_response(mut self, response: PolicyResponse) -> Self {
         self.policy_response = Some(response);
@@ -74,7 +67,6 @@ impl MockPackageBrokerServer {
         self
     }
 
-    #[cfg(feature = "policy-compat")]
     #[must_use]
     pub fn with_policy_error(mut self, error: ErrorResponse) -> Self {
         self.policy_response = None;
@@ -125,7 +117,6 @@ impl PackageBrokerServer for MockPackageBrokerServer {
         self.capabilities.clone()
     }
 
-    #[cfg(feature = "policy-compat")]
     async fn policy(&self) -> Result<PolicyResponse, ErrorResponse> {
         if let Some(response) = &self.policy_response {
             return Ok(response.clone());
@@ -140,7 +131,7 @@ impl PackageBrokerServer for MockPackageBrokerServer {
             response_version: API_VERSION_STR.into(),
             server: self.capabilities.server.clone(),
             code: ErrorCode::NotFound,
-            message: "active policy inspection is not supported".to_owned(),
+            message: "no active policy is configured".to_owned(),
             details: Vec::new(),
         })
     }
