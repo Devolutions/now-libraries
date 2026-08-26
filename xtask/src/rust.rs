@@ -46,12 +46,7 @@ pub fn tests_compile(sh: &Shell) -> anyhow::Result<()> {
 pub fn tests_run(sh: &Shell) -> anyhow::Result<()> {
     let _s = Section::new("RUST-TESTS-RUN");
 
-    cmd!(sh, "{CARGO} test --workspace --locked").run()?;
-    cmd!(
-        sh,
-        "{CARGO} test -p now-policy-api -p now-policy-server-template --all-features --locked"
-    )
-    .run()?;
+    cmd!(sh, "{CARGO} test --workspace --all-features --locked").run()?;
 
     println!("All good!");
 
