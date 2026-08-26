@@ -19,12 +19,7 @@ pub fn lints(sh: &Shell) -> anyhow::Result<()> {
 
     cmd!(
         sh,
-        "{CARGO} clippy --workspace --all-targets --locked --keep-going -- -D warnings"
-    )
-    .run()?;
-    cmd!(
-        sh,
-        "{CARGO} clippy -p now-policy-api -p now-policy-server-template --all-targets --all-features --locked -- -D warnings"
+        "{CARGO} clippy --workspace --all-targets --all-features --locked --keep-going -- -D warnings"
     )
     .run()?;
 
