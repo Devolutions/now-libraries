@@ -303,6 +303,7 @@ async fn request_rejection(
         message: message.to_owned(),
         details: Vec::new(),
         validation: None,
+        management: None,
     };
     (error_status(error.code), Json(error)).into_response()
 }
@@ -318,11 +319,12 @@ fn error_status(code: ErrorCode) -> StatusCode {
     match code {
         ErrorCode::BadRequest | ErrorCode::MalformedDraft => StatusCode::BAD_REQUEST,
         ErrorCode::Unauthorized | ErrorCode::Unauthenticated => StatusCode::UNAUTHORIZED,
-        ErrorCode::Forbidden | ErrorCode::AdministratorRequired | ErrorCode::UnsafePolicyPath => StatusCode::FORBIDDEN,
+        ErrorCode::Forbidden | ErrorCode::AdministratorRequired => StatusCode::FORBIDDEN,
         ErrorCode::NotFound => StatusCode::NOT_FOUND,
-        ErrorCode::Conflict | ErrorCode::WarningConfirmationRequired | ErrorCode::StalePolicyStoreToken => {
-            StatusCode::CONFLICT
-        }
+        ErrorCode::Conflict
+        | ErrorCode::WarningConfirmationRequired
+        | ErrorCode::UnsafePolicyPath
+        | ErrorCode::StalePolicyStoreToken => StatusCode::CONFLICT,
         ErrorCode::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
         ErrorCode::UnsupportedMediaType => StatusCode::UNSUPPORTED_MEDIA_TYPE,
         ErrorCode::ValidationFailed | ErrorCode::InvalidPolicy | ErrorCode::UnsupportedPolicyFilesystem => {

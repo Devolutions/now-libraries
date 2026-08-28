@@ -202,7 +202,7 @@ pub struct PolicyFinding {
 }
 
 /// Authoritative validation output.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(try_from = "PolicyValidationResultWire")]
 #[serde(rename_all = "PascalCase")]
 #[serde(deny_unknown_fields)]
@@ -216,11 +216,11 @@ pub struct PolicyValidationResult {
     pub is_valid: bool,
 
     /// Canonical typed draft, present only when validation succeeds.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub canonical_draft: Option<PolicyDraftDocument>,
 
     /// Receipt bound to the canonical draft, validator version, and exact warning set.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub validation_receipt: Option<PolicyValidationReceipt>,
 
     pub findings: Vec<PolicyFinding>,
@@ -243,29 +243,75 @@ struct PolicyValidationResultWire {
     pub findings: Vec<PolicyFinding>,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct PolicyValidationResultRef<'a> {
+    result_version: &'a ApiVersion,
+    validator_version: &'a str,
+    is_valid: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    canonical_draft: Option<&'a PolicyDraftDocument>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    validation_receipt: Option<&'a PolicyValidationReceipt>,
+    findings: &'a [PolicyFinding],
+}
+
+impl PolicyValidationResult {
+    fn validate(&self) -> Result<(), &'static str> {
+        let has_success_artifacts = self.canonical_draft.is_some() && self.validation_receipt.is_some();
+        let has_any_success_artifact = self.canonical_draft.is_some() || self.validation_receipt.is_some();
+        let has_error = self
+            .findings
+            .iter()
+            .any(|finding| finding.severity == PolicyFindingSeverity::Error);
+        if self.is_valid && !has_success_artifacts {
+            return Err("valid policy validation results require CanonicalDraft and ValidationReceipt");
+        }
+        if self.is_valid && has_error {
+            return Err("valid policy validation results must not contain Error findings");
+        }
+        if !self.is_valid && has_any_success_artifact {
+            return Err("invalid policy validation results must not contain CanonicalDraft or ValidationReceipt");
+        }
+        if !self.is_valid && !has_error {
+            return Err("invalid policy validation results require at least one Error finding");
+        }
+        Ok(())
+    }
+}
+
 impl TryFrom<PolicyValidationResultWire> for PolicyValidationResult {
-    type Error = String;
+    type Error = &'static str;
 
     fn try_from(value: PolicyValidationResultWire) -> Result<Self, Self::Error> {
-        let has_success_artifacts = value.canonical_draft.is_some() && value.validation_receipt.is_some();
-        let has_any_success_artifact = value.canonical_draft.is_some() || value.validation_receipt.is_some();
-        if value.is_valid && !has_success_artifacts {
-            return Err("valid policy validation results require CanonicalDraft and ValidationReceipt".to_owned());
-        }
-        if !value.is_valid && has_any_success_artifact {
-            return Err(
-                "invalid policy validation results must not contain CanonicalDraft or ValidationReceipt".to_owned(),
-            );
-        }
-
-        Ok(Self {
+        let result = Self {
             result_version: value.result_version,
             validator_version: value.validator_version,
             is_valid: value.is_valid,
             canonical_draft: value.canonical_draft,
             validation_receipt: value.validation_receipt,
             findings: value.findings,
-        })
+        };
+        result.validate()?;
+        Ok(result)
+    }
+}
+
+impl Serialize for PolicyValidationResult {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.validate().map_err(serde::ser::Error::custom)?;
+        PolicyValidationResultRef {
+            result_version: &self.result_version,
+            validator_version: &self.validator_version,
+            is_valid: self.is_valid,
+            canonical_draft: self.canonical_draft.as_ref(),
+            validation_receipt: self.validation_receipt.as_ref(),
+            findings: &self.findings,
+        }
+        .serialize(serializer)
     }
 }
 
@@ -281,13 +327,38 @@ impl JsonSchema for PolicyValidationResult {
             "oneOf": [
                 {
                     "properties": {
-                        "IsValid": { "const": true }
+                        "IsValid": { "const": true },
+                        "CanonicalDraft": {
+                            "$ref": "#/components/schemas/PolicyDraftDocument"
+                        },
+                        "ValidationReceipt": {
+                            "$ref": "#/components/schemas/PolicyValidationReceipt"
+                        },
+                        "Findings": {
+                            "items": {
+                                "properties": {
+                                    "Severity": { "const": "Warning" }
+                                },
+                                "required": ["Severity"]
+                            }
+                        }
                     },
                     "required": ["CanonicalDraft", "ValidationReceipt"]
                 },
                 {
                     "properties": {
-                        "IsValid": { "const": false }
+                        "IsValid": { "const": false },
+                        "Findings": {
+                            "minItems": 1,
+                            "not": {
+                                "items": {
+                                    "properties": {
+                                        "Severity": { "const": "Warning" }
+                                    },
+                                    "required": ["Severity"]
+                                }
+                            }
+                        }
                     },
                     "not": {
                         "anyOf": [
@@ -312,32 +383,233 @@ pub struct InvalidPolicyDiagnostics {
 }
 
 /// Atomic view of configured policy state and management guidance.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename = "PolicyManagementSnapshot")]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(try_from = "PolicyManagementSnapshotWire")]
 #[serde(rename_all = "PascalCase")]
 #[serde(deny_unknown_fields)]
 pub struct PolicyManagementSnapshot {
     pub state: PolicyManagementState,
 
     /// Fully resolved configured path.
-    #[schemars(length(min = 1, max = 32767))]
     pub configured_path: String,
 
     pub store_token: PolicyStoreToken,
     pub source: PolicyConfigurationSource,
     pub write_capability: PolicyWriteCapability,
 
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub read_only_reason: Option<PolicyReadOnlyReason>,
 
     pub elevation_required: bool,
 
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[schemars(schema_with = "super::policy::policy_document_schema")]
+    #[serde(default)]
     pub policy: Option<PolicyDocument>,
 
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     pub invalid_diagnostics: Option<InvalidPolicyDiagnostics>,
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[schemars(rename = "PolicyManagementSnapshotFields")]
+#[serde(rename_all = "PascalCase")]
+#[serde(deny_unknown_fields)]
+struct PolicyManagementSnapshotWire {
+    pub state: PolicyManagementState,
+    #[schemars(length(min = 1, max = 32767))]
+    pub configured_path: String,
+    pub store_token: PolicyStoreToken,
+    pub source: PolicyConfigurationSource,
+    pub write_capability: PolicyWriteCapability,
+    #[serde(default)]
+    pub read_only_reason: Option<PolicyReadOnlyReason>,
+    pub elevation_required: bool,
+    #[serde(default)]
+    #[schemars(schema_with = "super::policy::policy_document_schema")]
+    pub policy: Option<PolicyDocument>,
+    #[serde(default)]
+    pub invalid_diagnostics: Option<InvalidPolicyDiagnostics>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct PolicyManagementSnapshotRef<'a> {
+    state: PolicyManagementState,
+    configured_path: &'a str,
+    store_token: &'a PolicyStoreToken,
+    source: PolicyConfigurationSource,
+    write_capability: PolicyWriteCapability,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    read_only_reason: Option<PolicyReadOnlyReason>,
+    elevation_required: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    policy: Option<&'a PolicyDocument>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    invalid_diagnostics: Option<&'a InvalidPolicyDiagnostics>,
+}
+
+impl PolicyManagementSnapshot {
+    fn validate(&self) -> Result<(), &'static str> {
+        match self.state {
+            PolicyManagementState::Active if self.policy.is_none() || self.invalid_diagnostics.is_some() => {
+                return Err("Active management snapshots require Policy and forbid InvalidDiagnostics");
+            }
+            PolicyManagementState::Missing if self.policy.is_some() || self.invalid_diagnostics.is_some() => {
+                return Err("Missing management snapshots forbid Policy and InvalidDiagnostics");
+            }
+            PolicyManagementState::Invalid => {
+                let Some(diagnostics) = &self.invalid_diagnostics else {
+                    return Err("Invalid management snapshots require InvalidDiagnostics");
+                };
+                if self.policy.is_some() {
+                    return Err("Invalid management snapshots forbid Policy");
+                }
+                if diagnostics.findings.is_empty()
+                    || !diagnostics
+                        .findings
+                        .iter()
+                        .any(|finding| finding.severity == PolicyFindingSeverity::Error)
+                {
+                    return Err("Invalid management snapshots require nonempty diagnostics with an Error finding");
+                }
+            }
+            _ => {}
+        }
+
+        match self.write_capability {
+            PolicyWriteCapability::Writable if self.read_only_reason.is_some() => {
+                return Err("Writable management snapshots forbid ReadOnlyReason");
+            }
+            PolicyWriteCapability::ReadOnly | PolicyWriteCapability::Unsupported if self.read_only_reason.is_none() => {
+                return Err("ReadOnly and Unsupported management snapshots require ReadOnlyReason");
+            }
+            _ => {}
+        }
+
+        Ok(())
+    }
+}
+
+impl TryFrom<PolicyManagementSnapshotWire> for PolicyManagementSnapshot {
+    type Error = &'static str;
+
+    fn try_from(value: PolicyManagementSnapshotWire) -> Result<Self, Self::Error> {
+        let snapshot = Self {
+            state: value.state,
+            configured_path: value.configured_path,
+            store_token: value.store_token,
+            source: value.source,
+            write_capability: value.write_capability,
+            read_only_reason: value.read_only_reason,
+            elevation_required: value.elevation_required,
+            policy: value.policy,
+            invalid_diagnostics: value.invalid_diagnostics,
+        };
+        snapshot.validate()?;
+        Ok(snapshot)
+    }
+}
+
+impl Serialize for PolicyManagementSnapshot {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.validate().map_err(serde::ser::Error::custom)?;
+        PolicyManagementSnapshotRef {
+            state: self.state,
+            configured_path: &self.configured_path,
+            store_token: &self.store_token,
+            source: self.source,
+            write_capability: self.write_capability,
+            read_only_reason: self.read_only_reason,
+            elevation_required: self.elevation_required,
+            policy: self.policy.as_ref(),
+            invalid_diagnostics: self.invalid_diagnostics.as_ref(),
+        }
+        .serialize(serializer)
+    }
+}
+
+impl JsonSchema for PolicyManagementSnapshot {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "PolicyManagementSnapshot".into()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        let fields = generator.subschema_for::<PolicyManagementSnapshotWire>();
+        json_schema!({
+            "allOf": [
+                fields,
+                {
+                    "oneOf": [
+                        {
+                            "properties": {
+                                "State": { "const": "Active" },
+                                "Policy": {
+                                    "$ref": "#/components/schemas/PolicyDocument"
+                                }
+                            },
+                            "required": ["Policy"],
+                            "not": { "required": ["InvalidDiagnostics"] }
+                        },
+                        {
+                            "properties": { "State": { "const": "Missing" } },
+                            "not": {
+                                "anyOf": [
+                                    { "required": ["Policy"] },
+                                    { "required": ["InvalidDiagnostics"] }
+                                ]
+                            }
+                        },
+                        {
+                            "properties": {
+                                "State": { "const": "Invalid" },
+                                "InvalidDiagnostics": {
+                                    "allOf": [{
+                                        "$ref": "#/components/schemas/InvalidPolicyDiagnostics"
+                                    }],
+                                    "properties": {
+                                        "Findings": {
+                                            "minItems": 1,
+                                            "not": {
+                                                "items": {
+                                                    "properties": {
+                                                        "Severity": { "const": "Warning" }
+                                                    },
+                                                    "required": ["Severity"]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "required": ["InvalidDiagnostics"],
+                            "not": { "required": ["Policy"] }
+                        }
+                    ]
+                },
+                {
+                    "oneOf": [
+                        {
+                            "properties": { "WriteCapability": { "const": "Writable" } },
+                            "not": { "required": ["ReadOnlyReason"] }
+                        },
+                        {
+                            "properties": {
+                                "WriteCapability": {
+                                    "enum": ["ReadOnly", "Unsupported"]
+                                },
+                                "ReadOnlyReason": {
+                                    "$ref": "#/components/schemas/PolicyReadOnlyReason"
+                                }
+                            },
+                            "required": ["ReadOnlyReason"]
+                        }
+                    ]
+                }
+            ]
+        })
+    }
 }
 
 /// Response body for `GET /v1/policy/management`.
@@ -421,7 +693,7 @@ pub struct PolicyReplacementResponse {
 
 #[cfg(test)]
 mod tests {
-    use super::PolicyValidationResult;
+    use super::{PolicyManagementSnapshot, PolicyValidationResult};
 
     #[test]
     fn validation_result_requires_success_artifacts_exactly_when_valid() {
@@ -441,5 +713,101 @@ mod tests {
             "Findings": []
         });
         assert!(serde_json::from_value::<PolicyValidationResult>(invalid_with_receipt).is_err());
+    }
+
+    #[test]
+    fn validation_result_requires_findings_consistent_with_validity() {
+        let valid_with_error = serde_json::json!({
+            "ResultVersion": "1.0",
+            "ValidatorVersion": "validator/1",
+            "IsValid": true,
+            "CanonicalDraft": {
+                "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
+                "PolicyVersion": "1.0.0",
+                "PolicyType": "PackageBrokerPolicy",
+                "Metadata": { "Id": "test", "Publisher": "test" },
+                "Enforcement": { "DefaultDecision": "Deny", "RulePrecedence": "PriorityThenDeny" },
+                "Rules": []
+            },
+            "ValidationReceipt": "receipt",
+            "Findings": [{
+                "FindingVersion": "1.0",
+                "Severity": "Error",
+                "Code": "InvalidFieldValue",
+                "Path": "",
+                "Message": "error"
+            }]
+        });
+        assert!(serde_json::from_value::<PolicyValidationResult>(valid_with_error).is_err());
+
+        for findings in [
+            serde_json::json!([]),
+            serde_json::json!([{
+                "FindingVersion": "1.0",
+                "Severity": "Warning",
+                "Code": "DefaultAllow",
+                "Path": "/Enforcement/DefaultDecision",
+                "Message": "warning"
+            }]),
+        ] {
+            let invalid_without_error = serde_json::json!({
+                "ResultVersion": "1.0",
+                "ValidatorVersion": "validator/1",
+                "IsValid": false,
+                "Findings": findings
+            });
+            assert!(serde_json::from_value::<PolicyValidationResult>(invalid_without_error).is_err());
+        }
+
+        let mut invalid_for_serialization: PolicyValidationResult = serde_json::from_value(serde_json::json!({
+            "ResultVersion": "1.0",
+            "ValidatorVersion": "validator/1",
+            "IsValid": false,
+            "Findings": [{
+                "FindingVersion": "1.0",
+                "Severity": "Error",
+                "Code": "InvalidFieldValue",
+                "Path": "",
+                "Message": "error"
+            }]
+        }))
+        .expect("valid invalid-result fixture");
+        invalid_for_serialization.findings.clear();
+        assert!(serde_json::to_value(invalid_for_serialization).is_err());
+    }
+
+    #[test]
+    fn management_snapshot_rejects_contradictory_state_and_capability() {
+        let active_without_policy = serde_json::json!({
+            "State": "Active",
+            "ConfiguredPath": "C:\\policy.json",
+            "StoreToken": "store:1",
+            "Source": "ConfiguredPath",
+            "WriteCapability": "Writable",
+            "ElevationRequired": true
+        });
+        assert!(serde_json::from_value::<PolicyManagementSnapshot>(active_without_policy).is_err());
+
+        let readonly_without_reason = serde_json::json!({
+            "State": "Missing",
+            "ConfiguredPath": "C:\\policy.json",
+            "StoreToken": "store:1",
+            "Source": "ConfiguredPath",
+            "WriteCapability": "ReadOnly",
+            "ElevationRequired": true
+        });
+        assert!(serde_json::from_value::<PolicyManagementSnapshot>(readonly_without_reason).is_err());
+
+        let mut invalid_for_serialization: PolicyManagementSnapshot = serde_json::from_value(serde_json::json!({
+            "State": "Missing",
+            "ConfiguredPath": "C:\\policy.json",
+            "StoreToken": "store:1",
+            "Source": "ConfiguredPath",
+            "WriteCapability": "Writable",
+            "ElevationRequired": true
+        }))
+        .expect("valid missing snapshot fixture");
+        invalid_for_serialization.state = super::PolicyManagementState::Active;
+        assert!(serde_json::to_value(invalid_for_serialization).is_err());
     }
 }

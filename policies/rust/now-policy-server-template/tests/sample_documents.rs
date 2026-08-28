@@ -515,6 +515,7 @@ async fn api_router_preserves_supported_policy_failure() {
         message: "active policy is temporarily unavailable".to_owned(),
         details: Vec::new(),
         validation: None,
+        management: None,
     };
     let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME).with_policy_error(error));
 
@@ -589,7 +590,7 @@ async fn policy_management_error_codes_use_stable_http_statuses() {
         (ErrorCode::WarningConfirmationRequired, StatusCode::CONFLICT),
         (ErrorCode::Unauthenticated, StatusCode::UNAUTHORIZED),
         (ErrorCode::AdministratorRequired, StatusCode::FORBIDDEN),
-        (ErrorCode::UnsafePolicyPath, StatusCode::FORBIDDEN),
+        (ErrorCode::UnsafePolicyPath, StatusCode::CONFLICT),
         (ErrorCode::StalePolicyStoreToken, StatusCode::CONFLICT),
         (ErrorCode::UnsupportedPolicyFilesystem, StatusCode::UNPROCESSABLE_ENTITY),
         (ErrorCode::PolicyPersistenceFailed, StatusCode::INTERNAL_SERVER_ERROR),
@@ -606,6 +607,7 @@ async fn policy_management_error_codes_use_stable_http_statuses() {
             message: "management error".to_owned(),
             details: Vec::new(),
             validation: None,
+            management: None,
         };
         let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME).with_policy_error(error));
         let response = app
@@ -620,6 +622,43 @@ async fn policy_management_error_codes_use_stable_http_statuses() {
             .unwrap();
         assert_eq!(response.status(), expected, "{code:?}");
     }
+}
+
+#[test]
+fn stale_policy_store_token_requires_atomic_management_snapshot() {
+    let mut stale = load_json_file(&response_sample_path("policy-stale-token.error.json"));
+    let parsed: ErrorResponse = serde_json::from_value(stale.clone()).unwrap();
+    assert_eq!(parsed.management.unwrap().store_token.as_ref(), "store:active:9");
+
+    stale.as_object_mut().unwrap().remove("Management");
+    assert!(serde_json::from_value::<ErrorResponse>(stale).is_err());
+
+    let mut contradictory = load_json_file(&response_sample_path("policy-stale-token.error.json"));
+    contradictory["Management"].as_object_mut().unwrap().remove("Policy");
+    assert!(serde_json::from_value::<ErrorResponse>(contradictory).is_err());
+
+    let mut invalid_for_serialization: ErrorResponse =
+        serde_json::from_value(load_json_file(&response_sample_path("policy-stale-token.error.json"))).unwrap();
+    invalid_for_serialization.management = None;
+    assert!(serde_json::to_value(invalid_for_serialization).is_err());
+}
+
+#[tokio::test]
+async fn absent_legacy_policy_management_route_remains_an_ordinary_404() {
+    let response = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME))
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/v0/policy/management")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+    assert!(serde_json::from_slice::<ErrorResponse>(&body).is_err());
 }
 
 #[tokio::test]

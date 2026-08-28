@@ -82,6 +82,7 @@ public class PolicyManagementClientTests
 
         Assert.Equal(ErrorCode.StalePolicyStoreToken, exception.BrokerError?.Code);
         Assert.Equal(PolicyFindingCode.InvalidFieldValue, exception.BrokerError?.Validation?.Findings[0].Code);
+        Assert.Equal("store:active:9", exception.BrokerError?.Management?.StoreToken);
     }
 
     [Theory]
@@ -177,6 +178,54 @@ public class PolicyManagementClientTests
     }
 
     [Theory]
+    [InlineData("policy-validation.valid-with-error.response.json")]
+    [InlineData("policy-validation.invalid-with-warning.response.json")]
+    [InlineData("policy-validation.invalid-with-empty-findings.response.json")]
+    public async Task Strict_validation_response_rejects_contradictory_findings(string fixture)
+    {
+        var json = await ReadFixture(Path.Combine("invalid", "responses"), fixture);
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyValidationResponse>(json));
+    }
+
+    [Theory]
+    [InlineData("policy-management.active-without-policy.response.json")]
+    [InlineData("policy-management.invalid-with-warning.response.json")]
+    [InlineData("policy-management.readonly-without-reason.response.json")]
+    public async Task Strict_management_response_rejects_contradictory_snapshot(string fixture)
+    {
+        var json = await ReadFixture(Path.Combine("invalid", "responses"), fixture);
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyManagementResponse>(json));
+    }
+
+    [Theory]
+    [InlineData("policy-validation.valid-with-error.response.json", "PolicyValidationResponse")]
+    [InlineData("policy-validation.invalid-with-warning.response.json", "PolicyValidationResponse")]
+    [InlineData("policy-validation.invalid-with-empty-findings.response.json", "PolicyValidationResponse")]
+    [InlineData("policy-management.active-without-policy.response.json", "PolicyManagementResponse")]
+    [InlineData("policy-management.invalid-with-warning.response.json", "PolicyManagementResponse")]
+    [InlineData("policy-management.readonly-without-reason.response.json", "PolicyManagementResponse")]
+    public async Task OpenApi_rejects_contradictory_policy_management_contracts(string fixture, string component)
+    {
+        var json = await ReadFixture(Path.Combine("invalid", "responses"), fixture);
+        var schema = await TestData.SchemaAsync(component);
+        Assert.NotEmpty(schema.Validate(json));
+    }
+
+    [Fact]
+    public async Task Serialization_rejects_contradictory_policy_management_contracts()
+    {
+        var validation = BrokerJson.DeserializeStrict<PolicyValidationResponse>(
+            await ReadFixture("responses", "policy-validation.invalid.response.json"))!;
+        validation.Validation.Findings.Clear();
+        Assert.Throws<JsonException>(() => BrokerJson.Serialize(validation));
+
+        var management = BrokerJson.DeserializeStrict<PolicyManagementResponse>(
+            await ReadFixture("responses", "policy-management.missing.response.json"))!;
+        management.Management.State = PolicyManagementState.Active;
+        Assert.Throws<JsonException>(() => BrokerJson.Serialize(management));
+    }
+
+    [Theory]
     [InlineData("\"stalepolicystoretoken\"")]
     [InlineData("16")]
     public async Task Management_error_rejects_noncanonical_error_code(string value)
@@ -194,6 +243,44 @@ public class PolicyManagementClientTests
         error["Validation"]!["IsValid"] = true;
 
         Assert.Throws<JsonException>(() => BrokerJson.Deserialize<ErrorResponse>(error.ToJsonString()));
+    }
+
+    [Fact]
+    public async Task Stale_token_error_requires_atomic_management_snapshot()
+    {
+        var error = JsonNode.Parse(await ReadFixture("responses", "policy-stale-token.error.json"))!;
+        error.AsObject().Remove("Management");
+
+        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<ErrorResponse>(error.ToJsonString()));
+        Assert.NotEmpty((await TestData.SchemaAsync("ErrorResponse")).Validate(error.ToJsonString()));
+
+        var contradictory = JsonNode.Parse(await ReadFixture("responses", "policy-stale-token.error.json"))!;
+        contradictory["Management"]!.AsObject().Remove("Policy");
+        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<ErrorResponse>(contradictory.ToJsonString()));
+
+        var dto = new ErrorResponse
+        {
+            Code = ErrorCode.StalePolicyStoreToken,
+            Message = "stale",
+        };
+        Assert.Throws<JsonException>(() => BrokerJson.Serialize(dto));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("<html>not found</html>")]
+    public async Task GetPolicyManagement_preserves_legacy_route_not_found(string body)
+    {
+        var transport = new FakeBrokerTransport(new BrokerTransportResponse { StatusCode = 404, Body = body });
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(
+            () => CreateClient(transport).GetPolicyManagement());
+
+        Assert.True(
+            exception.Kind is BrokerClientErrorKind.EmptyResponse or BrokerClientErrorKind.BrokerError,
+            $"unexpected legacy 404 error kind: {exception.Kind}");
+        Assert.Equal(404, exception.StatusCode);
+        Assert.Null(exception.BrokerError);
     }
 
     private static async Task<string> ReadFixture(string directory, string file) =>

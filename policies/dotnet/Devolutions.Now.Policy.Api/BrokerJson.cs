@@ -25,15 +25,18 @@ public static class BrokerJson
 
     public static readonly JsonSerializerOptions PrettyOptions = CreateOptions(writeIndented: true);
 
-    public static string Serialize<T>(T value) =>
-        JsonSerializer.Serialize(value, TypeInfo<T>());
+    public static string Serialize<T>(T value)
+    {
+        ValidateStrictValue(value);
+        return JsonSerializer.Serialize(value, TypeInfo<T>());
+    }
 
     public static T? Deserialize<T>(string json)
     {
         var value = JsonSerializer.Deserialize(json, TypeInfo<T>());
-        if (value is ErrorResponse { Validation: { } validation })
+        if (value is ErrorResponse error)
         {
-            ValidateValidation(validation);
+            ValidateError(error);
         }
 
         return value;
@@ -42,6 +45,12 @@ public static class BrokerJson
     public static T? DeserializeStrict<T>(string json)
     {
         var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
+        ValidateStrictValue(value);
+        return value;
+    }
+
+    private static void ValidateStrictValue<T>(T value)
+    {
         switch (value)
         {
             case PolicyResponse response:
@@ -58,12 +67,10 @@ public static class BrokerJson
                 ValidateValidation(response.Validation);
                 ValidateManagement(response.Management);
                 break;
-            case ErrorResponse { Validation: { } validation }:
-                ValidateValidation(validation);
+            case ErrorResponse error:
+                ValidateError(error);
                 break;
         }
-
-        return value;
     }
 
     private static JsonTypeInfo<T> TypeInfo<T>() =>
@@ -109,14 +116,64 @@ public static class BrokerJson
 
     private static void ValidateManagement(PolicyManagementSnapshot management)
     {
+        switch (management.State)
+        {
+            case PolicyManagementState.Active when management.Policy is null || management.InvalidDiagnostics is not null:
+                throw new JsonException("Active management snapshots require Policy and forbid InvalidDiagnostics.");
+            case PolicyManagementState.Missing when management.Policy is not null || management.InvalidDiagnostics is not null:
+                throw new JsonException("Missing management snapshots forbid Policy and InvalidDiagnostics.");
+            case PolicyManagementState.Invalid:
+                if (management.Policy is not null)
+                {
+                    throw new JsonException("Invalid management snapshots forbid Policy.");
+                }
+                if (management.InvalidDiagnostics is null
+                    || management.InvalidDiagnostics.Findings.Count == 0
+                    || !management.InvalidDiagnostics.Findings.Any(
+                        finding => finding.Severity == PolicyFindingSeverity.Error))
+                {
+                    throw new JsonException(
+                        "Invalid management snapshots require nonempty diagnostics with an Error finding.");
+                }
+                break;
+        }
+
+        switch (management.WriteCapability)
+        {
+            case PolicyWriteCapability.Writable when management.ReadOnlyReason is not null:
+                throw new JsonException("Writable management snapshots forbid ReadOnlyReason.");
+            case PolicyWriteCapability.ReadOnly or PolicyWriteCapability.Unsupported
+                when management.ReadOnlyReason is null:
+                throw new JsonException("ReadOnly and Unsupported management snapshots require ReadOnlyReason.");
+        }
+
         if (management.Policy is { } policy)
         {
             PolicyJson.ValidateRequiredCollectionElements(policy);
         }
     }
 
+    private static void ValidateError(ErrorResponse error)
+    {
+        if (error.Code == ErrorCode.StalePolicyStoreToken && error.Management is null)
+        {
+            throw new JsonException("StalePolicyStoreToken errors require Management.");
+        }
+
+        if (error.Management is { } management)
+        {
+            ValidateManagement(management);
+        }
+
+        if (error.Validation is { } validation)
+        {
+            ValidateValidation(validation);
+        }
+    }
+
     private static void ValidateValidation(PolicyValidationResult validation)
     {
+        var hasError = validation.Findings.Any(finding => finding.Severity == PolicyFindingSeverity.Error);
         if (validation.IsValid)
         {
             if (validation.CanonicalDraft is null || validation.ValidationReceipt is null)
@@ -124,13 +181,25 @@ public static class BrokerJson
                 throw new JsonException(
                     "Valid policy validation results require CanonicalDraft and ValidationReceipt.");
             }
+            if (hasError)
+            {
+                throw new JsonException("Valid policy validation results must not contain Error findings.");
+            }
 
             PolicyJson.ValidateRequiredCollectionElements(validation.CanonicalDraft);
         }
-        else if (validation.CanonicalDraft is not null || validation.ValidationReceipt is not null)
+        else
         {
-            throw new JsonException(
-                "Invalid policy validation results must not contain CanonicalDraft or ValidationReceipt.");
+            if (validation.CanonicalDraft is not null || validation.ValidationReceipt is not null)
+            {
+                throw new JsonException(
+                    "Invalid policy validation results must not contain CanonicalDraft or ValidationReceipt.");
+            }
+            if (!hasError)
+            {
+                throw new JsonException(
+                    "Invalid policy validation results require at least one Error finding.");
+            }
         }
     }
 

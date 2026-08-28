@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [**breaking**] Add required policy management, validation, and optimistic replacement trait methods, routes, status mappings, and OpenAPI operations.
+- [**breaking**] Add required policy management, validation, and optimistic replacement trait methods, routes, status mappings, and OpenAPI operations. Unsafe policy paths map to HTTP 409; absent routes retain ordinary HTTP 404 behavior.
 
 
 ## [[0.3.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.2.0...now-policy-server-template-v0.3.0)] - 2026-08-05

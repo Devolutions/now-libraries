@@ -111,6 +111,8 @@ Response-oriented methods return successful DTOs or throw `BrokerClientException
 
 `GetPolicy` preserves both legacy and structured unsupported-endpoint behavior. Old Agents may return an empty or non-JSON 404, which is exposed with `StatusCode == 404` and no `BrokerError`. Rebuilt implementations may return a structured `ErrorResponse` with `Code == NotFound`. A supported Agent that cannot provide its active policy returns a structured non-404 error.
 
+The policy management methods preserve the same ordinary 404 behavior when an older Agent does not expose a newer route. A structured `StalePolicyStoreToken` error carries the atomic current `Management` snapshot; use its exact store token for an explicitly confirmed overwrite retry. `UnsafePolicyPath` uses HTTP 409 because it represents the current storage/write-capability state rather than authentication or elevation.
+
 Schema relationship
 -------------------
 

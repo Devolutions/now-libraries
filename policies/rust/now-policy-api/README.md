@@ -57,6 +57,8 @@ cargo run -p now-policy-server-template --bin generate-now-policy-api-openapi --
 
 The generated document contains the unchanged policy inspection route, the management/validation/replacement routes, and canonical committed and draft policy schemas.
 
+`StalePolicyStoreToken` errors include the atomic current `Management` snapshot so a client can explicitly confirm an overwrite against that exact newly observed token. `UnsafePolicyPath` is a 409 state/write-capability conflict, not an authentication failure. An Agent that does not expose a newer route may still return an ordinary unstructured 404; `UnsupportedEndpoint` is only an optional explicit implementation response.
+
 Validation
 ----------
 

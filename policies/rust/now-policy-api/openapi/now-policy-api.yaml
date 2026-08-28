@@ -32,7 +32,7 @@ paths:
       description: Returns the active parsed policy document. A 404 response means no active policy is configured.
       responses:
         default:
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
@@ -44,7 +44,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PolicyResponse'
         '404':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
@@ -67,43 +67,43 @@ paths:
               schema:
                 $ref: '#/components/schemas/PolicyReplacementResponse'
         '400':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '501':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
@@ -114,7 +114,7 @@ paths:
       description: Atomically returns configured policy state and advisory write capability. Capability fields are UX guidance and are rechecked during replacement.
       responses:
         default:
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
@@ -138,7 +138,7 @@ paths:
         required: true
       responses:
         default:
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
@@ -150,7 +150,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/PolicyValidationResponse'
         '400':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
@@ -174,19 +174,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/EvaluationResponse'
         '400':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '503':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
@@ -210,25 +210,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/ExecutionResponse'
         '400':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '503':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
@@ -252,13 +252,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/StatusResponse'
         '400':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
@@ -288,13 +288,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/CancelResponse'
         '400':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
-          description: Generic error body returned for non-2xx responses.
+          description: ''
           content:
             application/json:
               schema:
@@ -565,42 +565,57 @@ components:
       required:
       - Message
     ErrorResponse:
-      description: Generic error body returned for non-2xx responses.
+      allOf:
+      - $ref: '#/components/schemas/ErrorResponseFields'
+      oneOf:
+      - properties:
+          Code:
+            enum:
+            - StalePolicyStoreToken
+          Management:
+            $ref: '#/components/schemas/PolicyManagementSnapshot'
+        required:
+        - Management
+      - properties:
+          Code:
+            not:
+              enum:
+              - StalePolicyStoreToken
+    ErrorResponseFields:
       type: object
       properties:
         Code:
-          description: Machine-readable error code.
-          allOf:
-          - $ref: '#/components/schemas/ErrorCode'
+          $ref: '#/components/schemas/ErrorCode'
         Details:
-          description: Structured error details.
           type: array
+          default: []
           items:
             $ref: '#/components/schemas/ErrorDetail'
+        Management:
+          anyOf:
+          - $ref: '#/components/schemas/PolicyManagementSnapshot'
+          - enum:
+            - null
+            nullable: true
+          default: null
         Message:
-          description: Human-readable summary.
           type: string
           maxLength: 2048
           minLength: 1
         ResponseKind:
-          description: Response discriminator.
-          allOf:
-          - $ref: '#/components/schemas/ErrorResponseKind'
+          $ref: '#/components/schemas/ErrorResponseKind'
         ResponseVersion:
-          description: Server-side API version used to construct the response.
-          allOf:
-          - $ref: '#/components/schemas/ApiVersion'
+          $ref: '#/components/schemas/ApiVersion'
         Server:
-          description: Server context.
-          allOf:
-          - $ref: '#/components/schemas/ServerContext'
+          $ref: '#/components/schemas/ServerContext'
         Validation:
-          description: Current authoritative policy findings for management errors.
           anyOf:
           - $ref: '#/components/schemas/PolicyValidationResult'
           - enum:
             - null
             nullable: true
+          default: null
+      additionalProperties: false
       required:
       - ResponseKind
       - ResponseVersion
@@ -1197,11 +1212,74 @@ components:
       type: string
       pattern: ^PolicyManagementResponse$
     PolicyManagementSnapshot:
-      description: Atomic view of configured policy state and management guidance.
+      allOf:
+      - $ref: '#/components/schemas/PolicyManagementSnapshotFields'
+      - oneOf:
+        - properties:
+            Policy:
+              $ref: '#/components/schemas/PolicyDocument'
+            State:
+              enum:
+              - Active
+          not:
+            required:
+            - InvalidDiagnostics
+          required:
+          - Policy
+        - properties:
+            State:
+              enum:
+              - Missing
+          not:
+            anyOf:
+            - required:
+              - Policy
+            - required:
+              - InvalidDiagnostics
+        - properties:
+            InvalidDiagnostics:
+              properties:
+                Findings:
+                  minItems: 1
+                  not:
+                    items:
+                      properties:
+                        Severity:
+                          enum:
+                          - Warning
+                      required:
+                      - Severity
+              allOf:
+              - $ref: '#/components/schemas/InvalidPolicyDiagnostics'
+            State:
+              enum:
+              - Invalid
+          not:
+            required:
+            - Policy
+          required:
+          - InvalidDiagnostics
+      - oneOf:
+        - properties:
+            WriteCapability:
+              enum:
+              - Writable
+          not:
+            required:
+            - ReadOnlyReason
+        - properties:
+            ReadOnlyReason:
+              $ref: '#/components/schemas/PolicyReadOnlyReason'
+            WriteCapability:
+              enum:
+              - ReadOnly
+              - Unsupported
+          required:
+          - ReadOnlyReason
+    PolicyManagementSnapshotFields:
       type: object
       properties:
         ConfiguredPath:
-          description: Fully resolved configured path.
           type: string
           maxLength: 32767
           minLength: 1
@@ -1213,14 +1291,18 @@ components:
           - enum:
             - null
             nullable: true
+          default: null
         Policy:
-          $ref: '#/components/schemas/PolicyDocument'
+          allOf:
+          - $ref: '#/components/schemas/PolicyDocument'
+          default: null
         ReadOnlyReason:
           anyOf:
           - $ref: '#/components/schemas/PolicyReadOnlyReason'
           - enum:
             - null
             nullable: true
+          default: null
         Source:
           $ref: '#/components/schemas/PolicyConfigurationSource'
         State:
@@ -1421,13 +1503,35 @@ components:
       - $ref: '#/components/schemas/PolicyValidationResultFields'
       oneOf:
       - properties:
+          CanonicalDraft:
+            $ref: '#/components/schemas/PolicyDraftDocument'
+          Findings:
+            items:
+              properties:
+                Severity:
+                  enum:
+                  - Warning
+              required:
+              - Severity
           IsValid:
             enum:
             - true
+          ValidationReceipt:
+            $ref: '#/components/schemas/PolicyValidationReceipt'
         required:
         - CanonicalDraft
         - ValidationReceipt
       - properties:
+          Findings:
+            minItems: 1
+            not:
+              items:
+                properties:
+                  Severity:
+                    enum:
+                    - Warning
+                required:
+                - Severity
           IsValid:
             enum:
             - false

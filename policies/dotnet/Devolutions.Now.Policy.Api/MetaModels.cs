@@ -130,6 +130,10 @@ public sealed class ErrorResponse
     [JsonPropertyName("Validation")]
     public PolicyValidationResult? Validation { get; set; }
 
+    /// <summary>Atomic current policy state, required for stale store-token errors.</summary>
+    [JsonPropertyName("Management")]
+    public PolicyManagementSnapshot? Management { get; set; }
+
 }
 
 public sealed class ErrorDetail

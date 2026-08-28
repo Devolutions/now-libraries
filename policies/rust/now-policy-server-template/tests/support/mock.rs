@@ -129,6 +129,7 @@ impl MockPackageBrokerServer {
             message: format!("no mock response registered for '{id}'"),
             details: Vec::new(),
             validation: None,
+            management: None,
         }
     }
 
@@ -141,6 +142,7 @@ impl MockPackageBrokerServer {
             message: format!("{endpoint} is not implemented by this mock"),
             details: Vec::new(),
             validation: None,
+            management: None,
         }
     }
 }
@@ -172,6 +174,7 @@ impl PackageBrokerServer for MockPackageBrokerServer {
             message: "no active policy is configured".to_owned(),
             details: Vec::new(),
             validation: None,
+            management: None,
         })
     }
 
