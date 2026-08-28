@@ -10,64 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### <!-- 1 -->Features
 
-- Add active package policy inspection contract ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6)) 
-
-  - add canonical `GET /v1/policy` support across the Rust server
-  contract, generated OpenAPI, C# DTOs, and
-  `BrokerClient.GetPolicy(CancellationToken)`
-  - return the existing canonical `PolicyDocument` inside a versioned
-  `PolicyResponse`, with structured `404 NotFound` behavior when no active
-  policy is configured
-  - make policy inspection unconditional: remove `policy-compat` and its
-  cross-model conversion impls, and keep runtime mapping ownership in
-  broker implementations
-  - name the required Rust server accessor `active_policy`, leaving clear
-  room for a future explicit `replace_policy` operation backed by a
-  separate policy-store abstraction
-  - harden C# successful-response validation for required/null fields,
-  collection elements, unknown members, and canonical enum casing
-  - preserve existing OpenAPI component names by namespacing colliding
-  embedded policy components as `PolicyModel…`
-  - run workspace Rust tests and Clippy with all features through the
-  standard xtask commands
-  
-  ## API changes
-  
-  ### Rust
-  
-  - `now-policy-api` adds public `PolicyResponse` and
-  `PolicyResponseKind`; `now-policy` is now a normal dependency because
-  `PolicyDocument` is part of the permanent wire contract
-  - `PackageBrokerServer` adds the required method:
-  
-    ```rust
-  async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse>;
-    ```
-  
-  - `now-policy-server-template` registers the route unconditionally and
-  extends its mock with policy response/error builders
-  - `policy-compat` and its `From`/`TryFrom` conversions are removed
-  
-  ### C#
-  
-  - `Devolutions.Now.Policy.Api` adds `PolicyResponse`, embedding
-  `Devolutions.Now.Policy.Model.PolicyDocument`
-  - `Devolutions.Now.Policy.Client` adds `GetPolicy(CancellationToken)`
-  with strict validation of successful response bodies
-  - policy-model deserialization now enforces required members, non-null
-  collection elements, and canonical enum casing
-  
-  ### HTTP
-  
-  - adds read-only `GET /v1/policy`
-  - `200`: `PolicyResponse`
-  - `404`: structured `ErrorResponse` when no active policy is configured
-  - other failures use the existing `ErrorResponse` contract
-  - no policy mutation endpoint is introduced
-  
-  ---------
-
-
+- [**breaking**] Add the required `PackageBrokerServer::active_policy` method and expose it through `GET /v1/policy`; the mock server can configure policy responses or errors and defaults to `404 Not Found` when no active policy is set ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
 
 ## [[0.3.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.2.0...now-policy-server-template-v0.3.0)] - 2026-08-05
 
