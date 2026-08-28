@@ -46,6 +46,9 @@ The main surface is `BrokerClient`:
 - `IsAvailable` probes the health endpoint.
 - `GetHealth` and `GetCapabilities` query broker metadata.
 - `GetPolicy` sends `GET /v1/policy` and returns a `PolicyResponse` containing the active parsed `PolicyDocument` after strict validation of the successful response.
+- `GetPolicyManagement` gets the atomic active/missing/invalid management snapshot and advisory write capability.
+- `ValidatePolicy` preserves raw `JsonElement` draft content for authoritative validation and returns a canonical draft, exact findings, and receipt.
+- `ReplacePolicy` performs a token- and receipt-bound optimistic replacement; confirmed overwrite still targets an exact newly observed token and is never unconditional.
 - `Evaluate` sends `POST /v1/package-operations/evaluate`.
 - `Execute` sends `POST /v1/package-operations/execute`.
 - `ExecuteAndWait` submits an operation and polls status until a terminal state.

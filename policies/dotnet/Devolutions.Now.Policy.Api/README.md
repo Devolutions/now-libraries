@@ -6,7 +6,7 @@ Devolutions NOW package broker API for .NET
 Purpose
 -------
 
-This package contains request, response, status, health, capabilities, active-policy inspection, and error DTOs for package broker clients and implementations. It does not perform HTTP transport, named-pipe I/O, policy evaluation, or package-manager execution.
+This package contains request, response, status, health, capabilities, active-policy inspection and management, and error DTOs for package broker clients and implementations. It does not perform HTTP transport, named-pipe I/O, policy validation/evaluation, persistence, or package-manager execution.
 
 Top-level request DTOs carry `RequestKind` and `RequestVersion`; top-level response DTOs carry
 `ResponseKind` and `ResponseVersion`. Kind properties are fixed discriminators that serialize
@@ -26,6 +26,7 @@ Architecture
 
 - `RequestModels.cs` defines `PackageRequest` and request context/options.
 - `ResponseModels.cs` defines active-policy, evaluation, and execution responses plus shared response context, summaries, decisions, policy info, diagnostics, and operation submission. `PolicyResponse` embeds the canonical `Devolutions.Now.Policy.Model.PolicyDocument`.
+- `PolicyManagementModels.cs` defines atomic management snapshots, raw JSON draft requests, versioned validation findings/receipts, optimistic replacement intents, and management responses.
 - `StatusModels.cs` defines status query request/response DTOs.
 - `MetaModels.cs` defines health, capabilities, manager capability, and error DTOs.
 - `Enums.cs` defines package broker API enums and JSON string enum converters.

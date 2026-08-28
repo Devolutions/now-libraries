@@ -49,6 +49,112 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Replace the configured policy
+      description: Reparses and revalidates the raw draft inside the write transaction, then atomically commits it only when the expected opaque store token and validation receipt still match.
+      requestBody:
+        description: Request body for `PUT /v1/policy`.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyReplacementRequest'
+        required: true
+      responses:
+        '200':
+          description: Response body for `PUT /v1/policy`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyReplacementResponse'
+        '400':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/policy/management:
+    get:
+      summary: Get policy management state
+      description: Atomically returns configured policy state and advisory write capability. Capability fields are UX guidance and are rechecked during replacement.
+      responses:
+        default:
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
+          description: Response body for `GET /v1/policy/management`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyManagementResponse'
+  /v1/policy/validate:
+    post:
+      summary: Validate a policy draft
+      description: Authoritatively validates raw draft JSON without discarding unknown fields. Validation findings are returned with HTTP 200; malformed envelopes use ErrorResponse.
+      requestBody:
+        description: Request body for `POST /v1/policy/validate`.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyValidationRequest'
+        required: true
+      responses:
+        default:
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
+          description: Response body for `POST /v1/policy/validate`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyValidationResponse'
+        '400':
+          description: Generic error body returned for non-2xx responses.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /v1/package-operations/evaluate:
     post:
       summary: Evaluate package operation
@@ -424,6 +530,17 @@ components:
       - BrokerPaused
       - InternalError
       - Timeout
+      - UnsupportedEndpoint
+      - MalformedDraft
+      - InvalidPolicy
+      - WarningConfirmationRequired
+      - Unauthenticated
+      - AdministratorRequired
+      - UnsafePolicyPath
+      - StalePolicyStoreToken
+      - UnsupportedPolicyFilesystem
+      - PolicyPersistenceFailed
+      - PolicyActivationFailed
     ErrorDetail:
       description: Structured error detail, typically used for validation failures.
       type: object
@@ -477,6 +594,13 @@ components:
           description: Server context.
           allOf:
           - $ref: '#/components/schemas/ServerContext'
+        Validation:
+          description: Current authoritative policy findings for management errors.
+          anyOf:
+          - $ref: '#/components/schemas/PolicyValidationResult'
+          - enum:
+            - null
+            nullable: true
       required:
       - ResponseKind
       - ResponseVersion
@@ -688,6 +812,20 @@ components:
         type: string
         enum:
         - Paused
+    InvalidPolicyDiagnostics:
+      description: Sanitized diagnostics for an invalid configured policy.
+      type: object
+      properties:
+        DiagnosticsVersion:
+          $ref: '#/components/schemas/ApiVersion'
+        Findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyFinding'
+      additionalProperties: false
+      required:
+      - DiagnosticsVersion
+      - Findings
     ManagerCapability:
       description: Package-manager-specific capability declaration.
       type: object
@@ -955,6 +1093,252 @@ components:
     PackageRequestKind:
       type: string
       pattern: ^PackageRequest$
+    PolicyConfigurationSource:
+      description: Origin of the resolved policy path.
+      type: string
+      enum:
+      - DefaultPath
+      - ConfiguredPath
+    PolicyConflictHandling:
+      description: Optimistic-conflict behavior for policy replacement.
+      oneOf:
+      - type: string
+        enum:
+        - Reject
+      - description: Overwrite only the exact newly observed store token carried by this request.
+        type: string
+        enum:
+        - ConfirmOverwrite
+    PolicyFinding:
+      description: Versioned, structured policy validation finding.
+      type: object
+      properties:
+        Arguments:
+          description: Machine-readable message arguments for localization.
+          type: object
+          additionalProperties: true
+        Code:
+          $ref: '#/components/schemas/PolicyFindingCode'
+        FindingVersion:
+          description: Finding shape version.
+          allOf:
+          - $ref: '#/components/schemas/ApiVersion'
+        Message:
+          description: Human-readable fallback for clients that do not recognize the code.
+          type: string
+          maxLength: 2048
+          minLength: 1
+        Path:
+          description: RFC 6901 JSON Pointer into the submitted draft.
+          type: string
+          maxLength: 2048
+        RuleId:
+          anyOf:
+          - $ref: '#/components/schemas/ResourceId'
+          - enum:
+            - null
+            nullable: true
+        Severity:
+          $ref: '#/components/schemas/PolicyFindingSeverity'
+      additionalProperties: false
+      required:
+      - FindingVersion
+      - Severity
+      - Code
+      - Path
+      - Message
+    PolicyFindingCode:
+      description: Stable policy validation finding code.
+      type: string
+      enum:
+      - SchemaViolation
+      - UnknownField
+      - MissingRequiredField
+      - InvalidFieldType
+      - InvalidFieldValue
+      - DuplicateRuleId
+      - IneffectiveBooleanMatch
+      - InvalidVersionRange
+      - EmptyVersionRange
+      - InvalidWildcardPattern
+      - ContradictoryConstraints
+      - InvalidValidityInterval
+      - UnsupportedSchema
+      - UnsupportedPolicyType
+      - UnsupportedPolicyVersion
+      - AuditModeEnabled
+      - DefaultAllow
+      - SensitiveOptionAllowed
+    PolicyFindingSeverity:
+      description: Severity of a policy validation finding.
+      type: string
+      enum:
+      - Error
+      - Warning
+    PolicyManagementResponse:
+      description: Response body for `GET /v1/policy/management`.
+      type: object
+      properties:
+        Management:
+          $ref: '#/components/schemas/PolicyManagementSnapshot'
+        ResponseKind:
+          $ref: '#/components/schemas/PolicyManagementResponseKind'
+        ResponseVersion:
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          $ref: '#/components/schemas/ServerContext'
+      additionalProperties: false
+      required:
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      - Management
+    PolicyManagementResponseKind:
+      type: string
+      pattern: ^PolicyManagementResponse$
+    PolicyManagementSnapshot:
+      description: Atomic view of configured policy state and management guidance.
+      type: object
+      properties:
+        ConfiguredPath:
+          description: Fully resolved configured path.
+          type: string
+          maxLength: 32767
+          minLength: 1
+        ElevationRequired:
+          type: boolean
+        InvalidDiagnostics:
+          anyOf:
+          - $ref: '#/components/schemas/InvalidPolicyDiagnostics'
+          - enum:
+            - null
+            nullable: true
+        Policy:
+          $ref: '#/components/schemas/PolicyDocument'
+        ReadOnlyReason:
+          anyOf:
+          - $ref: '#/components/schemas/PolicyReadOnlyReason'
+          - enum:
+            - null
+            nullable: true
+        Source:
+          $ref: '#/components/schemas/PolicyConfigurationSource'
+        State:
+          $ref: '#/components/schemas/PolicyManagementState'
+        StoreToken:
+          $ref: '#/components/schemas/PolicyStoreToken'
+        WriteCapability:
+          $ref: '#/components/schemas/PolicyWriteCapability'
+      additionalProperties: false
+      required:
+      - State
+      - ConfiguredPath
+      - StoreToken
+      - Source
+      - WriteCapability
+      - ElevationRequired
+    PolicyManagementState:
+      description: Current configured-policy state.
+      type: string
+      enum:
+      - Active
+      - Missing
+      - Invalid
+    PolicyReadOnlyReason:
+      description: Stable reason why the configured policy cannot be written.
+      type: string
+      enum:
+      - ManagementDisabled
+      - PathNotConfigured
+      - UnsafePath
+      - InsufficientPermissions
+      - UnsupportedFileSystem
+    PolicyReplacementOperation:
+      description: Requested identity/revision behavior for a policy replacement.
+      oneOf:
+      - description: Update the active policy while retaining its identity and incrementing its revision.
+        type: string
+        enum:
+        - Update
+      - description: Replace the active policy with an explicitly different identity at revision 1.
+        type: string
+        enum:
+        - ReplaceIdentity
+      - description: Create the first policy at revision 1.
+        type: string
+        enum:
+        - Create
+      - description: Replace an invalid configured document at revision 1.
+        type: string
+        enum:
+        - Repair
+    PolicyReplacementRequest:
+      description: Request body for `PUT /v1/policy`.
+      type: object
+      properties:
+        ConflictHandling:
+          $ref: '#/components/schemas/PolicyConflictHandling'
+        Draft:
+          description: Raw draft JSON retained for transaction-time reparsing and revalidation.
+        ExpectedStoreToken:
+          $ref: '#/components/schemas/PolicyStoreToken'
+        Operation:
+          $ref: '#/components/schemas/PolicyReplacementOperation'
+        RequestKind:
+          $ref: '#/components/schemas/PolicyReplacementRequestKind'
+        RequestVersion:
+          $ref: '#/components/schemas/ApiVersion'
+        ValidationReceipt:
+          $ref: '#/components/schemas/PolicyValidationReceipt'
+        WarningsAcknowledged:
+          description: Explicit acknowledgement of every warning bound into the validation receipt.
+          type: boolean
+      additionalProperties: false
+      required:
+      - RequestKind
+      - RequestVersion
+      - ExpectedStoreToken
+      - Operation
+      - ConflictHandling
+      - WarningsAcknowledged
+      - Draft
+      - ValidationReceipt
+    PolicyReplacementRequestKind:
+      type: string
+      pattern: ^PolicyReplacementRequest$
+    PolicyReplacementResponse:
+      description: Response body for `PUT /v1/policy`.
+      type: object
+      properties:
+        Management:
+          description: Newly observed management state and store token.
+          allOf:
+          - $ref: '#/components/schemas/PolicyManagementSnapshot'
+        Policy:
+          description: Exact committed active policy, including server-assigned metadata.
+          allOf:
+          - $ref: '#/components/schemas/PolicyDocument'
+        ResponseKind:
+          $ref: '#/components/schemas/PolicyReplacementResponseKind'
+        ResponseVersion:
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          $ref: '#/components/schemas/ServerContext'
+        Validation:
+          description: Transaction-time validation result for the exact committed draft.
+          allOf:
+          - $ref: '#/components/schemas/PolicyValidationResult'
+      additionalProperties: false
+      required:
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      - Policy
+      - Validation
+      - Management
+    PolicyReplacementResponseKind:
+      type: string
+      pattern: ^PolicyReplacementResponse$
     PolicyResponse:
       description: Response body for `GET /v1/policy`.
       type: object
@@ -983,6 +1367,115 @@ components:
     PolicyResponseKind:
       type: string
       pattern: ^PolicyResponse$
+    PolicyStoreToken:
+      description: Opaque token identifying the exact state observed in the policy store.
+      type: string
+      maxLength: 512
+      minLength: 1
+    PolicyValidationReceipt:
+      description: Opaque receipt bound to a canonical draft, validator version, and exact warning set.
+      type: string
+      maxLength: 2048
+      minLength: 1
+    PolicyValidationRequest:
+      description: Request body for `POST /v1/policy/validate`.
+      type: object
+      properties:
+        Draft:
+          description: Raw draft JSON retained without dropping unknown members.
+        RequestKind:
+          $ref: '#/components/schemas/PolicyValidationRequestKind'
+        RequestVersion:
+          $ref: '#/components/schemas/ApiVersion'
+      additionalProperties: false
+      required:
+      - RequestKind
+      - RequestVersion
+      - Draft
+    PolicyValidationRequestKind:
+      type: string
+      pattern: ^PolicyValidationRequest$
+    PolicyValidationResponse:
+      description: Response body for `POST /v1/policy/validate`.
+      type: object
+      properties:
+        ResponseKind:
+          $ref: '#/components/schemas/PolicyValidationResponseKind'
+        ResponseVersion:
+          $ref: '#/components/schemas/ApiVersion'
+        Server:
+          $ref: '#/components/schemas/ServerContext'
+        Validation:
+          $ref: '#/components/schemas/PolicyValidationResult'
+      additionalProperties: false
+      required:
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      - Validation
+    PolicyValidationResponseKind:
+      type: string
+      pattern: ^PolicyValidationResponse$
+    PolicyValidationResult:
+      allOf:
+      - $ref: '#/components/schemas/PolicyValidationResultFields'
+      oneOf:
+      - properties:
+          IsValid:
+            enum:
+            - true
+        required:
+        - CanonicalDraft
+        - ValidationReceipt
+      - properties:
+          IsValid:
+            enum:
+            - false
+        not:
+          anyOf:
+          - required:
+            - CanonicalDraft
+          - required:
+            - ValidationReceipt
+    PolicyValidationResultFields:
+      type: object
+      properties:
+        CanonicalDraft:
+          allOf:
+          - $ref: '#/components/schemas/PolicyDraftDocument'
+          default: null
+        Findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyFinding'
+        IsValid:
+          type: boolean
+        ResultVersion:
+          $ref: '#/components/schemas/ApiVersion'
+        ValidationReceipt:
+          anyOf:
+          - $ref: '#/components/schemas/PolicyValidationReceipt'
+          - enum:
+            - null
+            nullable: true
+          default: null
+        ValidatorVersion:
+          type: string
+          maxLength: 128
+          minLength: 1
+      additionalProperties: false
+      required:
+      - ResultVersion
+      - ValidatorVersion
+      - IsValid
+      - Findings
+    PolicyWriteCapability:
+      description: Advisory ability to write the configured policy through the management API.
+      type: string
+      enum:
+      - Writable
+      - ReadOnly
+      - Unsupported
     ProcessName:
       description: A process name string.
       type: string
@@ -1458,6 +1951,83 @@ components:
       - Metadata
       - Enforcement
       - Rules
+    PolicyDraftDocument:
+      description: An editable policy document without server-managed commit metadata.
+      type: object
+      properties:
+        $schema:
+          description: Policy schema URI constant.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPolicySchemaUri'
+        Enforcement:
+          description: Enforcement configuration.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPolicyEnforcement'
+        Metadata:
+          description: Editable policy metadata.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPolicyDraftMetadata'
+        PolicyType:
+          description: Must be `"PackageBrokerPolicy"`.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPackageBrokerPolicy'
+        PolicyVersion:
+          description: Policy syntax version (semver).
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelSemanticVersion'
+        Rules:
+          description: Ordered list of policy rules (may be empty; enforcement defaults apply).
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyModelPolicyRule'
+          maxItems: 1024
+      additionalProperties: false
+      required:
+      - $schema
+      - PolicyVersion
+      - PolicyType
+      - Metadata
+      - Enforcement
+      - Rules
+    PolicyModelPolicyDraftMetadata:
+      description: Editable policy metadata without server-managed revision and publication time.
+      type: object
+      properties:
+        Description:
+          description: Human-readable description.
+          type: string
+          maxLength: 512
+          nullable: true
+        Id:
+          description: Unique policy identifier.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelResourceId'
+        Publisher:
+          description: Organization that publishes the policy.
+          type: string
+          maxLength: 128
+          minLength: 1
+        SupportUrl:
+          description: URL for support or documentation.
+          anyOf:
+          - $ref: '#/components/schemas/PolicyModelHttpUrl'
+          - enum:
+            - null
+            nullable: true
+        ValidFrom:
+          description: Policy becomes active at this time.
+          type: string
+          format: date-time
+          nullable: true
+        ValidUntil:
+          description: Policy expires at this time.
+          type: string
+          format: date-time
+          nullable: true
+      additionalProperties: false
+      required:
+      - Id
+      - Publisher
     PolicyModelPolicyEnforcement:
       description: Enforcement configuration.
       type: object
@@ -1503,41 +2073,42 @@ components:
           type: array
           items:
             type: boolean
-          maxItems: 2
+          maxItems: 1
           uniqueItems: true
         HasCustomParameters:
           description: Whether request has custom parameters.
           type: array
           items:
             type: boolean
-          maxItems: 2
+          maxItems: 1
           uniqueItems: true
         HasKillBeforeOperation:
           description: Whether request has kill-before-operation entries.
           type: array
           items:
             type: boolean
-          maxItems: 2
+          maxItems: 1
           uniqueItems: true
         HasPrePostCommands:
           description: Whether request has pre/post operation commands.
           type: array
           items:
             type: boolean
-          maxItems: 2
+          maxItems: 1
           uniqueItems: true
         HasUninstallPrevious:
           description: Whether request has uninstall-previous flag set.
           type: array
           items:
             type: boolean
+          maxItems: 1
           uniqueItems: true
         Interactive:
           description: Allowed interactive values.
           type: array
           items:
             type: boolean
-          maxItems: 2
+          maxItems: 1
           uniqueItems: true
         Managers:
           description: Allowed managers.
@@ -1572,7 +2143,7 @@ components:
           type: array
           items:
             type: boolean
-          maxItems: 2
+          maxItems: 1
           uniqueItems: true
         Scopes:
           description: Allowed scopes.
@@ -1586,7 +2157,7 @@ components:
           type: array
           items:
             type: boolean
-          maxItems: 2
+          maxItems: 1
           uniqueItems: true
         Sources:
           description: Source patterns (wildcard).

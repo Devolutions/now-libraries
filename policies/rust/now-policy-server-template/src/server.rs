@@ -3,19 +3,22 @@
 use std::sync::Arc;
 
 use aide::axum::ApiRouter;
-use aide::axum::routing::{get_with, post_with};
+use aide::axum::routing::{get_with, post_with, put_with};
 use aide::openapi::OpenApi;
 use aide::transform::TransformOperation;
 use async_trait::async_trait;
 use axum::Json;
 use axum::extract::State;
+use axum::extract::rejection::JsonRejection;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
 use now_policy_api::{
     API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, ErrorCode, ErrorResponse, EvaluationResponse,
-    ExecutionResponse, HealthResponse, PackageRequest, PolicyResponse, StatusRequest, StatusResponse,
+    ExecutionResponse, HealthResponse, PackageRequest, PolicyManagementResponse, PolicyReplacementRequest,
+    PolicyReplacementResponse, PolicyResponse, PolicyValidationRequest, PolicyValidationResponse, StatusRequest,
+    StatusResponse,
 };
 use schemars::SchemaGenerator;
 
@@ -27,6 +30,15 @@ pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
     async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse>;
+    async fn policy_management(&self) -> Result<PolicyManagementResponse, ErrorResponse>;
+    async fn validate_policy(
+        &self,
+        request: PolicyValidationRequest,
+    ) -> Result<PolicyValidationResponse, ErrorResponse>;
+    async fn replace_policy(
+        &self,
+        request: PolicyReplacementRequest,
+    ) -> Result<PolicyReplacementResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
@@ -54,6 +66,20 @@ fn api_routes() -> ApiRouter<SharedPackageBrokerServer> {
         .api_route("/v1/health", get_with(health_handler, health_docs))
         .api_route("/v1/capabilities", get_with(capabilities_handler, capabilities_docs))
         .api_route("/v1/policy", get_with(policy_handler, policy_docs))
+        .api_route(
+            "/v1/policy/management",
+            get_with(policy_management_handler, policy_management_docs),
+        )
+        .api_route(
+            "/v1/policy/validate",
+            post_with(policy_validation_handler, policy_validation_docs)
+                .layer(axum::extract::DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
+        )
+        .api_route(
+            "/v1/policy",
+            put_with(policy_replacement_handler, policy_replacement_docs)
+                .layer(axum::extract::DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
+        )
         .api_route(
             "/v1/package-operations/evaluate",
             post_with(evaluate_handler, evaluate_docs)
@@ -109,15 +135,16 @@ fn register_policy_schema(api: &mut OpenApi) {
     use std::collections::BTreeMap;
 
     use aide::openapi::{Components, SchemaObject};
-    use now_policy::PolicyDocument;
+    use now_policy::{PolicyDocument, PolicyDraftDocument};
 
     let mut generator = openapi_schema_generator();
     let _ = generator.subschema_for::<PolicyDocument>();
+    let _ = generator.subschema_for::<PolicyDraftDocument>();
     let definitions = generator.take_definitions(true);
     let renames: BTreeMap<_, _> = definitions
         .keys()
         .map(|name| {
-            let component_name = if name == "PolicyDocument" {
+            let component_name = if matches!(name.as_str(), "PolicyDocument" | "PolicyDraftDocument") {
                 name.clone()
             } else {
                 format!("PolicyModel{name}")
@@ -190,32 +217,94 @@ async fn policy_handler(State(server): State<SharedPackageBrokerServer>) -> Resp
     broker_result(server.active_policy().await)
 }
 
+async fn policy_management_handler(State(server): State<SharedPackageBrokerServer>) -> Response {
+    broker_result(server.policy_management().await)
+}
+
+async fn policy_validation_handler(
+    State(server): State<SharedPackageBrokerServer>,
+    request: Result<Json<PolicyValidationRequest>, JsonRejection>,
+) -> Response {
+    match request {
+        Ok(Json(request)) => broker_result(server.validate_policy(request).await),
+        Err(rejection) => request_rejection(&server, rejection, ErrorCode::MalformedDraft).await,
+    }
+}
+
+async fn policy_replacement_handler(
+    State(server): State<SharedPackageBrokerServer>,
+    request: Result<Json<PolicyReplacementRequest>, JsonRejection>,
+) -> Response {
+    match request {
+        Ok(Json(request)) => broker_result(server.replace_policy(request).await),
+        Err(rejection) => request_rejection(&server, rejection, ErrorCode::MalformedDraft).await,
+    }
+}
+
 async fn evaluate_handler(
     State(server): State<SharedPackageBrokerServer>,
-    Json(request): Json<PackageRequest>,
+    request: Result<Json<PackageRequest>, JsonRejection>,
 ) -> Response {
-    broker_result(server.evaluate(request).await)
+    match request {
+        Ok(Json(request)) => broker_result(server.evaluate(request).await),
+        Err(rejection) => request_rejection(&server, rejection, ErrorCode::BadRequest).await,
+    }
 }
 
 async fn execute_handler(
     State(server): State<SharedPackageBrokerServer>,
-    Json(request): Json<PackageRequest>,
+    request: Result<Json<PackageRequest>, JsonRejection>,
 ) -> Response {
-    broker_result(server.execute(request).await)
+    match request {
+        Ok(Json(request)) => broker_result(server.execute(request).await),
+        Err(rejection) => request_rejection(&server, rejection, ErrorCode::BadRequest).await,
+    }
 }
 
 async fn status_handler(
     State(server): State<SharedPackageBrokerServer>,
-    Json(request): Json<StatusRequest>,
+    request: Result<Json<StatusRequest>, JsonRejection>,
 ) -> Response {
-    broker_result(server.status(request).await)
+    match request {
+        Ok(Json(request)) => broker_result(server.status(request).await),
+        Err(rejection) => request_rejection(&server, rejection, ErrorCode::BadRequest).await,
+    }
 }
 
 async fn cancel_handler(
     State(server): State<SharedPackageBrokerServer>,
-    Json(request): Json<CancelRequest>,
+    request: Result<Json<CancelRequest>, JsonRejection>,
 ) -> Response {
-    broker_result(server.cancel(request).await)
+    match request {
+        Ok(Json(request)) => broker_result(server.cancel(request).await),
+        Err(rejection) => request_rejection(&server, rejection, ErrorCode::BadRequest).await,
+    }
+}
+
+async fn request_rejection(
+    server: &SharedPackageBrokerServer,
+    rejection: JsonRejection,
+    malformed_code: ErrorCode,
+) -> Response {
+    let status = rejection.status();
+    let (code, message) = match status {
+        StatusCode::PAYLOAD_TOO_LARGE => (ErrorCode::PayloadTooLarge, "request body exceeds the broker limit"),
+        StatusCode::UNSUPPORTED_MEDIA_TYPE => (
+            ErrorCode::UnsupportedMediaType,
+            "request Content-Type must be application/json",
+        ),
+        _ => (malformed_code, "request body is not a valid broker document"),
+    };
+    let error = ErrorResponse {
+        response_kind: now_policy_api::ErrorResponseKind,
+        response_version: API_VERSION_STR.into(),
+        server: server.capabilities().await.server,
+        code,
+        message: message.to_owned(),
+        details: Vec::new(),
+        validation: None,
+    };
+    (error_status(error.code), Json(error)).into_response()
 }
 
 fn broker_result<T: Serialize>(result: Result<T, ErrorResponse>) -> Response {
@@ -227,17 +316,24 @@ fn broker_result<T: Serialize>(result: Result<T, ErrorResponse>) -> Response {
 
 fn error_status(code: ErrorCode) -> StatusCode {
     match code {
-        ErrorCode::BadRequest => StatusCode::BAD_REQUEST,
-        ErrorCode::Unauthorized => StatusCode::UNAUTHORIZED,
-        ErrorCode::Forbidden => StatusCode::FORBIDDEN,
+        ErrorCode::BadRequest | ErrorCode::MalformedDraft => StatusCode::BAD_REQUEST,
+        ErrorCode::Unauthorized | ErrorCode::Unauthenticated => StatusCode::UNAUTHORIZED,
+        ErrorCode::Forbidden | ErrorCode::AdministratorRequired | ErrorCode::UnsafePolicyPath => StatusCode::FORBIDDEN,
         ErrorCode::NotFound => StatusCode::NOT_FOUND,
-        ErrorCode::Conflict => StatusCode::CONFLICT,
+        ErrorCode::Conflict | ErrorCode::WarningConfirmationRequired | ErrorCode::StalePolicyStoreToken => {
+            StatusCode::CONFLICT
+        }
         ErrorCode::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
         ErrorCode::UnsupportedMediaType => StatusCode::UNSUPPORTED_MEDIA_TYPE,
-        ErrorCode::ValidationFailed => StatusCode::UNPROCESSABLE_ENTITY,
+        ErrorCode::ValidationFailed | ErrorCode::InvalidPolicy | ErrorCode::UnsupportedPolicyFilesystem => {
+            StatusCode::UNPROCESSABLE_ENTITY
+        }
         ErrorCode::BrokerPaused => StatusCode::SERVICE_UNAVAILABLE,
-        ErrorCode::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+        ErrorCode::InternalError | ErrorCode::PolicyPersistenceFailed | ErrorCode::PolicyActivationFailed => {
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
         ErrorCode::Timeout => StatusCode::GATEWAY_TIMEOUT,
+        ErrorCode::UnsupportedEndpoint => StatusCode::NOT_IMPLEMENTED,
     }
 }
 
@@ -259,6 +355,43 @@ fn policy_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .response::<200, Json<PolicyResponse>>()
         .response::<404, Json<ErrorResponse>>()
         .default_response::<Json<ErrorResponse>>()
+}
+
+fn policy_management_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
+    op.summary("Get policy management state")
+        .description(
+            "Atomically returns configured policy state and advisory write capability. \
+             Capability fields are UX guidance and are rechecked during replacement.",
+        )
+        .response::<200, Json<PolicyManagementResponse>>()
+        .default_response::<Json<ErrorResponse>>()
+}
+
+fn policy_validation_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
+    op.summary("Validate a policy draft")
+        .description(
+            "Authoritatively validates raw draft JSON without discarding unknown fields. \
+             Validation findings are returned with HTTP 200; malformed envelopes use ErrorResponse.",
+        )
+        .response::<200, Json<PolicyValidationResponse>>()
+        .response::<400, Json<ErrorResponse>>()
+        .default_response::<Json<ErrorResponse>>()
+}
+
+fn policy_replacement_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
+    op.summary("Replace the configured policy")
+        .description(
+            "Reparses and revalidates the raw draft inside the write transaction, then atomically \
+             commits it only when the expected opaque store token and validation receipt still match.",
+        )
+        .response::<200, Json<PolicyReplacementResponse>>()
+        .response::<400, Json<ErrorResponse>>()
+        .response::<401, Json<ErrorResponse>>()
+        .response::<403, Json<ErrorResponse>>()
+        .response::<409, Json<ErrorResponse>>()
+        .response::<422, Json<ErrorResponse>>()
+        .response::<500, Json<ErrorResponse>>()
+        .response::<501, Json<ErrorResponse>>()
 }
 
 fn evaluate_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {

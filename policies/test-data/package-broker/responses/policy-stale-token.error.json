@@ -1,0 +1,27 @@
+{
+  "ResponseKind": "ErrorResponse",
+  "ResponseVersion": "1.0",
+  "Server": {
+    "ServerVersion": "2026.8.0",
+    "Transport": "HttpNamedPipe"
+  },
+  "Code": "StalePolicyStoreToken",
+  "Message": "The configured policy changed after it was read.",
+  "Validation": {
+    "ResultVersion": "1.0",
+    "ValidatorVersion": "gateway-policy-validator/1",
+    "IsValid": false,
+    "Findings": [
+      {
+        "FindingVersion": "1.0",
+        "Severity": "Error",
+        "Code": "InvalidFieldValue",
+        "Path": "",
+        "Arguments": {
+          "currentStoreToken": "store:active:9"
+        },
+        "Message": "Read the current management snapshot and retry."
+      }
+    ]
+  }
+}

@@ -28,15 +28,39 @@ public static class BrokerJson
     public static string Serialize<T>(T value) =>
         JsonSerializer.Serialize(value, TypeInfo<T>());
 
-    public static T? Deserialize<T>(string json) =>
-        JsonSerializer.Deserialize(json, TypeInfo<T>());
+    public static T? Deserialize<T>(string json)
+    {
+        var value = JsonSerializer.Deserialize(json, TypeInfo<T>());
+        if (value is ErrorResponse { Validation: { } validation })
+        {
+            ValidateValidation(validation);
+        }
+
+        return value;
+    }
 
     public static T? DeserializeStrict<T>(string json)
     {
         var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
-        if (value is PolicyResponse response)
+        switch (value)
         {
-            PolicyJson.ValidateRequiredCollectionElements(response.Policy);
+            case PolicyResponse response:
+                PolicyJson.ValidateRequiredCollectionElements(response.Policy);
+                break;
+            case PolicyManagementResponse response:
+                ValidateManagement(response.Management);
+                break;
+            case PolicyValidationResponse response:
+                ValidateValidation(response.Validation);
+                break;
+            case PolicyReplacementResponse response:
+                PolicyJson.ValidateRequiredCollectionElements(response.Policy);
+                ValidateValidation(response.Validation);
+                ValidateManagement(response.Management);
+                break;
+            case ErrorResponse { Validation: { } validation }:
+                ValidateValidation(validation);
+                break;
         }
 
         return value;
@@ -46,39 +70,77 @@ public static class BrokerJson
         typeof(T) == typeof(PackageRequest) ? Cast<T>(BrokerJsonSerializerContext.Default.PackageRequest) :
         typeof(T) == typeof(StatusRequest) ? Cast<T>(BrokerJsonSerializerContext.Default.StatusRequest) :
         typeof(T) == typeof(CancelRequest) ? Cast<T>(BrokerJsonSerializerContext.Default.CancelRequest) :
+        typeof(T) == typeof(PolicyValidationRequest) ? Cast<T>(BrokerPolicyJsonSerializerContext.Default.PolicyValidationRequest) :
+        typeof(T) == typeof(PolicyReplacementRequest) ? Cast<T>(BrokerPolicyJsonSerializerContext.Default.PolicyReplacementRequest) :
         typeof(T) == typeof(HealthResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.HealthResponse) :
         typeof(T) == typeof(CapabilitiesResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.CapabilitiesResponse) :
         typeof(T) == typeof(PolicyResponse) ? Cast<T>(BrokerPolicyJsonSerializerContext.Default.PolicyResponse) :
+        typeof(T) == typeof(PolicyManagementResponse) ? Cast<T>(BrokerPolicyJsonSerializerContext.Default.PolicyManagementResponse) :
+        typeof(T) == typeof(PolicyValidationResponse) ? Cast<T>(BrokerPolicyJsonSerializerContext.Default.PolicyValidationResponse) :
+        typeof(T) == typeof(PolicyReplacementResponse) ? Cast<T>(BrokerPolicyJsonSerializerContext.Default.PolicyReplacementResponse) :
         typeof(T) == typeof(EvaluationResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.EvaluationResponse) :
         typeof(T) == typeof(ExecutionResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.ExecutionResponse) :
         typeof(T) == typeof(StatusResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.StatusResponse) :
         typeof(T) == typeof(CancelResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.CancelResponse) :
-        typeof(T) == typeof(ErrorResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.ErrorResponse) :
+        typeof(T) == typeof(ErrorResponse) ? Cast<T>(BrokerErrorJsonSerializerContext.Default.ErrorResponse) :
         throw new NotSupportedException($"Broker JSON serialization for {typeof(T).FullName} is not source-generated.");
 
     private static JsonTypeInfo<T> StrictTypeInfo<T>() =>
         typeof(T) == typeof(PackageRequest) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.PackageRequest) :
         typeof(T) == typeof(StatusRequest) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.StatusRequest) :
         typeof(T) == typeof(CancelRequest) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.CancelRequest) :
+        typeof(T) == typeof(PolicyValidationRequest) ? Cast<T>(BrokerPolicyJsonStrictSerializerContext.Default.PolicyValidationRequest) :
+        typeof(T) == typeof(PolicyReplacementRequest) ? Cast<T>(BrokerPolicyJsonStrictSerializerContext.Default.PolicyReplacementRequest) :
         typeof(T) == typeof(HealthResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.HealthResponse) :
         typeof(T) == typeof(CapabilitiesResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.CapabilitiesResponse) :
         typeof(T) == typeof(PolicyResponse) ? Cast<T>(BrokerPolicyJsonStrictSerializerContext.Default.PolicyResponse) :
+        typeof(T) == typeof(PolicyManagementResponse) ? Cast<T>(BrokerPolicyJsonStrictSerializerContext.Default.PolicyManagementResponse) :
+        typeof(T) == typeof(PolicyValidationResponse) ? Cast<T>(BrokerPolicyJsonStrictSerializerContext.Default.PolicyValidationResponse) :
+        typeof(T) == typeof(PolicyReplacementResponse) ? Cast<T>(BrokerPolicyJsonStrictSerializerContext.Default.PolicyReplacementResponse) :
         typeof(T) == typeof(EvaluationResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.EvaluationResponse) :
         typeof(T) == typeof(ExecutionResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.ExecutionResponse) :
         typeof(T) == typeof(StatusResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.StatusResponse) :
         typeof(T) == typeof(CancelResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.CancelResponse) :
-        typeof(T) == typeof(ErrorResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.ErrorResponse) :
+        typeof(T) == typeof(ErrorResponse) ? Cast<T>(BrokerErrorJsonStrictSerializerContext.Default.ErrorResponse) :
         throw new NotSupportedException($"Strict broker JSON deserialization for {typeof(T).FullName} is not source-generated.");
 
     private static JsonTypeInfo<T> Cast<T>(JsonTypeInfo jsonTypeInfo) =>
         (JsonTypeInfo<T>)jsonTypeInfo;
+
+    private static void ValidateManagement(PolicyManagementSnapshot management)
+    {
+        if (management.Policy is { } policy)
+        {
+            PolicyJson.ValidateRequiredCollectionElements(policy);
+        }
+    }
+
+    private static void ValidateValidation(PolicyValidationResult validation)
+    {
+        if (validation.IsValid)
+        {
+            if (validation.CanonicalDraft is null || validation.ValidationReceipt is null)
+            {
+                throw new JsonException(
+                    "Valid policy validation results require CanonicalDraft and ValidationReceipt.");
+            }
+
+            PolicyJson.ValidateRequiredCollectionElements(validation.CanonicalDraft);
+        }
+        else if (validation.CanonicalDraft is not null || validation.ValidationReceipt is not null)
+        {
+            throw new JsonException(
+                "Invalid policy validation results must not contain CanonicalDraft or ValidationReceipt.");
+        }
+    }
 
     private static JsonSerializerOptions CreateOptions(bool writeIndented) =>
         new(BrokerJsonSerializerContext.Default.Options)
         {
             TypeInfoResolver = JsonTypeInfoResolver.Combine(
                 BrokerJsonSerializerContext.Default,
-                BrokerPolicyJsonSerializerContext.Default),
+                BrokerPolicyJsonSerializerContext.Default,
+                BrokerErrorJsonSerializerContext.Default),
             WriteIndented = writeIndented,
         };
 }
@@ -96,7 +158,6 @@ public static class BrokerJson
 [JsonSerializable(typeof(ExecutionResponse))]
 [JsonSerializable(typeof(StatusResponse))]
 [JsonSerializable(typeof(CancelResponse))]
-[JsonSerializable(typeof(ErrorResponse))]
 [JsonSerializable(typeof(JsonNode))]
 [JsonSerializable(typeof(JsonObject))]
 [JsonSerializable(typeof(JsonArray))]
@@ -116,7 +177,6 @@ internal sealed partial class BrokerJsonSerializerContext : JsonSerializerContex
 [JsonSerializable(typeof(ExecutionResponse))]
 [JsonSerializable(typeof(StatusResponse))]
 [JsonSerializable(typeof(CancelResponse))]
-[JsonSerializable(typeof(ErrorResponse))]
 [JsonSerializable(typeof(JsonNode))]
 [JsonSerializable(typeof(JsonObject))]
 [JsonSerializable(typeof(JsonArray))]
@@ -128,6 +188,11 @@ internal sealed partial class BrokerJsonStrictSerializerContext : JsonSerializer
     RespectNullableAnnotations = true,
     WriteIndented = false)]
 [JsonSerializable(typeof(PolicyResponse))]
+[JsonSerializable(typeof(PolicyManagementResponse))]
+[JsonSerializable(typeof(PolicyValidationRequest))]
+[JsonSerializable(typeof(PolicyValidationResponse))]
+[JsonSerializable(typeof(PolicyReplacementRequest))]
+[JsonSerializable(typeof(PolicyReplacementResponse))]
 internal sealed partial class BrokerPolicyJsonSerializerContext : JsonSerializerContext;
 
 [JsonSourceGenerationOptions(
@@ -137,4 +202,24 @@ internal sealed partial class BrokerPolicyJsonSerializerContext : JsonSerializer
     WriteIndented = false,
     UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(PolicyResponse))]
+[JsonSerializable(typeof(PolicyManagementResponse))]
+[JsonSerializable(typeof(PolicyValidationRequest))]
+[JsonSerializable(typeof(PolicyValidationResponse))]
+[JsonSerializable(typeof(PolicyReplacementRequest))]
+[JsonSerializable(typeof(PolicyReplacementResponse))]
 internal sealed partial class BrokerPolicyJsonStrictSerializerContext : JsonSerializerContext;
+
+[JsonSourceGenerationOptions(
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
+    WriteIndented = false)]
+[JsonSerializable(typeof(ErrorResponse))]
+internal sealed partial class BrokerErrorJsonSerializerContext : JsonSerializerContext;
+
+[JsonSourceGenerationOptions(
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
+    WriteIndented = false,
+    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
+[JsonSerializable(typeof(ErrorResponse))]
+internal sealed partial class BrokerErrorJsonStrictSerializerContext : JsonSerializerContext;

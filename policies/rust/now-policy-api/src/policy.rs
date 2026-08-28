@@ -31,8 +31,14 @@ pub struct PolicyResponse {
     pub policy: PolicyDocument,
 }
 
-fn policy_document_schema(_generator: &mut SchemaGenerator) -> Schema {
+pub(crate) fn policy_document_schema(_generator: &mut SchemaGenerator) -> Schema {
     schemars::json_schema!({
         "$ref": "#/components/schemas/PolicyDocument",
+    })
+}
+
+pub(crate) fn policy_draft_document_schema(_generator: &mut SchemaGenerator) -> Schema {
+    schemars::json_schema!({
+        "$ref": "#/components/schemas/PolicyDraftDocument",
     })
 }

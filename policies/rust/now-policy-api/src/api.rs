@@ -314,4 +314,8 @@ pub struct ErrorResponse {
     /// Structured error details.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub details: Vec<ErrorDetail>,
+
+    /// Current authoritative policy findings for management errors.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub validation: Option<super::PolicyValidationResult>,
 }

@@ -7,8 +7,8 @@ use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    Architecture, CustomParameterString, Decision, Elevation, HttpUrl, ManagerName, Operation, PackageBrokerPolicy,
-    PolicySchemaUri, ResourceId, Scope, SemanticVersion, StringPattern, VersionString,
+    Architecture, CustomParameterString, Decision, Elevation, HttpUrl, ManagerName, ModelValidationError, Operation,
+    PackageBrokerPolicy, PolicySchemaUri, ResourceId, Scope, SemanticVersion, StringPattern, VersionString,
 };
 
 /// A policy document governing which package operations are allowed or denied.
@@ -36,6 +36,71 @@ pub struct PolicyDocument {
     /// Ordered list of policy rules (may be empty; enforcement defaults apply).
     #[schemars(length(max = 1024))]
     pub rules: Vec<PolicyRule>,
+}
+
+impl From<&PolicyDocument> for PolicyDraftDocument {
+    fn from(value: &PolicyDocument) -> Self {
+        Self {
+            _schema: value._schema,
+            policy_version: value.policy_version.clone(),
+            policy_type: value.policy_type,
+            metadata: PolicyDraftMetadata::from(&value.metadata),
+            enforcement: value.enforcement.clone(),
+            rules: value.rules.clone(),
+        }
+    }
+}
+
+/// An editable policy document without server-managed commit metadata.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "PolicyDraftDocument")]
+#[serde(rename_all = "PascalCase")]
+#[serde(deny_unknown_fields)]
+pub struct PolicyDraftDocument {
+    /// Policy schema URI constant.
+    #[serde(rename = "$schema")]
+    pub _schema: PolicySchemaUri,
+
+    /// Policy syntax version (semver).
+    pub policy_version: SemanticVersion,
+
+    /// Must be `"PackageBrokerPolicy"`.
+    pub policy_type: PackageBrokerPolicy,
+
+    /// Editable policy metadata.
+    pub metadata: PolicyDraftMetadata,
+
+    /// Enforcement configuration.
+    pub enforcement: PolicyEnforcement,
+
+    /// Ordered list of policy rules (may be empty; enforcement defaults apply).
+    #[schemars(length(max = 1024))]
+    pub rules: Vec<PolicyRule>,
+}
+
+impl PolicyDraftDocument {
+    /// Commit this draft with server-managed revision and publication metadata.
+    pub fn into_policy_document(
+        self,
+        revision: u32,
+        published_at: DateTime<Utc>,
+    ) -> Result<PolicyDocument, ModelValidationError> {
+        if revision == 0 {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PolicyDocument",
+                reason: "revision must be at least 1".to_owned(),
+            });
+        }
+
+        Ok(PolicyDocument {
+            _schema: self._schema,
+            policy_version: self.policy_version,
+            policy_type: self.policy_type,
+            metadata: self.metadata.into_policy_metadata(revision, published_at),
+            enforcement: self.enforcement,
+            rules: self.rules,
+        })
+    }
 }
 
 /// Policy metadata.
@@ -74,6 +139,65 @@ pub struct PolicyMetadata {
     /// URL for support or documentation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub support_url: Option<HttpUrl>,
+}
+
+/// Editable policy metadata without server-managed revision and publication time.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "PolicyDraftMetadata")]
+#[serde(rename_all = "PascalCase")]
+#[serde(deny_unknown_fields)]
+pub struct PolicyDraftMetadata {
+    /// Unique policy identifier.
+    pub id: ResourceId,
+
+    /// Organization that publishes the policy.
+    #[schemars(length(min = 1, max = 128))]
+    pub publisher: String,
+
+    /// Policy becomes active at this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub valid_from: Option<DateTime<Utc>>,
+
+    /// Policy expires at this time.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub valid_until: Option<DateTime<Utc>>,
+
+    /// Human-readable description.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(length(max = 512))]
+    pub description: Option<String>,
+
+    /// URL for support or documentation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub support_url: Option<HttpUrl>,
+}
+
+impl From<&PolicyMetadata> for PolicyDraftMetadata {
+    fn from(value: &PolicyMetadata) -> Self {
+        Self {
+            id: value.id.clone(),
+            publisher: value.publisher.clone(),
+            valid_from: value.valid_from,
+            valid_until: value.valid_until,
+            description: value.description.clone(),
+            support_url: value.support_url.clone(),
+        }
+    }
+}
+
+impl PolicyDraftMetadata {
+    fn into_policy_metadata(self, revision: u32, published_at: DateTime<Utc>) -> PolicyMetadata {
+        PolicyMetadata {
+            id: self.id,
+            publisher: self.publisher,
+            revision,
+            published_at,
+            valid_from: self.valid_from,
+            valid_until: self.valid_until,
+            description: self.description,
+            support_url: self.support_url,
+        }
+    }
 }
 
 /// Enforcement configuration.
@@ -225,43 +349,87 @@ pub struct PolicyMatch {
     pub elevation: BTreeSet<Elevation>,
 
     /// Allowed interactive values.
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[schemars(length(max = 2))]
+    #[serde(
+        default,
+        skip_serializing_if = "BTreeSet::is_empty",
+        deserialize_with = "deserialize_boolean_match"
+    )]
+    #[schemars(length(max = 1))]
     pub interactive: BTreeSet<bool>,
 
     /// Allowed skipHashCheck values.
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[schemars(length(max = 2))]
+    #[serde(
+        default,
+        skip_serializing_if = "BTreeSet::is_empty",
+        deserialize_with = "deserialize_boolean_match"
+    )]
+    #[schemars(length(max = 1))]
     pub skip_hash_check: BTreeSet<bool>,
 
     /// Allowed preRelease values.
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[schemars(length(max = 2))]
+    #[serde(
+        default,
+        skip_serializing_if = "BTreeSet::is_empty",
+        deserialize_with = "deserialize_boolean_match"
+    )]
+    #[schemars(length(max = 1))]
     pub pre_release: BTreeSet<bool>,
 
     /// Whether request has custom parameters.
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[schemars(length(max = 2))]
+    #[serde(
+        default,
+        skip_serializing_if = "BTreeSet::is_empty",
+        deserialize_with = "deserialize_boolean_match"
+    )]
+    #[schemars(length(max = 1))]
     pub has_custom_parameters: BTreeSet<bool>,
 
     /// Whether request has custom install location.
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[schemars(length(max = 2))]
+    #[serde(
+        default,
+        skip_serializing_if = "BTreeSet::is_empty",
+        deserialize_with = "deserialize_boolean_match"
+    )]
+    #[schemars(length(max = 1))]
     pub has_custom_install_location: BTreeSet<bool>,
 
     /// Whether request has pre/post operation commands.
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[schemars(length(max = 2))]
+    #[serde(
+        default,
+        skip_serializing_if = "BTreeSet::is_empty",
+        deserialize_with = "deserialize_boolean_match"
+    )]
+    #[schemars(length(max = 1))]
     pub has_pre_post_commands: BTreeSet<bool>,
 
     /// Whether request has kill-before-operation entries.
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[schemars(length(max = 2))]
+    #[serde(
+        default,
+        skip_serializing_if = "BTreeSet::is_empty",
+        deserialize_with = "deserialize_boolean_match"
+    )]
+    #[schemars(length(max = 1))]
     pub has_kill_before_operation: BTreeSet<bool>,
 
     /// Whether request has uninstall-previous flag set.
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    #[serde(
+        default,
+        skip_serializing_if = "BTreeSet::is_empty",
+        deserialize_with = "deserialize_boolean_match"
+    )]
+    #[schemars(length(max = 1))]
     pub has_uninstall_previous: BTreeSet<bool>,
+}
+
+fn deserialize_boolean_match<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<BTreeSet<bool>, D::Error> {
+    let values = Vec::<bool>::deserialize(deserializer)?;
+    if values.len() > 1 {
+        return Err(serde::de::Error::custom(
+            "boolean match arrays must contain exactly one value when present",
+        ));
+    }
+
+    Ok(values.into_iter().collect())
 }
 
 impl PolicyMatch {

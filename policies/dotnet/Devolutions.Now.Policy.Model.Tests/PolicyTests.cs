@@ -17,7 +17,7 @@ public class PolicyTests
     private static string PolicySchema => Path.Combine(PolicyCrateRoot, "schema", "devolutions.now-policy.schema.json");
 
     public static IEnumerable<object[]> PolicySamples() =>
-        Directory.GetFiles(SamplesDir, "*.policy.*").Select(f => new object[] { f });
+        Directory.GetFiles(SamplesDir, "*.policy.json").Select(f => new object[] { f });
 
     [Fact]
     public void Tests_run_with_reflection_json_disabled()
@@ -72,25 +72,6 @@ public class PolicyTests
         var content = File.ReadAllText(path);
 
         Assert.ThrowsAny<Exception>(() => PolicyDocument.ParseJson(content));
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Empty_yaml_is_rejected_with_json_exception(string yaml)
-    {
-        Assert.Throws<JsonException>(() => PolicyDocument.ParseYaml(yaml));
-    }
-
-    [Fact]
-    public void Yaml_with_non_scalar_mapping_key_is_rejected_with_json_exception()
-    {
-        const string yaml = """
-        ? [PolicyVersion]
-        : 1.0.0
-        """;
-
-        Assert.Throws<JsonException>(() => PolicyDocument.ParseYaml(yaml));
     }
 
     [Fact]
@@ -197,14 +178,50 @@ public class PolicyTests
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
     }
 
+    [Fact]
+    public void Draft_conversion_omits_and_restores_server_metadata_without_aliasing()
+    {
+        var committed = PolicyDocument.ParseJson(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")));
+
+        var draft = committed.ToDraft();
+        var draftJson = JsonNode.Parse(draft.ToJson())!;
+        Assert.Null(draftJson["Metadata"]!["Revision"]);
+        Assert.Null(draftJson["Metadata"]!["PublishedAt"]);
+
+        draft.Rules[0].Id = "changed";
+        Assert.NotEqual(draft.Rules[0].Id, committed.Rules[0].Id);
+
+        var publishedAt = DateTimeOffset.Parse("2026-08-29T00:00:00Z");
+        var recommitted = draft.ToPolicyDocument(7, publishedAt);
+        Assert.Equal(7U, recommitted.Metadata.Revision);
+        Assert.Equal(publishedAt, recommitted.Metadata.PublishedAt);
+        Assert.Equal("changed", recommitted.Rules[0].Id);
+    }
+
+    [Fact]
+    public void Mixed_boolean_match_values_are_rejected()
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+        document["Rules"]![0]!["Match"]!["Interactive"] = new JsonArray(false, true);
+
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
+    [Fact]
+    public void Draft_rejects_server_managed_metadata()
+    {
+        var committed = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+
+        Assert.Throws<JsonException>(() => PolicyDraftDocument.ParseJson(committed.ToJsonString()));
+    }
+
     private static PolicyDocument ParsePolicy(string path)
     {
         var content = File.ReadAllText(path);
-        var extension = Path.GetExtension(path);
-        return extension.Equals(".yaml", StringComparison.OrdinalIgnoreCase)
-            || extension.Equals(".yml", StringComparison.OrdinalIgnoreCase)
-            ? PolicyDocument.ParseYaml(content)
-            : PolicyDocument.ParseJson(content);
+        return PolicyDocument.ParseJson(content);
     }
 
     private static string ResolvePolicyCrateRoot([CallerFilePath] string thisFile = "")

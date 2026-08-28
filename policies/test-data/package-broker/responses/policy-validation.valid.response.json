@@ -1,0 +1,68 @@
+{
+  "ResponseKind": "PolicyValidationResponse",
+  "ResponseVersion": "1.0",
+  "Server": {
+    "ServerVersion": "2026.8.0",
+    "Transport": "HttpNamedPipe"
+  },
+  "Validation": {
+    "ResultVersion": "1.0",
+    "ValidatorVersion": "gateway-policy-validator/1",
+    "IsValid": true,
+    "CanonicalDraft": {
+      "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
+      "PolicyVersion": "1.0.0",
+      "PolicyType": "PackageBrokerPolicy",
+      "Metadata": {
+        "Id": "contoso.package-policy",
+        "Publisher": "Contoso IT"
+      },
+      "Enforcement": {
+        "DefaultDecision": "Allow",
+        "RulePrecedence": "PriorityThenDeny",
+        "AuditMode": true
+      },
+      "Rules": [
+        {
+          "Id": "allow.vscode.skip-hash",
+          "Enabled": true,
+          "Priority": 100,
+          "Decision": "Allow",
+          "Match": {
+            "Managers": ["Winget"],
+            "PackageIdentifiers": ["Microsoft.VisualStudioCode"],
+            "SkipHashCheck": [true]
+          }
+        }
+      ]
+    },
+    "ValidationReceipt": "receipt:sha256:valid-warning-set",
+    "Findings": [
+      {
+        "FindingVersion": "1.0",
+        "Severity": "Warning",
+        "Code": "AuditModeEnabled",
+        "Path": "/Enforcement/AuditMode",
+        "Message": "Audit mode disables enforcement."
+      },
+      {
+        "FindingVersion": "1.0",
+        "Severity": "Warning",
+        "Code": "DefaultAllow",
+        "Path": "/Enforcement/DefaultDecision",
+        "Message": "Unmatched requests are allowed."
+      },
+      {
+        "FindingVersion": "1.0",
+        "Severity": "Warning",
+        "Code": "SensitiveOptionAllowed",
+        "Path": "/Rules/0/Match/SkipHashCheck",
+        "RuleId": "allow.vscode.skip-hash",
+        "Arguments": {
+          "option": "SkipHashCheck"
+        },
+        "Message": "This allow rule permits an individually identified sensitive option."
+      }
+    ]
+  }
+}

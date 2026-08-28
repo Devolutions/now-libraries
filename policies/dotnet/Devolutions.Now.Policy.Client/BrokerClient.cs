@@ -84,6 +84,69 @@ public sealed class BrokerClient : IDisposable
             strictSuccessBody: true);
     }
 
+    /// <summary>Get the atomic configured-policy management snapshot.</summary>
+    public async Task<PolicyManagementResponse> GetPolicyManagement(CancellationToken cancellationToken = default)
+    {
+        var headers = new Dictionary<string, string> { ["Accept"] = JsonMediaType };
+        var response = await SendRequest(
+            "GET",
+            "/v1/policy/management",
+            null,
+            headers,
+            cancellationToken).ConfigureAwait(false);
+        return DeserializeResponse<PolicyManagementResponse>(
+            response,
+            "policy management",
+            "/v1/policy/management",
+            strictSuccessBody: true);
+    }
+
+    /// <summary>
+    /// Authoritatively validate raw draft JSON without discarding unknown members.
+    /// </summary>
+    public async Task<PolicyValidationResponse> ValidatePolicy(
+        JsonElement draft,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new PolicyValidationRequest
+        {
+            RequestVersion = BrokerApi.Version,
+            Draft = draft.Clone(),
+        };
+
+        var response = await SendPolicyManagementRequest(
+            "POST",
+            "/v1/policy/validate",
+            BrokerJson.Serialize(request),
+            cancellationToken).ConfigureAwait(false);
+        return DeserializeResponse<PolicyValidationResponse>(
+            response,
+            "policy validation",
+            "/v1/policy/validate",
+            strictSuccessBody: true);
+    }
+
+    /// <summary>
+    /// Replace the configured policy using optimistic concurrency and a validation receipt.
+    /// </summary>
+    public async Task<PolicyReplacementResponse> ReplacePolicy(
+        PolicyReplacementRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var response = await SendPolicyManagementRequest(
+            "PUT",
+            "/v1/policy",
+            BrokerJson.Serialize(request),
+            cancellationToken).ConfigureAwait(false);
+        return DeserializeResponse<PolicyReplacementResponse>(
+            response,
+            "policy replacement",
+            "/v1/policy",
+            strictSuccessBody: true);
+    }
+
     /// <summary>Evaluate a package operation against policy without executing it (dry-run).</summary>
     public async Task<EvaluationResponse> Evaluate(PackageOperationRequest request, CancellationToken cancellationToken = default)
     {
@@ -406,6 +469,20 @@ public sealed class BrokerClient : IDisposable
                 Headers = extraHeaders ?? new Dictionary<string, string>(),
             },
             cancellationToken);
+
+    private Task<BrokerTransportResponse> SendPolicyManagementRequest(
+        string method,
+        string endpoint,
+        string body,
+        CancellationToken cancellationToken)
+    {
+        var headers = new Dictionary<string, string>
+        {
+            ["Content-Type"] = JsonMediaType,
+            ["Accept"] = JsonMediaType,
+        };
+        return SendRequest(method, endpoint, body, headers, cancellationToken);
+    }
 
     private CapabilitiesResponse? CachedCapabilities => _capabilities;
 

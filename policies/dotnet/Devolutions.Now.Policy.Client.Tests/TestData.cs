@@ -142,6 +142,7 @@ public static class TestData
         JsonFiles(Path.Combine(SamplesDir, "requests"))
             .Where(f => !Path.GetFileName(f).StartsWith("status-", StringComparison.Ordinal))
             .Where(f => !Path.GetFileName(f).StartsWith("cancel-", StringComparison.Ordinal))
+            .Where(f => !Path.GetFileName(f).StartsWith("policy-", StringComparison.Ordinal))
             .Where(f => !IsInvalidRequestSample(f))
             .Select(f => new object[] { f });
 
@@ -192,7 +193,32 @@ public static class TestData
 
     public static IEnumerable<object[]> PolicyResponseSamples() =>
         JsonFiles(Path.Combine(SamplesDir, "responses"))
-            .Where(f => Path.GetFileName(f).StartsWith("policy", StringComparison.Ordinal))
+            .Where(f => Path.GetFileName(f).Equals("policy.response.json", StringComparison.Ordinal))
+            .Select(f => new object[] { f });
+
+    public static IEnumerable<object[]> PolicyManagementResponseSamples() =>
+        JsonFiles(Path.Combine(SamplesDir, "responses"))
+            .Where(f => Path.GetFileName(f).StartsWith("policy-management.", StringComparison.Ordinal))
+            .Select(f => new object[] { f });
+
+    public static IEnumerable<object[]> PolicyValidationRequestSamples() =>
+        JsonFiles(Path.Combine(SamplesDir, "requests"))
+            .Where(f => Path.GetFileName(f).Equals("policy-validation.request.json", StringComparison.Ordinal))
+            .Select(f => new object[] { f });
+
+    public static IEnumerable<object[]> PolicyValidationResponseSamples() =>
+        JsonFiles(Path.Combine(SamplesDir, "responses"))
+            .Where(f => Path.GetFileName(f).StartsWith("policy-validation.", StringComparison.Ordinal))
+            .Select(f => new object[] { f });
+
+    public static IEnumerable<object[]> PolicyReplacementRequestSamples() =>
+        JsonFiles(Path.Combine(SamplesDir, "requests"))
+            .Where(f => Path.GetFileName(f).StartsWith("policy-replacement.", StringComparison.Ordinal))
+            .Select(f => new object[] { f });
+
+    public static IEnumerable<object[]> PolicyReplacementResponseSamples() =>
+        JsonFiles(Path.Combine(SamplesDir, "responses"))
+            .Where(f => Path.GetFileName(f).Equals("policy-replacement.response.json", StringComparison.Ordinal))
             .Select(f => new object[] { f });
 
     private static IEnumerable<string> JsonFiles(string dir) =>

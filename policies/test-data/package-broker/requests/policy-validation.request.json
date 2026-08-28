@@ -1,0 +1,22 @@
+{
+  "RequestKind": "PolicyValidationRequest",
+  "RequestVersion": "1.0",
+  "Draft": {
+    "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
+    "PolicyVersion": "1.0.0",
+    "PolicyType": "PackageBrokerPolicy",
+    "Metadata": {
+      "Id": "contoso.package-policy",
+      "Publisher": "Contoso IT"
+    },
+    "Enforcement": {
+      "DefaultDecision": "Allow",
+      "RulePrecedence": "PriorityThenDeny",
+      "AuditMode": true
+    },
+    "Rules": [],
+    "EditorExtension": {
+      "preserved": true
+    }
+  }
+}

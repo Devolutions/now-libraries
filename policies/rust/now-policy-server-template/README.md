@@ -37,6 +37,9 @@ pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
     async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse>;
+    async fn policy_management(&self) -> Result<PolicyManagementResponse, ErrorResponse>;
+    async fn validate_policy(&self, request: PolicyValidationRequest) -> Result<PolicyValidationResponse, ErrorResponse>;
+    async fn replace_policy(&self, request: PolicyReplacementRequest) -> Result<PolicyReplacementResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
@@ -50,6 +53,9 @@ Then they pass the implementation to `api_router` or `api_router_from_shared`. T
 - `GET /v1/health`
 - `GET /v1/capabilities`
 - `GET /v1/policy`
+- `GET /v1/policy/management`
+- `POST /v1/policy/validate`
+- `PUT /v1/policy`
 - `POST /v1/package-operations/evaluate`
 - `POST /v1/package-operations/execute`
 - `POST /v1/package-operations/get-status`

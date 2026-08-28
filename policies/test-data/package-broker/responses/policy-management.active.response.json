@@ -1,0 +1,32 @@
+{
+  "ResponseKind": "PolicyManagementResponse",
+  "ResponseVersion": "1.0",
+  "Server": {
+    "ServerVersion": "2026.8.0",
+    "Transport": "HttpNamedPipe"
+  },
+  "Management": {
+    "State": "Active",
+    "ConfiguredPath": "C:\\ProgramData\\Devolutions\\Agent\\now-policy.json",
+    "StoreToken": "store:active:7",
+    "Source": "ConfiguredPath",
+    "WriteCapability": "Writable",
+    "ElevationRequired": true,
+    "Policy": {
+      "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
+      "PolicyVersion": "1.0.0",
+      "PolicyType": "PackageBrokerPolicy",
+      "Metadata": {
+        "Id": "contoso.package-policy",
+        "Publisher": "Contoso IT",
+        "Revision": 7,
+        "PublishedAt": "2026-08-29T00:00:00Z"
+      },
+      "Enforcement": {
+        "DefaultDecision": "Deny",
+        "RulePrecedence": "PriorityThenDeny"
+      },
+      "Rules": []
+    }
+  }
+}

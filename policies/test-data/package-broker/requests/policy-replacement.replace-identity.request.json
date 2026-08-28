@@ -1,0 +1,17 @@
+{
+  "RequestKind": "PolicyReplacementRequest",
+  "RequestVersion": "1.0",
+  "ExpectedStoreToken": "store:active:7",
+  "Operation": "ReplaceIdentity",
+  "ConflictHandling": "Reject",
+  "WarningsAcknowledged": false,
+  "Draft": {
+    "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
+    "PolicyVersion": "1.0.0",
+    "PolicyType": "PackageBrokerPolicy",
+    "Metadata": { "Id": "fabrikam.package-policy", "Publisher": "Fabrikam IT" },
+    "Enforcement": { "DefaultDecision": "Deny", "RulePrecedence": "PriorityThenDeny" },
+    "Rules": []
+  },
+  "ValidationReceipt": "receipt:sha256:replace"
+}

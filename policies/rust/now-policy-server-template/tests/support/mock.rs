@@ -8,8 +8,9 @@ use now_policy_server_template::{
     API_VERSION_STR, Architecture, CancelRequest, CancelResponse, CapabilitiesResponse, CapabilitiesResponseKind,
     ErrorCode, ErrorResponse, ErrorResponseKind, EvaluationResponse, ExecutionResponse, HealthResponse,
     HealthResponseKind, HealthStatus, MAX_REQUEST_BODY_BYTES, ManagerCapability, ManagerName, Operation,
-    PackageBrokerServer, PackageRequest, PolicyResponse, Scope, ServerContext, StatusRequest, StatusResponse,
-    Transport,
+    PackageBrokerServer, PackageRequest, PolicyManagementResponse, PolicyReplacementRequest, PolicyReplacementResponse,
+    PolicyResponse, PolicyValidationRequest, PolicyValidationResponse, Scope, ServerContext, StatusRequest,
+    StatusResponse, Transport,
 };
 
 /// Deterministic mock broker backed by caller-provided sample responses.
@@ -19,6 +20,9 @@ pub(crate) struct MockPackageBrokerServer {
     capabilities: CapabilitiesResponse,
     policy_response: Option<PolicyResponse>,
     policy_error: Option<ErrorResponse>,
+    policy_management_response: Option<PolicyManagementResponse>,
+    policy_validation_response: Option<PolicyValidationResponse>,
+    policy_replacement_response: Option<PolicyReplacementResponse>,
     evaluation_responses: BTreeMap<String, EvaluationResponse>,
     execution_responses: BTreeMap<String, ExecutionResponse>,
     status_responses: BTreeMap<String, StatusResponse>,
@@ -46,6 +50,9 @@ impl MockPackageBrokerServer {
             },
             policy_response: None,
             policy_error: None,
+            policy_management_response: None,
+            policy_validation_response: None,
+            policy_replacement_response: None,
             evaluation_responses: BTreeMap::new(),
             execution_responses: BTreeMap::new(),
             status_responses: BTreeMap::new(),
@@ -71,6 +78,24 @@ impl MockPackageBrokerServer {
     pub(crate) fn with_policy_error(mut self, error: ErrorResponse) -> Self {
         self.policy_response = None;
         self.policy_error = Some(error);
+        self
+    }
+
+    #[must_use]
+    pub(crate) fn with_policy_management_response(mut self, response: PolicyManagementResponse) -> Self {
+        self.policy_management_response = Some(response);
+        self
+    }
+
+    #[must_use]
+    pub(crate) fn with_policy_validation_response(mut self, response: PolicyValidationResponse) -> Self {
+        self.policy_validation_response = Some(response);
+        self
+    }
+
+    #[must_use]
+    pub(crate) fn with_policy_replacement_response(mut self, response: PolicyReplacementResponse) -> Self {
+        self.policy_replacement_response = Some(response);
         self
     }
 
@@ -103,6 +128,19 @@ impl MockPackageBrokerServer {
             code: ErrorCode::NotFound,
             message: format!("no mock response registered for '{id}'"),
             details: Vec::new(),
+            validation: None,
+        }
+    }
+
+    fn unsupported_endpoint(&self, endpoint: &str) -> ErrorResponse {
+        ErrorResponse {
+            response_kind: ErrorResponseKind,
+            response_version: API_VERSION_STR.into(),
+            server: self.capabilities.server.clone(),
+            code: ErrorCode::UnsupportedEndpoint,
+            message: format!("{endpoint} is not implemented by this mock"),
+            details: Vec::new(),
+            validation: None,
         }
     }
 }
@@ -133,7 +171,32 @@ impl PackageBrokerServer for MockPackageBrokerServer {
             code: ErrorCode::NotFound,
             message: "no active policy is configured".to_owned(),
             details: Vec::new(),
+            validation: None,
         })
+    }
+
+    async fn policy_management(&self) -> Result<PolicyManagementResponse, ErrorResponse> {
+        self.policy_management_response
+            .clone()
+            .ok_or_else(|| self.unsupported_endpoint("policy management"))
+    }
+
+    async fn validate_policy(
+        &self,
+        _request: PolicyValidationRequest,
+    ) -> Result<PolicyValidationResponse, ErrorResponse> {
+        self.policy_validation_response
+            .clone()
+            .ok_or_else(|| self.unsupported_endpoint("policy validation"))
+    }
+
+    async fn replace_policy(
+        &self,
+        _request: PolicyReplacementRequest,
+    ) -> Result<PolicyReplacementResponse, ErrorResponse> {
+        self.policy_replacement_response
+            .clone()
+            .ok_or_else(|| self.unsupported_endpoint("policy replacement"))
     }
 
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse> {

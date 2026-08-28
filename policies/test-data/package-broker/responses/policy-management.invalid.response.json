@@ -1,0 +1,33 @@
+{
+  "ResponseKind": "PolicyManagementResponse",
+  "ResponseVersion": "1.0",
+  "Server": {
+    "ServerVersion": "2026.8.0",
+    "Transport": "HttpNamedPipe"
+  },
+  "Management": {
+    "State": "Invalid",
+    "ConfiguredPath": "C:\\ProgramData\\Devolutions\\Agent\\now-policy.json",
+    "StoreToken": "store:invalid:4",
+    "Source": "ConfiguredPath",
+    "WriteCapability": "ReadOnly",
+    "ReadOnlyReason": "InsufficientPermissions",
+    "ElevationRequired": true,
+    "InvalidDiagnostics": {
+      "DiagnosticsVersion": "1.0",
+      "Findings": [
+        {
+          "FindingVersion": "1.0",
+          "Severity": "Error",
+          "Code": "UnsupportedPolicyVersion",
+          "Path": "/PolicyVersion",
+          "Arguments": {
+            "actual": "2.0.0",
+            "supported": "1.0.0"
+          },
+          "Message": "The policy version is not supported."
+        }
+      ]
+    }
+  }
+}

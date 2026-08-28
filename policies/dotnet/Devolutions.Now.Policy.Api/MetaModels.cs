@@ -126,6 +126,10 @@ public sealed class ErrorResponse
     [JsonPropertyName("Details")]
     public List<ErrorDetail> Details { get; set; } = [];
 
+    /// <summary>Current authoritative policy findings for management errors.</summary>
+    [JsonPropertyName("Validation")]
+    public PolicyValidationResult? Validation { get; set; }
+
 }
 
 public sealed class ErrorDetail

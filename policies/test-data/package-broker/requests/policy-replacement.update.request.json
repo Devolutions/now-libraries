@@ -1,0 +1,17 @@
+{
+  "RequestKind": "PolicyReplacementRequest",
+  "RequestVersion": "1.0",
+  "ExpectedStoreToken": "store:active:7",
+  "Operation": "Update",
+  "ConflictHandling": "Reject",
+  "WarningsAcknowledged": true,
+  "Draft": {
+    "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
+    "PolicyVersion": "1.0.0",
+    "PolicyType": "PackageBrokerPolicy",
+    "Metadata": { "Id": "contoso.package-policy", "Publisher": "Contoso IT" },
+    "Enforcement": { "DefaultDecision": "Deny", "RulePrecedence": "PriorityThenDeny" },
+    "Rules": []
+  },
+  "ValidationReceipt": "receipt:sha256:update"
+}
