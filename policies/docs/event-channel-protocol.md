@@ -10,7 +10,7 @@ Reference implementations:
 
 - Rust: `policies/rust/now-policy-api/src/event_channel.rs`
 - .NET: `policies/dotnet/Devolutions.Now.Policy.Api/EventChannel.cs`
-- Shared test fixture: `policies/rust/now-policy-server-template/assets/samples/frames/event-channel.frames.bin`
+- Shared test fixture: `policies/test-data/package-broker/frames/event-channel.frames.bin`
 
 ## Purpose
 

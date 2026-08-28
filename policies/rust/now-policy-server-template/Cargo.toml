@@ -7,7 +7,7 @@ homepage.workspace = true
 repository.workspace = true
 authors.workspace = true
 readme = "README.md"
-description = "Reusable Devolutions NOW package broker server facade, mock, and OpenAPI generator"
+description = "Reusable Devolutions NOW package broker server facade and OpenAPI generator"
 publish = true
 
 [lints]

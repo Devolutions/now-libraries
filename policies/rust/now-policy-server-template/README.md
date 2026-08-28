@@ -1,7 +1,7 @@
 Devolutions NOW policy server template
 ======================================
 
-`now-policy-server-template` is the reusable server facade, HTTP route binding, mock implementation, OpenAPI generator, and sample fixture owner for the Devolutions NOW package broker API.
+`now-policy-server-template` is the reusable server facade, HTTP route binding, and OpenAPI generator for the Devolutions NOW package broker API.
 
 Purpose
 -------
@@ -15,16 +15,13 @@ The crate is used to:
 - expose the `PackageBrokerServer` trait implemented by runtime brokers;
 - bind that trait to the canonical HTTP endpoints;
 - keep runtime routing and OpenAPI generation based on the same route definitions;
-- provide a deterministic mock server for tests and client development;
-- store sample request/response documents used by Rust and .NET validation.
 
 Architecture
 ------------
 
-The crate has three main surfaces:
+The crate has two main components:
 
 - `server.rs` defines `PackageBrokerServer`, router builders, endpoint handlers, error-to-HTTP status mapping, and OpenAPI generation.
-- `mock.rs` provides `MockPackageBrokerServer`, a deterministic in-memory implementation backed by registered sample responses and default health/capability data.
 - `tools/generate_openapi.rs` generates the OpenAPI YAML file into the sibling `now-policy-api/openapi/` directory.
 
 The crate re-exports `now-policy-api`, so tests and consumers that need the server template can import both server utilities and API DTOs from `now_policy_server_template`.
@@ -58,19 +55,6 @@ Then they pass the implementation to `api_router` or `api_router_from_shared`. T
 - `POST /v1/package-operations/get-status`
 
 This keeps route dispatch, error responses, and OpenAPI operation metadata in one place.
-
-Mock and fixtures
------------------
-
-`MockPackageBrokerServer` is intended for protocol tests, sample validation, and client development. It returns deterministic health/capabilities responses and can be configured with policy, evaluation, execution, and status responses loaded from fixture files.
-
-Sample documents live under:
-
-```text
-assets/samples/
-```
-
-They are treated as protocol fixtures rather than implementation fixtures. Rust tests deserialize them through the API model, exercise the mock/router path, and .NET tests validate equivalent DTOs against the generated OpenAPI schema.
 
 OpenAPI generation
 ------------------
