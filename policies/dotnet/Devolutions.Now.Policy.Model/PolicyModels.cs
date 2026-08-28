@@ -17,21 +17,27 @@ public static class SchemaUris
 public sealed class PolicyDocument
 {
     [JsonPropertyName("$schema")]
+    [JsonRequired]
     public string Schema { get; set; } = SchemaUris.Policy;
 
     [JsonPropertyName("PolicyVersion")]
+    [JsonRequired]
     public string PolicyVersion { get; set; } = "1.0.0";
 
     [JsonPropertyName("PolicyType")]
+    [JsonRequired]
     public string PolicyType { get; set; } = "PackageBrokerPolicy";
 
     [JsonPropertyName("Metadata")]
+    [JsonRequired]
     public PolicyMetadata Metadata { get; set; } = new();
 
     [JsonPropertyName("Enforcement")]
+    [JsonRequired]
     public PolicyEnforcement Enforcement { get; set; } = new();
 
     [JsonPropertyName("Rules")]
+    [JsonRequired]
     public List<PolicyRule> Rules { get; set; } = [];
 
     public static PolicyDocument Create(string id, string publisher, Decision defaultDecision = Decision.Deny)
@@ -138,15 +144,19 @@ public sealed class PolicyDocument
 public sealed class PolicyMetadata
 {
     [JsonPropertyName("Id")]
+    [JsonRequired]
     public string Id { get; set; } = "";
 
     [JsonPropertyName("Publisher")]
+    [JsonRequired]
     public string Publisher { get; set; } = "";
 
     [JsonPropertyName("Revision")]
+    [JsonRequired]
     public uint Revision { get; set; }
 
     [JsonPropertyName("PublishedAt")]
+    [JsonRequired]
     public DateTimeOffset PublishedAt { get; set; }
 
     [JsonPropertyName("ValidFrom")]
@@ -165,9 +175,11 @@ public sealed class PolicyMetadata
 public sealed class PolicyEnforcement
 {
     [JsonPropertyName("DefaultDecision")]
+    [JsonRequired]
     public Decision DefaultDecision { get; set; }
 
     [JsonPropertyName("RulePrecedence")]
+    [JsonRequired]
     public RulePrecedence RulePrecedence { get; set; }
 
     [JsonPropertyName("AuditMode")]
@@ -177,21 +189,25 @@ public sealed class PolicyEnforcement
 public sealed class PolicyRule
 {
     [JsonPropertyName("Id")]
+    [JsonRequired]
     public string Id { get; set; } = "";
 
     [JsonPropertyName("Enabled")]
     public bool Enabled { get; set; } = true;
 
     [JsonPropertyName("Priority")]
+    [JsonRequired]
     public uint Priority { get; set; }
 
     [JsonPropertyName("Decision")]
+    [JsonRequired]
     public Decision Decision { get; set; }
 
     [JsonPropertyName("Reason")]
     public string? Reason { get; set; }
 
     [JsonPropertyName("Match")]
+    [JsonRequired]
     public PolicyMatch Match { get; set; } = new();
 
     [JsonPropertyName("Constraints")]

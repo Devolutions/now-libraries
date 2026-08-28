@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 using Devolutions.Now.Policy.Client;
 
@@ -300,6 +301,182 @@ public class BrokerClientTests
     }
 
     [Fact]
+    public async Task GetPolicy_sends_json_get_and_deserializes_response()
+    {
+        var body = await File.ReadAllTextAsync(Path.Combine(TestData.SamplesDir, "responses", "policy.response.json"));
+        var transport = new FakeBrokerTransport(body);
+        var client = CreateClient(transport);
+
+        var response = await client.GetPolicy();
+
+        var request = Assert.Single(transport.Requests);
+        Assert.Equal("GET", request.Method);
+        Assert.Equal("/v1/policy", request.Path);
+        Assert.Null(request.Body);
+        Assert.Equal("application/json", request.Headers["Accept"]);
+        Assert.Equal(BrokerApi.PolicyResponseKind, response.ResponseKind);
+        Assert.Equal("contoso.desktop.standard-allowlist", response.Policy.Metadata.Id);
+        Assert.Equal(4u, response.Policy.Metadata.Revision);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("Policy.Metadata")]
+    public async Task GetPolicy_rejects_unmapped_property(string objectPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        var target = string.IsNullOrEmpty(objectPath) ? document : ResolveNode(document, objectPath);
+        target.AsObject()["Unexpected"] = true;
+
+        await AssertInvalidPolicyResponse(document);
+    }
+
+    [Fact]
+    public async Task GetPolicy_rejects_integer_policy_enum_token()
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        ResolveNode(document, "Policy.Rules.0.Match.Operations").AsArray()[0] = 0;
+
+        await AssertInvalidPolicyResponse(document);
+    }
+
+    [Theory]
+    [InlineData("Server.Transport", "httpnamedpipe")]
+    [InlineData("Policy.Enforcement.DefaultDecision", "deny")]
+    [InlineData("Policy.Enforcement.RulePrecedence", "prioritythendeny")]
+    [InlineData("Policy.Rules.0.Decision", "deny")]
+    [InlineData("Policy.Rules.0.Match.Operations.0", "install")]
+    public async Task GetPolicy_rejects_noncanonical_enum_casing(string propertyPath, string value)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        SetPropertyValue(document, propertyPath, value);
+
+        await AssertInvalidPolicyResponse(document);
+    }
+
+    [Theory]
+    [InlineData("Policy.Rules.0")]
+    [InlineData("Policy.Rules.3.Match.Sources.0")]
+    public async Task GetPolicy_rejects_null_collection_element(string elementPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        SetPropertyToNull(document, elementPath);
+
+        await AssertInvalidPolicyResponse(document);
+    }
+
+    [Fact]
+    public async Task GetPolicy_propagates_cancellation()
+    {
+        var transport = new FakeBrokerTransport(Array.Empty<string>());
+        var client = CreateClient(transport);
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.GetPolicy(cancellation.Token));
+        Assert.Empty(transport.Requests);
+    }
+
+    [Theory]
+    [InlineData("HttpNamedPipe")]
+    [InlineData("httpnamedpipe")]
+    public async Task GetPolicy_preserves_structured_unsupported_error(string transportValue)
+    {
+        var transport = new FakeBrokerTransport(new BrokerTransportResponse
+        {
+            StatusCode = 404,
+            Body = """
+                {"ResponseKind":"ErrorResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"Code":"NotFound","Message":"active policy inspection is not supported"}
+                """.Replace("HttpNamedPipe", transportValue, StringComparison.Ordinal),
+        });
+        var client = CreateClient(transport);
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.BrokerError, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.Equal(404, exception.StatusCode);
+        Assert.Equal(ErrorCode.NotFound, exception.BrokerError?.Code);
+    }
+
+    [Theory]
+    [InlineData("ResponseVersion")]
+    [InlineData("Server")]
+    [InlineData("Server.ServerVersion")]
+    [InlineData("Server.Transport")]
+    [InlineData("Policy.$schema")]
+    [InlineData("Policy.Metadata.Id")]
+    [InlineData("Policy.Enforcement.DefaultDecision")]
+    [InlineData("Policy.Rules")]
+    [InlineData("Policy.Rules.0.Match")]
+    public async Task GetPolicy_rejects_missing_required_property(string propertyPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        RemoveProperty(document, propertyPath);
+        var client = CreateClient(new FakeBrokerTransport(document.ToJsonString()));
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.Equal(200, exception.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("ResponseVersion")]
+    [InlineData("Server")]
+    [InlineData("Server.ServerVersion")]
+    [InlineData("Policy")]
+    [InlineData("Policy.Metadata")]
+    [InlineData("Policy.Metadata.Id")]
+    [InlineData("Policy.Enforcement.DefaultDecision")]
+    [InlineData("Policy.Rules")]
+    [InlineData("Policy.Rules.0.Match")]
+    [InlineData("Policy.Rules.0.Match.Operations")]
+    public async Task GetPolicy_rejects_null_non_nullable_property(string propertyPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        SetPropertyToNull(document, propertyPath);
+        var client = CreateClient(new FakeBrokerTransport(document.ToJsonString()));
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.Equal(200, exception.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("<html>not found</html>")]
+    public async Task GetPolicy_identifies_legacy_unstructured_not_found(string body)
+    {
+        var transport = new FakeBrokerTransport(new BrokerTransportResponse { StatusCode = 404, Body = body });
+        var client = CreateClient(transport);
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.True(
+            exception.Kind is BrokerClientErrorKind.EmptyResponse or BrokerClientErrorKind.BrokerError,
+            $"unexpected legacy 404 error kind: {exception.Kind}");
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.Equal(404, exception.StatusCode);
+        Assert.Null(exception.BrokerError);
+    }
+
+    [Fact]
     public void Constructor_can_resolve_effective_user_automatically()
     {
         using var client = new BrokerClient(new BrokerClientOptions
@@ -318,6 +495,70 @@ public class BrokerClientTests
         ClientExecutablePath = "C:\\Tools\\client.exe",
         ClientVersion = "9.8.7",
     });
+
+    private static async Task AssertInvalidPolicyResponse(JsonNode document)
+    {
+        var client = CreateClient(new FakeBrokerTransport(document.ToJsonString()));
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.Equal(200, exception.StatusCode);
+    }
+
+    private static void RemoveProperty(JsonNode document, string propertyPath)
+    {
+        var segments = propertyPath.Split('.');
+        var parent = document;
+        foreach (var segment in segments[..^1])
+        {
+            parent = int.TryParse(segment, out var index)
+                ? parent.AsArray()[index]!
+                : parent[segment]!;
+        }
+
+        Assert.True(parent.AsObject().Remove(segments[^1]), $"missing fixture property {propertyPath}");
+    }
+
+    private static void SetPropertyToNull(JsonNode document, string propertyPath)
+        => SetPropertyValue(document, propertyPath, null);
+
+    private static void SetPropertyValue(JsonNode document, string propertyPath, JsonNode? value)
+    {
+        var segments = propertyPath.Split('.');
+        var parent = document;
+        foreach (var segment in segments[..^1])
+        {
+            parent = int.TryParse(segment, out var index)
+                ? parent.AsArray()[index]!
+                : parent[segment]!;
+        }
+
+        if (int.TryParse(segments[^1], out var finalIndex))
+        {
+            Assert.NotNull(parent.AsArray()[finalIndex]);
+            parent.AsArray()[finalIndex] = value;
+        }
+        else
+        {
+            Assert.NotNull(parent.AsObject()[segments[^1]]);
+            parent.AsObject()[segments[^1]] = value;
+        }
+    }
+
+    private static JsonNode ResolveNode(JsonNode document, string propertyPath)
+    {
+        var node = document;
+        foreach (var segment in propertyPath.Split('.'))
+        {
+            node = int.TryParse(segment, out var index)
+                ? node.AsArray()[index]!
+                : node[segment]!;
+        }
+
+        return node;
+    }
 
     private sealed class FakeBrokerTransport : IBrokerTransport
     {
@@ -340,6 +581,7 @@ public class BrokerClientTests
         public Task<BrokerTransportResponse> Send(BrokerTransportRequest request, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(request);
+            cancellationToken.ThrowIfCancellationRequested();
             Requests.Add(request);
             if (_responses.Count == 0)
             {

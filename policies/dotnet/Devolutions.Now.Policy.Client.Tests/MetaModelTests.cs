@@ -1,4 +1,7 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
+
+using Devolutions.Now.Policy.Model;
 
 using Xunit;
 
@@ -38,6 +41,124 @@ public class MetaModelTests
     }
 
     [Fact]
+    public void PolicyResponseKind_rejects_wrong_value_on_deserialization()
+    {
+        var json = File.ReadAllText(Path.Combine(TestData.SamplesDir, "responses", "policy.response.json"))
+            .Replace(BrokerApi.PolicyResponseKind, BrokerApi.ErrorResponseKind, StringComparison.Ordinal);
+
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyResponse>(json));
+    }
+
+    [Fact]
+    public void PolicyResponse_requires_policy_on_deserialization()
+    {
+        const string json =
+            """
+            {"ResponseKind":"PolicyResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"}}
+            """;
+
+        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<PolicyResponse>(json));
+    }
+
+    [Theory]
+    [InlineData("ResponseVersion")]
+    [InlineData("Server")]
+    [InlineData("Server.ServerVersion")]
+    [InlineData("Policy")]
+    [InlineData("Policy.Metadata")]
+    [InlineData("Policy.Metadata.Id")]
+    [InlineData("Policy.Enforcement.DefaultDecision")]
+    [InlineData("Policy.Rules")]
+    [InlineData("Policy.Rules.0.Match")]
+    [InlineData("Policy.Rules.0.Match.Operations")]
+    public void PolicyResponse_rejects_null_non_nullable_property(string propertyPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        SetPropertyToNull(document, propertyPath);
+        var json = document.ToJsonString();
+
+        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<PolicyResponse>(json));
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyResponse>(json));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<PolicyResponse>(json, BrokerJson.Options));
+    }
+
+    [Theory]
+    [InlineData("Policy.Rules.0")]
+    [InlineData("Policy.Rules.3.Match.Sources.0")]
+    public void Strict_policy_response_rejects_null_collection_element(string elementPath)
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        SetPropertyToNull(document, elementPath);
+
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyResponse>(document.ToJsonString()));
+    }
+
+    [Fact]
+    public void Public_json_options_source_generate_all_broker_dtos()
+    {
+        Type[] dtoTypes =
+        [
+            typeof(PackageRequest),
+            typeof(RequestSource),
+            typeof(RequestPackage),
+            typeof(RequestOptions),
+            typeof(ClientContext),
+            typeof(PolicyResponse),
+            typeof(EvaluationResponse),
+            typeof(ExecutionResponse),
+            typeof(ServerContext),
+            typeof(RequestSummary),
+            typeof(DecisionInfo),
+            typeof(ResponsePolicyInfo),
+            typeof(OperationDiagnostics),
+            typeof(OperationSubmission),
+            typeof(StatusRequest),
+            typeof(StatusResponse),
+            typeof(CancelRequest),
+            typeof(CancelResponse),
+            typeof(HealthResponse),
+            typeof(CapabilitiesResponse),
+            typeof(ManagerCapability),
+            typeof(ErrorResponse),
+            typeof(ErrorDetail),
+            typeof(EventChannel),
+            typeof(PolicyDocument),
+            typeof(PolicyMetadata),
+            typeof(PolicyEnforcement),
+            typeof(PolicyRule),
+            typeof(PolicyMatch),
+            typeof(VersionRange),
+            typeof(PolicyConstraints),
+        ];
+
+        foreach (var dtoType in dtoTypes)
+        {
+            Assert.NotNull(BrokerJson.Options.GetTypeInfo(dtoType));
+            Assert.NotNull(BrokerJson.PrettyOptions.GetTypeInfo(dtoType));
+        }
+    }
+
+    [Fact]
+    public void Public_json_options_round_trip_policy_response_without_reflection()
+    {
+        var json = File.ReadAllText(Path.Combine(TestData.SamplesDir, "responses", "policy.response.json"));
+        var response = JsonSerializer.Deserialize<PolicyResponse>(json, BrokerJson.Options);
+
+        Assert.NotNull(response);
+
+        var compact = JsonSerializer.Serialize(response, BrokerJson.Options);
+        var pretty = JsonSerializer.Serialize(response, BrokerJson.PrettyOptions);
+
+        Assert.NotNull(JsonSerializer.Deserialize<PolicyResponse>(compact, BrokerJson.Options));
+        Assert.NotNull(JsonSerializer.Deserialize<PolicyResponse>(pretty, BrokerJson.PrettyOptions));
+        Assert.Contains(Environment.NewLine, pretty);
+    }
+
+    [Fact]
     public async Task ErrorResponse_serializes_to_schema_valid_output()
     {
         var full = new ErrorResponse
@@ -72,6 +193,29 @@ public class MetaModelTests
         ServerVersion = "0.1.0",
         Transport = Transport.HttpNamedPipe,
     };
+
+    private static void SetPropertyToNull(JsonNode document, string propertyPath)
+    {
+        var segments = propertyPath.Split('.');
+        var parent = document;
+        foreach (var segment in segments[..^1])
+        {
+            parent = int.TryParse(segment, out var index)
+                ? parent.AsArray()[index]!
+                : parent[segment]!;
+        }
+
+        if (int.TryParse(segments[^1], out var finalIndex))
+        {
+            Assert.NotNull(parent.AsArray()[finalIndex]);
+            parent.AsArray()[finalIndex] = null;
+        }
+        else
+        {
+            Assert.NotNull(parent.AsObject()[segments[^1]]);
+            parent.AsObject()[segments[^1]] = null;
+        }
+    }
 
     private static async Task AssertSerializesValid<T>(T dto, string componentName)
     {

@@ -3,6 +3,8 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
+using Devolutions.Now.Policy.Model;
+
 namespace Devolutions.Now.Policy.Api;
 
 /// <summary>Canonical schema URI used in the <c>$schema</c> field of policy documents.</summary>
@@ -19,14 +21,9 @@ public static class BrokerJson
     /// (via explicit <c>[JsonPropertyName]</c> attributes), PascalCase enum values, and
     /// null optionals omitted (mirroring the Rust <c>skip_serializing_if = "Option::is_none"</c>).
     /// </summary>
-    public static readonly JsonSerializerOptions Options = new(BrokerJsonSerializerContext.Default.Options)
-    {
-    };
+    public static readonly JsonSerializerOptions Options = CreateOptions(writeIndented: false);
 
-    public static readonly JsonSerializerOptions PrettyOptions = new(Options)
-    {
-        WriteIndented = true,
-    };
+    public static readonly JsonSerializerOptions PrettyOptions = CreateOptions(writeIndented: true);
 
     public static string Serialize<T>(T value) =>
         JsonSerializer.Serialize(value, TypeInfo<T>());
@@ -34,8 +31,16 @@ public static class BrokerJson
     public static T? Deserialize<T>(string json) =>
         JsonSerializer.Deserialize(json, TypeInfo<T>());
 
-    public static T? DeserializeStrict<T>(string json) =>
-        JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
+    public static T? DeserializeStrict<T>(string json)
+    {
+        var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
+        if (value is PolicyResponse response)
+        {
+            PolicyJson.ValidateRequiredCollectionElements(response.Policy);
+        }
+
+        return value;
+    }
 
     private static JsonTypeInfo<T> TypeInfo<T>() =>
         typeof(T) == typeof(PackageRequest) ? Cast<T>(BrokerJsonSerializerContext.Default.PackageRequest) :
@@ -43,6 +48,7 @@ public static class BrokerJson
         typeof(T) == typeof(CancelRequest) ? Cast<T>(BrokerJsonSerializerContext.Default.CancelRequest) :
         typeof(T) == typeof(HealthResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.HealthResponse) :
         typeof(T) == typeof(CapabilitiesResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.CapabilitiesResponse) :
+        typeof(T) == typeof(PolicyResponse) ? Cast<T>(BrokerPolicyJsonSerializerContext.Default.PolicyResponse) :
         typeof(T) == typeof(EvaluationResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.EvaluationResponse) :
         typeof(T) == typeof(ExecutionResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.ExecutionResponse) :
         typeof(T) == typeof(StatusResponse) ? Cast<T>(BrokerJsonSerializerContext.Default.StatusResponse) :
@@ -56,6 +62,7 @@ public static class BrokerJson
         typeof(T) == typeof(CancelRequest) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.CancelRequest) :
         typeof(T) == typeof(HealthResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.HealthResponse) :
         typeof(T) == typeof(CapabilitiesResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.CapabilitiesResponse) :
+        typeof(T) == typeof(PolicyResponse) ? Cast<T>(BrokerPolicyJsonStrictSerializerContext.Default.PolicyResponse) :
         typeof(T) == typeof(EvaluationResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.EvaluationResponse) :
         typeof(T) == typeof(ExecutionResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.ExecutionResponse) :
         typeof(T) == typeof(StatusResponse) ? Cast<T>(BrokerJsonStrictSerializerContext.Default.StatusResponse) :
@@ -65,10 +72,20 @@ public static class BrokerJson
 
     private static JsonTypeInfo<T> Cast<T>(JsonTypeInfo jsonTypeInfo) =>
         (JsonTypeInfo<T>)jsonTypeInfo;
+
+    private static JsonSerializerOptions CreateOptions(bool writeIndented) =>
+        new(BrokerJsonSerializerContext.Default.Options)
+        {
+            TypeInfoResolver = JsonTypeInfoResolver.Combine(
+                BrokerJsonSerializerContext.Default,
+                BrokerPolicyJsonSerializerContext.Default),
+            WriteIndented = writeIndented,
+        };
 }
 
 [JsonSourceGenerationOptions(
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
     WriteIndented = false)]
 [JsonSerializable(typeof(PackageRequest))]
 [JsonSerializable(typeof(StatusRequest))]
@@ -87,6 +104,7 @@ internal sealed partial class BrokerJsonSerializerContext : JsonSerializerContex
 
 [JsonSourceGenerationOptions(
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
     WriteIndented = false,
     UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(PackageRequest))]
@@ -103,3 +121,20 @@ internal sealed partial class BrokerJsonSerializerContext : JsonSerializerContex
 [JsonSerializable(typeof(JsonObject))]
 [JsonSerializable(typeof(JsonArray))]
 internal sealed partial class BrokerJsonStrictSerializerContext : JsonSerializerContext;
+
+[JsonSourceGenerationOptions(
+    Converters = new[] { typeof(ExactCaseTransportConverter) },
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
+    WriteIndented = false)]
+[JsonSerializable(typeof(PolicyResponse))]
+internal sealed partial class BrokerPolicyJsonSerializerContext : JsonSerializerContext;
+
+[JsonSourceGenerationOptions(
+    Converters = new[] { typeof(ExactCaseTransportConverter) },
+    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    RespectNullableAnnotations = true,
+    WriteIndented = false,
+    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
+[JsonSerializable(typeof(PolicyResponse))]
+internal sealed partial class BrokerPolicyJsonStrictSerializerContext : JsonSerializerContext;

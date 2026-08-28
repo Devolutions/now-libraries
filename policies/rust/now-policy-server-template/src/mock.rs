@@ -8,8 +8,8 @@ use crate::server::{MAX_REQUEST_BODY_BYTES, PackageBrokerServer};
 use now_policy_api::{
     API_VERSION_STR, Architecture, CancelRequest, CancelResponse, CapabilitiesResponse, CapabilitiesResponseKind,
     ErrorCode, ErrorResponse, ErrorResponseKind, EvaluationResponse, ExecutionResponse, HealthResponse,
-    HealthResponseKind, HealthStatus, ManagerCapability, ManagerName, Operation, PackageRequest, Scope, ServerContext,
-    StatusRequest, StatusResponse, Transport,
+    HealthResponseKind, HealthStatus, ManagerCapability, ManagerName, Operation, PackageRequest, PolicyResponse, Scope,
+    ServerContext, StatusRequest, StatusResponse, Transport,
 };
 
 /// Deterministic mock broker backed by caller-provided sample responses.
@@ -17,6 +17,8 @@ use now_policy_api::{
 pub struct MockPackageBrokerServer {
     health: HealthResponse,
     capabilities: CapabilitiesResponse,
+    policy_response: Option<PolicyResponse>,
+    policy_error: Option<ErrorResponse>,
     evaluation_responses: BTreeMap<String, EvaluationResponse>,
     execution_responses: BTreeMap<String, ExecutionResponse>,
     status_responses: BTreeMap<String, StatusResponse>,
@@ -42,6 +44,8 @@ impl MockPackageBrokerServer {
                 managers: default_manager_capabilities(),
                 max_request_body_bytes: MAX_REQUEST_BODY_BYTES as u64,
             },
+            policy_response: None,
+            policy_error: None,
             evaluation_responses: BTreeMap::new(),
             execution_responses: BTreeMap::new(),
             status_responses: BTreeMap::new(),
@@ -53,6 +57,20 @@ impl MockPackageBrokerServer {
     pub fn with_evaluation_response(mut self, response: EvaluationResponse) -> Self {
         self.evaluation_responses
             .insert(response.request_id.to_string(), response);
+        self
+    }
+
+    #[must_use]
+    pub fn with_policy_response(mut self, response: PolicyResponse) -> Self {
+        self.policy_response = Some(response);
+        self.policy_error = None;
+        self
+    }
+
+    #[must_use]
+    pub fn with_policy_error(mut self, error: ErrorResponse) -> Self {
+        self.policy_response = None;
+        self.policy_error = Some(error);
         self
     }
 
@@ -97,6 +115,25 @@ impl PackageBrokerServer for MockPackageBrokerServer {
 
     async fn capabilities(&self) -> CapabilitiesResponse {
         self.capabilities.clone()
+    }
+
+    async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse> {
+        if let Some(response) = &self.policy_response {
+            return Ok(response.clone());
+        }
+
+        if let Some(error) = &self.policy_error {
+            return Err(error.clone());
+        }
+
+        Err(ErrorResponse {
+            response_kind: ErrorResponseKind,
+            response_version: API_VERSION_STR.into(),
+            server: self.capabilities.server.clone(),
+            code: ErrorCode::NotFound,
+            message: "no active policy is configured".to_owned(),
+            details: Vec::new(),
+        })
     }
 
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse> {

@@ -21,7 +21,7 @@ Architecture
 
 - `PolicyModels.cs` defines `PolicyDocument`, metadata, enforcement, rules, match criteria, constraints, and version range types.
 - `Enums.cs` defines policy-level enums such as operation, manager, scope, architecture, elevation, decision, and rule precedence.
-- `PolicyJson.cs` defines shared `JsonSerializerOptions`, including strict parsing that rejects unknown JSON members.
+- `PolicyJson.cs` defines shared `JsonSerializerOptions`, including strict parsing that rejects unknown JSON members and JSON null for non-nullable policy members or collection elements.
 
 `PolicyDocument.Create` provides a simple helper for constructing a new policy document with metadata and default enforcement. `PolicyDocument.ParseJson` and `PolicyDocument.ParseYaml` are the main entry points for reading policy documents.
 

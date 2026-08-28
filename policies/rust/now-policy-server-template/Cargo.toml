@@ -13,16 +13,12 @@ publish = true
 [lints]
 workspace = true
 
-[features]
-default = []
-policy-compat = ["dep:now-policy", "now-policy-api/policy-compat"]
-
 [dependencies]
 aide = { version = "0.15", features = ["axum", "axum-json"] }
 async-trait = "0.1"
 axum = { version = "0.8", default-features = false, features = ["json"] }
 now-policy-api = { version = "0.3", path = "../now-policy-api" }
-now-policy = { version = "0.2", path = "../now-policy", optional = true }
+now-policy = { version = "0.2", path = "../now-policy" }
 schemars = "0.9"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

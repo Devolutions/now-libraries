@@ -27,9 +27,11 @@ Library structure overview:
 - `event_channel.rs` contains the per-operation event channel descriptor returned in execution responses and the `NOW_BROKER` binary frame protocol codec (see `policies/docs/event-channel-protocol.md`).
 - `health.rs` contains health endpoint models for `GET /v1/health`.
 - `capabilities.rs` contains capability endpoint models for `GET /v1/capabilities`.
+- `policy.rs` contains the active `PolicyDocument` response for the canonical `GET /v1/policy` endpoint.
 - `enums.rs` contains shared protocol enums.
 - `lib.rs` contains constrained string newtypes, validation helpers, etc.
-- `policy_compat.rs` is enabled by the `policy-compat` feature and maps selected API model types to the `now-policy` crate's package policy types.
+
+`now-policy` owns the canonical policy document and schema. This API crate composes that domain contract into `PolicyResponse`; runtime-specific mappings between policy evaluation types and API DTOs belong to the consuming broker implementation.
 
 Top-level requests carry `RequestKind` and `RequestVersion`; top-level responses carry `ResponseKind` and `ResponseVersion`. Kind fields are marker types that serialize to fixed strings and reject mismatched values during deserialization; this is
 required for further protocol evolution and allows the client to switch transport from HTTP to other
@@ -51,6 +53,8 @@ Regenerate it with:
 ```powershell
 cargo run -p now-policy-server-template --bin generate-now-policy-api-openapi --locked
 ```
+
+The generated document always contains the policy inspection route and canonical `PolicyDocument` schema.
 
 Validation
 ----------

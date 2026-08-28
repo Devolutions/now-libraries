@@ -15,7 +15,7 @@ use serde::Serialize;
 
 use now_policy_api::{
     API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, ErrorCode, ErrorResponse, EvaluationResponse,
-    ExecutionResponse, HealthResponse, PackageRequest, StatusRequest, StatusResponse,
+    ExecutionResponse, HealthResponse, PackageRequest, PolicyResponse, StatusRequest, StatusResponse,
 };
 use schemars::SchemaGenerator;
 
@@ -26,6 +26,7 @@ pub const MAX_REQUEST_BODY_BYTES: usize = 256 * 1024;
 pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
+    async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
@@ -52,6 +53,7 @@ fn api_routes() -> ApiRouter<SharedPackageBrokerServer> {
     ApiRouter::new()
         .api_route("/v1/health", get_with(health_handler, health_docs))
         .api_route("/v1/capabilities", get_with(capabilities_handler, capabilities_docs))
+        .api_route("/v1/policy", get_with(policy_handler, policy_docs))
         .api_route(
             "/v1/package-operations/evaluate",
             post_with(evaluate_handler, evaluate_docs)
@@ -93,7 +95,6 @@ pub fn openapi() -> OpenApi {
     });
 
     let _ = api_routes().finish_api(&mut api);
-    #[cfg(feature = "policy-compat")]
     register_policy_schema(&mut api);
     api
 }
@@ -104,25 +105,77 @@ fn openapi_schema_generator() -> SchemaGenerator {
     SchemaSettings::openapi3().into()
 }
 
-#[cfg(feature = "policy-compat")]
 fn register_policy_schema(api: &mut OpenApi) {
+    use std::collections::BTreeMap;
+
     use aide::openapi::{Components, SchemaObject};
     use now_policy::PolicyDocument;
-    use schemars::Schema;
 
     let mut generator = openapi_schema_generator();
     let _ = generator.subschema_for::<PolicyDocument>();
     let definitions = generator.take_definitions(true);
+    let renames: BTreeMap<_, _> = definitions
+        .keys()
+        .map(|name| {
+            let component_name = if name == "PolicyDocument" {
+                name.clone()
+            } else {
+                format!("PolicyModel{name}")
+            };
+            (name.clone(), component_name)
+        })
+        .collect();
 
     let components = api.components.get_or_insert_with(Components::default);
 
     for (name, schema) in definitions {
-        components.schemas.entry(name).or_insert_with(|| SchemaObject {
-            json_schema: Schema::try_from(schema).expect("schemars generated an invalid schema"),
-            external_docs: None,
-            example: None,
-        });
+        let component_name = renames
+            .get(&name)
+            .expect("BUG: every policy schema definition should have a namespaced component");
+        components
+            .schemas
+            .entry(component_name.clone())
+            .or_insert_with(|| SchemaObject {
+                json_schema: rewrite_policy_schema_refs(schema, &renames),
+                external_docs: None,
+                example: None,
+            });
     }
+}
+
+fn rewrite_policy_schema_refs(
+    schema: serde_json::Value,
+    renames: &std::collections::BTreeMap<String, String>,
+) -> schemars::Schema {
+    fn rewrite(value: &mut serde_json::Value, renames: &std::collections::BTreeMap<String, String>) {
+        match value {
+            serde_json::Value::String(reference) => {
+                for prefix in ["#/components/schemas/", "#/$defs/", "#/definitions/"] {
+                    if let Some(name) = reference.strip_prefix(prefix)
+                        && let Some(replacement) = renames.get(name)
+                    {
+                        *reference = format!("#/components/schemas/{replacement}");
+                        break;
+                    }
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for value in values {
+                    rewrite(value, renames);
+                }
+            }
+            serde_json::Value::Object(values) => {
+                for value in values.values_mut() {
+                    rewrite(value, renames);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let mut value = schema;
+    rewrite(&mut value, renames);
+    schemars::Schema::try_from(value).expect("BUG: rewritten policy schema should remain valid")
 }
 
 async fn health_handler(State(server): State<SharedPackageBrokerServer>) -> Json<HealthResponse> {
@@ -131,6 +184,10 @@ async fn health_handler(State(server): State<SharedPackageBrokerServer>) -> Json
 
 async fn capabilities_handler(State(server): State<SharedPackageBrokerServer>) -> Json<CapabilitiesResponse> {
     Json(server.capabilities().await)
+}
+
+async fn policy_handler(State(server): State<SharedPackageBrokerServer>) -> Response {
+    broker_result(server.active_policy().await)
 }
 
 async fn evaluate_handler(
@@ -196,6 +253,14 @@ fn capabilities_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .response::<200, Json<CapabilitiesResponse>>()
 }
 
+fn policy_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
+    op.summary("Get active policy")
+        .description("Returns the active parsed policy document. A 404 response means no active policy is configured.")
+        .response::<200, Json<PolicyResponse>>()
+        .response::<404, Json<ErrorResponse>>()
+        .default_response::<Json<ErrorResponse>>()
+}
+
 fn evaluate_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
     op.summary("Evaluate package operation")
         .description("Evaluates a package operation against policy without requiring elevated execution.")
@@ -232,4 +297,56 @@ fn cancel_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .response::<200, Json<CancelResponse>>()
         .response::<400, Json<ErrorResponse>>()
         .response::<404, Json<ErrorResponse>>()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::openapi;
+
+    #[test]
+    fn policy_schemas_do_not_rename_existing_api_components() {
+        let api = openapi();
+        let schemas = &api.components.expect("OpenAPI components should exist").schemas;
+
+        for name in [
+            "Architecture",
+            "CustomParameterString",
+            "Decision",
+            "Elevation",
+            "ManagerName",
+            "Operation",
+            "ResourceId",
+            "Scope",
+            "SemanticVersion",
+            "VersionString",
+        ] {
+            assert!(
+                schemas.contains_key(name),
+                "existing API component {name} should remain"
+            );
+            assert!(
+                schemas.contains_key(&format!("PolicyModel{name}")),
+                "embedded policy component {name} should be namespaced"
+            );
+            assert!(
+                !schemas.contains_key(&format!("{name}2")),
+                "component collision must not rename {name}"
+            );
+        }
+    }
+
+    #[test]
+    fn policy_openapi_documents_structured_errors_for_other_statuses() {
+        let api = serde_json::to_value(openapi()).expect("OpenAPI should serialize");
+        let responses = &api["paths"]["/v1/policy"]["get"]["responses"];
+
+        assert_eq!(
+            responses["default"]["content"]["application/json"]["schema"]["$ref"],
+            "#/components/schemas/ErrorResponse"
+        );
+        assert_eq!(
+            responses["404"]["content"]["application/json"]["schema"]["$ref"],
+            "#/components/schemas/ErrorResponse"
+        );
+    }
 }

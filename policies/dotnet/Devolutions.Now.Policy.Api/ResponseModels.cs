@@ -1,6 +1,35 @@
 using System.Text.Json.Serialization;
 
+using Devolutions.Now.Policy.Model;
+
 namespace Devolutions.Now.Policy.Api;
+
+/// <summary>Response containing the broker's active parsed policy document.</summary>
+public sealed class PolicyResponse
+{
+    private const string Kind = BrokerApi.PolicyResponseKind;
+    private string _responseKind = Kind;
+
+    [JsonPropertyName("ResponseKind")]
+    [JsonRequired]
+    public string ResponseKind
+    {
+        get => _responseKind;
+        set => _responseKind = BrokerApi.ValidateMessageKind(value, Kind, nameof(ResponseKind));
+    }
+
+    [JsonPropertyName("ResponseVersion")]
+    [JsonRequired]
+    public string ResponseVersion { get; set; } = BrokerApi.Version;
+
+    [JsonPropertyName("Server")]
+    [JsonRequired]
+    public ServerContext Server { get; set; } = new();
+
+    [JsonPropertyName("Policy")]
+    [JsonRequired]
+    public PolicyDocument Policy { get; set; } = new();
+}
 
 /// <summary>Canonical response returned by the broker after evaluating a request.</summary>
 public sealed class EvaluationResponse
@@ -95,9 +124,11 @@ public sealed class ExecutionResponse
 public sealed class ServerContext
 {
     [JsonPropertyName("ServerVersion")]
+    [JsonRequired]
     public string ServerVersion { get; set; } = "";
 
     [JsonPropertyName("Transport")]
+    [JsonRequired]
     public Transport Transport { get; set; }
 }
 

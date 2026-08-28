@@ -39,16 +39,20 @@ Runtime implementations implement:
 pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
+    async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
 }
 ```
 
+Implementations return the active policy from `active_policy`. A broker with no active policy may return a structured `NotFound` error.
+
 Then they pass the implementation to `api_router` or `api_router_from_shared`. The template owns the HTTP paths:
 
 - `GET /v1/health`
 - `GET /v1/capabilities`
+- `GET /v1/policy`
 - `POST /v1/package-operations/evaluate`
 - `POST /v1/package-operations/execute`
 - `POST /v1/package-operations/get-status`
@@ -58,7 +62,7 @@ This keeps route dispatch, error responses, and OpenAPI operation metadata in on
 Mock and fixtures
 -----------------
 
-`MockPackageBrokerServer` is intended for protocol tests, sample validation, and client development. It returns deterministic health/capabilities responses and can be configured with evaluation, execution, and status responses loaded from fixture files.
+`MockPackageBrokerServer` is intended for protocol tests, sample validation, and client development. It returns deterministic health/capabilities responses and can be configured with policy, evaluation, execution, and status responses loaded from fixture files.
 
 Sample documents live under:
 
@@ -83,7 +87,7 @@ Regenerate it with:
 cargo run -p now-policy-server-template --bin generate-now-policy-api-openapi --locked
 ```
 
-With the `policy-compat` feature enabled, the generated components also include the policy document schema from `now-policy`.
+The generated route and components include the policy response and policy document schema from `now-policy`.
 
 Validation
 ----------

@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 using NJsonSchema;
 
@@ -126,6 +127,76 @@ public class PolicyTests
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(json));
     }
 
+    [Theory]
+    [InlineData("$schema")]
+    [InlineData("PolicyVersion")]
+    [InlineData("PolicyType")]
+    [InlineData("Metadata")]
+    [InlineData("Enforcement")]
+    [InlineData("Rules")]
+    [InlineData("Metadata.Id")]
+    [InlineData("Metadata.Publisher")]
+    [InlineData("Metadata.Revision")]
+    [InlineData("Metadata.PublishedAt")]
+    [InlineData("Enforcement.DefaultDecision")]
+    [InlineData("Enforcement.RulePrecedence")]
+    [InlineData("Rules.0.Id")]
+    [InlineData("Rules.0.Priority")]
+    [InlineData("Rules.0.Decision")]
+    [InlineData("Rules.0.Match")]
+    public void Missing_rust_required_property_is_rejected_by_parser(string propertyPath)
+    {
+        var path = Path.Combine(SamplesDir, "corporate-allowlist.policy.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))
+            ?? throw new InvalidOperationException("policy sample should parse");
+
+        RemoveProperty(document, propertyPath);
+
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
+    [Theory]
+    [InlineData("$schema")]
+    [InlineData("PolicyVersion")]
+    [InlineData("PolicyType")]
+    [InlineData("Metadata")]
+    [InlineData("Enforcement")]
+    [InlineData("Rules")]
+    [InlineData("Metadata.Id")]
+    [InlineData("Metadata.Publisher")]
+    [InlineData("Metadata.Revision")]
+    [InlineData("Metadata.PublishedAt")]
+    [InlineData("Enforcement.DefaultDecision")]
+    [InlineData("Enforcement.RulePrecedence")]
+    [InlineData("Rules.0.Id")]
+    [InlineData("Rules.0.Priority")]
+    [InlineData("Rules.0.Decision")]
+    [InlineData("Rules.0.Match")]
+    public void Null_rust_required_property_is_rejected_by_parser(string propertyPath)
+    {
+        var path = Path.Combine(SamplesDir, "corporate-allowlist.policy.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))
+            ?? throw new InvalidOperationException("policy sample should parse");
+
+        SetPropertyToNull(document, propertyPath);
+
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
+    [Theory]
+    [InlineData("Rules.0")]
+    [InlineData("Rules.3.Match.Sources.0")]
+    [InlineData("Rules.3.Match.PackageIdentifiers.0")]
+    public void Null_policy_collection_element_is_rejected_by_parser(string elementPath)
+    {
+        var path = Path.Combine(SamplesDir, "corporate-allowlist.policy.json");
+        var document = JsonNode.Parse(File.ReadAllText(path))
+            ?? throw new InvalidOperationException("policy sample should parse");
+        SetPropertyToNull(document, elementPath);
+
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
     private static PolicyDocument ParsePolicy(string path)
     {
         var content = File.ReadAllText(path);
@@ -162,5 +233,42 @@ public class PolicyTests
         {{rules}}
         }
         """;
+    }
+
+    private static void RemoveProperty(JsonNode document, string propertyPath)
+    {
+        var segments = propertyPath.Split('.');
+        var parent = document;
+        foreach (var segment in segments[..^1])
+        {
+            parent = int.TryParse(segment, out var index)
+                ? parent.AsArray()[index]!
+                : parent[segment]!;
+        }
+
+        Assert.True(parent.AsObject().Remove(segments[^1]), $"missing fixture property {propertyPath}");
+    }
+
+    private static void SetPropertyToNull(JsonNode document, string propertyPath)
+    {
+        var segments = propertyPath.Split('.');
+        var parent = document;
+        foreach (var segment in segments[..^1])
+        {
+            parent = int.TryParse(segment, out var index)
+                ? parent.AsArray()[index]!
+                : parent[segment]!;
+        }
+
+        if (int.TryParse(segments[^1], out var finalIndex))
+        {
+            Assert.NotNull(parent.AsArray()[finalIndex]);
+            parent.AsArray()[finalIndex] = null;
+        }
+        else
+        {
+            Assert.NotNull(parent.AsObject()[segments[^1]]);
+            parent.AsObject()[segments[^1]] = null;
+        }
     }
 }

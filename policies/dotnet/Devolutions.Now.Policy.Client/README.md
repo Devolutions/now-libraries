@@ -45,6 +45,7 @@ The main surface is `BrokerClient`:
 
 - `IsAvailable` probes the health endpoint.
 - `GetHealth` and `GetCapabilities` query broker metadata.
+- `GetPolicy` sends `GET /v1/policy` and returns a `PolicyResponse` containing the active parsed `PolicyDocument` after strict validation of the successful response.
 - `Evaluate` sends `POST /v1/package-operations/evaluate`.
 - `Execute` sends `POST /v1/package-operations/execute`.
 - `ExecuteAndWait` submits an operation and polls status until a terminal state.
@@ -104,6 +105,8 @@ Response-oriented methods return successful DTOs or throw `BrokerClientException
 - `StatusCode` and `BrokerError`, when the broker returned a structured `ErrorResponse`.
 
 `IsAvailable` remains a boolean probe and reports diagnostics through `BrokerClient.Trace`. Other methods do not silently convert failures into `null`.
+
+`GetPolicy` preserves both legacy and structured unsupported-endpoint behavior. Old Agents may return an empty or non-JSON 404, which is exposed with `StatusCode == 404` and no `BrokerError`. Rebuilt implementations may return a structured `ErrorResponse` with `Code == NotFound`. A supported Agent that cannot provide its active policy returns a structured non-404 error.
 
 Schema relationship
 -------------------
