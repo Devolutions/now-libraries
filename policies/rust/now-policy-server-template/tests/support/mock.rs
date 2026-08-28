@@ -4,17 +4,17 @@ use std::collections::BTreeMap;
 
 use async_trait::async_trait;
 
-use crate::server::{MAX_REQUEST_BODY_BYTES, PackageBrokerServer};
-use now_policy_api::{
+use now_policy_server_template::{
     API_VERSION_STR, Architecture, CancelRequest, CancelResponse, CapabilitiesResponse, CapabilitiesResponseKind,
     ErrorCode, ErrorResponse, ErrorResponseKind, EvaluationResponse, ExecutionResponse, HealthResponse,
-    HealthResponseKind, HealthStatus, ManagerCapability, ManagerName, Operation, PackageRequest, PolicyResponse, Scope,
-    ServerContext, StatusRequest, StatusResponse, Transport,
+    HealthResponseKind, HealthStatus, MAX_REQUEST_BODY_BYTES, ManagerCapability, ManagerName, Operation,
+    PackageBrokerServer, PackageRequest, PolicyResponse, Scope, ServerContext, StatusRequest, StatusResponse,
+    Transport,
 };
 
 /// Deterministic mock broker backed by caller-provided sample responses.
 #[derive(Debug, Clone)]
-pub struct MockPackageBrokerServer {
+pub(crate) struct MockPackageBrokerServer {
     health: HealthResponse,
     capabilities: CapabilitiesResponse,
     policy_response: Option<PolicyResponse>,
@@ -26,7 +26,7 @@ pub struct MockPackageBrokerServer {
 }
 
 impl MockPackageBrokerServer {
-    pub fn new(_pipe_name: impl Into<String>) -> Self {
+    pub(crate) fn new(_pipe_name: impl Into<String>) -> Self {
         let server = server_context();
         Self {
             health: HealthResponse {
@@ -54,42 +54,42 @@ impl MockPackageBrokerServer {
     }
 
     #[must_use]
-    pub fn with_evaluation_response(mut self, response: EvaluationResponse) -> Self {
+    pub(crate) fn with_evaluation_response(mut self, response: EvaluationResponse) -> Self {
         self.evaluation_responses
             .insert(response.request_id.to_string(), response);
         self
     }
 
     #[must_use]
-    pub fn with_policy_response(mut self, response: PolicyResponse) -> Self {
+    pub(crate) fn with_policy_response(mut self, response: PolicyResponse) -> Self {
         self.policy_response = Some(response);
         self.policy_error = None;
         self
     }
 
     #[must_use]
-    pub fn with_policy_error(mut self, error: ErrorResponse) -> Self {
+    pub(crate) fn with_policy_error(mut self, error: ErrorResponse) -> Self {
         self.policy_response = None;
         self.policy_error = Some(error);
         self
     }
 
     #[must_use]
-    pub fn with_execution_response(mut self, response: ExecutionResponse) -> Self {
+    pub(crate) fn with_execution_response(mut self, response: ExecutionResponse) -> Self {
         self.execution_responses
             .insert(response.request_id.to_string(), response);
         self
     }
 
     #[must_use]
-    pub fn with_status_response(mut self, response: StatusResponse) -> Self {
+    pub(crate) fn with_status_response(mut self, response: StatusResponse) -> Self {
         self.status_responses
             .insert(response.operation_id.to_string(), response);
         self
     }
 
     #[must_use]
-    pub fn with_cancel_response(mut self, response: CancelResponse) -> Self {
+    pub(crate) fn with_cancel_response(mut self, response: CancelResponse) -> Self {
         self.cancel_responses
             .insert(response.operation_id.to_string(), response);
         self

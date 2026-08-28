@@ -7,14 +7,18 @@ use axum::http::{Request, StatusCode};
 use now_policy_server_template::{
     API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, CapabilitiesResponseKind, DEFAULT_PIPE_NAME,
     ErrorCode, ErrorResponse, ErrorResponseKind, EvaluationResponse, ExecutionResponse, HealthResponse,
-    HealthResponseKind, HealthStatus, MAX_REQUEST_BODY_BYTES, ManagerName, MockPackageBrokerServer, Operation,
-    PackageBrokerServer, PackageRequest, PolicyResponse, PolicyResponseKind, Scope, ServerContext, StatusRequest,
-    StatusRequestKind, StatusResponse, Transport, api_router,
+    HealthResponseKind, HealthStatus, MAX_REQUEST_BODY_BYTES, ManagerName, Operation, PackageBrokerServer,
+    PackageRequest, PolicyResponse, PolicyResponseKind, Scope, ServerContext, StatusRequest, StatusRequestKind,
+    StatusResponse, Transport, api_router,
 };
 use tower::ServiceExt;
 
+use support::mock::MockPackageBrokerServer;
+
+mod support;
+
 fn samples_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/samples")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../test-data/package-broker")
 }
 
 fn load_text_file(path: &Path) -> String {
