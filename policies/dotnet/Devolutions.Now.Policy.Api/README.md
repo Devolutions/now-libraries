@@ -33,6 +33,8 @@ Architecture
 - `BrokerJson.cs` defines source-generated serializer options for the broker wire format. Public `BrokerJson.Options` and `BrokerJson.PrettyOptions` support every broker DTO, including the embedded policy model, without reflection and reject JSON null for non-nullable contract members.
 - `PolicyCompatibility.cs` maps compatible API enums to and from `Devolutions.Now.Policy.Model` enums.
 
+Opaque policy store tokens and validation receipts are restricted to safe printable ASCII (`A-Z`, `a-z`, `0-9`, `.`, `_`, `~`, `:`, `-`) beginning with an ASCII alphanumeric character, so Rust and .NET enforce identical bounds.
+
 OpenAPI relationship
 --------------------
 

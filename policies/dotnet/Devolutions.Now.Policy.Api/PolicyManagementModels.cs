@@ -14,7 +14,7 @@ internal sealed class ExactCasePolicyConflictHandlingConverter : ExactCaseString
 internal sealed class ExactCasePolicyFindingSeverityConverter : ExactCaseStringEnumConverter<PolicyFindingSeverity>;
 internal sealed class ExactCasePolicyFindingCodeConverter : ExactCaseStringEnumConverter<PolicyFindingCode>;
 
-internal abstract class BoundedStringJsonConverter(int maxLength, string typeName) : JsonConverter<string>
+internal abstract class OpaqueStringJsonConverter(int maxLength, string typeName) : JsonConverter<string>
 {
     public override string Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -35,16 +35,25 @@ internal abstract class BoundedStringJsonConverter(int maxLength, string typeNam
         {
             throw new JsonException($"{typeName} must contain between 1 and {maxLength} characters.");
         }
+        if (!IsAsciiAlphanumeric(value[0]) || value.Any(character =>
+                !IsAsciiAlphanumeric(character) && character is not ('.' or '_' or '~' or ':' or '-')))
+        {
+            throw new JsonException(
+                $"{typeName} must use safe printable ASCII characters and start with an ASCII alphanumeric character.");
+        }
 
         return value;
     }
+
+    private static bool IsAsciiAlphanumeric(char character) =>
+        character is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9';
 }
 
 internal sealed class PolicyStoreTokenJsonConverter()
-    : BoundedStringJsonConverter(512, "PolicyStoreToken");
+    : OpaqueStringJsonConverter(512, "PolicyStoreToken");
 
 internal sealed class PolicyValidationReceiptJsonConverter()
-    : BoundedStringJsonConverter(2048, "PolicyValidationReceipt");
+    : OpaqueStringJsonConverter(2048, "PolicyValidationReceipt");
 
 /// <summary>Current configured-policy state.</summary>
 [JsonConverter(typeof(ExactCasePolicyManagementStateConverter))]

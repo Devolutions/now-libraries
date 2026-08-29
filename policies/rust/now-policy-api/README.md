@@ -59,6 +59,8 @@ The generated document contains the unchanged policy inspection route, the manag
 
 `StalePolicyStoreToken` errors include the atomic current `Management` snapshot so a client can explicitly confirm an overwrite against that exact newly observed token. `UnsafePolicyPath` is a 409 state/write-capability conflict, not an authentication failure. An Agent that does not expose a newer route may still return an ordinary unstructured 404; `UnsupportedEndpoint` is only an optional explicit implementation response.
 
+Opaque store tokens and validation receipts use safe printable ASCII (`A-Z`, `a-z`, `0-9`, `.`, `_`, `~`, `:`, `-`) and begin with an ASCII alphanumeric character. This keeps length and validation behavior identical across Rust UTF-8 and .NET UTF-16 implementations.
+
 Validation
 ----------
 

@@ -27,29 +27,25 @@ public static class BrokerJson
 
     public static string Serialize<T>(T value)
     {
-        ValidateStrictValue(value);
+        ValidateSemanticValue(value);
         return JsonSerializer.Serialize(value, TypeInfo<T>());
     }
 
     public static T? Deserialize<T>(string json)
     {
         var value = JsonSerializer.Deserialize(json, TypeInfo<T>());
-        if (value is ErrorResponse error)
-        {
-            ValidateError(error);
-        }
-
+        ValidateSemanticValue(value);
         return value;
     }
 
     public static T? DeserializeStrict<T>(string json)
     {
         var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
-        ValidateStrictValue(value);
+        ValidateSemanticValue(value);
         return value;
     }
 
-    private static void ValidateStrictValue<T>(T value)
+    private static void ValidateSemanticValue<T>(T value)
     {
         switch (value)
         {

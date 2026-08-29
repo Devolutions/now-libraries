@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 
 use now_policy::{PolicyDocument, PolicyDraftDocument};
 use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
 use super::api::ServerContext;
 use super::{
@@ -115,7 +115,6 @@ pub enum PolicyFindingCode {
     Clone,
     PartialEq,
     Eq,
-    Serialize,
     JsonSchema,
     derive_more::AsRef,
     derive_more::Deref,
@@ -125,13 +124,26 @@ pub enum PolicyFindingCode {
 #[as_ref(str)]
 #[deref(forward)]
 #[display("{_0}")]
-pub struct PolicyStoreToken(#[schemars(length(min = 1, max = 512))] pub String);
+pub struct PolicyStoreToken(
+    #[schemars(
+        length(min = 1, max = 512),
+        regex(pattern = r"^[A-Za-z0-9][A-Za-z0-9._~:\-]{0,511}$")
+    )]
+    pub String,
+);
 
 impl<'de> Deserialize<'de> for PolicyStoreToken {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let value = String::deserialize(deserializer)?;
-        validate_bounded_string(&value, 1, 512, "PolicyStoreToken").map_err(serde::de::Error::custom)?;
+        validate_opaque_ascii(&value, 512, "PolicyStoreToken").map_err(serde::de::Error::custom)?;
         Ok(Self(value))
+    }
+}
+
+impl Serialize for PolicyStoreToken {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        validate_opaque_ascii(&self.0, 512, "PolicyStoreToken").map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&self.0)
     }
 }
 
@@ -147,7 +159,6 @@ impl From<&str> for PolicyStoreToken {
     Clone,
     PartialEq,
     Eq,
-    Serialize,
     JsonSchema,
     derive_more::AsRef,
     derive_more::Deref,
@@ -157,13 +168,26 @@ impl From<&str> for PolicyStoreToken {
 #[as_ref(str)]
 #[deref(forward)]
 #[display("{_0}")]
-pub struct PolicyValidationReceipt(#[schemars(length(min = 1, max = 2048))] pub String);
+pub struct PolicyValidationReceipt(
+    #[schemars(
+        length(min = 1, max = 2048),
+        regex(pattern = r"^[A-Za-z0-9][A-Za-z0-9._~:\-]{0,2047}$")
+    )]
+    pub String,
+);
 
 impl<'de> Deserialize<'de> for PolicyValidationReceipt {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let value = String::deserialize(deserializer)?;
-        validate_bounded_string(&value, 1, 2048, "PolicyValidationReceipt").map_err(serde::de::Error::custom)?;
+        validate_opaque_ascii(&value, 2048, "PolicyValidationReceipt").map_err(serde::de::Error::custom)?;
         Ok(Self(value))
+    }
+}
+
+impl Serialize for PolicyValidationReceipt {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        validate_opaque_ascii(&self.0, 2048, "PolicyValidationReceipt").map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&self.0)
     }
 }
 
@@ -171,6 +195,25 @@ impl From<&str> for PolicyValidationReceipt {
     fn from(value: &str) -> Self {
         Self(value.to_owned())
     }
+}
+
+fn validate_opaque_ascii(
+    value: &str,
+    max_length: usize,
+    type_name: &'static str,
+) -> Result<(), super::ModelValidationError> {
+    validate_bounded_string(value, 1, max_length, type_name)?;
+    if !value.bytes().enumerate().all(|(index, byte)| {
+        (index == 0 && byte.is_ascii_alphanumeric())
+            || (index > 0 && (byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'~' | b':' | b'-')))
+    }) {
+        return Err(super::ModelValidationError::Invalid {
+            type_name,
+            reason: "must use safe printable ASCII characters and start with an ASCII alphanumeric character"
+                .to_owned(),
+        });
+    }
+    Ok(())
 }
 
 /// Versioned, structured policy validation finding.
@@ -236,7 +279,7 @@ struct PolicyValidationResultWire {
     pub validator_version: String,
     pub is_valid: bool,
     #[serde(default)]
-    #[schemars(schema_with = "super::policy::policy_draft_document_schema")]
+    #[schemars(schema_with = "super::policy::optional_policy_draft_document_schema")]
     pub canonical_draft: Option<PolicyDraftDocument>,
     #[serde(default)]
     pub validation_receipt: Option<PolicyValidationReceipt>,
@@ -348,6 +391,8 @@ impl JsonSchema for PolicyValidationResult {
                 {
                     "properties": {
                         "IsValid": { "const": false },
+                        "CanonicalDraft": { "type": "null" },
+                        "ValidationReceipt": { "type": "null" },
                         "Findings": {
                             "minItems": 1,
                             "not": {
@@ -359,12 +404,6 @@ impl JsonSchema for PolicyValidationResult {
                                 }
                             }
                         }
-                    },
-                    "not": {
-                        "anyOf": [
-                            { "required": ["CanonicalDraft"] },
-                            { "required": ["ValidationReceipt"] }
-                        ]
                     }
                 }
             ]
@@ -424,7 +463,7 @@ struct PolicyManagementSnapshotWire {
     pub read_only_reason: Option<PolicyReadOnlyReason>,
     pub elevation_required: bool,
     #[serde(default)]
-    #[schemars(schema_with = "super::policy::policy_document_schema")]
+    #[schemars(schema_with = "super::policy::optional_policy_document_schema")]
     pub policy: Option<PolicyDocument>,
     #[serde(default)]
     pub invalid_diagnostics: Option<InvalidPolicyDiagnostics>,
@@ -547,18 +586,16 @@ impl JsonSchema for PolicyManagementSnapshot {
                                 "State": { "const": "Active" },
                                 "Policy": {
                                     "$ref": "#/components/schemas/PolicyDocument"
-                                }
+                                },
+                                "InvalidDiagnostics": { "type": "null" }
                             },
-                            "required": ["Policy"],
-                            "not": { "required": ["InvalidDiagnostics"] }
+                            "required": ["Policy"]
                         },
                         {
-                            "properties": { "State": { "const": "Missing" } },
-                            "not": {
-                                "anyOf": [
-                                    { "required": ["Policy"] },
-                                    { "required": ["InvalidDiagnostics"] }
-                                ]
+                            "properties": {
+                                "State": { "const": "Missing" },
+                                "Policy": { "type": "null" },
+                                "InvalidDiagnostics": { "type": "null" }
                             }
                         },
                         {
@@ -581,18 +618,20 @@ impl JsonSchema for PolicyManagementSnapshot {
                                             }
                                         }
                                     }
-                                }
+                                },
+                                "Policy": { "type": "null" }
                             },
-                            "required": ["InvalidDiagnostics"],
-                            "not": { "required": ["Policy"] }
+                            "required": ["InvalidDiagnostics"]
                         }
                     ]
                 },
                 {
                     "oneOf": [
                         {
-                            "properties": { "WriteCapability": { "const": "Writable" } },
-                            "not": { "required": ["ReadOnlyReason"] }
+                            "properties": {
+                                "WriteCapability": { "const": "Writable" },
+                                "ReadOnlyReason": { "type": "null" }
+                            }
                         },
                         {
                             "properties": {
@@ -693,7 +732,15 @@ pub struct PolicyReplacementResponse {
 
 #[cfg(test)]
 mod tests {
-    use super::{PolicyManagementSnapshot, PolicyValidationResult};
+    use super::{PolicyManagementSnapshot, PolicyStoreToken, PolicyValidationReceipt, PolicyValidationResult};
+
+    #[test]
+    fn opaque_tokens_and_receipts_reject_non_ascii_values() {
+        assert!(serde_json::from_str::<PolicyStoreToken>("\"store:activé:7\"").is_err());
+        assert!(serde_json::from_str::<PolicyValidationReceipt>("\"receipt:é\"").is_err());
+        assert!(serde_json::to_value(PolicyStoreToken("store:activé:7".to_owned())).is_err());
+        assert!(serde_json::to_value(PolicyValidationReceipt("receipt:é".to_owned())).is_err());
+    }
 
     #[test]
     fn validation_result_requires_success_artifacts_exactly_when_valid() {

@@ -1216,26 +1216,29 @@ components:
       - $ref: '#/components/schemas/PolicyManagementSnapshotFields'
       - oneOf:
         - properties:
+            InvalidDiagnostics:
+              enum:
+              - null
+              nullable: true
             Policy:
               $ref: '#/components/schemas/PolicyDocument'
             State:
               enum:
               - Active
-          not:
-            required:
-            - InvalidDiagnostics
           required:
           - Policy
         - properties:
+            InvalidDiagnostics:
+              enum:
+              - null
+              nullable: true
+            Policy:
+              enum:
+              - null
+              nullable: true
             State:
               enum:
               - Missing
-          not:
-            anyOf:
-            - required:
-              - Policy
-            - required:
-              - InvalidDiagnostics
         - properties:
             InvalidDiagnostics:
               properties:
@@ -1251,22 +1254,24 @@ components:
                       - Severity
               allOf:
               - $ref: '#/components/schemas/InvalidPolicyDiagnostics'
+            Policy:
+              enum:
+              - null
+              nullable: true
             State:
               enum:
               - Invalid
-          not:
-            required:
-            - Policy
           required:
           - InvalidDiagnostics
       - oneOf:
         - properties:
+            ReadOnlyReason:
+              enum:
+              - null
+              nullable: true
             WriteCapability:
               enum:
               - Writable
-          not:
-            required:
-            - ReadOnlyReason
         - properties:
             ReadOnlyReason:
               $ref: '#/components/schemas/PolicyReadOnlyReason'
@@ -1293,8 +1298,11 @@ components:
             nullable: true
           default: null
         Policy:
-          allOf:
+          anyOf:
           - $ref: '#/components/schemas/PolicyDocument'
+          - enum:
+            - null
+            nullable: true
           default: null
         ReadOnlyReason:
           anyOf:
@@ -1454,11 +1462,13 @@ components:
       type: string
       maxLength: 512
       minLength: 1
+      pattern: ^[A-Za-z0-9][A-Za-z0-9._~:\-]{0,511}$
     PolicyValidationReceipt:
       description: Opaque receipt bound to a canonical draft, validator version, and exact warning set.
       type: string
       maxLength: 2048
       minLength: 1
+      pattern: ^[A-Za-z0-9][A-Za-z0-9._~:\-]{0,2047}$
     PolicyValidationRequest:
       description: Request body for `POST /v1/policy/validate`.
       type: object
@@ -1522,6 +1532,10 @@ components:
         - CanonicalDraft
         - ValidationReceipt
       - properties:
+          CanonicalDraft:
+            enum:
+            - null
+            nullable: true
           Findings:
             minItems: 1
             not:
@@ -1535,18 +1549,19 @@ components:
           IsValid:
             enum:
             - false
-        not:
-          anyOf:
-          - required:
-            - CanonicalDraft
-          - required:
-            - ValidationReceipt
+          ValidationReceipt:
+            enum:
+            - null
+            nullable: true
     PolicyValidationResultFields:
       type: object
       properties:
         CanonicalDraft:
-          allOf:
+          anyOf:
           - $ref: '#/components/schemas/PolicyDraftDocument'
+          - enum:
+            - null
+            nullable: true
           default: null
         Findings:
           type: array

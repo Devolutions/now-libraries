@@ -484,4 +484,29 @@ mod tests {
             "#/components/schemas/ErrorResponse"
         );
     }
+
+    #[test]
+    fn policy_openapi_preserves_nullable_optional_document_fields() {
+        let api = serde_json::to_value(openapi()).expect("OpenAPI should serialize");
+        for pointer in [
+            "/components/schemas/PolicyManagementSnapshotFields/properties/Policy/anyOf",
+            "/components/schemas/PolicyValidationResultFields/properties/CanonicalDraft/anyOf",
+        ] {
+            let variants = api
+                .pointer(pointer)
+                .and_then(serde_json::Value::as_array)
+                .unwrap_or_else(|| panic!("missing nullable variants at {pointer}"));
+            assert!(
+                variants.iter().any(|variant| {
+                    variant.get("nullable") == Some(&serde_json::Value::Bool(true))
+                        || variant.get("type").and_then(serde_json::Value::as_str) == Some("null")
+                        || variant
+                            .get("enum")
+                            .and_then(serde_json::Value::as_array)
+                            .is_some_and(|values| values.iter().any(serde_json::Value::is_null))
+                }),
+                "{pointer} should retain an explicit null variant"
+            );
+        }
+    }
 }

@@ -42,3 +42,23 @@ pub(crate) fn policy_draft_document_schema(_generator: &mut SchemaGenerator) -> 
         "$ref": "#/components/schemas/PolicyDraftDocument",
     })
 }
+
+pub(crate) fn optional_policy_document_schema(generator: &mut SchemaGenerator) -> Schema {
+    let document = policy_document_schema(generator);
+    schemars::json_schema!({
+        "anyOf": [
+            document,
+            { "type": "null" }
+        ]
+    })
+}
+
+pub(crate) fn optional_policy_draft_document_schema(generator: &mut SchemaGenerator) -> Schema {
+    let document = policy_draft_document_schema(generator);
+    schemars::json_schema!({
+        "anyOf": [
+            document,
+            { "type": "null" }
+        ]
+    })
+}
