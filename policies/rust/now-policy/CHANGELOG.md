@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- Count Unicode scalar values for `StringPattern`, `VersionString`, and `CustomParameterString` length bounds, matching JSON Schema and .NET policy validation semantics.
+
 ### Changed
 
 - [**breaking**] Make policy documents JSON-only and remove `parse_policy_yaml`.

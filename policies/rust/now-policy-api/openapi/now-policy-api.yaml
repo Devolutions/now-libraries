@@ -51,7 +51,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
     put:
       summary: Replace the configured policy
-      description: Reparses and revalidates the raw draft inside the write transaction, then atomically commits it only when the expected opaque store token and validation receipt still match.
+      description: Reparses and revalidates the raw draft inside the write transaction, then atomically commits it only when the expected opaque store token and validation receipt still match. The complete HTTP request body, including the envelope, is limited to 16 MiB (16,777,216 bytes). This operational transport cap is below the schema's theoretical maximum.
       requestBody:
         description: Request body for `PUT /v1/policy`.
         content:
@@ -90,6 +90,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: ''
           content:
@@ -108,6 +114,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+      x-max-request-body-bytes: 16777216
   /v1/policy/management:
     get:
       summary: Get policy management state
@@ -128,7 +135,7 @@ paths:
   /v1/policy/validate:
     post:
       summary: Validate a policy draft
-      description: Authoritatively validates raw draft JSON without discarding unknown fields. Validation findings are returned with HTTP 200; malformed envelopes use ErrorResponse.
+      description: Authoritatively validates raw draft JSON without discarding unknown fields. Validation findings are returned with HTTP 200; malformed envelopes use ErrorResponse. The complete HTTP request body, including the envelope, is limited to 16 MiB (16,777,216 bytes). This operational transport cap is below the schema's theoretical maximum.
       requestBody:
         description: Request body for `POST /v1/policy/validate`.
         content:
@@ -155,6 +162,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-max-request-body-bytes: 16777216
   /v1/package-operations/evaluate:
     post:
       summary: Evaluate package operation
@@ -537,6 +551,7 @@ components:
       - Unauthenticated
       - AdministratorRequired
       - UnsafePolicyPath
+      - UnsupportedPolicyFormat
       - StalePolicyStoreToken
       - UnsupportedPolicyFilesystem
       - PolicyPersistenceFailed
@@ -1340,6 +1355,7 @@ components:
       enum:
       - ManagementDisabled
       - PathNotConfigured
+      - UnsupportedFormat
       - UnsafePath
       - InsufficientPermissions
       - UnsupportedFileSystem

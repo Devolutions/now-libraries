@@ -23,6 +23,7 @@ use now_policy_api::{
 use schemars::SchemaGenerator;
 
 pub const MAX_REQUEST_BODY_BYTES: usize = 256 * 1024;
+pub const MAX_POLICY_MANAGEMENT_BODY_BYTES: usize = 16 * 1024 * 1024;
 
 /// Implementation-neutral contract exposed by a package broker server.
 #[async_trait]
@@ -73,12 +74,12 @@ fn api_routes() -> ApiRouter<SharedPackageBrokerServer> {
         .api_route(
             "/v1/policy/validate",
             post_with(policy_validation_handler, policy_validation_docs)
-                .layer(axum::extract::DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
+                .layer(axum::extract::DefaultBodyLimit::max(MAX_POLICY_MANAGEMENT_BODY_BYTES)),
         )
         .api_route(
             "/v1/policy",
             put_with(policy_replacement_handler, policy_replacement_docs)
-                .layer(axum::extract::DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
+                .layer(axum::extract::DefaultBodyLimit::max(MAX_POLICY_MANAGEMENT_BODY_BYTES)),
         )
         .api_route(
             "/v1/package-operations/evaluate",
@@ -121,6 +122,7 @@ pub fn openapi() -> OpenApi {
     });
 
     let _ = api_routes().finish_api(&mut api);
+    register_policy_management_body_limits(&mut api);
     register_policy_schema(&mut api);
     api
 }
@@ -129,6 +131,29 @@ fn openapi_schema_generator() -> SchemaGenerator {
     use schemars::generate::SchemaSettings;
 
     SchemaSettings::openapi3().into()
+}
+
+fn register_policy_management_body_limits(api: &mut OpenApi) {
+    const EXTENSION: &str = "x-max-request-body-bytes";
+
+    let paths = api.paths.as_mut().expect("BUG: API routes should generate paths");
+    for (path, method) in [("/v1/policy/validate", "post"), ("/v1/policy", "put")] {
+        let path_item = paths
+            .paths
+            .get_mut(path)
+            .and_then(aide::openapi::ReferenceOr::as_item_mut)
+            .unwrap_or_else(|| panic!("BUG: missing generated OpenAPI path {path}"));
+        let operation = match method {
+            "post" => path_item.post.as_mut(),
+            "put" => path_item.put.as_mut(),
+            _ => unreachable!("BUG: unsupported policy management method"),
+        }
+        .unwrap_or_else(|| panic!("BUG: missing generated OpenAPI operation {method} {path}"));
+        operation.extensions.insert(
+            EXTENSION.to_owned(),
+            serde_json::json!(MAX_POLICY_MANAGEMENT_BODY_BYTES),
+        );
+    }
 }
 
 fn register_policy_schema(api: &mut OpenApi) {
@@ -327,9 +352,10 @@ fn error_status(code: ErrorCode) -> StatusCode {
         | ErrorCode::StalePolicyStoreToken => StatusCode::CONFLICT,
         ErrorCode::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
         ErrorCode::UnsupportedMediaType => StatusCode::UNSUPPORTED_MEDIA_TYPE,
-        ErrorCode::ValidationFailed | ErrorCode::InvalidPolicy | ErrorCode::UnsupportedPolicyFilesystem => {
-            StatusCode::UNPROCESSABLE_ENTITY
-        }
+        ErrorCode::ValidationFailed
+        | ErrorCode::InvalidPolicy
+        | ErrorCode::UnsupportedPolicyFormat
+        | ErrorCode::UnsupportedPolicyFilesystem => StatusCode::UNPROCESSABLE_ENTITY,
         ErrorCode::BrokerPaused => StatusCode::SERVICE_UNAVAILABLE,
         ErrorCode::InternalError | ErrorCode::PolicyPersistenceFailed | ErrorCode::PolicyActivationFailed => {
             StatusCode::INTERNAL_SERVER_ERROR
@@ -373,10 +399,13 @@ fn policy_validation_docs(op: TransformOperation<'_>) -> TransformOperation<'_> 
     op.summary("Validate a policy draft")
         .description(
             "Authoritatively validates raw draft JSON without discarding unknown fields. \
-             Validation findings are returned with HTTP 200; malformed envelopes use ErrorResponse.",
+             Validation findings are returned with HTTP 200; malformed envelopes use ErrorResponse. \
+             The complete HTTP request body, including the envelope, is limited to 16 MiB \
+             (16,777,216 bytes). This operational transport cap is below the schema's theoretical maximum.",
         )
         .response::<200, Json<PolicyValidationResponse>>()
         .response::<400, Json<ErrorResponse>>()
+        .response::<413, Json<ErrorResponse>>()
         .default_response::<Json<ErrorResponse>>()
 }
 
@@ -384,13 +413,16 @@ fn policy_replacement_docs(op: TransformOperation<'_>) -> TransformOperation<'_>
     op.summary("Replace the configured policy")
         .description(
             "Reparses and revalidates the raw draft inside the write transaction, then atomically \
-             commits it only when the expected opaque store token and validation receipt still match.",
+             commits it only when the expected opaque store token and validation receipt still match. \
+             The complete HTTP request body, including the envelope, is limited to 16 MiB \
+             (16,777,216 bytes). This operational transport cap is below the schema's theoretical maximum.",
         )
         .response::<200, Json<PolicyReplacementResponse>>()
         .response::<400, Json<ErrorResponse>>()
         .response::<401, Json<ErrorResponse>>()
         .response::<403, Json<ErrorResponse>>()
         .response::<409, Json<ErrorResponse>>()
+        .response::<413, Json<ErrorResponse>>()
         .response::<422, Json<ErrorResponse>>()
         .response::<500, Json<ErrorResponse>>()
         .response::<501, Json<ErrorResponse>>()
@@ -436,7 +468,7 @@ fn cancel_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
 
 #[cfg(test)]
 mod tests {
-    use super::openapi;
+    use super::{MAX_POLICY_MANAGEMENT_BODY_BYTES, openapi};
 
     #[test]
     fn policy_schemas_do_not_rename_existing_api_components() {
@@ -506,6 +538,22 @@ mod tests {
                             .is_some_and(|values| values.iter().any(serde_json::Value::is_null))
                 }),
                 "{pointer} should retain an explicit null variant"
+            );
+        }
+    }
+
+    #[test]
+    fn policy_openapi_exposes_management_request_body_limit() {
+        let api = serde_json::to_value(openapi()).expect("OpenAPI should serialize");
+
+        for pointer in [
+            "/paths/~1v1~1policy~1validate/post/x-max-request-body-bytes",
+            "/paths/~1v1~1policy/put/x-max-request-body-bytes",
+        ] {
+            assert_eq!(
+                api.pointer(pointer),
+                Some(&serde_json::json!(MAX_POLICY_MANAGEMENT_BODY_BYTES)),
+                "missing management request-body limit at {pointer}"
             );
         }
     }

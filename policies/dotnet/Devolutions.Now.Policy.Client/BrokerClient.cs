@@ -476,6 +476,7 @@ public sealed class BrokerClient : IDisposable
         string body,
         CancellationToken cancellationToken)
     {
+        EnsureRequestBodySize(body, BrokerApi.MaxPolicyManagementBodyBytes, endpoint);
         var headers = new Dictionary<string, string>
         {
             ["Content-Type"] = JsonMediaType,
@@ -662,16 +663,19 @@ public sealed class BrokerClient : IDisposable
     }
 
     private static void EnsureRequestBodySize(string body, CapabilitiesResponse capabilities, string endpoint)
+        => EnsureRequestBodySize(body, capabilities.MaxRequestBodyBytes, endpoint);
+
+    private static void EnsureRequestBodySize(string body, long maxBodyBytes, string endpoint)
     {
         var bodyLength = Encoding.UTF8.GetByteCount(body);
-        if (bodyLength <= capabilities.MaxRequestBodyBytes)
+        if (bodyLength <= maxBodyBytes)
         {
             return;
         }
 
         throw new BrokerClientException(
             BrokerClientErrorKind.RequestTooLarge,
-            $"Request body for {endpoint} is {bodyLength} bytes, which exceeds broker limit of {capabilities.MaxRequestBodyBytes} bytes.",
+            $"Request body for {endpoint} is {bodyLength} bytes, which exceeds broker limit of {maxBodyBytes} bytes.",
             endpoint);
     }
 

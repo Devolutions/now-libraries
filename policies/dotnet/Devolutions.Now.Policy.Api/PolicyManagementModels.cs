@@ -87,6 +87,7 @@ public enum PolicyReadOnlyReason
 {
     ManagementDisabled,
     PathNotConfigured,
+    UnsupportedFormat,
     UnsafePath,
     InsufficientPermissions,
     UnsupportedFileSystem,

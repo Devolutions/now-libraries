@@ -51,6 +51,32 @@ public static class TestData
         return doc.Info.Version;
     }
 
+    public static async Task<IReadOnlyList<int>> OpenApiPolicyManagementBodyLimitsAsync()
+    {
+        var yamlText = await File.ReadAllTextAsync(OpenApiSpec);
+        var stream = new YamlStream();
+        stream.Load(new StringReader(yamlText));
+
+        var root = (YamlMappingNode)stream.Documents[0].RootNode;
+        var paths = GetMapping(root, "paths");
+        var limits = new List<int>();
+        foreach (var (path, method) in new[]
+        {
+            ("/v1/policy/validate", "post"),
+            ("/v1/policy", "put"),
+        })
+        {
+            var operation = GetMapping(GetMapping(paths, path), method);
+            var value = (YamlScalarNode)operation.Children[new YamlScalarNode("x-max-request-body-bytes")];
+            limits.Add(int.Parse(value.Value!, CultureInfo.InvariantCulture));
+        }
+
+        return limits;
+    }
+
+    private static YamlMappingNode GetMapping(YamlMappingNode parent, string key) =>
+        (YamlMappingNode)parent.Children[new YamlScalarNode(key)];
+
     private static async Task<OpenApiDocument> LoadOpenApiAsync()
     {
         await s_docLock.WaitAsync();
@@ -219,6 +245,11 @@ public static class TestData
     public static IEnumerable<object[]> PolicyReplacementResponseSamples() =>
         JsonFiles(Path.Combine(SamplesDir, "responses"))
             .Where(f => Path.GetFileName(f).Equals("policy-replacement.response.json", StringComparison.Ordinal))
+            .Select(f => new object[] { f });
+
+    public static IEnumerable<object[]> PolicyManagementErrorSamples() =>
+        JsonFiles(Path.Combine(SamplesDir, "responses"))
+            .Where(f => Path.GetFileName(f).EndsWith(".error.json", StringComparison.Ordinal))
             .Select(f => new object[] { f });
 
     private static IEnumerable<string> JsonFiles(string dir) =>

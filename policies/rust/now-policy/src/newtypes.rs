@@ -16,17 +16,18 @@ fn validate_bounded_string(
     max: usize,
     type_name: &'static str,
 ) -> Result<(), ModelValidationError> {
-    if s.len() < min {
+    let length = s.chars().count();
+    if length < min {
         return Err(ModelValidationError::Invalid {
             type_name,
-            reason: format!("length {} is below minimum {min}", s.len()),
+            reason: format!("length {length} is below minimum {min}"),
         });
     }
 
-    if s.len() > max {
+    if length > max {
         return Err(ModelValidationError::Invalid {
             type_name,
-            reason: format!("length {} exceeds maximum {max}", s.len()),
+            reason: format!("length {length} exceeds maximum {max}"),
         });
     }
 

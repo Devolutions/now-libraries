@@ -93,6 +93,14 @@ switch transport from HTTP to other mechanisms without changing the wire schema.
 
 Before sending package operation and status requests, the client implicitly queries `GetCapabilities` once and caches the result. The cached capabilities are used as a local preflight gate: unsupported transports, package managers, operations, scopes, architectures, request body sizes, custom parameters, custom install locations, or captured output requests fail before the client sends the operation/status request. Use `CapabilitiesResponse.SupportsManager(ManagerName)` or `GetManagerCapability(ManagerName)` to check package manager support ahead of time.
 
+Policy validation and replacement use the separate fixed `BrokerApi.MaxPolicyManagementBodyBytes`
+limit (16 MiB / 16,777,216 bytes). `BrokerClient` measures the serialized UTF-8 request body,
+including the complete validation or replacement envelope, before sending it. Transport helpers
+must apply the same full-body limit to `POST /v1/policy/validate` and `PUT /v1/policy` only; package
+operation requests retain their advertised 256 KiB default. The 16 MiB value is an operational cap
+for realistic policies within the 1,024-rule editor model, not the schema's pathological theoretical
+maximum.
+
 Before sending package operation requests, the client fills missing request metadata:
 
 - `RequestId` is generated with `BrokerClient.GenerateRequestId()` when empty. Request IDs are normalized to lowercase dashed GUIDs without braces.
@@ -111,7 +119,7 @@ Response-oriented methods return successful DTOs or throw `BrokerClientException
 
 `GetPolicy` preserves both legacy and structured unsupported-endpoint behavior. Old Agents may return an empty or non-JSON 404, which is exposed with `StatusCode == 404` and no `BrokerError`. Rebuilt implementations may return a structured `ErrorResponse` with `Code == NotFound`. A supported Agent that cannot provide its active policy returns a structured non-404 error.
 
-The policy management methods preserve the same ordinary 404 behavior when an older Agent does not expose a newer route. A structured `StalePolicyStoreToken` error carries the atomic current `Management` snapshot; use its exact store token for an explicitly confirmed overwrite retry. `UnsafePolicyPath` uses HTTP 409 because it represents the current storage/write-capability state rather than authentication or elevation.
+The policy management methods preserve the same ordinary 404 behavior when an older Agent does not expose a newer route. A structured `StalePolicyStoreToken` error carries the atomic current `Management` snapshot; use its exact store token for an explicitly confirmed overwrite retry. `UnsafePolicyPath` uses HTTP 409 because it represents the current storage/write-capability state rather than authentication or elevation. Configured `.yaml`, `.yml`, extensionless, and other non-JSON policy paths use `PolicyReadOnlyReason.UnsupportedFormat` and `ErrorCode.UnsupportedPolicyFormat` (HTTP 422).
 
 Schema relationship
 -------------------

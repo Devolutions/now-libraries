@@ -9,6 +9,9 @@ public static class BrokerApi
 
     public const string DefaultPipeName = "Devolutions.Now.PackageBroker.v1";
 
+    /// <summary>Maximum complete HTTP request-body size for policy validation and replacement.</summary>
+    public const int MaxPolicyManagementBodyBytes = 16 * 1024 * 1024;
+
     public const string PackageRequestKind = "PackageRequest";
     public const string StatusRequestKind = "StatusRequest";
     public const string CancelRequestKind = "CancelRequest";

@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -83,6 +84,109 @@ public class PolicyManagementClientTests
         Assert.Equal(ErrorCode.StalePolicyStoreToken, exception.BrokerError?.Code);
         Assert.Equal(PolicyFindingCode.InvalidFieldValue, exception.BrokerError?.Validation?.Findings[0].Code);
         Assert.Equal("store:active:9", exception.BrokerError?.Management?.StoreToken);
+    }
+
+    [Fact]
+    public async Task ReplacePolicy_parses_unsupported_json_path_format()
+    {
+        var request = BrokerJson.DeserializeStrict<PolicyReplacementRequest>(
+            await ReadFixture("requests", "policy-replacement.update.request.json"))!;
+        var errorBody = await ReadFixture("responses", "policy-unsupported-format.error.json");
+        var transport = new FakeBrokerTransport(new BrokerTransportResponse { StatusCode = 422, Body = errorBody });
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(
+            () => CreateClient(transport).ReplacePolicy(request));
+
+        Assert.Equal(422, exception.StatusCode);
+        Assert.Equal(ErrorCode.UnsupportedPolicyFormat, exception.BrokerError?.Code);
+        Assert.Equal(PolicyReadOnlyReason.UnsupportedFormat, exception.BrokerError?.Management?.ReadOnlyReason);
+        Assert.EndsWith("now-policy.yaml", exception.BrokerError?.Management?.ConfiguredPath, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Unsupported_policy_format_values_use_exact_case()
+    {
+        var management = JsonNode.Parse(
+            await ReadFixture("responses", "policy-management.unsupported-format.response.json"))!;
+        var parsedManagement = BrokerJson.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString())!;
+        Assert.Equal(PolicyReadOnlyReason.UnsupportedFormat, parsedManagement.Management.ReadOnlyReason);
+        Assert.Contains("\"ReadOnlyReason\":\"UnsupportedFormat\"", BrokerJson.Serialize(parsedManagement));
+
+        management["Management"]!["ReadOnlyReason"] = JsonNode.Parse("\"unsupportedformat\"");
+        Assert.Throws<JsonException>(
+            () => BrokerJson.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString()));
+
+        var error = JsonNode.Parse(await ReadFixture("responses", "policy-unsupported-format.error.json"))!;
+        var parsedError = BrokerJson.DeserializeStrict<ErrorResponse>(error.ToJsonString())!;
+        Assert.Equal(ErrorCode.UnsupportedPolicyFormat, parsedError.Code);
+        Assert.Contains("\"Code\":\"UnsupportedPolicyFormat\"", BrokerJson.Serialize(parsedError));
+
+        error["Code"] = JsonNode.Parse("\"unsupportedpolicyformat\"");
+        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<ErrorResponse>(error.ToJsonString()));
+    }
+
+    [Fact]
+    public async Task Policy_management_requests_accept_the_exact_full_body_limit()
+    {
+        var validationBody = await ReadFixture("responses", "policy-validation.valid.response.json");
+        var validationTransport = new FakeBrokerTransport(
+            new BrokerTransportResponse { StatusCode = 200, Body = validationBody });
+        var validationRequest = new PolicyValidationRequest { RequestVersion = BrokerApi.Version };
+        var validationDraft = DraftForSerializedRequestSize(
+            validationRequest,
+            static (request, draft) => request.Draft = draft,
+            BrokerApi.MaxPolicyManagementBodyBytes);
+
+        await CreateClient(validationTransport).ValidatePolicy(validationDraft);
+
+        Assert.Equal(
+            BrokerApi.MaxPolicyManagementBodyBytes,
+            Encoding.UTF8.GetByteCount(Assert.Single(validationTransport.Requests).Body!));
+
+        var replacementRequest = BrokerJson.DeserializeStrict<PolicyReplacementRequest>(
+            await ReadFixture("requests", "policy-replacement.update.request.json"))!;
+        replacementRequest.Draft = DraftForSerializedRequestSize(
+            replacementRequest,
+            static (request, draft) => request.Draft = draft,
+            BrokerApi.MaxPolicyManagementBodyBytes);
+        var replacementBody = await ReadFixture("responses", "policy-replacement.response.json");
+        var replacementTransport = new FakeBrokerTransport(
+            new BrokerTransportResponse { StatusCode = 200, Body = replacementBody });
+
+        await CreateClient(replacementTransport).ReplacePolicy(replacementRequest);
+
+        Assert.Equal(
+            BrokerApi.MaxPolicyManagementBodyBytes,
+            Encoding.UTF8.GetByteCount(Assert.Single(replacementTransport.Requests).Body!));
+    }
+
+    [Fact]
+    public async Task Policy_management_requests_reject_one_byte_over_before_transport()
+    {
+        var validationTransport = new FakeBrokerTransport();
+        var validationRequest = new PolicyValidationRequest { RequestVersion = BrokerApi.Version };
+        var validationDraft = DraftForSerializedRequestSize(
+            validationRequest,
+            static (request, draft) => request.Draft = draft,
+            BrokerApi.MaxPolicyManagementBodyBytes + 1);
+
+        var validationException = await Assert.ThrowsAsync<BrokerClientException>(
+            () => CreateClient(validationTransport).ValidatePolicy(validationDraft));
+        Assert.Equal(BrokerClientErrorKind.RequestTooLarge, validationException.Kind);
+        Assert.Empty(validationTransport.Requests);
+
+        var replacementRequest = BrokerJson.DeserializeStrict<PolicyReplacementRequest>(
+            await ReadFixture("requests", "policy-replacement.update.request.json"))!;
+        replacementRequest.Draft = DraftForSerializedRequestSize(
+            replacementRequest,
+            static (request, draft) => request.Draft = draft,
+            BrokerApi.MaxPolicyManagementBodyBytes + 1);
+        var replacementTransport = new FakeBrokerTransport();
+
+        var replacementException = await Assert.ThrowsAsync<BrokerClientException>(
+            () => CreateClient(replacementTransport).ReplacePolicy(replacementRequest));
+        Assert.Equal(BrokerClientErrorKind.RequestTooLarge, replacementException.Kind);
+        Assert.Empty(replacementTransport.Requests);
     }
 
     [Theory]
@@ -379,6 +483,21 @@ public class PolicyManagementClientTests
 
     private static async Task<string> ReadFixture(string directory, string file) =>
         await File.ReadAllTextAsync(Path.Combine(TestData.SamplesDir, directory, file));
+
+    private static JsonElement DraftForSerializedRequestSize<TRequest>(
+        TRequest request,
+        Action<TRequest, JsonElement> setDraft,
+        int targetSize)
+    {
+        using var emptyDraft = JsonDocument.Parse("""{"Padding":""}""");
+        setDraft(request, emptyDraft.RootElement.Clone());
+        var baseSize = Encoding.UTF8.GetByteCount(BrokerJson.Serialize(request));
+        var paddingLength = targetSize - baseSize;
+        Assert.True(paddingLength >= 0);
+
+        using var paddedDraft = JsonDocument.Parse($$"""{"Padding":"{{new string('x', paddingLength)}}"}""");
+        return paddedDraft.RootElement.Clone();
+    }
 
     private static BrokerClient CreateClient(FakeBrokerTransport transport) => new(new BrokerClientOptions
     {

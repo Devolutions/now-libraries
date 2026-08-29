@@ -87,12 +87,10 @@ public class DtoRoundTripTests
     public async Task PolicyReplacementResponse_round_trips_and_validates(string path)
         => await AssertRoundTrip<PolicyReplacementResponse>(path, await TestData.SchemaAsync("PolicyReplacementResponse"));
 
-    [Fact]
-    public async Task PolicyManagementError_round_trips_and_validates()
-    {
-        var path = Path.Combine(TestData.SamplesDir, "responses", "policy-stale-token.error.json");
-        await AssertRoundTrip<ErrorResponse>(path, await TestData.SchemaAsync("ErrorResponse"));
-    }
+    [Theory]
+    [MemberData(nameof(TestData.PolicyManagementErrorSamples), MemberType = typeof(TestData))]
+    public async Task PolicyManagementError_round_trips_and_validates(string path)
+        => await AssertRoundTrip<ErrorResponse>(path, await TestData.SchemaAsync("ErrorResponse"));
 
     private static async Task AssertRoundTrip<T>(string samplePath, JsonSchema schema)
     {

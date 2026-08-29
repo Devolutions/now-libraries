@@ -209,6 +209,42 @@ public class PolicyTests
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
     }
 
+    [Theory]
+    [InlineData("StringPattern", 256)]
+    [InlineData("VersionString", 128)]
+    [InlineData("CustomParameterString", 512)]
+    public void Policy_text_lists_count_unicode_scalars_at_length_boundaries(string valueKind, int maximum)
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+        var rule = document["Rules"]![0]!;
+        var values = new JsonArray();
+        switch (valueKind)
+        {
+            case "StringPattern":
+                rule["Match"]!["PackageNames"] = values;
+                break;
+            case "VersionString":
+                rule["Match"]!["Versions"] = values;
+                break;
+            default:
+                var constraints = rule["Constraints"] as JsonObject ?? new JsonObject();
+                rule["Constraints"] = constraints;
+                constraints["AllowedCustomParameters"] = values;
+                break;
+        }
+        var multibyteScalar = "\U0001F600";
+
+        values.Add(ParseJsonString(string.Concat(Enumerable.Repeat(multibyteScalar, maximum))));
+        Assert.NotNull(PolicyDocument.ParseJson(document.ToJsonString()));
+
+        values[0] = ParseJsonString(string.Concat(Enumerable.Repeat(multibyteScalar, maximum + 1)));
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+
+        values[0] = ParseJsonString("");
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
     [Fact]
     public void Draft_rejects_server_managed_metadata()
     {
@@ -223,6 +259,8 @@ public class PolicyTests
         var content = File.ReadAllText(path);
         return PolicyDocument.ParseJson(content);
     }
+
+    private static JsonNode ParseJsonString(string value) => JsonNode.Parse($"\"{value}\"")!;
 
     private static string ResolvePolicyCrateRoot([CallerFilePath] string thisFile = "")
     {

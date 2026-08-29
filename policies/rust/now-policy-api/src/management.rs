@@ -49,6 +49,7 @@ pub enum PolicyWriteCapability {
 pub enum PolicyReadOnlyReason {
     ManagementDisabled,
     PathNotConfigured,
+    UnsupportedFormat,
     UnsafePath,
     InsufficientPermissions,
     UnsupportedFileSystem,

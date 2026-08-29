@@ -7,10 +7,10 @@ use axum::http::{Request, StatusCode};
 use now_policy_server_template::{
     API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, CapabilitiesResponseKind, DEFAULT_PIPE_NAME,
     ErrorCode, ErrorResponse, ErrorResponseKind, EvaluationResponse, ExecutionResponse, HealthResponse,
-    HealthResponseKind, HealthStatus, MAX_REQUEST_BODY_BYTES, ManagerName, Operation, PackageBrokerServer,
-    PackageRequest, PolicyManagementResponse, PolicyReplacementRequest, PolicyReplacementResponse, PolicyResponse,
-    PolicyResponseKind, PolicyValidationRequest, PolicyValidationResponse, Scope, ServerContext, StatusRequest,
-    StatusRequestKind, StatusResponse, Transport, api_router,
+    HealthResponseKind, HealthStatus, MAX_POLICY_MANAGEMENT_BODY_BYTES, MAX_REQUEST_BODY_BYTES, ManagerName, Operation,
+    PackageBrokerServer, PackageRequest, PolicyManagementResponse, PolicyReadOnlyReason, PolicyReplacementRequest,
+    PolicyReplacementResponse, PolicyResponse, PolicyResponseKind, PolicyValidationRequest, PolicyValidationResponse,
+    Scope, ServerContext, StatusRequest, StatusRequestKind, StatusResponse, Transport, api_router,
 };
 use tower::ServiceExt;
 
@@ -87,7 +87,7 @@ fn assert_response_sample_deserializes(path: &Path) {
     } else if name == "policy-replacement.response.json" {
         let _: PolicyReplacementResponse = serde_json::from_value(load_json_file(path))
             .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
-    } else if name == "policy-stale-token.error.json" {
+    } else if name.ends_with(".error.json") {
         let _: ErrorResponse = serde_json::from_value(load_json_file(path))
             .unwrap_or_else(|e| panic!("failed to deserialize {}: {e}", path.display()));
     } else if name == "policy.response.json" {
@@ -591,6 +591,7 @@ async fn policy_management_error_codes_use_stable_http_statuses() {
         (ErrorCode::Unauthenticated, StatusCode::UNAUTHORIZED),
         (ErrorCode::AdministratorRequired, StatusCode::FORBIDDEN),
         (ErrorCode::UnsafePolicyPath, StatusCode::CONFLICT),
+        (ErrorCode::UnsupportedPolicyFormat, StatusCode::UNPROCESSABLE_ENTITY),
         (ErrorCode::StalePolicyStoreToken, StatusCode::CONFLICT),
         (ErrorCode::UnsupportedPolicyFilesystem, StatusCode::UNPROCESSABLE_ENTITY),
         (ErrorCode::PolicyPersistenceFailed, StatusCode::INTERNAL_SERVER_ERROR),
@@ -643,6 +644,33 @@ fn stale_policy_store_token_requires_atomic_management_snapshot() {
     assert!(serde_json::to_value(invalid_for_serialization).is_err());
 }
 
+#[test]
+fn unsupported_policy_format_contract_uses_exact_case() {
+    let management_path = response_sample_path("policy-management.unsupported-format.response.json");
+    let management: PolicyManagementResponse = serde_json::from_value(load_json_file(&management_path)).unwrap();
+    assert_eq!(
+        management.management.read_only_reason,
+        Some(PolicyReadOnlyReason::UnsupportedFormat)
+    );
+    assert_eq!(
+        serde_json::to_value(management).unwrap()["Management"]["ReadOnlyReason"],
+        "UnsupportedFormat"
+    );
+
+    let error_path = response_sample_path("policy-unsupported-format.error.json");
+    let error: ErrorResponse = serde_json::from_value(load_json_file(&error_path)).unwrap();
+    assert_eq!(error.code, ErrorCode::UnsupportedPolicyFormat);
+    assert_eq!(serde_json::to_value(error).unwrap()["Code"], "UnsupportedPolicyFormat");
+
+    let mut noncanonical_management = load_json_file(&management_path);
+    noncanonical_management["Management"]["ReadOnlyReason"] = serde_json::json!("unsupportedformat");
+    assert!(serde_json::from_value::<PolicyManagementResponse>(noncanonical_management).is_err());
+
+    let mut noncanonical_error = load_json_file(&error_path);
+    noncanonical_error["Code"] = serde_json::json!("unsupportedpolicyformat");
+    assert!(serde_json::from_value::<ErrorResponse>(noncanonical_error).is_err());
+}
+
 #[tokio::test]
 async fn absent_legacy_policy_management_route_remains_an_ordinary_404() {
     let response = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME))
@@ -664,7 +692,6 @@ async fn absent_legacy_policy_management_route_remains_an_ordinary_404() {
 #[tokio::test]
 async fn policy_management_request_rejections_are_structured() {
     let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME));
-    let oversized = " ".repeat(MAX_REQUEST_BODY_BYTES + 1);
 
     for (content_type, body, expected_status, expected_code) in [
         (
@@ -678,12 +705,6 @@ async fn policy_management_request_rejections_are_structured() {
             "{}".to_owned(),
             StatusCode::UNSUPPORTED_MEDIA_TYPE,
             ErrorCode::UnsupportedMediaType,
-        ),
-        (
-            Some("application/json"),
-            oversized,
-            StatusCode::PAYLOAD_TOO_LARGE,
-            ErrorCode::PayloadTooLarge,
         ),
     ] {
         let mut request = Request::builder().method("POST").uri("/v1/policy/validate");
@@ -699,6 +720,72 @@ async fn policy_management_request_rejections_are_structured() {
         let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
         let error: ErrorResponse = serde_json::from_slice(&body).unwrap();
         assert_eq!(error.code, expected_code);
+    }
+}
+
+fn policy_management_body(prefix: &str, suffix: &str, length: usize) -> String {
+    let padding_length = length
+        .checked_sub(prefix.len() + suffix.len())
+        .expect("target body length should accommodate the request envelope");
+    let body = format!("{prefix}{}{suffix}", "x".repeat(padding_length));
+    assert_eq!(body.len(), length);
+    body
+}
+
+#[tokio::test]
+async fn policy_management_routes_accept_exact_limit_and_reject_one_byte_over() {
+    let app = api_router(MockPackageBrokerServer::new(DEFAULT_PIPE_NAME));
+    let cases = [
+        (
+            "POST",
+            "/v1/policy/validate",
+            r#"{"RequestKind":"PolicyValidationRequest","RequestVersion":"1.0","Draft":{"Padding":""#,
+            r#""}}"#,
+        ),
+        (
+            "PUT",
+            "/v1/policy",
+            r#"{"RequestKind":"PolicyReplacementRequest","RequestVersion":"1.0","ExpectedStoreToken":"store:active:7","Operation":"Update","ConflictHandling":"Reject","WarningsAcknowledged":true,"Draft":{"Padding":""#,
+            r#""},"ValidationReceipt":"receipt:sha256:test"}"#,
+        ),
+    ];
+
+    for (method, uri, prefix, suffix) in cases {
+        let exact = policy_management_body(prefix, suffix, MAX_POLICY_MANAGEMENT_BODY_BYTES);
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(method)
+                    .uri(uri)
+                    .header("content-type", "application/json")
+                    .body(Body::from(exact))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::NOT_IMPLEMENTED, "{method} {uri}");
+        let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        let error: ErrorResponse = serde_json::from_slice(&body).unwrap();
+        assert_eq!(error.code, ErrorCode::UnsupportedEndpoint);
+
+        let oversized = policy_management_body(prefix, suffix, MAX_POLICY_MANAGEMENT_BODY_BYTES + 1);
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method(method)
+                    .uri(uri)
+                    .header("content-type", "application/json")
+                    .body(Body::from(oversized))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE, "{method} {uri}");
+        let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        let error: ErrorResponse = serde_json::from_slice(&body).unwrap();
+        assert_eq!(error.code, ErrorCode::PayloadTooLarge);
     }
 }
 

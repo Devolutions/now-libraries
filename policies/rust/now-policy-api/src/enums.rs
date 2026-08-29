@@ -132,6 +132,7 @@ pub enum ErrorCode {
     Unauthenticated,
     AdministratorRequired,
     UnsafePolicyPath,
+    UnsupportedPolicyFormat,
     StalePolicyStoreToken,
     UnsupportedPolicyFilesystem,
     PolicyPersistenceFailed,

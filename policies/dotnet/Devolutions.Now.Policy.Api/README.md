@@ -35,6 +35,14 @@ Architecture
 
 Opaque policy store tokens and validation receipts are restricted to safe printable ASCII (`A-Z`, `a-z`, `0-9`, `.`, `_`, `~`, `:`, `-`) beginning with an ASCII alphanumeric character, so Rust and .NET enforce identical bounds.
 
+`BrokerApi.MaxPolicyManagementBodyBytes` exposes the fixed 16 MiB limit for the complete serialized
+HTTP body of policy validation and replacement requests. It is separate from the package-operation
+limit advertised by broker capabilities.
+
+Because policy documents are JSON-only, configured `.yaml`, `.yml`, extensionless, and other
+non-JSON paths use `PolicyReadOnlyReason.UnsupportedFormat` in management snapshots and
+`ErrorCode.UnsupportedPolicyFormat` for structured HTTP 422 errors.
+
 OpenAPI relationship
 --------------------
 

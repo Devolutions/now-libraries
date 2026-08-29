@@ -38,6 +38,15 @@ public class SchemaValidationTests
         Assert.Equal(BrokerApi.Version, new ErrorResponse().ResponseVersion);
     }
 
+    [Fact]
+    public async Task Policy_management_body_limit_matches_generated_openapi()
+    {
+        var limits = await TestData.OpenApiPolicyManagementBodyLimitsAsync();
+
+        Assert.Equal(2, limits.Count);
+        Assert.All(limits, limit => Assert.Equal(BrokerApi.MaxPolicyManagementBodyBytes, limit));
+    }
+
     [Theory]
     [MemberData(nameof(TestData.RequestSamples), MemberType = typeof(TestData))]
     public async Task Request_samples_are_schema_valid(string path)

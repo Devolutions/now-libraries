@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add versioned policy management, raw-draft validation, structured findings/receipts, optimistic replacement, and management error contracts, including the atomic current snapshot required on stale-token errors.
+- Add versioned policy management, raw-draft validation, structured findings/receipts, optimistic replacement, and management error contracts, including the atomic current snapshot required on stale-token errors, explicit unsupported non-JSON path semantics, and generated 16 MiB full-request-body metadata for management write endpoints.
 
 
 ## [[0.3.1](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.3.0...now-policy-api-v0.3.1)] - 2026-08-13

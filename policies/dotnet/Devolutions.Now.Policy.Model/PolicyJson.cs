@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -15,11 +16,17 @@ public static class PolicyJson
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
     };
 
-    public static string Serialize(PolicyDocument value) =>
-        JsonSerializer.Serialize(value, PolicyJsonSerializerContext.Default.PolicyDocument);
+    public static string Serialize(PolicyDocument value)
+    {
+        ValidateRequiredCollectionElements(value);
+        return JsonSerializer.Serialize(value, PolicyJsonSerializerContext.Default.PolicyDocument);
+    }
 
-    public static string Serialize(PolicyDraftDocument value) =>
-        JsonSerializer.Serialize(value, PolicyJsonSerializerContext.Default.PolicyDraftDocument);
+    public static string Serialize(PolicyDraftDocument value)
+    {
+        ValidateRequiredCollectionElements(value);
+        return JsonSerializer.Serialize(value, PolicyJsonSerializerContext.Default.PolicyDraftDocument);
+    }
 
     public static PolicyDocument? DeserializePolicyDocument(string json) =>
         Validate(JsonSerializer.Deserialize(json, PolicyJsonSerializerContext.Default.PolicyDocument));
@@ -63,10 +70,10 @@ public static class PolicyJson
         {
             var rule = rules[ruleIndex];
             var matchPath = $"$.Rules[{ruleIndex}].Match";
-            RejectNullElements(rule.Match.Sources, $"{matchPath}.Sources");
-            RejectNullElements(rule.Match.PackageIdentifiers, $"{matchPath}.PackageIdentifiers");
-            RejectNullElements(rule.Match.PackageNames, $"{matchPath}.PackageNames");
-            RejectNullElements(rule.Match.Versions, $"{matchPath}.Versions");
+            RejectBoundedStrings(rule.Match.Sources, 1, 256, $"{matchPath}.Sources");
+            RejectBoundedStrings(rule.Match.PackageIdentifiers, 1, 256, $"{matchPath}.PackageIdentifiers");
+            RejectBoundedStrings(rule.Match.PackageNames, 1, 256, $"{matchPath}.PackageNames");
+            RejectBoundedStrings(rule.Match.Versions, 1, 128, $"{matchPath}.Versions");
             RejectBooleanMatch(rule.Match.Interactive, $"{matchPath}.Interactive");
             RejectBooleanMatch(rule.Match.SkipHashCheck, $"{matchPath}.SkipHashCheck");
             RejectBooleanMatch(rule.Match.PreRelease, $"{matchPath}.PreRelease");
@@ -79,14 +86,26 @@ public static class PolicyJson
             if (rule.Constraints is { } constraints)
             {
                 var constraintsPath = $"$.Rules[{ruleIndex}].Constraints";
-                RejectNullElements(
+                RejectBoundedStrings(
                     constraints.AllowedInstallLocationPatterns,
+                    1,
+                    256,
                     $"{constraintsPath}.AllowedInstallLocationPatterns");
-                RejectNullElements(constraints.AllowedCustomParameters, $"{constraintsPath}.AllowedCustomParameters");
-                RejectNullElements(
+                RejectBoundedStrings(
+                    constraints.AllowedCustomParameters,
+                    1,
+                    512,
+                    $"{constraintsPath}.AllowedCustomParameters");
+                RejectBoundedStrings(
                     constraints.AllowedCustomParameterPatterns,
+                    1,
+                    512,
                     $"{constraintsPath}.AllowedCustomParameterPatterns");
-                RejectNullElements(constraints.DeniedCustomParameters, $"{constraintsPath}.DeniedCustomParameters");
+                RejectBoundedStrings(
+                    constraints.DeniedCustomParameters,
+                    1,
+                    512,
+                    $"{constraintsPath}.DeniedCustomParameters");
             }
         }
     }
@@ -127,6 +146,24 @@ public static class PolicyJson
             if (values[index] is null)
             {
                 throw new JsonException($"The JSON value at {path}[{index}] must not be null.");
+            }
+        }
+    }
+
+    private static void RejectBoundedStrings(
+        IReadOnlyList<string> values,
+        int minLength,
+        int maxLength,
+        string path)
+    {
+        RejectNullElements(values, path);
+        for (var index = 0; index < values.Count; index++)
+        {
+            var length = values[index].EnumerateRunes().Count();
+            if (length < minLength || length > maxLength)
+            {
+                throw new JsonException(
+                    $"The JSON string at {path}[{index}] must contain between {minLength} and {maxLength} Unicode scalar values; found {length}.");
             }
         }
     }

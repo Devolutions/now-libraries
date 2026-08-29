@@ -62,6 +62,13 @@ Then they pass the implementation to `api_router` or `api_router_from_shared`. T
 
 This keeps route dispatch, error responses, and OpenAPI operation metadata in one place.
 
+`POST /v1/policy/validate` and `PUT /v1/policy` accept complete HTTP request bodies up to
+`MAX_POLICY_MANAGEMENT_BODY_BYTES` (16 MiB / 16,777,216 bytes), including their JSON envelopes.
+This is an operational transport limit for realistic policies within the 1,024-rule editor model;
+it does not attempt to accommodate the policy schema's pathological theoretical maximum. Package
+operation endpoints continue to use the separate `MAX_REQUEST_BODY_BYTES` limit (256 KiB), which
+implementations advertise through `CapabilitiesResponse.MaxRequestBodyBytes`.
+
 OpenAPI generation
 ------------------
 

@@ -5,7 +5,7 @@
 use std::path::PathBuf;
 
 use chrono::{TimeZone, Utc};
-use now_policy::{PolicyDocument, PolicyDraftDocument};
+use now_policy::{CustomParameterString, PolicyDocument, PolicyDraftDocument, StringPattern, VersionString};
 
 fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/samples")
@@ -68,6 +68,20 @@ fn mixed_boolean_match_values_are_rejected() {
 
     let result: Result<PolicyDocument, _> = serde_json::from_value(value);
     assert!(result.is_err());
+}
+
+#[test]
+fn policy_text_newtypes_count_unicode_scalars_at_length_boundaries() {
+    let multibyte_scalar = "😀";
+
+    assert!(StringPattern::parse(&multibyte_scalar.repeat(256)).is_ok());
+    assert!(StringPattern::parse(&multibyte_scalar.repeat(257)).is_err());
+
+    assert!(VersionString::parse(&multibyte_scalar.repeat(128)).is_ok());
+    assert!(VersionString::parse(&multibyte_scalar.repeat(129)).is_err());
+
+    assert!(CustomParameterString::parse(&multibyte_scalar.repeat(512)).is_ok());
+    assert!(CustomParameterString::parse(&multibyte_scalar.repeat(513)).is_err());
 }
 
 #[test]
