@@ -123,6 +123,7 @@ public static class BrokerJson
                 {
                     throw new JsonException("Invalid management snapshots forbid Policy.");
                 }
+                RejectNullElements(management.InvalidDiagnostics?.Findings, "Management.InvalidDiagnostics.Findings");
                 if (management.InvalidDiagnostics is null
                     || management.InvalidDiagnostics.Findings.Count == 0
                     || !management.InvalidDiagnostics.Findings.Any(
@@ -169,6 +170,7 @@ public static class BrokerJson
 
     private static void ValidateValidation(PolicyValidationResult validation)
     {
+        RejectNullElements(validation.Findings, "Validation.Findings");
         var hasError = validation.Findings.Any(finding => finding.Severity == PolicyFindingSeverity.Error);
         if (validation.IsValid)
         {
@@ -195,6 +197,23 @@ public static class BrokerJson
             {
                 throw new JsonException(
                     "Invalid policy validation results require at least one Error finding.");
+            }
+        }
+    }
+
+    private static void RejectNullElements<T>(IReadOnlyList<T>? values, string path)
+        where T : class
+    {
+        if (values is null)
+        {
+            throw new JsonException($"The JSON array at {path} must not be null.");
+        }
+
+        for (var index = 0; index < values.Count; index++)
+        {
+            if (values[index] is null)
+            {
+                throw new JsonException($"The JSON value at {path}[{index}] must not be null.");
             }
         }
     }

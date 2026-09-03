@@ -37,12 +37,21 @@ public static class PolicyJson
     public static PolicyDraftDocument? DeserializePolicyDraftDocumentStrict(string json) =>
         Validate(JsonSerializer.Deserialize(json, PolicyJsonStrictSerializerContext.Default.PolicyDraftDocument));
 
-    public static string Serialize<T>(T value) =>
-        JsonSerializer.Serialize(value, TypeInfo<T>());
+    public static string Serialize<T>(T value)
+    {
+        ValidateSemanticValue(value);
+        return JsonSerializer.Serialize(value, TypeInfo<T>());
+    }
 
     public static T? DeserializeStrict<T>(string json)
     {
         var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
+        ValidateSemanticValue(value);
+        return value;
+    }
+
+    private static void ValidateSemanticValue<T>(T value)
+    {
         switch (value)
         {
             case PolicyDocument policy:
@@ -51,9 +60,13 @@ public static class PolicyJson
             case PolicyDraftDocument draft:
                 ValidateRequiredCollectionElements(draft);
                 break;
+            case PolicyRule rule:
+                ValidateRequiredCollectionElements(rule, "$");
+                break;
+            case PolicyMatch match:
+                ValidateRequiredCollectionElements(match, "$");
+                break;
         }
-
-        return value;
     }
 
     internal static void ValidateRequiredCollectionElements(PolicyDocument policy)
@@ -68,46 +81,54 @@ public static class PolicyJson
 
         for (var ruleIndex = 0; ruleIndex < rules.Count; ruleIndex++)
         {
-            var rule = rules[ruleIndex];
-            var matchPath = $"$.Rules[{ruleIndex}].Match";
-            RejectBoundedStrings(rule.Match.Sources, 1, 256, $"{matchPath}.Sources");
-            RejectBoundedStrings(rule.Match.PackageIdentifiers, 1, 256, $"{matchPath}.PackageIdentifiers");
-            RejectBoundedStrings(rule.Match.PackageNames, 1, 256, $"{matchPath}.PackageNames");
-            RejectBoundedStrings(rule.Match.Versions, 1, 128, $"{matchPath}.Versions");
-            RejectBooleanMatch(rule.Match.Interactive, $"{matchPath}.Interactive");
-            RejectBooleanMatch(rule.Match.SkipHashCheck, $"{matchPath}.SkipHashCheck");
-            RejectBooleanMatch(rule.Match.PreRelease, $"{matchPath}.PreRelease");
-            RejectBooleanMatch(rule.Match.HasCustomParameters, $"{matchPath}.HasCustomParameters");
-            RejectBooleanMatch(rule.Match.HasCustomInstallLocation, $"{matchPath}.HasCustomInstallLocation");
-            RejectBooleanMatch(rule.Match.HasPrePostCommands, $"{matchPath}.HasPrePostCommands");
-            RejectBooleanMatch(rule.Match.HasKillBeforeOperation, $"{matchPath}.HasKillBeforeOperation");
-            RejectBooleanMatch(rule.Match.HasUninstallPrevious, $"{matchPath}.HasUninstallPrevious");
-
-            if (rule.Constraints is { } constraints)
-            {
-                var constraintsPath = $"$.Rules[{ruleIndex}].Constraints";
-                RejectBoundedStrings(
-                    constraints.AllowedInstallLocationPatterns,
-                    1,
-                    256,
-                    $"{constraintsPath}.AllowedInstallLocationPatterns");
-                RejectBoundedStrings(
-                    constraints.AllowedCustomParameters,
-                    1,
-                    512,
-                    $"{constraintsPath}.AllowedCustomParameters");
-                RejectBoundedStrings(
-                    constraints.AllowedCustomParameterPatterns,
-                    1,
-                    512,
-                    $"{constraintsPath}.AllowedCustomParameterPatterns");
-                RejectBoundedStrings(
-                    constraints.DeniedCustomParameters,
-                    1,
-                    512,
-                    $"{constraintsPath}.DeniedCustomParameters");
-            }
+            ValidateRequiredCollectionElements(rules[ruleIndex], $"$.Rules[{ruleIndex}]");
         }
+    }
+
+    private static void ValidateRequiredCollectionElements(PolicyRule rule, string path)
+    {
+        ValidateRequiredCollectionElements(rule.Match, $"{path}.Match");
+
+        if (rule.Constraints is { } constraints)
+        {
+            var constraintsPath = $"{path}.Constraints";
+            RejectBoundedStrings(
+                constraints.AllowedInstallLocationPatterns,
+                1,
+                256,
+                $"{constraintsPath}.AllowedInstallLocationPatterns");
+            RejectBoundedStrings(
+                constraints.AllowedCustomParameters,
+                1,
+                512,
+                $"{constraintsPath}.AllowedCustomParameters");
+            RejectBoundedStrings(
+                constraints.AllowedCustomParameterPatterns,
+                1,
+                512,
+                $"{constraintsPath}.AllowedCustomParameterPatterns");
+            RejectBoundedStrings(
+                constraints.DeniedCustomParameters,
+                1,
+                512,
+                $"{constraintsPath}.DeniedCustomParameters");
+        }
+    }
+
+    private static void ValidateRequiredCollectionElements(PolicyMatch match, string path)
+    {
+        RejectBoundedStrings(match.Sources, 1, 256, $"{path}.Sources");
+        RejectBoundedStrings(match.PackageIdentifiers, 1, 256, $"{path}.PackageIdentifiers");
+        RejectBoundedStrings(match.PackageNames, 1, 256, $"{path}.PackageNames");
+        RejectBoundedStrings(match.Versions, 1, 128, $"{path}.Versions");
+        RejectBooleanMatch(match.Interactive, $"{path}.Interactive");
+        RejectBooleanMatch(match.SkipHashCheck, $"{path}.SkipHashCheck");
+        RejectBooleanMatch(match.PreRelease, $"{path}.PreRelease");
+        RejectBooleanMatch(match.HasCustomParameters, $"{path}.HasCustomParameters");
+        RejectBooleanMatch(match.HasCustomInstallLocation, $"{path}.HasCustomInstallLocation");
+        RejectBooleanMatch(match.HasPrePostCommands, $"{path}.HasPrePostCommands");
+        RejectBooleanMatch(match.HasKillBeforeOperation, $"{path}.HasKillBeforeOperation");
+        RejectBooleanMatch(match.HasUninstallPrevious, $"{path}.HasUninstallPrevious");
     }
 
     private static PolicyDocument? Validate(PolicyDocument? policy)
@@ -134,7 +155,7 @@ public static class PolicyJson
     {
         if (values.Count > 1)
         {
-            throw new JsonException($"The JSON array at {path} must contain exactly one value when present.");
+            throw new JsonException($"The JSON array at {path} must contain at most one value.");
         }
     }
 

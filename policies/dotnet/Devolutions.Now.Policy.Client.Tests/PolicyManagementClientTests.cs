@@ -365,6 +365,24 @@ public class PolicyManagementClientTests
         Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyManagementResponse>(json));
     }
 
+    [Fact]
+    public async Task Management_contract_rejects_null_finding_elements()
+    {
+        var validation = JsonNode.Parse(await ReadFixture("responses", "policy-validation.valid.response.json"))!;
+        validation["Validation"]!["Findings"] = new JsonArray((JsonNode?)null);
+        Assert.Throws<JsonException>(
+            () => BrokerJson.DeserializeStrict<PolicyValidationResponse>(validation.ToJsonString()));
+        Assert.Throws<JsonException>(
+            () => BrokerJson.Deserialize<PolicyValidationResponse>(validation.ToJsonString()));
+
+        var management = JsonNode.Parse(await ReadFixture("responses", "policy-management.invalid.response.json"))!;
+        management["Management"]!["InvalidDiagnostics"]!["Findings"] = new JsonArray((JsonNode?)null);
+        Assert.Throws<JsonException>(
+            () => BrokerJson.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString()));
+        Assert.Throws<JsonException>(
+            () => BrokerJson.Deserialize<PolicyManagementResponse>(management.ToJsonString()));
+    }
+
     [Theory]
     [InlineData("policy-validation.valid-with-error.response.json", true)]
     [InlineData("policy-validation.invalid-with-warning.response.json", true)]

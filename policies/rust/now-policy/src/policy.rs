@@ -425,7 +425,7 @@ fn deserialize_boolean_match<'de, D: serde::Deserializer<'de>>(deserializer: D) 
     let values = Vec::<bool>::deserialize(deserializer)?;
     if values.len() > 1 {
         return Err(serde::de::Error::custom(
-            "boolean match arrays must contain exactly one value when present",
+            "boolean match arrays must contain at most one value",
         ));
     }
 

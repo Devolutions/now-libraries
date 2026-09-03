@@ -209,6 +209,21 @@ public class PolicyTests
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
     }
 
+    [Fact]
+    public void Direct_policy_match_and_rule_deserialization_reject_mixed_boolean_values()
+    {
+        const string MatchJson = """{"Interactive":[false,true]}""";
+        const string RuleJson =
+            """{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{"Interactive":[false,true]}}""";
+
+        Assert.Throws<JsonException>(() => PolicyJson.DeserializeStrict<PolicyMatch>(MatchJson));
+        Assert.Throws<JsonException>(() => PolicyJson.DeserializeStrict<PolicyRule>(RuleJson));
+        Assert.NotNull(PolicyJson.DeserializeStrict<PolicyMatch>("""{"Interactive":[]}"""));
+
+        var match = new PolicyMatch { Interactive = [false, true] };
+        Assert.Throws<JsonException>(() => PolicyJson.Serialize(match));
+    }
+
     [Theory]
     [InlineData("StringPattern", 256)]
     [InlineData("VersionString", 128)]

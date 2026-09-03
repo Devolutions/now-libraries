@@ -68,6 +68,9 @@ fn mixed_boolean_match_values_are_rejected() {
 
     let result: Result<PolicyDocument, _> = serde_json::from_value(value);
     assert!(result.is_err());
+
+    let empty: now_policy::PolicyMatch = serde_json::from_value(serde_json::json!({ "Interactive": [] })).unwrap();
+    assert!(empty.interactive.is_empty());
 }
 
 #[test]
