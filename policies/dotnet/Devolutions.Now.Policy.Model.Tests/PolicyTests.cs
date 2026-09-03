@@ -22,6 +22,14 @@ public class PolicyTests
     public static IEnumerable<object[]> PolicySamples() =>
         Directory.GetFiles(SamplesDir, "*.policy.json").Select(f => new object[] { f });
 
+    public static TheoryData<string, int> ConstraintTextCollections() => new()
+    {
+        { nameof(PolicyConstraints.AllowedInstallLocationPatterns), 256 },
+        { nameof(PolicyConstraints.AllowedCustomParameters), 512 },
+        { nameof(PolicyConstraints.AllowedCustomParameterPatterns), 512 },
+        { nameof(PolicyConstraints.DeniedCustomParameters), 512 },
+    };
+
     [Fact]
     public void Tests_run_with_reflection_json_disabled()
     {
@@ -322,6 +330,45 @@ public class PolicyTests
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
     }
 
+    [Theory]
+    [MemberData(nameof(ConstraintTextCollections))]
+    public void Direct_policy_constraints_reject_invalid_bounded_strings(string collectionName, int maximum)
+    {
+        foreach (var value in new[] { "", new string('x', maximum + 1) })
+        {
+            var constraints = CreateConstraints(collectionName, value);
+            var json = new JsonObject { [collectionName] = new JsonArray(value) }.ToJsonString();
+
+            Assert.Throws<JsonException>(() => PolicySerializer.Serialize(constraints));
+            Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyConstraints>(json));
+
+            foreach (var options in new[] { PolicySerializer.Options, PolicySerializer.StrictOptions })
+            {
+                Assert.Throws<JsonException>(() => JsonSerializer.Serialize(constraints, options));
+                Assert.Throws<JsonException>(
+                    () => JsonSerializer.Deserialize<PolicyConstraints>(json, options));
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(ConstraintTextCollections))]
+    public void Direct_policy_constraints_accept_valid_boundary_strings(string collectionName, int maximum)
+    {
+        var value = string.Concat(Enumerable.Repeat("\U0001F600", maximum));
+        var constraints = CreateConstraints(collectionName, value);
+        var json = new JsonObject { [collectionName] = new JsonArray(value) }.ToJsonString();
+
+        Assert.NotNull(PolicySerializer.Serialize(constraints));
+        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyConstraints>(json));
+
+        foreach (var options in new[] { PolicySerializer.Options, PolicySerializer.StrictOptions })
+        {
+            Assert.NotNull(JsonSerializer.Serialize(constraints, options));
+            Assert.NotNull(JsonSerializer.Deserialize<PolicyConstraints>(json, options));
+        }
+    }
+
     [Fact]
     public void Draft_rejects_server_managed_metadata()
     {
@@ -338,6 +385,30 @@ public class PolicyTests
     }
 
     private static JsonNode ParseJsonString(string value) => JsonNode.Parse($"\"{value}\"")!;
+
+    private static PolicyConstraints CreateConstraints(string collectionName, string value)
+    {
+        var constraints = new PolicyConstraints();
+        switch (collectionName)
+        {
+            case nameof(PolicyConstraints.AllowedInstallLocationPatterns):
+                constraints.AllowedInstallLocationPatterns = [value];
+                break;
+            case nameof(PolicyConstraints.AllowedCustomParameters):
+                constraints.AllowedCustomParameters = [value];
+                break;
+            case nameof(PolicyConstraints.AllowedCustomParameterPatterns):
+                constraints.AllowedCustomParameterPatterns = [value];
+                break;
+            case nameof(PolicyConstraints.DeniedCustomParameters):
+                constraints.DeniedCustomParameters = [value];
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(collectionName), collectionName, null);
+        }
+
+        return constraints;
+    }
 
     private static string ResolvePolicyCrateRoot([CallerFilePath] string thisFile = "")
     {

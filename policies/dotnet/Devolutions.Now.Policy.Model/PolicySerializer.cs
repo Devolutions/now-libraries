@@ -64,6 +64,9 @@ public static class PolicySerializer
             case PolicyMatch match:
                 ValidateRequiredCollectionElements(match, "$");
                 break;
+            case PolicyConstraints constraints:
+                ValidateRequiredCollectionElements(constraints, "$");
+                break;
         }
     }
 
@@ -96,28 +99,32 @@ public static class PolicySerializer
 
         if (rule.Constraints is { } constraints)
         {
-            var constraintsPath = $"{path}.Constraints";
-            RejectBoundedStrings(
-                constraints.AllowedInstallLocationPatterns,
-                1,
-                256,
-                $"{constraintsPath}.AllowedInstallLocationPatterns");
-            RejectBoundedStrings(
-                constraints.AllowedCustomParameters,
-                1,
-                512,
-                $"{constraintsPath}.AllowedCustomParameters");
-            RejectBoundedStrings(
-                constraints.AllowedCustomParameterPatterns,
-                1,
-                512,
-                $"{constraintsPath}.AllowedCustomParameterPatterns");
-            RejectBoundedStrings(
-                constraints.DeniedCustomParameters,
-                1,
-                512,
-                $"{constraintsPath}.DeniedCustomParameters");
+            ValidateRequiredCollectionElements(constraints, $"{path}.Constraints");
         }
+    }
+
+    private static void ValidateRequiredCollectionElements(PolicyConstraints constraints, string path)
+    {
+        RejectBoundedStrings(
+            constraints.AllowedInstallLocationPatterns,
+            1,
+            256,
+            $"{path}.AllowedInstallLocationPatterns");
+        RejectBoundedStrings(
+            constraints.AllowedCustomParameters,
+            1,
+            512,
+            $"{path}.AllowedCustomParameters");
+        RejectBoundedStrings(
+            constraints.AllowedCustomParameterPatterns,
+            1,
+            512,
+            $"{path}.AllowedCustomParameterPatterns");
+        RejectBoundedStrings(
+            constraints.DeniedCustomParameters,
+            1,
+            512,
+            $"{path}.DeniedCustomParameters");
     }
 
     private static void ValidateRequiredCollectionElements(PolicyMatch match, string path)
