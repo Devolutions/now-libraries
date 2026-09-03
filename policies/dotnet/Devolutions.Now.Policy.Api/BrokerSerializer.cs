@@ -50,6 +50,12 @@ public static class BrokerSerializer
     {
         switch (value)
         {
+            case PolicyDocument policy:
+                PolicySerializer.ValidateRequiredCollectionElements(policy);
+                break;
+            case PolicyDraftDocument draft:
+                PolicySerializer.ValidateRequiredCollectionElements(draft);
+                break;
             case PolicyResponse response:
                 PolicySerializer.ValidateRequiredCollectionElements(response.Policy);
                 break;

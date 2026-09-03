@@ -6,6 +6,9 @@ using Devolutions.Now.Policy.Client;
 
 using Xunit;
 
+using PolicyDocument = Devolutions.Now.Policy.Model.PolicyDocument;
+using PolicyDraftDocument = Devolutions.Now.Policy.Model.PolicyDraftDocument;
+
 namespace Devolutions.Now.Policy.Client.Tests;
 
 public class PolicyManagementClientTests
@@ -493,6 +496,53 @@ public class PolicyManagementClientTests
         }
     }
 
+    [Fact]
+    public async Task Public_serializer_options_enforce_policy_root_semantic_invariants()
+    {
+        var committed = JsonNode.Parse(await ReadFixture("responses", "policy.response.json"))!["Policy"]!;
+        var draft = JsonNode.Parse(
+            await ReadFixture("responses", "policy-validation.valid.response.json"))!["Validation"]!["CanonicalDraft"]!;
+
+        foreach (var options in new[] { BrokerSerializer.Options, BrokerSerializer.PrettyOptions })
+        {
+            foreach (var invalid in InvalidCommittedPolicies(committed))
+            {
+                Assert.Throws<JsonException>(
+                    () => JsonSerializer.Deserialize<PolicyDocument>(invalid.ToJsonString(), options));
+            }
+
+            foreach (var invalid in InvalidDraftPolicies(draft))
+            {
+                Assert.Throws<JsonException>(
+                    () => JsonSerializer.Deserialize<PolicyDraftDocument>(invalid.ToJsonString(), options));
+            }
+
+            var committedDto = JsonSerializer.Deserialize<PolicyDocument>(committed.ToJsonString(), options)!;
+            committedDto.Schema = Devolutions.Now.Policy.Model.SchemaUris.PolicyDraft;
+            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(committedDto, options));
+
+            committedDto = JsonSerializer.Deserialize<PolicyDocument>(committed.ToJsonString(), options)!;
+            committedDto.Metadata.Revision = 0;
+            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(committedDto, options));
+
+            committedDto = JsonSerializer.Deserialize<PolicyDocument>(committed.ToJsonString(), options)!;
+            committedDto.Metadata.Revision = (uint)int.MaxValue + 1;
+            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(committedDto, options));
+
+            committedDto = JsonSerializer.Deserialize<PolicyDocument>(committed.ToJsonString(), options)!;
+            committedDto.Rules[0].Match.SkipHashCheck = [false, true];
+            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(committedDto, options));
+
+            var draftDto = JsonSerializer.Deserialize<PolicyDraftDocument>(draft.ToJsonString(), options)!;
+            draftDto.Schema = Devolutions.Now.Policy.Model.SchemaUris.Policy;
+            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(draftDto, options));
+
+            draftDto = JsonSerializer.Deserialize<PolicyDraftDocument>(draft.ToJsonString(), options)!;
+            draftDto.Rules[0].Match.SkipHashCheck = [false, true];
+            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(draftDto, options));
+        }
+    }
+
     [Theory]
     [InlineData("\"stalepolicystoretoken\"")]
     [InlineData("16")]
@@ -559,6 +609,36 @@ public class PolicyManagementClientTests
         var copy = source.DeepClone();
         copy[propertyName] = value.DeepClone();
         return copy;
+    }
+
+    private static IEnumerable<JsonNode> InvalidCommittedPolicies(JsonNode committed)
+    {
+        var wrongSchema = committed.DeepClone();
+        wrongSchema["$schema"] = Devolutions.Now.Policy.Model.SchemaUris.PolicyDraft;
+        yield return wrongSchema;
+
+        var zeroRevision = committed.DeepClone();
+        zeroRevision["Metadata"]!["Revision"] = 0;
+        yield return zeroRevision;
+
+        var excessiveRevision = committed.DeepClone();
+        excessiveRevision["Metadata"]!["Revision"] = (uint)int.MaxValue + 1;
+        yield return excessiveRevision;
+
+        var mixedBooleanMatch = committed.DeepClone();
+        mixedBooleanMatch["Rules"]![0]!["Match"]!["SkipHashCheck"] = new JsonArray(false, true);
+        yield return mixedBooleanMatch;
+    }
+
+    private static IEnumerable<JsonNode> InvalidDraftPolicies(JsonNode draft)
+    {
+        var wrongSchema = draft.DeepClone();
+        wrongSchema["$schema"] = Devolutions.Now.Policy.Model.SchemaUris.Policy;
+        yield return wrongSchema;
+
+        var mixedBooleanMatch = draft.DeepClone();
+        mixedBooleanMatch["Rules"]![0]!["Match"]!["SkipHashCheck"] = new JsonArray(false, true);
+        yield return mixedBooleanMatch;
     }
 
     private static JsonElement DraftForSerializedRequestSize<TRequest>(
