@@ -84,6 +84,69 @@ public sealed class BrokerClient : IDisposable
             strictSuccessBody: true);
     }
 
+    /// <summary>Get the atomic configured-policy management snapshot.</summary>
+    public async Task<PolicyManagementResponse> GetPolicyManagement(CancellationToken cancellationToken = default)
+    {
+        var headers = new Dictionary<string, string> { ["Accept"] = JsonMediaType };
+        var response = await SendRequest(
+            "GET",
+            "/v1/policy/management",
+            null,
+            headers,
+            cancellationToken).ConfigureAwait(false);
+        return DeserializeResponse<PolicyManagementResponse>(
+            response,
+            "policy management",
+            "/v1/policy/management",
+            strictSuccessBody: true);
+    }
+
+    /// <summary>
+    /// Authoritatively validate raw draft JSON without discarding unknown members.
+    /// </summary>
+    public async Task<PolicyValidationResponse> ValidatePolicy(
+        JsonElement draft,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new PolicyValidationRequest
+        {
+            RequestVersion = BrokerApi.Version,
+            Draft = draft.Clone(),
+        };
+
+        var response = await SendPolicyManagementRequest(
+            "POST",
+            "/v1/policy/validate",
+            BrokerSerializer.Serialize(request),
+            cancellationToken).ConfigureAwait(false);
+        return DeserializeResponse<PolicyValidationResponse>(
+            response,
+            "policy validation",
+            "/v1/policy/validate",
+            strictSuccessBody: true);
+    }
+
+    /// <summary>
+    /// Replace the configured policy using optimistic concurrency and a validation receipt.
+    /// </summary>
+    public async Task<PolicyReplacementResponse> ReplacePolicy(
+        PolicyReplacementRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var response = await SendPolicyManagementRequest(
+            "PUT",
+            "/v1/policy",
+            BrokerSerializer.Serialize(request),
+            cancellationToken).ConfigureAwait(false);
+        return DeserializeResponse<PolicyReplacementResponse>(
+            response,
+            "policy replacement",
+            "/v1/policy",
+            strictSuccessBody: true);
+    }
+
     /// <summary>Evaluate a package operation against policy without executing it (dry-run).</summary>
     public async Task<EvaluationResponse> Evaluate(PackageOperationRequest request, CancellationToken cancellationToken = default)
     {
@@ -192,7 +255,7 @@ public sealed class BrokerClient : IDisposable
         var capabilities = await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
         EnsureTransportSupported(capabilities, _transport.Kind, "cancel operation", "/v1/package-operations/cancel");
 
-        var body = BrokerJson.Serialize(cancelRequest);
+        var body = BrokerSerializer.Serialize(cancelRequest);
         EnsureRequestBodySize(body, capabilities, "/v1/package-operations/cancel");
 
         var headers = new Dictionary<string, string>
@@ -238,7 +301,7 @@ public sealed class BrokerClient : IDisposable
         var capabilities = await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
         EnsureTransportSupported(capabilities, _transport.Kind, "query operation status", "/v1/package-operations/get-status");
 
-        var body = BrokerJson.Serialize(statusRequest);
+        var body = BrokerSerializer.Serialize(statusRequest);
         EnsureRequestBodySize(body, capabilities, "/v1/package-operations/get-status");
 
         var headers = new Dictionary<string, string>
@@ -377,7 +440,7 @@ public sealed class BrokerClient : IDisposable
         var capabilities = await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
         EnsurePackageRequestSupported(request, capabilities, endpoint);
 
-        var body = BrokerJson.Serialize(request);
+        var body = BrokerSerializer.Serialize(request);
         EnsureRequestBodySize(body, capabilities, endpoint);
 
         var headers = new Dictionary<string, string>
@@ -406,6 +469,21 @@ public sealed class BrokerClient : IDisposable
                 Headers = extraHeaders ?? new Dictionary<string, string>(),
             },
             cancellationToken);
+
+    private Task<BrokerTransportResponse> SendPolicyManagementRequest(
+        string method,
+        string endpoint,
+        string body,
+        CancellationToken cancellationToken)
+    {
+        EnsureRequestBodySize(body, BrokerApi.MaxPolicyManagementBodyBytes, endpoint);
+        var headers = new Dictionary<string, string>
+        {
+            ["Content-Type"] = JsonMediaType,
+            ["Accept"] = JsonMediaType,
+        };
+        return SendRequest(method, endpoint, body, headers, cancellationToken);
+    }
 
     private CapabilitiesResponse? CachedCapabilities => _capabilities;
 
@@ -464,8 +542,8 @@ public sealed class BrokerClient : IDisposable
         try
         {
             var value = strictSuccessBody
-                ? BrokerJson.DeserializeStrict<TResponse>(response.Body)
-                : BrokerJson.Deserialize<TResponse>(response.Body);
+                ? BrokerSerializer.DeserializeStrict<TResponse>(response.Body)
+                : BrokerSerializer.Deserialize<TResponse>(response.Body);
             if (value is null)
             {
                 throw new BrokerClientException(
@@ -495,7 +573,7 @@ public sealed class BrokerClient : IDisposable
     {
         try
         {
-            error = BrokerJson.Deserialize<ErrorResponse>(body);
+            error = BrokerSerializer.Deserialize<ErrorResponse>(body);
             parseError = null;
             return error is not null;
         }
@@ -585,16 +663,19 @@ public sealed class BrokerClient : IDisposable
     }
 
     private static void EnsureRequestBodySize(string body, CapabilitiesResponse capabilities, string endpoint)
+        => EnsureRequestBodySize(body, capabilities.MaxRequestBodyBytes, endpoint);
+
+    private static void EnsureRequestBodySize(string body, long maxBodyBytes, string endpoint)
     {
         var bodyLength = Encoding.UTF8.GetByteCount(body);
-        if (bodyLength <= capabilities.MaxRequestBodyBytes)
+        if (bodyLength <= maxBodyBytes)
         {
             return;
         }
 
         throw new BrokerClientException(
             BrokerClientErrorKind.RequestTooLarge,
-            $"Request body for {endpoint} is {bodyLength} bytes, which exceeds broker limit of {capabilities.MaxRequestBodyBytes} bytes.",
+            $"Request body for {endpoint} is {bodyLength} bytes, which exceeds broker limit of {maxBodyBytes} bytes.",
             endpoint);
     }
 

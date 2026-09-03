@@ -12,18 +12,23 @@ The model is used to:
 
 - represent package broker policy documents in C#;
 - parse strict JSON policy documents;
-- parse YAML policy documents by converting them to the same JSON model;
+- represent editable drafts separately from committed policy documents;
 - serialize policy documents with the canonical JSON shape;
 - share policy enums and document types with the package broker API compatibility layer.
 
 Architecture
 ------------
 
-- `PolicyModels.cs` defines `PolicyDocument`, metadata, enforcement, rules, match criteria, constraints, and version range types.
+- `PolicyModels.cs` defines committed `PolicyDocument`, editable `PolicyDraftDocument`, their metadata, explicit conversions, enforcement, rules, match criteria, constraints, and version range types.
 - `Enums.cs` defines policy-level enums such as operation, manager, scope, architecture, elevation, decision, and rule precedence.
-- `PolicyJson.cs` defines shared `JsonSerializerOptions`, including strict parsing that rejects unknown JSON members and JSON null for non-nullable policy members or collection elements.
+- `PolicySerializer.cs` defines shared `JsonSerializerOptions`, including strict parsing that rejects unknown JSON members and JSON null for non-nullable policy members or collection elements.
 
-`PolicyDocument.Create` provides a simple helper for constructing a new policy document with metadata and default enforcement. `PolicyDocument.ParseJson` and `PolicyDocument.ParseYaml` are the main entry points for reading policy documents.
+`PolicyDocument.Create` constructs a committed policy and `PolicyDraftDocument.Create` constructs an editable draft. `PolicyDocument.ToDraft` removes server-managed `Revision` and `PublishedAt`; `PolicyDraftDocument.ToPolicyDocument` requires those values when committing. `ParseJson` is the only policy parsing entry point.
+
+Breaking change
+---------------
+
+Policy documents are JSON-only. `PolicyDocument.ParseYaml`, which was public in `Devolutions.Now.Policy.Model` 2026.8.13, has been removed intentionally. Consumers must migrate stored policies to JSON before upgrading; OpenAPI YAML and unrelated YAML documents are unaffected.
 
 Validation
 ----------

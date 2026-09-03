@@ -1,0 +1,37 @@
+{
+  "ResponseKind": "PolicyValidationResponse",
+  "ResponseVersion": "1.0",
+  "Server": {
+    "ServerVersion": "2026.8.0",
+    "Transport": "HttpNamedPipe"
+  },
+  "Validation": {
+    "ResultVersion": "1.0",
+    "ValidatorVersion": "gateway-policy-validator/1",
+    "IsValid": true,
+    "CanonicalDraft": {
+      "$schema": "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json",
+      "PolicyVersion": "1.0.0",
+      "PolicyType": "PackageBrokerPolicy",
+      "Metadata": {
+        "Id": "contoso.package-policy",
+        "Publisher": "Contoso IT"
+      },
+      "Enforcement": {
+        "DefaultDecision": "Deny",
+        "RulePrecedence": "PriorityThenDeny"
+      },
+      "Rules": []
+    },
+    "ValidationReceipt": "receipt:contradictory",
+    "Findings": [
+      {
+        "FindingVersion": "1.0",
+        "Severity": "Error",
+        "Code": "InvalidFieldValue",
+        "Path": "/Metadata/Id",
+        "Message": "An error contradicts IsValid."
+      }
+    ]
+  }
+}

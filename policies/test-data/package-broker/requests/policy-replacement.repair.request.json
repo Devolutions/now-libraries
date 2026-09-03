@@ -1,0 +1,17 @@
+{
+  "RequestKind": "PolicyReplacementRequest",
+  "RequestVersion": "1.0",
+  "ExpectedStoreToken": "store:invalid:4",
+  "Operation": "Repair",
+  "ConflictHandling": "Reject",
+  "WarningsAcknowledged": false,
+  "Draft": {
+    "$schema": "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json",
+    "PolicyVersion": "1.0.0",
+    "PolicyType": "PackageBrokerPolicy",
+    "Metadata": { "Id": "contoso.package-policy", "Publisher": "Contoso IT" },
+    "Enforcement": { "DefaultDecision": "Deny", "RulePrecedence": "PriorityThenDeny" },
+    "Rules": []
+  },
+  "ValidationReceipt": "receipt:sha256:repair"
+}

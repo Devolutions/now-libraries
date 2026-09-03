@@ -11,6 +11,7 @@ pub mod evaluate;
 pub mod event_channel;
 pub mod execute;
 pub mod health;
+pub mod management;
 pub mod policy;
 pub mod status;
 
@@ -22,6 +23,7 @@ pub use evaluate::*;
 pub use event_channel::*;
 pub use execute::*;
 pub use health::*;
+pub use management::*;
 pub use policy::*;
 pub use status::*;
 
@@ -31,6 +33,8 @@ pub const DEFAULT_PIPE_NAME: &str = "Devolutions.Now.PackageBroker.v1";
 pub const PACKAGE_REQUEST_KIND: &str = "PackageRequest";
 pub const STATUS_REQUEST_KIND: &str = "StatusRequest";
 pub const CANCEL_REQUEST_KIND: &str = "CancelRequest";
+pub const POLICY_VALIDATION_REQUEST_KIND: &str = "PolicyValidationRequest";
+pub const POLICY_REPLACEMENT_REQUEST_KIND: &str = "PolicyReplacementRequest";
 
 pub const HEALTH_RESPONSE_KIND: &str = "HealthResponse";
 pub const CAPABILITIES_RESPONSE_KIND: &str = "CapabilitiesResponse";
@@ -39,6 +43,9 @@ pub const EXECUTION_RESPONSE_KIND: &str = "ExecutionResponse";
 pub const STATUS_RESPONSE_KIND: &str = "StatusResponse";
 pub const CANCEL_RESPONSE_KIND: &str = "CancelResponse";
 pub const POLICY_RESPONSE_KIND: &str = "PolicyResponse";
+pub const POLICY_MANAGEMENT_RESPONSE_KIND: &str = "PolicyManagementResponse";
+pub const POLICY_VALIDATION_RESPONSE_KIND: &str = "PolicyValidationResponse";
+pub const POLICY_REPLACEMENT_RESPONSE_KIND: &str = "PolicyReplacementResponse";
 pub const ERROR_RESPONSE_KIND: &str = "ErrorResponse";
 
 macro_rules! fixed_string_marker {
@@ -91,6 +98,8 @@ macro_rules! fixed_string_marker {
 fixed_string_marker!(PackageRequestKind, PACKAGE_REQUEST_KIND);
 fixed_string_marker!(StatusRequestKind, STATUS_REQUEST_KIND);
 fixed_string_marker!(CancelRequestKind, CANCEL_REQUEST_KIND);
+fixed_string_marker!(PolicyValidationRequestKind, POLICY_VALIDATION_REQUEST_KIND);
+fixed_string_marker!(PolicyReplacementRequestKind, POLICY_REPLACEMENT_REQUEST_KIND);
 fixed_string_marker!(HealthResponseKind, HEALTH_RESPONSE_KIND);
 fixed_string_marker!(CapabilitiesResponseKind, CAPABILITIES_RESPONSE_KIND);
 fixed_string_marker!(EvaluationResponseKind, EVALUATION_RESPONSE_KIND);
@@ -98,6 +107,9 @@ fixed_string_marker!(ExecutionResponseKind, EXECUTION_RESPONSE_KIND);
 fixed_string_marker!(StatusResponseKind, STATUS_RESPONSE_KIND);
 fixed_string_marker!(CancelResponseKind, CANCEL_RESPONSE_KIND);
 fixed_string_marker!(PolicyResponseKind, POLICY_RESPONSE_KIND);
+fixed_string_marker!(PolicyManagementResponseKind, POLICY_MANAGEMENT_RESPONSE_KIND);
+fixed_string_marker!(PolicyValidationResponseKind, POLICY_VALIDATION_RESPONSE_KIND);
+fixed_string_marker!(PolicyReplacementResponseKind, POLICY_REPLACEMENT_RESPONSE_KIND);
 fixed_string_marker!(ErrorResponseKind, ERROR_RESPONSE_KIND);
 
 /// Error returned when a broker protocol newtype fails deserialization validation.

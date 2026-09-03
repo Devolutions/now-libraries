@@ -36,6 +36,7 @@ internal class ExactCaseStringEnumConverter<TEnum> : JsonConverter<TEnum>
 }
 
 internal sealed class ExactCaseTransportConverter : ExactCaseStringEnumConverter<Transport>;
+internal sealed class ExactCaseErrorCodeConverter : ExactCaseStringEnumConverter<ErrorCode>;
 
 /// <summary>Package operation type.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<Operation>))]
@@ -132,7 +133,7 @@ public enum HealthStatus
 }
 
 /// <summary>Structured machine-readable error code.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<ErrorCode>))]
+[JsonConverter(typeof(ExactCaseErrorCodeConverter))]
 public enum ErrorCode
 {
     BadRequest,
@@ -146,6 +147,18 @@ public enum ErrorCode
     BrokerPaused,
     InternalError,
     Timeout,
+    UnsupportedEndpoint,
+    MalformedDraft,
+    InvalidPolicy,
+    WarningConfirmationRequired,
+    Unauthenticated,
+    AdministratorRequired,
+    UnsafePolicyPath,
+    UnsupportedPolicyFormat,
+    StalePolicyStoreToken,
+    UnsupportedPolicyFilesystem,
+    PolicyPersistenceFailed,
+    PolicyActivationFailed,
 }
 
 /// <summary>Transport kind of a per-operation event channel.</summary>

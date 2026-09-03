@@ -126,6 +126,14 @@ public sealed class ErrorResponse
     [JsonPropertyName("Details")]
     public List<ErrorDetail> Details { get; set; } = [];
 
+    /// <summary>Current authoritative policy findings for management errors.</summary>
+    [JsonPropertyName("Validation")]
+    public PolicyValidationResult? Validation { get; set; }
+
+    /// <summary>Atomic current policy state, required for stale store-token errors.</summary>
+    [JsonPropertyName("Management")]
+    public PolicyManagementSnapshot? Management { get; set; }
+
 }
 
 public sealed class ErrorDetail

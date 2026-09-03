@@ -1,0 +1,16 @@
+{
+  "ResponseKind": "PolicyManagementResponse",
+  "ResponseVersion": "1.0",
+  "Server": {
+    "ServerVersion": "2026.8.0",
+    "Transport": "HttpNamedPipe"
+  },
+  "Management": {
+    "State": "Missing",
+    "ConfiguredPath": "C:\\ProgramData\\Devolutions\\Agent\\now-policy.json",
+    "StoreToken": "store:missing:0",
+    "Source": "ConfiguredPath",
+    "WriteCapability": "ReadOnly",
+    "ElevationRequired": true
+  }
+}

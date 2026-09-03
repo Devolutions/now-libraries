@@ -62,16 +62,46 @@ public class DtoRoundTripTests
     public async Task PolicyResponse_round_trips_and_validates(string path)
         => await AssertRoundTrip<PolicyResponse>(path, await TestData.SchemaAsync("PolicyResponse"));
 
+    [Theory]
+    [MemberData(nameof(TestData.PolicyManagementResponseSamples), MemberType = typeof(TestData))]
+    public async Task PolicyManagementResponse_round_trips_and_validates(string path)
+        => await AssertRoundTrip<PolicyManagementResponse>(path, await TestData.SchemaAsync("PolicyManagementResponse"));
+
+    [Theory]
+    [MemberData(nameof(TestData.PolicyValidationRequestSamples), MemberType = typeof(TestData))]
+    public async Task PolicyValidationRequest_round_trips_and_validates(string path)
+        => await AssertRoundTrip<PolicyValidationRequest>(path, await TestData.SchemaAsync("PolicyValidationRequest"));
+
+    [Theory]
+    [MemberData(nameof(TestData.PolicyValidationResponseSamples), MemberType = typeof(TestData))]
+    public async Task PolicyValidationResponse_round_trips_and_validates(string path)
+        => await AssertRoundTrip<PolicyValidationResponse>(path, await TestData.SchemaAsync("PolicyValidationResponse"));
+
+    [Theory]
+    [MemberData(nameof(TestData.PolicyReplacementRequestSamples), MemberType = typeof(TestData))]
+    public async Task PolicyReplacementRequest_round_trips_and_validates(string path)
+        => await AssertRoundTrip<PolicyReplacementRequest>(path, await TestData.SchemaAsync("PolicyReplacementRequest"));
+
+    [Theory]
+    [MemberData(nameof(TestData.PolicyReplacementResponseSamples), MemberType = typeof(TestData))]
+    public async Task PolicyReplacementResponse_round_trips_and_validates(string path)
+        => await AssertRoundTrip<PolicyReplacementResponse>(path, await TestData.SchemaAsync("PolicyReplacementResponse"));
+
+    [Theory]
+    [MemberData(nameof(TestData.PolicyManagementErrorSamples), MemberType = typeof(TestData))]
+    public async Task PolicyManagementError_round_trips_and_validates(string path)
+        => await AssertRoundTrip<ErrorResponse>(path, await TestData.SchemaAsync("ErrorResponse"));
+
     private static async Task AssertRoundTrip<T>(string samplePath, JsonSchema schema)
     {
         var original = await File.ReadAllTextAsync(samplePath);
 
         // 1. Deserialize the canonical sample into the DTO (strict: every field must map).
-        var dto = BrokerJson.DeserializeStrict<T>(original);
+        var dto = BrokerSerializer.DeserializeStrict<T>(original);
         Assert.NotNull(dto);
 
         // 2. Re-serialize and validate the output against the same schema.
-        var reserialized = BrokerJson.Serialize(dto);
+        var reserialized = BrokerSerializer.Serialize(dto);
         var errors = schema.Validate(reserialized);
 
         Assert.True(

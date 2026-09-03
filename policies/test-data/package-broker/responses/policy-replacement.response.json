@@ -1,0 +1,69 @@
+{
+  "ResponseKind": "PolicyReplacementResponse",
+  "ResponseVersion": "1.0",
+  "Server": {
+    "ServerVersion": "2026.8.0",
+    "Transport": "HttpNamedPipe"
+  },
+  "Policy": {
+    "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
+    "PolicyVersion": "1.0.0",
+    "PolicyType": "PackageBrokerPolicy",
+    "Metadata": {
+      "Id": "contoso.package-policy",
+      "Publisher": "Contoso IT",
+      "Revision": 8,
+      "PublishedAt": "2026-08-29T01:00:00Z"
+    },
+    "Enforcement": {
+      "DefaultDecision": "Deny",
+      "RulePrecedence": "PriorityThenDeny"
+    },
+    "Rules": []
+  },
+  "Validation": {
+    "ResultVersion": "1.0",
+    "ValidatorVersion": "gateway-policy-validator/1",
+    "IsValid": true,
+    "CanonicalDraft": {
+      "$schema": "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json",
+      "PolicyVersion": "1.0.0",
+      "PolicyType": "PackageBrokerPolicy",
+      "Metadata": {
+        "Id": "contoso.package-policy",
+        "Publisher": "Contoso IT"
+      },
+      "Enforcement": {
+        "DefaultDecision": "Deny",
+        "RulePrecedence": "PriorityThenDeny"
+      },
+      "Rules": []
+    },
+    "ValidationReceipt": "receipt:sha256:committed",
+    "Findings": []
+  },
+  "Management": {
+    "State": "Active",
+    "ConfiguredPath": "C:\\ProgramData\\Devolutions\\Agent\\now-policy.json",
+    "StoreToken": "store:active:8",
+    "Source": "ConfiguredPath",
+    "WriteCapability": "Writable",
+    "ElevationRequired": true,
+    "Policy": {
+      "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
+      "PolicyVersion": "1.0.0",
+      "PolicyType": "PackageBrokerPolicy",
+      "Metadata": {
+        "Id": "contoso.package-policy",
+        "Publisher": "Contoso IT",
+        "Revision": 8,
+        "PublishedAt": "2026-08-29T01:00:00Z"
+      },
+      "Enforcement": {
+        "DefaultDecision": "Deny",
+        "RulePrecedence": "PriorityThenDeny"
+      },
+      "Rules": []
+    }
+  }
+}

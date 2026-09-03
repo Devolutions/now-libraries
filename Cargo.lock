@@ -619,7 +619,6 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
- "serde_yaml",
  "thiserror",
  "url",
 ]

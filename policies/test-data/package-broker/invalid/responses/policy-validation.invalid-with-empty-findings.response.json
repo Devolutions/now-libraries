@@ -1,0 +1,14 @@
+{
+  "ResponseKind": "PolicyValidationResponse",
+  "ResponseVersion": "1.0",
+  "Server": {
+    "ServerVersion": "2026.8.0",
+    "Transport": "HttpNamedPipe"
+  },
+  "Validation": {
+    "ResultVersion": "1.0",
+    "ValidatorVersion": "gateway-policy-validator/1",
+    "IsValid": false,
+    "Findings": []
+  }
+}

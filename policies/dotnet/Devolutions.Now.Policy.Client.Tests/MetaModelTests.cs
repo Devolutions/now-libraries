@@ -18,7 +18,7 @@ public class MetaModelTests
     {
         const string json = """{"RequestKind":"StatusRequest","RequestVersion":"1.0"}""";
 
-        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PackageRequest>(json));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PackageRequest>(json));
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class MetaModelTests
     {
         const string json = """{"RequestVersion":"1.0"}""";
 
-        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PackageRequest>(json));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PackageRequest>(json));
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class MetaModelTests
             {"ResponseKind":"ErrorResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"Status":"Ready","PolicyId":"mock.policy"}
             """;
 
-        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<HealthResponse>(json));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<HealthResponse>(json));
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class MetaModelTests
         var json = File.ReadAllText(Path.Combine(TestData.SamplesDir, "responses", "policy.response.json"))
             .Replace(BrokerApi.PolicyResponseKind, BrokerApi.ErrorResponseKind, StringComparison.Ordinal);
 
-        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyResponse>(json));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PolicyResponse>(json));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class MetaModelTests
             {"ResponseKind":"PolicyResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"}}
             """;
 
-        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<PolicyResponse>(json));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<PolicyResponse>(json));
     }
 
     [Theory]
@@ -79,9 +79,9 @@ public class MetaModelTests
         SetPropertyToNull(document, propertyPath);
         var json = document.ToJsonString();
 
-        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<PolicyResponse>(json));
-        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyResponse>(json));
-        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<PolicyResponse>(json, BrokerJson.Options));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<PolicyResponse>(json));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PolicyResponse>(json));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<PolicyResponse>(json, BrokerSerializer.Options));
     }
 
     [Theory]
@@ -94,7 +94,7 @@ public class MetaModelTests
             ?? throw new InvalidOperationException("policy response sample should parse");
         SetPropertyToNull(document, elementPath);
 
-        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyResponse>(document.ToJsonString()));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PolicyResponse>(document.ToJsonString()));
     }
 
     [Fact]
@@ -108,6 +108,15 @@ public class MetaModelTests
             typeof(RequestOptions),
             typeof(ClientContext),
             typeof(PolicyResponse),
+            typeof(PolicyManagementResponse),
+            typeof(PolicyManagementSnapshot),
+            typeof(InvalidPolicyDiagnostics),
+            typeof(PolicyValidationRequest),
+            typeof(PolicyValidationResponse),
+            typeof(PolicyValidationResult),
+            typeof(PolicyFinding),
+            typeof(PolicyReplacementRequest),
+            typeof(PolicyReplacementResponse),
             typeof(EvaluationResponse),
             typeof(ExecutionResponse),
             typeof(ServerContext),
@@ -127,7 +136,9 @@ public class MetaModelTests
             typeof(ErrorDetail),
             typeof(EventChannel),
             typeof(PolicyDocument),
+            typeof(PolicyDraftDocument),
             typeof(PolicyMetadata),
+            typeof(PolicyDraftMetadata),
             typeof(PolicyEnforcement),
             typeof(PolicyRule),
             typeof(PolicyMatch),
@@ -137,8 +148,8 @@ public class MetaModelTests
 
         foreach (var dtoType in dtoTypes)
         {
-            Assert.NotNull(BrokerJson.Options.GetTypeInfo(dtoType));
-            Assert.NotNull(BrokerJson.PrettyOptions.GetTypeInfo(dtoType));
+            Assert.NotNull(BrokerSerializer.Options.GetTypeInfo(dtoType));
+            Assert.NotNull(BrokerSerializer.PrettyOptions.GetTypeInfo(dtoType));
         }
     }
 
@@ -146,15 +157,15 @@ public class MetaModelTests
     public void Public_json_options_round_trip_policy_response_without_reflection()
     {
         var json = File.ReadAllText(Path.Combine(TestData.SamplesDir, "responses", "policy.response.json"));
-        var response = JsonSerializer.Deserialize<PolicyResponse>(json, BrokerJson.Options);
+        var response = JsonSerializer.Deserialize<PolicyResponse>(json, BrokerSerializer.Options);
 
         Assert.NotNull(response);
 
-        var compact = JsonSerializer.Serialize(response, BrokerJson.Options);
-        var pretty = JsonSerializer.Serialize(response, BrokerJson.PrettyOptions);
+        var compact = JsonSerializer.Serialize(response, BrokerSerializer.Options);
+        var pretty = JsonSerializer.Serialize(response, BrokerSerializer.PrettyOptions);
 
-        Assert.NotNull(JsonSerializer.Deserialize<PolicyResponse>(compact, BrokerJson.Options));
-        Assert.NotNull(JsonSerializer.Deserialize<PolicyResponse>(pretty, BrokerJson.PrettyOptions));
+        Assert.NotNull(JsonSerializer.Deserialize<PolicyResponse>(compact, BrokerSerializer.Options));
+        Assert.NotNull(JsonSerializer.Deserialize<PolicyResponse>(pretty, BrokerSerializer.PrettyOptions));
         Assert.Contains(Environment.NewLine, pretty);
     }
 
@@ -220,7 +231,7 @@ public class MetaModelTests
     private static async Task AssertSerializesValid<T>(T dto, string componentName)
     {
         var schema = await TestData.SchemaAsync(componentName);
-        var json = BrokerJson.Serialize(dto);
+        var json = BrokerSerializer.Serialize(dto);
 
         // Output must satisfy the schema (catches missing required fields / type drift).
         var errors = schema.Validate(json);
@@ -230,7 +241,7 @@ public class MetaModelTests
             string.Join("\n", errors.Select(e => $"  {e.Kind} at {e.Path}")));
 
         // Round-trip back through the DTO with strict mapping (catches schema fields the DTO drops).
-        var reparsed = BrokerJson.DeserializeStrict<T>(json);
+        var reparsed = BrokerSerializer.DeserializeStrict<T>(json);
         Assert.NotNull(reparsed);
     }
 }

@@ -1,16 +1,12 @@
-using System.Globalization;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-
-using YamlDotNet.Core;
-using YamlDotNet.RepresentationModel;
 
 namespace Devolutions.Now.Policy.Model;
 
 public static class SchemaUris
 {
     public const string Policy = "https://devolutions.net/schemas/now-policy.schema.1.0.json";
+    public const string PolicyDraft = "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json";
 }
 
 /// <summary>A policy document governing which package operations are allowed or denied.</summary>
@@ -61,84 +57,102 @@ public sealed class PolicyDocument
 
     public static PolicyDocument ParseJson(string json)
     {
-        return PolicyJson.DeserializePolicyDocumentStrict(json)
+        return PolicySerializer.DeserializePolicyDocumentStrict(json)
             ?? throw new JsonException("policy document was null");
     }
 
-    public static PolicyDocument ParseYaml(string yaml)
+    public PolicyDraftDocument ToDraft()
     {
-        var stream = new YamlStream();
-        stream.Load(new StringReader(yaml));
-        if (stream.Documents.Count == 0)
+        return new PolicyDraftDocument
         {
-            throw new JsonException("policy YAML document was empty");
-        }
-
-        var json = YamlToJson(stream.Documents[0].RootNode)?.ToJsonString()
-            ?? throw new JsonException("policy YAML document was empty");
-        return ParseJson(json);
-    }
-
-    public string ToJson() => PolicyJson.Serialize(this);
-
-    private static JsonNode? YamlToJson(YamlNode node)
-    {
-        switch (node)
-        {
-            case YamlMappingNode map:
-                var obj = new JsonObject();
-                foreach (var (key, value) in map.Children)
-                {
-                    if (key is not YamlScalarNode scalarKey || scalarKey.Value is null)
-                    {
-                        throw new JsonException("policy YAML mapping keys must be scalar strings");
-                    }
-
-                    obj[scalarKey.Value] = YamlToJson(value);
-                }
-
-                return obj;
-
-            case YamlSequenceNode seq:
-                var arr = new JsonArray();
-                foreach (var item in seq.Children)
-                {
-                    arr.Add(YamlToJson(item));
-                }
-
-                return arr;
-
-            case YamlScalarNode scalar:
-                return ScalarToJson(scalar);
-
-            default:
-                return null;
-        }
-    }
-
-    private static JsonNode? ScalarToJson(YamlScalarNode scalar)
-    {
-        var value = scalar.Value;
-        if (value is null)
-        {
-            return null;
-        }
-
-        if (scalar.Style is ScalarStyle.SingleQuoted or ScalarStyle.DoubleQuoted)
-        {
-            return JsonValue.Create(value);
-        }
-
-        return value switch
-        {
-            "" or "null" or "~" => null,
-            "true" or "True" => JsonValue.Create(true),
-            "false" or "False" => JsonValue.Create(false),
-            _ when long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var l) => JsonValue.Create(l),
-            _ when double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var d) => JsonValue.Create(d),
-            _ => JsonValue.Create(value),
+            Schema = SchemaUris.PolicyDraft,
+            PolicyVersion = PolicyVersion,
+            PolicyType = PolicyType,
+            Metadata = PolicyModelClone.ToDraftMetadata(Metadata),
+            Enforcement = PolicyModelClone.Enforcement(Enforcement),
+            Rules = PolicyModelClone.Rules(Rules),
         };
     }
+
+    public string ToJson() => PolicySerializer.Serialize(this);
+}
+
+/// <summary>An editable policy document without server-managed commit metadata.</summary>
+public sealed class PolicyDraftDocument
+{
+    private const uint MaxRevision = int.MaxValue;
+
+    [JsonPropertyName("$schema")]
+    [JsonRequired]
+    public string Schema { get; set; } = SchemaUris.PolicyDraft;
+
+    [JsonPropertyName("PolicyVersion")]
+    [JsonRequired]
+    public string PolicyVersion { get; set; } = "1.0.0";
+
+    [JsonPropertyName("PolicyType")]
+    [JsonRequired]
+    public string PolicyType { get; set; } = "PackageBrokerPolicy";
+
+    [JsonPropertyName("Metadata")]
+    [JsonRequired]
+    public PolicyDraftMetadata Metadata { get; set; } = new();
+
+    [JsonPropertyName("Enforcement")]
+    [JsonRequired]
+    public PolicyEnforcement Enforcement { get; set; } = new();
+
+    [JsonPropertyName("Rules")]
+    [JsonRequired]
+    public List<PolicyRule> Rules { get; set; } = [];
+
+    public static PolicyDraftDocument Create(
+        string id,
+        string publisher,
+        Decision defaultDecision = Decision.Deny)
+    {
+        return new PolicyDraftDocument
+        {
+            Metadata = new PolicyDraftMetadata
+            {
+                Id = id,
+                Publisher = publisher,
+            },
+            Enforcement = new PolicyEnforcement
+            {
+                DefaultDecision = defaultDecision,
+                RulePrecedence = RulePrecedence.PriorityThenDeny,
+            },
+        };
+    }
+
+    public static PolicyDraftDocument ParseJson(string json)
+    {
+        return PolicySerializer.DeserializePolicyDraftDocumentStrict(json)
+            ?? throw new JsonException("policy draft document was null");
+    }
+
+    public PolicyDocument ToPolicyDocument(uint revision, DateTimeOffset publishedAt)
+    {
+        if (revision is 0 or > MaxRevision)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(revision),
+                $"Policy revisions must be between 1 and {MaxRevision}.");
+        }
+
+        return new PolicyDocument
+        {
+            Schema = SchemaUris.Policy,
+            PolicyVersion = PolicyVersion,
+            PolicyType = PolicyType,
+            Metadata = PolicyModelClone.ToCommittedMetadata(Metadata, revision, publishedAt),
+            Enforcement = PolicyModelClone.Enforcement(Enforcement),
+            Rules = PolicyModelClone.Rules(Rules),
+        };
+    }
+
+    public string ToJson() => PolicySerializer.Serialize(this);
 }
 
 public sealed class PolicyMetadata
@@ -158,6 +172,29 @@ public sealed class PolicyMetadata
     [JsonPropertyName("PublishedAt")]
     [JsonRequired]
     public DateTimeOffset PublishedAt { get; set; }
+
+    [JsonPropertyName("ValidFrom")]
+    public DateTimeOffset? ValidFrom { get; set; }
+
+    [JsonPropertyName("ValidUntil")]
+    public DateTimeOffset? ValidUntil { get; set; }
+
+    [JsonPropertyName("Description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("SupportUrl")]
+    public string? SupportUrl { get; set; }
+}
+
+public sealed class PolicyDraftMetadata
+{
+    [JsonPropertyName("Id")]
+    [JsonRequired]
+    public string Id { get; set; } = "";
+
+    [JsonPropertyName("Publisher")]
+    [JsonRequired]
+    public string Publisher { get; set; } = "";
 
     [JsonPropertyName("ValidFrom")]
     public DateTimeOffset? ValidFrom { get; set; }
@@ -323,4 +360,98 @@ public sealed class PolicyConstraints
 
     [JsonPropertyName("AllowUpgrade")]
     public bool AllowUpgrade { get; set; } = true;
+}
+
+internal static class PolicyModelClone
+{
+    internal static PolicyDraftMetadata ToDraftMetadata(PolicyMetadata value) => new()
+    {
+        Id = value.Id,
+        Publisher = value.Publisher,
+        ValidFrom = value.ValidFrom,
+        ValidUntil = value.ValidUntil,
+        Description = value.Description,
+        SupportUrl = value.SupportUrl,
+    };
+
+    internal static PolicyMetadata ToCommittedMetadata(
+        PolicyDraftMetadata value,
+        uint revision,
+        DateTimeOffset publishedAt) => new()
+        {
+            Id = value.Id,
+            Publisher = value.Publisher,
+            Revision = revision,
+            PublishedAt = publishedAt,
+            ValidFrom = value.ValidFrom,
+            ValidUntil = value.ValidUntil,
+            Description = value.Description,
+            SupportUrl = value.SupportUrl,
+        };
+
+    internal static PolicyEnforcement Enforcement(PolicyEnforcement value) => new()
+    {
+        DefaultDecision = value.DefaultDecision,
+        RulePrecedence = value.RulePrecedence,
+        AuditMode = value.AuditMode,
+    };
+
+    internal static List<PolicyRule> Rules(IEnumerable<PolicyRule> values) => values.Select(Rule).ToList();
+
+    private static PolicyRule Rule(PolicyRule value) => new()
+    {
+        Id = value.Id,
+        Enabled = value.Enabled,
+        Priority = value.Priority,
+        Decision = value.Decision,
+        Reason = value.Reason,
+        Match = Match(value.Match),
+        Constraints = value.Constraints is null ? null : Constraints(value.Constraints),
+    };
+
+    private static PolicyMatch Match(PolicyMatch value) => new()
+    {
+        Operations = [.. value.Operations],
+        Managers = [.. value.Managers],
+        Sources = [.. value.Sources],
+        PackageIdentifiers = [.. value.PackageIdentifiers],
+        PackageNames = [.. value.PackageNames],
+        Versions = [.. value.Versions],
+        VersionRange = value.VersionRange is null
+            ? null
+            : new VersionRange
+            {
+                MinVersion = value.VersionRange.MinVersion,
+                MaxVersion = value.VersionRange.MaxVersion,
+                IncludePrerelease = value.VersionRange.IncludePrerelease,
+            },
+        Scopes = [.. value.Scopes],
+        Architectures = [.. value.Architectures],
+        Elevation = [.. value.Elevation],
+        Interactive = [.. value.Interactive],
+        SkipHashCheck = [.. value.SkipHashCheck],
+        PreRelease = [.. value.PreRelease],
+        HasCustomParameters = [.. value.HasCustomParameters],
+        HasCustomInstallLocation = [.. value.HasCustomInstallLocation],
+        HasPrePostCommands = [.. value.HasPrePostCommands],
+        HasKillBeforeOperation = [.. value.HasKillBeforeOperation],
+        HasUninstallPrevious = [.. value.HasUninstallPrevious],
+    };
+
+    private static PolicyConstraints Constraints(PolicyConstraints value) => new()
+    {
+        AllowInteractive = value.AllowInteractive,
+        AllowSkipHashCheck = value.AllowSkipHashCheck,
+        AllowPreRelease = value.AllowPreRelease,
+        AllowCustomInstallLocation = value.AllowCustomInstallLocation,
+        AllowedInstallLocationPatterns = [.. value.AllowedInstallLocationPatterns],
+        AllowCustomParameters = value.AllowCustomParameters,
+        AllowedCustomParameters = [.. value.AllowedCustomParameters],
+        AllowedCustomParameterPatterns = [.. value.AllowedCustomParameterPatterns],
+        DeniedCustomParameters = [.. value.DeniedCustomParameters],
+        AllowPrePostCommands = value.AllowPrePostCommands,
+        AllowKillBeforeOperation = value.AllowKillBeforeOperation,
+        AllowUninstallPrevious = value.AllowUninstallPrevious,
+        AllowUpgrade = value.AllowUpgrade,
+    };
 }

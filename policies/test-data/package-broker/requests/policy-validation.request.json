@@ -1,0 +1,34 @@
+{
+  "RequestKind": "PolicyValidationRequest",
+  "RequestVersion": "1.0",
+  "Draft": {
+    "$schema": "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json",
+    "PolicyVersion": "1.0.0",
+    "PolicyType": "PackageBrokerPolicy",
+    "Metadata": {
+      "Id": "contoso.package-policy",
+      "Publisher": "Contoso IT"
+    },
+    "Enforcement": {
+      "DefaultDecision": "Allow",
+      "RulePrecedence": "PriorityThenDeny",
+      "AuditMode": true
+    },
+    "Rules": [
+      {
+        "Id": "allow.vscode.skip-hash",
+        "Enabled": true,
+        "Priority": 100,
+        "Decision": "Allow",
+        "Match": {
+          "Managers": ["Winget"],
+          "PackageIdentifiers": ["Microsoft.VisualStudioCode"],
+          "SkipHashCheck": [true]
+        }
+      }
+    ],
+    "EditorExtension": {
+      "preserved": true
+    }
+  }
+}

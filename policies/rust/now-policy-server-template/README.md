@@ -37,6 +37,9 @@ pub trait PackageBrokerServer: Send + Sync {
     async fn health(&self) -> HealthResponse;
     async fn capabilities(&self) -> CapabilitiesResponse;
     async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse>;
+    async fn policy_management(&self) -> Result<PolicyManagementResponse, ErrorResponse>;
+    async fn validate_policy(&self, request: PolicyValidationRequest) -> Result<PolicyValidationResponse, ErrorResponse>;
+    async fn replace_policy(&self, request: PolicyReplacementRequest) -> Result<PolicyReplacementResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
@@ -50,11 +53,21 @@ Then they pass the implementation to `api_router` or `api_router_from_shared`. T
 - `GET /v1/health`
 - `GET /v1/capabilities`
 - `GET /v1/policy`
+- `GET /v1/policy/management`
+- `POST /v1/policy/validate`
+- `PUT /v1/policy`
 - `POST /v1/package-operations/evaluate`
 - `POST /v1/package-operations/execute`
 - `POST /v1/package-operations/get-status`
 
 This keeps route dispatch, error responses, and OpenAPI operation metadata in one place.
+
+`POST /v1/policy/validate` and `PUT /v1/policy` accept complete HTTP request bodies up to
+`MAX_POLICY_MANAGEMENT_BODY_BYTES` (16 MiB / 16,777,216 bytes), including their JSON envelopes.
+This is an operational transport limit for realistic policies within the 1,024-rule editor model;
+it does not attempt to accommodate the policy schema's pathological theoretical maximum. Package
+operation endpoints continue to use the separate `MAX_REQUEST_BODY_BYTES` limit (256 KiB), which
+implementations advertise through `CapabilitiesResponse.MaxRequestBodyBytes`.
 
 OpenAPI generation
 ------------------

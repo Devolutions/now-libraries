@@ -16,8 +16,11 @@ public class PolicyTests
 
     private static string PolicySchema => Path.Combine(PolicyCrateRoot, "schema", "devolutions.now-policy.schema.json");
 
+    private static string PolicyDraftSchema =>
+        Path.Combine(PolicyCrateRoot, "schema", "devolutions.now-policy-draft.schema.json");
+
     public static IEnumerable<object[]> PolicySamples() =>
-        Directory.GetFiles(SamplesDir, "*.policy.*").Select(f => new object[] { f });
+        Directory.GetFiles(SamplesDir, "*.policy.json").Select(f => new object[] { f });
 
     [Fact]
     public void Tests_run_with_reflection_json_disabled()
@@ -58,11 +61,38 @@ public class PolicyTests
 
         var schema = await JsonSchema.FromFileAsync(PolicySchema);
         var json = policy.ToJson();
-        var reparsed = PolicyJson.DeserializeStrict<PolicyDocument>(json);
+        var reparsed = PolicySerializer.DeserializeStrict<PolicyDocument>(json);
         var errors = schema.Validate(json);
 
         Assert.NotNull(reparsed);
         Assert.True(errors.Count == 0, string.Join("\n", errors.Select(e => $"  {e.Kind} at {e.Path}")));
+    }
+
+    [Fact]
+    public async Task Draft_conversion_uses_and_validates_against_draft_schema()
+    {
+        var policy = PolicyDocument.Create("contoso.policy", "Contoso IT");
+        var draft = policy.ToDraft();
+        var schema = await JsonSchema.FromFileAsync(PolicyDraftSchema);
+        var json = draft.ToJson();
+
+        Assert.Equal(SchemaUris.PolicyDraft, draft.Schema);
+        Assert.Empty(schema.Validate(json));
+        Assert.Equal(SchemaUris.Policy, draft.ToPolicyDocument(1, DateTimeOffset.UtcNow).Schema);
+    }
+
+    [Fact]
+    public void Policy_and_draft_parsers_reject_the_other_document_schema()
+    {
+        var policy = PolicyDocument.Create("contoso.policy", "Contoso IT");
+        var policyJson = JsonNode.Parse(policy.ToJson())!;
+        policyJson["$schema"] = SchemaUris.PolicyDraft;
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(policyJson.ToJsonString()));
+
+        var draftJson = JsonNode.Parse(policy.ToDraft().ToJson())!;
+        draftJson["$schema"] = SchemaUris.Policy;
+        Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializePolicyDraftDocumentStrict(draftJson.ToJsonString()));
     }
 
     [Fact]
@@ -74,30 +104,25 @@ public class PolicyTests
         Assert.ThrowsAny<Exception>(() => PolicyDocument.ParseJson(content));
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Empty_yaml_is_rejected_with_json_exception(string yaml)
-    {
-        Assert.Throws<JsonException>(() => PolicyDocument.ParseYaml(yaml));
-    }
-
-    [Fact]
-    public void Yaml_with_non_scalar_mapping_key_is_rejected_with_json_exception()
-    {
-        const string yaml = """
-        ? [PolicyVersion]
-        : 1.0.0
-        """;
-
-        Assert.Throws<JsonException>(() => PolicyDocument.ParseYaml(yaml));
-    }
-
     [Fact]
     public void Negative_revision_is_rejected_by_parser()
     {
         var json = MinimalPolicyJson("""
                 "Revision": -1,
+        """, """
+                "Rules": []
+        """);
+
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(json));
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("2147483648")]
+    public void Out_of_range_revision_is_rejected_by_parser(string revision)
+    {
+        var json = MinimalPolicyJson($"""
+                "Revision": {revision},
         """, """
                 "Rules": []
         """);
@@ -197,15 +222,122 @@ public class PolicyTests
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
     }
 
+    [Fact]
+    public void Draft_conversion_omits_and_restores_server_metadata_without_aliasing()
+    {
+        var committed = PolicyDocument.ParseJson(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")));
+
+        var draft = committed.ToDraft();
+        var draftJson = JsonNode.Parse(draft.ToJson())!;
+        Assert.Null(draftJson["Metadata"]!["Revision"]);
+        Assert.Null(draftJson["Metadata"]!["PublishedAt"]);
+
+        draft.Rules[0].Id = "changed";
+        Assert.NotEqual(draft.Rules[0].Id, committed.Rules[0].Id);
+
+        var publishedAt = DateTimeOffset.Parse("2026-08-29T00:00:00Z");
+        var recommitted = draft.ToPolicyDocument(7, publishedAt);
+        Assert.Equal(7U, recommitted.Metadata.Revision);
+        Assert.Equal(publishedAt, recommitted.Metadata.PublishedAt);
+        Assert.Equal("changed", recommitted.Rules[0].Id);
+    }
+
+    [Fact]
+    public void Draft_conversion_enforces_revision_bounds()
+    {
+        var draft = PolicyDraftDocument.Create("contoso.policy", "Contoso IT");
+        var publishedAt = DateTimeOffset.Parse("2026-08-29T00:00:00Z");
+
+        Assert.Equal(
+            (uint)int.MaxValue,
+            draft.ToPolicyDocument(int.MaxValue, publishedAt).Metadata.Revision);
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => draft.ToPolicyDocument((uint)int.MaxValue + 1, publishedAt));
+    }
+
+    [Fact]
+    public void Mixed_boolean_match_values_are_rejected()
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+        document["Rules"]![0]!["Match"]!["Interactive"] = new JsonArray(false, true);
+
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
+    [Fact]
+    public void Direct_policy_match_and_rule_deserialization_reject_mixed_boolean_values()
+    {
+        const string MatchJson = """{"Interactive":[false,true]}""";
+        const string RuleJson =
+            """{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{"Interactive":[false,true]}}""";
+
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson));
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyRule>(RuleJson));
+        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyMatch>("""{"Interactive":[]}"""));
+
+        var match = new PolicyMatch { Interactive = [false, true] };
+        Assert.Throws<JsonException>(() => PolicySerializer.Serialize(match));
+        Assert.Throws<JsonException>(() => JsonSerializer.Serialize(match, PolicySerializer.Options));
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyMatch>(MatchJson, PolicySerializer.Options));
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyMatch>(MatchJson, PolicySerializer.StrictOptions));
+    }
+
+    [Theory]
+    [InlineData("StringPattern", 256)]
+    [InlineData("VersionString", 128)]
+    [InlineData("CustomParameterString", 512)]
+    public void Policy_text_lists_count_unicode_scalars_at_length_boundaries(string valueKind, int maximum)
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+        var rule = document["Rules"]![0]!;
+        var values = new JsonArray();
+        switch (valueKind)
+        {
+            case "StringPattern":
+                rule["Match"]!["PackageNames"] = values;
+                break;
+            case "VersionString":
+                rule["Match"]!["Versions"] = values;
+                break;
+            default:
+                var constraints = rule["Constraints"] as JsonObject ?? new JsonObject();
+                rule["Constraints"] = constraints;
+                constraints["AllowedCustomParameters"] = values;
+                break;
+        }
+        var multibyteScalar = "\U0001F600";
+
+        values.Add(ParseJsonString(string.Concat(Enumerable.Repeat(multibyteScalar, maximum))));
+        Assert.NotNull(PolicyDocument.ParseJson(document.ToJsonString()));
+
+        values[0] = ParseJsonString(string.Concat(Enumerable.Repeat(multibyteScalar, maximum + 1)));
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+
+        values[0] = ParseJsonString("");
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
+    [Fact]
+    public void Draft_rejects_server_managed_metadata()
+    {
+        var committed = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+
+        Assert.Throws<JsonException>(() => PolicyDraftDocument.ParseJson(committed.ToJsonString()));
+    }
+
     private static PolicyDocument ParsePolicy(string path)
     {
         var content = File.ReadAllText(path);
-        var extension = Path.GetExtension(path);
-        return extension.Equals(".yaml", StringComparison.OrdinalIgnoreCase)
-            || extension.Equals(".yml", StringComparison.OrdinalIgnoreCase)
-            ? PolicyDocument.ParseYaml(content)
-            : PolicyDocument.ParseJson(content);
+        return PolicyDocument.ParseJson(content);
     }
+
+    private static JsonNode ParseJsonString(string value) => JsonNode.Parse($"\"{value}\"")!;
 
     private static string ResolvePolicyCrateRoot([CallerFilePath] string thisFile = "")
     {

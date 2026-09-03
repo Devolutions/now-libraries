@@ -6,7 +6,7 @@ Devolutions NOW package broker API for .NET
 Purpose
 -------
 
-This package contains request, response, status, health, capabilities, active-policy inspection, and error DTOs for package broker clients and implementations. It does not perform HTTP transport, named-pipe I/O, policy evaluation, or package-manager execution.
+This package contains request, response, status, health, capabilities, active-policy inspection and management, and error DTOs for package broker clients and implementations. It does not perform HTTP transport, named-pipe I/O, policy validation/evaluation, persistence, or package-manager execution.
 
 Top-level request DTOs carry `RequestKind` and `RequestVersion`; top-level response DTOs carry
 `ResponseKind` and `ResponseVersion`. Kind properties are fixed discriminators that serialize
@@ -26,11 +26,22 @@ Architecture
 
 - `RequestModels.cs` defines `PackageRequest` and request context/options.
 - `ResponseModels.cs` defines active-policy, evaluation, and execution responses plus shared response context, summaries, decisions, policy info, diagnostics, and operation submission. `PolicyResponse` embeds the canonical `Devolutions.Now.Policy.Model.PolicyDocument`.
+- `PolicyManagementModels.cs` defines atomic management snapshots, raw JSON draft requests, versioned validation findings/receipts, optimistic replacement intents, and management responses.
 - `StatusModels.cs` defines status query request/response DTOs.
 - `MetaModels.cs` defines health, capabilities, manager capability, and error DTOs.
 - `Enums.cs` defines package broker API enums and JSON string enum converters.
-- `BrokerJson.cs` defines source-generated serializer options for the broker wire format. Public `BrokerJson.Options` and `BrokerJson.PrettyOptions` support every broker DTO, including the embedded policy model, without reflection and reject JSON null for non-nullable contract members.
+- `BrokerSerializer.cs` defines source-generated serializer options for the broker wire format. Public `BrokerSerializer.Options` and `BrokerSerializer.PrettyOptions` support every broker DTO, including the embedded policy model, without reflection and reject JSON null for non-nullable contract members.
 - `PolicyCompatibility.cs` maps compatible API enums to and from `Devolutions.Now.Policy.Model` enums.
+
+Opaque policy store tokens and validation receipts are restricted to safe printable ASCII (`A-Z`, `a-z`, `0-9`, `.`, `_`, `~`, `:`, `-`) beginning with an ASCII alphanumeric character, so Rust and .NET enforce identical bounds.
+
+`BrokerApi.MaxPolicyManagementBodyBytes` exposes the fixed 16 MiB limit for the complete serialized
+HTTP body of policy validation and replacement requests. It is separate from the package-operation
+limit advertised by broker capabilities.
+
+Because policy documents are JSON-only, configured `.yaml`, `.yml`, extensionless, and other
+non-JSON paths use `PolicyReadOnlyReason.UnsupportedFormat` in management snapshots and
+`ErrorCode.UnsupportedPolicyFormat` for structured HTTP 422 errors.
 
 OpenAPI relationship
 --------------------

@@ -1,8 +1,8 @@
 //! Shared package broker API models.
 
 use chrono::{DateTime, Utc};
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use super::enums::{Architecture, Decision, Elevation, ErrorCode, ManagerName, Operation, Scope, Transport};
 use super::{
@@ -291,9 +291,7 @@ pub struct ErrorDetail {
 }
 
 /// Generic error body returned for non-2xx responses.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename = "ErrorResponse")]
-#[serde(rename_all = "PascalCase")]
+#[derive(Debug, Clone)]
 pub struct ErrorResponse {
     /// Response discriminator.
     pub response_kind: ErrorResponseKind,
@@ -308,10 +306,142 @@ pub struct ErrorResponse {
     pub code: ErrorCode,
 
     /// Human-readable summary.
-    #[schemars(length(min = 1, max = 2048))]
     pub message: String,
 
     /// Structured error details.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub details: Vec<ErrorDetail>,
+
+    /// Current authoritative policy findings for management errors.
+    pub validation: Option<super::PolicyValidationResult>,
+
+    /// Atomic current policy state, required when `Code` is `StalePolicyStoreToken`.
+    pub management: Option<super::PolicyManagementSnapshot>,
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[schemars(rename = "ErrorResponseFields")]
+#[serde(rename_all = "PascalCase")]
+#[serde(deny_unknown_fields)]
+struct ErrorResponseWire {
+    pub response_kind: ErrorResponseKind,
+    pub response_version: ApiVersion,
+    pub server: ServerContext,
+    pub code: ErrorCode,
+    #[schemars(length(min = 1, max = 2048))]
+    pub message: String,
+    #[serde(default)]
+    pub details: Vec<ErrorDetail>,
+    #[serde(default)]
+    pub validation: Option<super::PolicyValidationResult>,
+    #[serde(default)]
+    pub management: Option<super::PolicyManagementSnapshot>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct ErrorResponseRef<'a> {
+    response_kind: &'a ErrorResponseKind,
+    response_version: &'a ApiVersion,
+    server: &'a ServerContext,
+    code: ErrorCode,
+    message: &'a str,
+    #[serde(skip_serializing_if = "slice_is_empty")]
+    details: &'a [ErrorDetail],
+    #[serde(skip_serializing_if = "Option::is_none")]
+    validation: Option<&'a super::PolicyValidationResult>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    management: Option<&'a super::PolicyManagementSnapshot>,
+}
+
+fn slice_is_empty<T>(value: &[T]) -> bool {
+    value.is_empty()
+}
+
+impl ErrorResponse {
+    fn validate(&self) -> Result<(), &'static str> {
+        if self.code == ErrorCode::StalePolicyStoreToken && self.management.is_none() {
+            return Err("StalePolicyStoreToken errors require Management");
+        }
+        Ok(())
+    }
+}
+
+impl TryFrom<ErrorResponseWire> for ErrorResponse {
+    type Error = &'static str;
+
+    fn try_from(value: ErrorResponseWire) -> Result<Self, Self::Error> {
+        let response = Self {
+            response_kind: value.response_kind,
+            response_version: value.response_version,
+            server: value.server,
+            code: value.code,
+            message: value.message,
+            details: value.details,
+            validation: value.validation,
+            management: value.management,
+        };
+        response.validate()?;
+        Ok(response)
+    }
+}
+
+impl Serialize for ErrorResponse {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.validate().map_err(serde::ser::Error::custom)?;
+        ErrorResponseRef {
+            response_kind: &self.response_kind,
+            response_version: &self.response_version,
+            server: &self.server,
+            code: self.code,
+            message: &self.message,
+            details: &self.details,
+            validation: self.validation.as_ref(),
+            management: self.management.as_ref(),
+        }
+        .serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for ErrorResponse {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let wire = ErrorResponseWire::deserialize(deserializer)?;
+        Self::try_from(wire).map_err(serde::de::Error::custom)
+    }
+}
+
+impl JsonSchema for ErrorResponse {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "ErrorResponse".into()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        let fields = generator.subschema_for::<ErrorResponseWire>();
+        json_schema!({
+            "allOf": [fields],
+            "oneOf": [
+                {
+                    "properties": {
+                        "Code": { "const": "StalePolicyStoreToken" },
+                        "Management": {
+                            "$ref": "#/components/schemas/PolicyManagementSnapshot"
+                        }
+                    },
+                    "required": ["Management"]
+                },
+                {
+                    "properties": {
+                        "Code": {
+                            "not": { "const": "StalePolicyStoreToken" }
+                        }
+                    }
+                }
+            ]
+        })
+    }
 }

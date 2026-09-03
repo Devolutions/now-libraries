@@ -28,10 +28,11 @@ Library structure overview:
 - `health.rs` contains health endpoint models for `GET /v1/health`.
 - `capabilities.rs` contains capability endpoint models for `GET /v1/capabilities`.
 - `policy.rs` contains the active `PolicyDocument` response for the canonical `GET /v1/policy` endpoint.
+- `management.rs` contains atomic management snapshots, raw-draft validation, versioned findings and receipts, optimistic replacement intents, and management responses.
 - `enums.rs` contains shared protocol enums.
 - `lib.rs` contains constrained string newtypes, validation helpers, etc.
 
-`now-policy` owns the canonical policy document and schema. This API crate composes that domain contract into `PolicyResponse`; runtime-specific mappings between policy evaluation types and API DTOs belong to the consuming broker implementation.
+`now-policy` owns the canonical committed and draft policy documents and schema. This API crate composes that domain contract into inspection and management responses; runtime-specific validation, persistence, and policy-evaluation logic belongs to the consuming broker implementation.
 
 Top-level requests carry `RequestKind` and `RequestVersion`; top-level responses carry `ResponseKind` and `ResponseVersion`. Kind fields are marker types that serialize to fixed strings and reject mismatched values during deserialization; this is
 required for further protocol evolution and allows the client to switch transport from HTTP to other
@@ -54,7 +55,11 @@ Regenerate it with:
 cargo run -p now-policy-server-template --bin generate-now-policy-api-openapi --locked
 ```
 
-The generated document always contains the policy inspection route and canonical `PolicyDocument` schema.
+The generated document contains the unchanged policy inspection route, the management/validation/replacement routes, and canonical committed and draft policy schemas.
+
+`StalePolicyStoreToken` errors include the atomic current `Management` snapshot so a client can explicitly confirm an overwrite against that exact newly observed token. `UnsafePolicyPath` is a 409 state/write-capability conflict, not an authentication failure. A configured `.yaml`, `.yml`, extensionless, or otherwise non-JSON policy path uses the stable `UnsupportedFormat` read-only reason and `UnsupportedPolicyFormat` error code (HTTP 422), rather than overloading unsafe-path semantics. An Agent that does not expose a newer route may still return an ordinary unstructured 404; `UnsupportedEndpoint` is only an optional explicit implementation response.
+
+Opaque store tokens and validation receipts use safe printable ASCII (`A-Z`, `a-z`, `0-9`, `.`, `_`, `~`, `:`, `-`) and begin with an ASCII alphanumeric character. This keeps length and validation behavior identical across Rust UTF-8 and .NET UTF-16 implementations.
 
 Validation
 ----------

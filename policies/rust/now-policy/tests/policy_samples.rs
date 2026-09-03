@@ -2,23 +2,15 @@
 
 #![allow(clippy::std_instead_of_core, clippy::unwrap_used, unused_crate_dependencies)]
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use now_policy::PolicyDocument;
+use chrono::{TimeZone, Utc};
+use now_policy::{
+    CustomParameterString, POLICY_DRAFT_SCHEMA_URI, POLICY_SCHEMA_URI, PolicyDocument, StringPattern, VersionString,
+};
 
 fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/samples")
-}
-
-fn load_policy(path: &Path) -> PolicyDocument {
-    let content = std::fs::read_to_string(path).unwrap_or_else(|e| panic!("failed to read {}: {e}", path.display()));
-    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-    match ext {
-        "yaml" | "yml" => serde_yaml::from_str(&content)
-            .unwrap_or_else(|e| panic!("failed to deserialize YAML policy {}: {e}", path.display())),
-        _ => serde_json::from_str(&content)
-            .unwrap_or_else(|e| panic!("failed to deserialize policy {}: {e}", path.display())),
-    }
 }
 
 #[test]
@@ -27,7 +19,6 @@ fn all_sample_policies_deserialize() {
 
     let policy_files = [
         "corporate-allowlist.policy.json",
-        "corporate-allowlist.policy.yaml",
         "deny-risky-options.policy.json",
         "powershell-advanced.policy.json",
         "powershell-current-user.policy.json",
@@ -36,8 +27,81 @@ fn all_sample_policies_deserialize() {
 
     for file in &policy_files {
         let path = dir.join(file);
-        let _policy = load_policy(&path);
+        let content =
+            std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("failed to read {}: {e}", path.display()));
+        let _policy: PolicyDocument = serde_json::from_str(&content)
+            .unwrap_or_else(|e| panic!("failed to deserialize policy {}: {e}", path.display()));
     }
+}
+
+#[test]
+fn draft_conversion_omits_and_restores_server_metadata() {
+    let path = samples_dir().join("corporate-allowlist.policy.json");
+    let content = std::fs::read_to_string(path).unwrap();
+    let committed: PolicyDocument = serde_json::from_str(&content).unwrap();
+
+    let draft = committed.to_draft();
+    let draft_json = serde_json::to_value(&draft).unwrap();
+    assert_eq!(draft_json["$schema"], POLICY_DRAFT_SCHEMA_URI);
+    assert!(draft_json["Metadata"].get("Revision").is_none());
+    assert!(draft_json["Metadata"].get("PublishedAt").is_none());
+
+    let published_at = Utc.with_ymd_and_hms(2026, 8, 29, 0, 0, 0).unwrap();
+    let recommitted = draft.into_policy_document(7, published_at).unwrap();
+    assert_eq!(
+        serde_json::to_value(&recommitted).unwrap()["$schema"],
+        POLICY_SCHEMA_URI
+    );
+    assert_eq!(recommitted.metadata.id.to_string(), committed.metadata.id.to_string());
+    assert_eq!(recommitted.metadata.revision, 7);
+    assert_eq!(recommitted.metadata.published_at, published_at);
+}
+
+#[test]
+fn draft_conversion_enforces_revision_bounds() {
+    let path = samples_dir().join("corporate-allowlist.policy.json");
+    let committed: PolicyDocument = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    let draft = committed.to_draft();
+    let published_at = Utc.with_ymd_and_hms(2026, 8, 29, 0, 0, 0).unwrap();
+
+    assert!(draft.into_policy_document(0, published_at).is_err());
+
+    let draft = committed.to_draft();
+    assert!(draft.into_policy_document(2_147_483_647, published_at).is_ok());
+
+    let draft = committed.to_draft();
+    assert!(draft.into_policy_document(2_147_483_648, published_at).is_err());
+}
+
+#[test]
+fn mixed_boolean_match_values_are_rejected() {
+    let path = samples_dir().join("corporate-allowlist.policy.json");
+    let mut value: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    value["Rules"][0]["Match"]["Interactive"] = serde_json::json!([false, true]);
+
+    let result: Result<PolicyDocument, _> = serde_json::from_value(value);
+    assert!(result.is_err());
+
+    let empty: now_policy::PolicyMatch = serde_json::from_value(serde_json::json!({ "Interactive": [] })).unwrap();
+    assert!(empty.interactive.is_empty());
+
+    let mut invalid = now_policy::PolicyMatch::default();
+    invalid.interactive.extend([false, true]);
+    assert!(serde_json::to_value(invalid).is_err());
+}
+
+#[test]
+fn policy_text_newtypes_count_unicode_scalars_at_length_boundaries() {
+    let multibyte_scalar = "😀";
+
+    assert!(StringPattern::parse(&multibyte_scalar.repeat(256)).is_ok());
+    assert!(StringPattern::parse(&multibyte_scalar.repeat(257)).is_err());
+
+    assert!(VersionString::parse(&multibyte_scalar.repeat(128)).is_ok());
+    assert!(VersionString::parse(&multibyte_scalar.repeat(129)).is_err());
+
+    assert!(CustomParameterString::parse(&multibyte_scalar.repeat(512)).is_ok());
+    assert!(CustomParameterString::parse(&multibyte_scalar.repeat(513)).is_err());
 }
 
 #[test]
@@ -84,6 +148,22 @@ fn policy_schema_generates_valid_json() {
 }
 
 #[test]
+fn committed_policy_enforces_revision_bounds_during_serialization_and_deserialization() {
+    let path = samples_dir().join("corporate-allowlist.policy.json");
+    let mut value: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+
+    for revision in [serde_json::json!(0), serde_json::json!(2_147_483_648u64)] {
+        value["Metadata"]["Revision"] = revision;
+        assert!(serde_json::from_value::<PolicyDocument>(value.clone()).is_err());
+    }
+
+    value["Metadata"]["Revision"] = serde_json::json!(1);
+    let mut policy: PolicyDocument = serde_json::from_value(value).unwrap();
+    policy.metadata.revision = 0;
+    assert!(serde_json::to_value(policy).is_err());
+}
+
+#[test]
 fn policy_match_schema_requires_at_least_one_property() {
     let schema = now_policy::schema::policy_schema_json();
     let min_properties = [
@@ -94,4 +174,17 @@ fn policy_match_schema_requires_at_least_one_property() {
     .find_map(|path| schema.pointer(path).and_then(serde_json::Value::as_u64));
 
     assert_eq!(min_properties, Some(1));
+}
+
+#[test]
+fn policy_match_schema_limits_boolean_arrays_to_one_item() {
+    let schema = now_policy::schema::policy_schema_json();
+    let max_items = [
+        "/definitions/PolicyMatch/properties/Interactive/maxItems",
+        "/$defs/PolicyMatch/properties/Interactive/maxItems",
+    ]
+    .into_iter()
+    .find_map(|path| schema.pointer(path).and_then(serde_json::Value::as_u64));
+
+    assert_eq!(max_items, Some(1));
 }
