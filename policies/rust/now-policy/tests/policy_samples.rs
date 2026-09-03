@@ -5,7 +5,9 @@
 use std::path::PathBuf;
 
 use chrono::{TimeZone, Utc};
-use now_policy::{CustomParameterString, PolicyDocument, StringPattern, VersionString};
+use now_policy::{
+    CustomParameterString, POLICY_DRAFT_SCHEMA_URI, POLICY_SCHEMA_URI, PolicyDocument, StringPattern, VersionString,
+};
 
 fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/samples")
@@ -40,11 +42,16 @@ fn draft_conversion_omits_and_restores_server_metadata() {
 
     let draft = committed.to_draft();
     let draft_json = serde_json::to_value(&draft).unwrap();
+    assert_eq!(draft_json["$schema"], POLICY_DRAFT_SCHEMA_URI);
     assert!(draft_json["Metadata"].get("Revision").is_none());
     assert!(draft_json["Metadata"].get("PublishedAt").is_none());
 
     let published_at = Utc.with_ymd_and_hms(2026, 8, 29, 0, 0, 0).unwrap();
     let recommitted = draft.into_policy_document(7, published_at).unwrap();
+    assert_eq!(
+        serde_json::to_value(&recommitted).unwrap()["$schema"],
+        POLICY_SCHEMA_URI
+    );
     assert_eq!(recommitted.metadata.id.to_string(), committed.metadata.id.to_string());
     assert_eq!(recommitted.metadata.revision, 7);
     assert_eq!(recommitted.metadata.published_at, published_at);

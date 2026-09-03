@@ -55,8 +55,17 @@ fixed_string_marker! {
 /// Schema URI for package policy documents.
 pub const POLICY_SCHEMA_URI: &str = "https://devolutions.net/schemas/now-policy.schema.1.0.json";
 
+/// Schema URI for editable package policy draft documents.
+pub const POLICY_DRAFT_SCHEMA_URI: &str = "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json";
+
 fixed_string_marker! {
     /// Marker type for the policy `$schema` field.
     /// Serializes to the canonical policy schema URI.
     pub struct PolicySchemaUri => POLICY_SCHEMA_URI;
+}
+
+fixed_string_marker! {
+    /// Marker type for the policy draft `$schema` field.
+    /// Serializes to the canonical policy draft schema URI.
+    pub struct PolicyDraftSchemaUri => POLICY_DRAFT_SCHEMA_URI;
 }

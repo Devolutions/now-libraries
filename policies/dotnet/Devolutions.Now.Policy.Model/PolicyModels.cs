@@ -6,6 +6,7 @@ namespace Devolutions.Now.Policy.Model;
 public static class SchemaUris
 {
     public const string Policy = "https://devolutions.net/schemas/now-policy.schema.1.0.json";
+    public const string PolicyDraft = "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json";
 }
 
 /// <summary>A policy document governing which package operations are allowed or denied.</summary>
@@ -64,7 +65,7 @@ public sealed class PolicyDocument
     {
         return new PolicyDraftDocument
         {
-            Schema = Schema,
+            Schema = SchemaUris.PolicyDraft,
             PolicyVersion = PolicyVersion,
             PolicyType = PolicyType,
             Metadata = PolicyModelClone.ToDraftMetadata(Metadata),
@@ -83,7 +84,7 @@ public sealed class PolicyDraftDocument
 
     [JsonPropertyName("$schema")]
     [JsonRequired]
-    public string Schema { get; set; } = SchemaUris.Policy;
+    public string Schema { get; set; } = SchemaUris.PolicyDraft;
 
     [JsonPropertyName("PolicyVersion")]
     [JsonRequired]
@@ -142,7 +143,7 @@ public sealed class PolicyDraftDocument
 
         return new PolicyDocument
         {
-            Schema = Schema,
+            Schema = SchemaUris.Policy,
             PolicyVersion = PolicyVersion,
             PolicyType = PolicyType,
             Metadata = PolicyModelClone.ToCommittedMetadata(Metadata, revision, publishedAt),

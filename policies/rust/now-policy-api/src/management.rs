@@ -918,7 +918,7 @@ mod tests {
             "ValidatorVersion": "validator/1",
             "IsValid": true,
             "CanonicalDraft": {
-                "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
+                "$schema": "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json",
                 "PolicyVersion": "1.0.0",
                 "PolicyType": "PackageBrokerPolicy",
                 "Metadata": { "Id": "test", "Publisher": "test" },

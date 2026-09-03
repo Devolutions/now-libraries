@@ -16,6 +16,9 @@ public class PolicyTests
 
     private static string PolicySchema => Path.Combine(PolicyCrateRoot, "schema", "devolutions.now-policy.schema.json");
 
+    private static string PolicyDraftSchema =>
+        Path.Combine(PolicyCrateRoot, "schema", "devolutions.now-policy-draft.schema.json");
+
     public static IEnumerable<object[]> PolicySamples() =>
         Directory.GetFiles(SamplesDir, "*.policy.json").Select(f => new object[] { f });
 
@@ -63,6 +66,33 @@ public class PolicyTests
 
         Assert.NotNull(reparsed);
         Assert.True(errors.Count == 0, string.Join("\n", errors.Select(e => $"  {e.Kind} at {e.Path}")));
+    }
+
+    [Fact]
+    public async Task Draft_conversion_uses_and_validates_against_draft_schema()
+    {
+        var policy = PolicyDocument.Create("contoso.policy", "Contoso IT");
+        var draft = policy.ToDraft();
+        var schema = await JsonSchema.FromFileAsync(PolicyDraftSchema);
+        var json = draft.ToJson();
+
+        Assert.Equal(SchemaUris.PolicyDraft, draft.Schema);
+        Assert.Empty(schema.Validate(json));
+        Assert.Equal(SchemaUris.Policy, draft.ToPolicyDocument(1, DateTimeOffset.UtcNow).Schema);
+    }
+
+    [Fact]
+    public void Policy_and_draft_parsers_reject_the_other_document_schema()
+    {
+        var policy = PolicyDocument.Create("contoso.policy", "Contoso IT");
+        var policyJson = JsonNode.Parse(policy.ToJson())!;
+        policyJson["$schema"] = SchemaUris.PolicyDraft;
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(policyJson.ToJsonString()));
+
+        var draftJson = JsonNode.Parse(policy.ToDraft().ToJson())!;
+        draftJson["$schema"] = SchemaUris.Policy;
+        Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializePolicyDraftDocumentStrict(draftJson.ToJsonString()));
     }
 
     [Fact]

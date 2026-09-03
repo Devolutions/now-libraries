@@ -434,6 +434,8 @@ fn evaluate_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .description("Evaluates a package operation against policy without requiring elevated execution.")
         .response::<200, Json<EvaluationResponse>>()
         .response::<400, Json<ErrorResponse>>()
+        .response::<413, Json<ErrorResponse>>()
+        .response::<415, Json<ErrorResponse>>()
         .response::<422, Json<ErrorResponse>>()
         .response::<503, Json<ErrorResponse>>()
 }
@@ -444,6 +446,8 @@ fn execute_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .response::<200, Json<ExecutionResponse>>()
         .response::<400, Json<ErrorResponse>>()
         .response::<409, Json<ErrorResponse>>()
+        .response::<413, Json<ErrorResponse>>()
+        .response::<415, Json<ErrorResponse>>()
         .response::<422, Json<ErrorResponse>>()
         .response::<503, Json<ErrorResponse>>()
 }
@@ -453,6 +457,8 @@ fn status_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .description("Returns the current status of a previously submitted package operation.")
         .response::<200, Json<StatusResponse>>()
         .response::<400, Json<ErrorResponse>>()
+        .response::<413, Json<ErrorResponse>>()
+        .response::<415, Json<ErrorResponse>>()
         .response::<404, Json<ErrorResponse>>()
 }
 
@@ -464,6 +470,8 @@ fn cancel_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         )
         .response::<200, Json<CancelResponse>>()
         .response::<400, Json<ErrorResponse>>()
+        .response::<413, Json<ErrorResponse>>()
+        .response::<415, Json<ErrorResponse>>()
         .response::<404, Json<ErrorResponse>>()
 }
 
@@ -527,6 +535,26 @@ mod tests {
             response["content"]["application/json"]["schema"]["$ref"],
             "#/components/schemas/ErrorResponse"
         );
+    }
+
+    #[test]
+    fn package_operation_openapi_documents_transport_rejections() {
+        let api = serde_json::to_value(openapi()).expect("OpenAPI should serialize");
+
+        for path in [
+            "/v1/package-operations/evaluate",
+            "/v1/package-operations/execute",
+            "/v1/package-operations/get-status",
+            "/v1/package-operations/cancel",
+        ] {
+            for status in ["413", "415"] {
+                assert_eq!(
+                    api["paths"][path]["post"]["responses"][status]["content"]["application/json"]["schema"]["$ref"],
+                    "#/components/schemas/ErrorResponse",
+                    "missing structured {status} response for {path}"
+                );
+            }
+        }
     }
 
     #[test]

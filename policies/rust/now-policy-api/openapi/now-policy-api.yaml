@@ -199,6 +199,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: ''
           content:
@@ -241,6 +253,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '422':
           description: ''
           content:
@@ -277,6 +301,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: ''
           content:
@@ -308,6 +344,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/CancelResponse'
         '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
           description: ''
           content:
             application/json:
@@ -2110,7 +2158,7 @@ components:
         $schema:
           description: Policy schema URI constant.
           allOf:
-          - $ref: '#/components/schemas/PolicyModelPolicySchemaUri'
+          - $ref: '#/components/schemas/PolicyModelPolicyDraftSchemaUri'
         Enforcement:
           description: Enforcement configuration.
           allOf:
@@ -2180,6 +2228,10 @@ components:
       required:
       - Id
       - Publisher
+    PolicyModelPolicyDraftSchemaUri:
+      type: string
+      enum:
+      - https://devolutions.net/schemas/now-policy-draft.schema.1.0.json
     PolicyModelPolicyEnforcement:
       description: Enforcement configuration.
       type: object

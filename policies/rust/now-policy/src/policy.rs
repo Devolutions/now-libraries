@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Architecture, CustomParameterString, Decision, Elevation, HttpUrl, ManagerName, ModelValidationError, Operation,
-    PackageBrokerPolicy, PolicySchemaUri, ResourceId, Scope, SemanticVersion, StringPattern, VersionString,
+    PackageBrokerPolicy, PolicyDraftSchemaUri, PolicySchemaUri, ResourceId, Scope, SemanticVersion, StringPattern,
+    VersionString,
 };
 
 const MAX_POLICY_REVISION: u32 = 2_147_483_647;
@@ -44,7 +45,7 @@ impl PolicyDocument {
     /// Create an editable draft, intentionally omitting server-managed commit metadata.
     pub fn to_draft(&self) -> PolicyDraftDocument {
         PolicyDraftDocument {
-            _schema: self._schema,
+            _schema: PolicyDraftSchemaUri,
             policy_version: self.policy_version.clone(),
             policy_type: self.policy_type,
             metadata: self.metadata.to_draft(),
@@ -60,9 +61,9 @@ impl PolicyDocument {
 #[serde(rename_all = "PascalCase")]
 #[serde(deny_unknown_fields)]
 pub struct PolicyDraftDocument {
-    /// Policy schema URI constant.
+    /// Policy draft schema URI constant.
     #[serde(rename = "$schema")]
-    pub _schema: PolicySchemaUri,
+    pub _schema: PolicyDraftSchemaUri,
 
     /// Policy syntax version (semver).
     pub policy_version: SemanticVersion,
@@ -96,7 +97,7 @@ impl PolicyDraftDocument {
         }
 
         Ok(PolicyDocument {
-            _schema: self._schema,
+            _schema: PolicySchemaUri,
             policy_version: self.policy_version,
             policy_type: self.policy_type,
             metadata: self.metadata.into_policy_metadata(revision, published_at),

@@ -11,6 +11,7 @@ namespace Devolutions.Now.Policy.Api;
 public static class SchemaUris
 {
     public const string Policy = "https://devolutions.net/schemas/now-policy.schema.1.0.json";
+    public const string PolicyDraft = "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json";
 }
 
 /// <summary>Shared <see cref="JsonSerializerOptions"/> for broker documents.</summary>
