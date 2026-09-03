@@ -226,7 +226,25 @@ public static class BrokerSerializer
         {
             throw new JsonException("Policy replacement responses require an Active Management snapshot.");
         }
+        if (response.Management.Policy is null
+            || !PolicyDocumentsEqual(response.Policy, response.Management.Policy))
+        {
+            throw new JsonException(
+                "Policy replacement responses require Policy and Management.Policy to match.");
+        }
+        if (response.Validation.CanonicalDraft is null
+            || !PolicyDraftDocumentsEqual(response.Policy.ToDraft(), response.Validation.CanonicalDraft))
+        {
+            throw new JsonException(
+                "Policy replacement responses require Policy and Validation.CanonicalDraft to match.");
+        }
     }
+
+    private static bool PolicyDocumentsEqual(PolicyDocument left, PolicyDocument right) =>
+        string.Equals(PolicySerializer.Serialize(left), PolicySerializer.Serialize(right), StringComparison.Ordinal);
+
+    private static bool PolicyDraftDocumentsEqual(PolicyDraftDocument left, PolicyDraftDocument right) =>
+        string.Equals(PolicySerializer.Serialize(left), PolicySerializer.Serialize(right), StringComparison.Ordinal);
 
     private static void RejectNullElements<T>(IReadOnlyList<T>? values, string path)
         where T : class

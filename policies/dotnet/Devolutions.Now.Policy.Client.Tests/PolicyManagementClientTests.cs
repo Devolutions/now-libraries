@@ -426,6 +426,17 @@ public class PolicyManagementClientTests
             Assert.NotEmpty(schema.Validate(json));
         }
 
+        foreach (var invalid in new[]
+        {
+            MismatchedReplacementManagementPolicy(response),
+            MismatchedReplacementCanonicalDraft(response),
+        })
+        {
+            var json = invalid.ToJsonString();
+            Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<PolicyReplacementResponse>(json));
+            Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PolicyReplacementResponse>(json));
+        }
+
         var dto = BrokerSerializer.DeserializeStrict<PolicyReplacementResponse>(response.ToJsonString())!;
         dto.Validation = BrokerSerializer.DeserializeStrict<PolicyValidationResponse>(
             invalidValidation.ToJsonString())!.Validation;
@@ -434,6 +445,14 @@ public class PolicyManagementClientTests
         dto = BrokerSerializer.DeserializeStrict<PolicyReplacementResponse>(response.ToJsonString())!;
         dto.Management = BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(
             missingManagement.ToJsonString())!.Management;
+        Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(dto));
+
+        dto = BrokerSerializer.DeserializeStrict<PolicyReplacementResponse>(response.ToJsonString())!;
+        dto.Management.Policy!.Metadata.Publisher = "Other publisher";
+        Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(dto));
+
+        dto = BrokerSerializer.DeserializeStrict<PolicyReplacementResponse>(response.ToJsonString())!;
+        dto.Validation.CanonicalDraft!.Metadata.Publisher = "Other publisher";
         Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(dto));
     }
 
@@ -608,6 +627,20 @@ public class PolicyManagementClientTests
     {
         var copy = source.DeepClone();
         copy[propertyName] = value.DeepClone();
+        return copy;
+    }
+
+    private static JsonNode MismatchedReplacementManagementPolicy(JsonNode response)
+    {
+        var copy = response.DeepClone();
+        copy["Management"]!["Policy"]!["Metadata"]!["Publisher"] = "Other publisher";
+        return copy;
+    }
+
+    private static JsonNode MismatchedReplacementCanonicalDraft(JsonNode response)
+    {
+        var copy = response.DeepClone();
+        copy["Validation"]!["CanonicalDraft"]!["Metadata"]!["Publisher"] = "Other publisher";
         return copy;
     }
 

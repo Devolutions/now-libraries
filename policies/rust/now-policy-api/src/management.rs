@@ -760,7 +760,26 @@ impl PolicyReplacementResponse {
         if self.management.state != PolicyManagementState::Active {
             return Err("policy replacement responses require an Active Management snapshot");
         }
+        let Some(management_policy) = self.management.policy.as_ref() else {
+            return Err("policy replacement responses require Management.Policy");
+        };
+        if !same_serialized_value(&self.policy, management_policy) {
+            return Err("policy replacement responses require Policy and Management.Policy to match");
+        }
+        let Some(canonical_draft) = self.validation.canonical_draft.as_ref() else {
+            return Err("policy replacement responses require Validation.CanonicalDraft");
+        };
+        if !same_serialized_value(&self.policy.to_draft(), canonical_draft) {
+            return Err("policy replacement responses require Policy and Validation.CanonicalDraft to match");
+        }
         Ok(())
+    }
+}
+
+fn same_serialized_value<T: Serialize>(left: &T, right: &T) -> bool {
+    match (serde_json::to_value(left), serde_json::to_value(right)) {
+        (Ok(left), Ok(right)) => left == right,
+        _ => false,
     }
 }
 
@@ -889,6 +908,44 @@ mod tests {
         invalid.management = serde_json::from_value(missing_management["Management"].clone())
             .expect("valid missing-management snapshot");
         assert!(serde_json::to_value(invalid).is_err());
+    }
+
+    #[test]
+    fn replacement_response_requires_matching_policy_views() {
+        let valid: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../test-data/package-broker/responses/policy-replacement.response.json"
+        ))
+        .expect("valid replacement response fixture");
+
+        let mut mismatched_management = valid.clone();
+        mismatched_management["Management"]["Policy"]["Metadata"]["Publisher"] = "Other publisher".into();
+        assert!(serde_json::from_value::<PolicyReplacementResponse>(mismatched_management).is_err());
+
+        let mut mismatched_validation = valid.clone();
+        mismatched_validation["Validation"]["CanonicalDraft"]["Metadata"]["Publisher"] = "Other publisher".into();
+        assert!(serde_json::from_value::<PolicyReplacementResponse>(mismatched_validation).is_err());
+
+        let mut mismatched_management: PolicyReplacementResponse =
+            serde_json::from_value(valid.clone()).expect("valid replacement response fixture");
+        mismatched_management
+            .management
+            .policy
+            .as_mut()
+            .expect("active replacement response has a policy")
+            .metadata
+            .publisher = "Other publisher".parse().expect("valid publisher");
+        assert!(serde_json::to_value(mismatched_management).is_err());
+
+        let mut mismatched_validation: PolicyReplacementResponse =
+            serde_json::from_value(valid).expect("valid replacement response fixture");
+        mismatched_validation
+            .validation
+            .canonical_draft
+            .as_mut()
+            .expect("valid replacement response has a canonical draft")
+            .metadata
+            .publisher = "Other publisher".parse().expect("valid publisher");
+        assert!(serde_json::to_value(mismatched_validation).is_err());
     }
 
     #[test]
