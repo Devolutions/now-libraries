@@ -402,15 +402,36 @@ public class PolicyManagementClientTests
     }
 
     [Fact]
-    public async Task Non_strict_replacement_deserialization_enforces_nested_invariants()
+    public async Task Replacement_response_enforces_success_invariants()
     {
         var response = JsonNode.Parse(await ReadFixture("responses", "policy-replacement.response.json"))!;
-        response["Validation"]!["IsValid"] = false;
-        response["Validation"]!.AsObject().Remove("CanonicalDraft");
-        response["Validation"]!.AsObject().Remove("ValidationReceipt");
+        var invalidValidation = JsonNode.Parse(
+            await ReadFixture("responses", "policy-validation.invalid.response.json"))!;
+        var missingManagement = JsonNode.Parse(
+            await ReadFixture("responses", "policy-management.missing.response.json"))!;
+        var schema = await TestData.SchemaAsync("PolicyReplacementResponse");
 
-        Assert.Throws<JsonException>(
-            () => BrokerSerializer.Deserialize<PolicyReplacementResponse>(response.ToJsonString()));
+        foreach (var invalid in new[]
+        {
+            ReplaceProperty(response, "Validation", invalidValidation["Validation"]!),
+            ReplaceProperty(response, "Management", missingManagement["Management"]!),
+        })
+        {
+            var json = invalid.ToJsonString();
+            Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<PolicyReplacementResponse>(json));
+            Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PolicyReplacementResponse>(json));
+            Assert.NotEmpty(schema.Validate(json));
+        }
+
+        var dto = BrokerSerializer.DeserializeStrict<PolicyReplacementResponse>(response.ToJsonString())!;
+        dto.Validation = BrokerSerializer.DeserializeStrict<PolicyValidationResponse>(
+            invalidValidation.ToJsonString())!.Validation;
+        Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(dto));
+
+        dto = BrokerSerializer.DeserializeStrict<PolicyReplacementResponse>(response.ToJsonString())!;
+        dto.Management = BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(
+            missingManagement.ToJsonString())!.Management;
+        Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(dto));
     }
 
     [Theory]
@@ -447,6 +468,11 @@ public class PolicyManagementClientTests
         var invalidValidation = await ReadFixture(
             Path.Combine("invalid", "responses"),
             "policy-validation.valid-with-error.response.json");
+        var invalidValidationNode = JsonNode.Parse(invalidValidation)!;
+        var invalidManagement = JsonNode.Parse(
+            await ReadFixture(
+                Path.Combine("invalid", "responses"),
+                "policy-management.active-without-policy.response.json"))!;
         var management = BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(
             await ReadFixture("responses", "policy-management.missing.response.json"))!;
         management.Management.State = PolicyManagementState.Active;
@@ -455,6 +481,14 @@ public class PolicyManagementClientTests
         {
             Assert.Throws<JsonException>(
                 () => JsonSerializer.Deserialize<PolicyValidationResponse>(invalidValidation, options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyValidationResult>(
+                    invalidValidationNode["Validation"]!.ToJsonString(),
+                    options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyManagementSnapshot>(
+                    invalidManagement["Management"]!.ToJsonString(),
+                    options));
             Assert.Throws<JsonException>(() => JsonSerializer.Serialize(management, options));
         }
     }
@@ -519,6 +553,13 @@ public class PolicyManagementClientTests
 
     private static async Task<string> ReadFixture(string directory, string file) =>
         await File.ReadAllTextAsync(Path.Combine(TestData.SamplesDir, directory, file));
+
+    private static JsonNode ReplaceProperty(JsonNode source, string propertyName, JsonNode value)
+    {
+        var copy = source.DeepClone();
+        copy[propertyName] = value.DeepClone();
+        return copy;
+    }
 
     private static JsonElement DraftForSerializedRequestSize<TRequest>(
         TRequest request,

@@ -120,6 +120,10 @@ pub struct PolicyMetadata {
     pub publisher: String,
 
     /// Monotonically increasing revision number.
+    #[serde(
+        serialize_with = "serialize_policy_revision",
+        deserialize_with = "deserialize_policy_revision"
+    )]
     #[schemars(range(min = 1, max = 2147483647))]
     pub revision: u32,
 
@@ -142,6 +146,28 @@ pub struct PolicyMetadata {
     /// URL for support or documentation.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub support_url: Option<HttpUrl>,
+}
+
+fn validate_policy_revision(revision: u32) -> Result<(), ModelValidationError> {
+    if !(1..=MAX_POLICY_REVISION).contains(&revision) {
+        return Err(ModelValidationError::Invalid {
+            type_name: "PolicyMetadata",
+            reason: format!("revision must be between 1 and {MAX_POLICY_REVISION}"),
+        });
+    }
+
+    Ok(())
+}
+
+fn serialize_policy_revision<S: serde::Serializer>(revision: &u32, serializer: S) -> Result<S::Ok, S::Error> {
+    validate_policy_revision(*revision).map_err(serde::ser::Error::custom)?;
+    revision.serialize(serializer)
+}
+
+fn deserialize_policy_revision<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<u32, D::Error> {
+    let revision = u32::deserialize(deserializer)?;
+    validate_policy_revision(revision).map_err(serde::de::Error::custom)?;
+    Ok(revision)
 }
 
 /// Editable policy metadata without server-managed revision and publication time.

@@ -7,14 +7,9 @@ namespace Devolutions.Now.Policy.Model;
 
 public static class PolicySerializer
 {
-    public static readonly JsonSerializerOptions Options = new(PolicySerializerContext.Default.Options)
-    {
-    };
+    public static readonly JsonSerializerOptions Options = CreateOptions(PolicySerializerContext.Default);
 
-    public static readonly JsonSerializerOptions StrictOptions = new(Options)
-    {
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-    };
+    public static readonly JsonSerializerOptions StrictOptions = CreateOptions(PolicyStrictSerializerContext.Default);
 
     public static string Serialize(PolicyDocument value)
     {
@@ -50,12 +45,15 @@ public static class PolicySerializer
         return value;
     }
 
-    private static void ValidateSemanticValue<T>(T value)
+    private static void ValidateSemanticValue(object? value)
     {
         switch (value)
         {
             case PolicyDocument policy:
                 ValidateRequiredCollectionElements(policy);
+                break;
+            case PolicyMetadata metadata:
+                ValidatePolicyRevision(metadata.Revision);
                 break;
             case PolicyDraftDocument draft:
                 ValidateRequiredCollectionElements(draft);
@@ -70,7 +68,10 @@ public static class PolicySerializer
     }
 
     internal static void ValidateRequiredCollectionElements(PolicyDocument policy)
-        => ValidateRequiredCollectionElements(policy.Rules);
+    {
+        ValidatePolicyRevision(policy.Metadata.Revision);
+        ValidateRequiredCollectionElements(policy.Rules);
+    }
 
     internal static void ValidateRequiredCollectionElements(PolicyDraftDocument policy)
         => ValidateRequiredCollectionElements(policy.Rules);
@@ -159,6 +160,14 @@ public static class PolicySerializer
         }
     }
 
+    private static void ValidatePolicyRevision(uint revision)
+    {
+        if (revision is 0 or > int.MaxValue)
+        {
+            throw new JsonException($"Policy revision must be between 1 and {int.MaxValue}.");
+        }
+    }
+
     private static void RejectNullElements<T>(IReadOnlyList<T> values, string path)
         where T : class
     {
@@ -215,6 +224,23 @@ public static class PolicySerializer
 
     private static JsonTypeInfo<T> Cast<T>(JsonTypeInfo jsonTypeInfo) =>
         (JsonTypeInfo<T>)jsonTypeInfo;
+
+    private static JsonSerializerOptions CreateOptions(JsonSerializerContext context) =>
+        new(context.Options)
+        {
+            TypeInfoResolver = context.WithAddedModifier(AttachSemanticValidation),
+        };
+
+    private static void AttachSemanticValidation(JsonTypeInfo typeInfo)
+    {
+        if (typeInfo.Kind != JsonTypeInfoKind.Object)
+        {
+            return;
+        }
+
+        typeInfo.OnSerializing = ValidateSemanticValue;
+        typeInfo.OnDeserialized = ValidateSemanticValue;
+    }
 }
 
 [JsonSourceGenerationOptions(

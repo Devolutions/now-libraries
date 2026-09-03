@@ -141,6 +141,22 @@ fn policy_schema_generates_valid_json() {
 }
 
 #[test]
+fn committed_policy_enforces_revision_bounds_during_serialization_and_deserialization() {
+    let path = samples_dir().join("corporate-allowlist.policy.json");
+    let mut value: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+
+    for revision in [serde_json::json!(0), serde_json::json!(2_147_483_648u64)] {
+        value["Metadata"]["Revision"] = revision;
+        assert!(serde_json::from_value::<PolicyDocument>(value.clone()).is_err());
+    }
+
+    value["Metadata"]["Revision"] = serde_json::json!(1);
+    let mut policy: PolicyDocument = serde_json::from_value(value).unwrap();
+    policy.metadata.revision = 0;
+    assert!(serde_json::to_value(policy).is_err());
+}
+
+#[test]
 fn policy_match_schema_requires_at_least_one_property() {
     let schema = now_policy::schema::policy_schema_json();
     let min_properties = [

@@ -86,6 +86,20 @@ public class PolicyTests
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(json));
     }
 
+    [Theory]
+    [InlineData("0")]
+    [InlineData("2147483648")]
+    public void Out_of_range_revision_is_rejected_by_parser(string revision)
+    {
+        var json = MinimalPolicyJson($"""
+                "Revision": {revision},
+        """, """
+                "Rules": []
+        """);
+
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(json));
+    }
+
     [Fact]
     public void Negative_priority_is_rejected_by_parser()
     {
@@ -235,6 +249,11 @@ public class PolicyTests
 
         var match = new PolicyMatch { Interactive = [false, true] };
         Assert.Throws<JsonException>(() => PolicySerializer.Serialize(match));
+        Assert.Throws<JsonException>(() => JsonSerializer.Serialize(match, PolicySerializer.Options));
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyMatch>(MatchJson, PolicySerializer.Options));
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyMatch>(MatchJson, PolicySerializer.StrictOptions));
     }
 
     [Theory]

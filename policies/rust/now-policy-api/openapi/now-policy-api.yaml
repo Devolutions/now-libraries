@@ -61,7 +61,7 @@ paths:
         required: true
       responses:
         '200':
-          description: Response body for `PUT /v1/policy`.
+          description: ''
           content:
             application/json:
               schema:
@@ -1419,17 +1419,30 @@ components:
       type: string
       pattern: ^PolicyReplacementRequest$
     PolicyReplacementResponse:
-      description: Response body for `PUT /v1/policy`.
+      allOf:
+      - $ref: '#/components/schemas/PolicyReplacementResponseFields'
+      - properties:
+          Management:
+            properties:
+              State:
+                enum:
+                - Active
+            required:
+            - State
+          Validation:
+            properties:
+              IsValid:
+                enum:
+                - true
+            required:
+            - IsValid
+    PolicyReplacementResponseFields:
       type: object
       properties:
         Management:
-          description: Newly observed management state and store token.
-          allOf:
-          - $ref: '#/components/schemas/PolicyManagementSnapshot'
+          $ref: '#/components/schemas/PolicyManagementSnapshot'
         Policy:
-          description: Exact committed active policy, including server-assigned metadata.
-          allOf:
-          - $ref: '#/components/schemas/PolicyDocument'
+          $ref: '#/components/schemas/PolicyDocument'
         ResponseKind:
           $ref: '#/components/schemas/PolicyReplacementResponseKind'
         ResponseVersion:
@@ -1437,9 +1450,7 @@ components:
         Server:
           $ref: '#/components/schemas/ServerContext'
         Validation:
-          description: Transaction-time validation result for the exact committed draft.
-          allOf:
-          - $ref: '#/components/schemas/PolicyValidationResult'
+          $ref: '#/components/schemas/PolicyValidationResult'
       additionalProperties: false
       required:
       - ResponseKind

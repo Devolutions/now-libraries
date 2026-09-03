@@ -59,9 +59,13 @@ public static class BrokerSerializer
                 ValidateValidation(response.Validation);
                 break;
             case PolicyReplacementResponse response:
-                PolicySerializer.ValidateRequiredCollectionElements(response.Policy);
-                ValidateValidation(response.Validation);
-                ValidateManagement(response.Management);
+                ValidateReplacement(response);
+                break;
+            case PolicyValidationResult validation:
+                ValidateValidation(validation);
+                break;
+            case PolicyManagementSnapshot management:
+                ValidateManagement(management);
                 break;
             case ErrorResponse error:
                 ValidateError(error);
@@ -198,6 +202,22 @@ public static class BrokerSerializer
                 throw new JsonException(
                     "Invalid policy validation results require at least one Error finding.");
             }
+        }
+    }
+
+    private static void ValidateReplacement(PolicyReplacementResponse response)
+    {
+        PolicySerializer.ValidateRequiredCollectionElements(response.Policy);
+        ValidateValidation(response.Validation);
+        ValidateManagement(response.Management);
+
+        if (!response.Validation.IsValid)
+        {
+            throw new JsonException("Policy replacement responses require a valid Validation result.");
+        }
+        if (response.Management.State != PolicyManagementState.Active)
+        {
+            throw new JsonException("Policy replacement responses require an Active Management snapshot.");
         }
     }
 

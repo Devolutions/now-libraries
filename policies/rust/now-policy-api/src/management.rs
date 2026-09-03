@@ -711,17 +711,13 @@ pub struct PolicyReplacementRequest {
 }
 
 /// Response body for `PUT /v1/policy`.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename = "PolicyReplacementResponse")]
-#[serde(rename_all = "PascalCase")]
-#[serde(deny_unknown_fields)]
+#[derive(Debug, Clone)]
 pub struct PolicyReplacementResponse {
     pub response_kind: PolicyReplacementResponseKind,
     pub response_version: ApiVersion,
     pub server: ServerContext,
 
     /// Exact committed active policy, including server-assigned metadata.
-    #[schemars(schema_with = "super::policy::policy_document_schema")]
     pub policy: PolicyDocument,
 
     /// Transaction-time validation result for the exact committed draft.
@@ -731,9 +727,125 @@ pub struct PolicyReplacementResponse {
     pub management: PolicyManagementSnapshot,
 }
 
+#[derive(Deserialize, JsonSchema)]
+#[schemars(rename = "PolicyReplacementResponseFields")]
+#[serde(rename_all = "PascalCase")]
+#[serde(deny_unknown_fields)]
+struct PolicyReplacementResponseWire {
+    pub response_kind: PolicyReplacementResponseKind,
+    pub response_version: ApiVersion,
+    pub server: ServerContext,
+    #[schemars(schema_with = "super::policy::policy_document_schema")]
+    pub policy: PolicyDocument,
+    pub validation: PolicyValidationResult,
+    pub management: PolicyManagementSnapshot,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct PolicyReplacementResponseRef<'a> {
+    response_kind: &'a PolicyReplacementResponseKind,
+    response_version: &'a ApiVersion,
+    server: &'a ServerContext,
+    policy: &'a PolicyDocument,
+    validation: &'a PolicyValidationResult,
+    management: &'a PolicyManagementSnapshot,
+}
+
+impl PolicyReplacementResponse {
+    fn validate(&self) -> Result<(), &'static str> {
+        if !self.validation.is_valid {
+            return Err("policy replacement responses require a valid Validation result");
+        }
+        if self.management.state != PolicyManagementState::Active {
+            return Err("policy replacement responses require an Active Management snapshot");
+        }
+        Ok(())
+    }
+}
+
+impl TryFrom<PolicyReplacementResponseWire> for PolicyReplacementResponse {
+    type Error = &'static str;
+
+    fn try_from(value: PolicyReplacementResponseWire) -> Result<Self, Self::Error> {
+        let response = Self {
+            response_kind: value.response_kind,
+            response_version: value.response_version,
+            server: value.server,
+            policy: value.policy,
+            validation: value.validation,
+            management: value.management,
+        };
+        response.validate()?;
+        Ok(response)
+    }
+}
+
+impl Serialize for PolicyReplacementResponse {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.validate().map_err(serde::ser::Error::custom)?;
+        PolicyReplacementResponseRef {
+            response_kind: &self.response_kind,
+            response_version: &self.response_version,
+            server: &self.server,
+            policy: &self.policy,
+            validation: &self.validation,
+            management: &self.management,
+        }
+        .serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for PolicyReplacementResponse {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let wire = PolicyReplacementResponseWire::deserialize(deserializer)?;
+        Self::try_from(wire).map_err(serde::de::Error::custom)
+    }
+}
+
+impl JsonSchema for PolicyReplacementResponse {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "PolicyReplacementResponse".into()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        let fields = generator.subschema_for::<PolicyReplacementResponseWire>();
+        json_schema!({
+            "allOf": [
+                fields,
+                {
+                    "properties": {
+                        "Validation": {
+                            "properties": {
+                                "IsValid": { "enum": [true] }
+                            },
+                            "required": ["IsValid"]
+                        },
+                        "Management": {
+                            "properties": {
+                                "State": { "enum": ["Active"] }
+                            },
+                            "required": ["State"]
+                        }
+                    }
+                }
+            ]
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{PolicyManagementSnapshot, PolicyStoreToken, PolicyValidationReceipt, PolicyValidationResult};
+    use super::{
+        PolicyManagementSnapshot, PolicyReplacementResponse, PolicyStoreToken, PolicyValidationReceipt,
+        PolicyValidationResult,
+    };
 
     #[test]
     fn opaque_tokens_and_receipts_reject_non_ascii_values() {
@@ -741,6 +853,42 @@ mod tests {
         assert!(serde_json::from_str::<PolicyValidationReceipt>("\"receipt:é\"").is_err());
         assert!(serde_json::to_value(PolicyStoreToken("store:activé:7".to_owned())).is_err());
         assert!(serde_json::to_value(PolicyValidationReceipt("receipt:é".to_owned())).is_err());
+    }
+
+    #[test]
+    fn replacement_response_requires_valid_validation_and_active_management() {
+        let valid: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../test-data/package-broker/responses/policy-replacement.response.json"
+        ))
+        .expect("valid replacement response fixture");
+        let invalid_validation: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../test-data/package-broker/responses/policy-validation.invalid.response.json"
+        ))
+        .expect("valid invalid-validation fixture");
+        let missing_management: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../test-data/package-broker/responses/policy-management.missing.response.json"
+        ))
+        .expect("valid missing-management fixture");
+
+        let mut invalid = valid.clone();
+        invalid["Validation"] = invalid_validation["Validation"].clone();
+        assert!(serde_json::from_value::<PolicyReplacementResponse>(invalid).is_err());
+
+        let mut invalid = valid.clone();
+        invalid["Management"] = missing_management["Management"].clone();
+        assert!(serde_json::from_value::<PolicyReplacementResponse>(invalid).is_err());
+
+        let mut invalid: PolicyReplacementResponse =
+            serde_json::from_value(valid.clone()).expect("valid replacement response fixture");
+        invalid.validation =
+            serde_json::from_value(invalid_validation["Validation"].clone()).expect("valid invalid-validation result");
+        assert!(serde_json::to_value(invalid).is_err());
+
+        let mut invalid: PolicyReplacementResponse =
+            serde_json::from_value(valid).expect("valid replacement response fixture");
+        invalid.management = serde_json::from_value(missing_management["Management"].clone())
+            .expect("valid missing-management snapshot");
+        assert!(serde_json::to_value(invalid).is_err());
     }
 
     #[test]
