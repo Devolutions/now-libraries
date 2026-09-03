@@ -1,6 +1,6 @@
 [package]
 name = "now-policy-server-template"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 license.workspace = true
 homepage.workspace = true
@@ -17,8 +17,8 @@ workspace = true
 aide = { version = "0.15", features = ["axum", "axum-json"] }
 async-trait = "0.1"
 axum = { version = "0.8", default-features = false, features = ["json"] }
-now-policy-api = { version = "0.3", path = "../now-policy-api" }
-now-policy = { version = "0.2", path = "../now-policy" }
+now-policy-api = { version = "0.4", path = "../now-policy-api" }
+now-policy = { version = "0.3", path = "../now-policy" }
 schemars = "0.9"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
