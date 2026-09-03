@@ -117,7 +117,7 @@ public sealed class BrokerClient : IDisposable
         var response = await SendPolicyManagementRequest(
             "POST",
             "/v1/policy/validate",
-            BrokerJson.Serialize(request),
+            BrokerSerializer.Serialize(request),
             cancellationToken).ConfigureAwait(false);
         return DeserializeResponse<PolicyValidationResponse>(
             response,
@@ -138,7 +138,7 @@ public sealed class BrokerClient : IDisposable
         var response = await SendPolicyManagementRequest(
             "PUT",
             "/v1/policy",
-            BrokerJson.Serialize(request),
+            BrokerSerializer.Serialize(request),
             cancellationToken).ConfigureAwait(false);
         return DeserializeResponse<PolicyReplacementResponse>(
             response,
@@ -255,7 +255,7 @@ public sealed class BrokerClient : IDisposable
         var capabilities = await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
         EnsureTransportSupported(capabilities, _transport.Kind, "cancel operation", "/v1/package-operations/cancel");
 
-        var body = BrokerJson.Serialize(cancelRequest);
+        var body = BrokerSerializer.Serialize(cancelRequest);
         EnsureRequestBodySize(body, capabilities, "/v1/package-operations/cancel");
 
         var headers = new Dictionary<string, string>
@@ -301,7 +301,7 @@ public sealed class BrokerClient : IDisposable
         var capabilities = await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
         EnsureTransportSupported(capabilities, _transport.Kind, "query operation status", "/v1/package-operations/get-status");
 
-        var body = BrokerJson.Serialize(statusRequest);
+        var body = BrokerSerializer.Serialize(statusRequest);
         EnsureRequestBodySize(body, capabilities, "/v1/package-operations/get-status");
 
         var headers = new Dictionary<string, string>
@@ -440,7 +440,7 @@ public sealed class BrokerClient : IDisposable
         var capabilities = await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
         EnsurePackageRequestSupported(request, capabilities, endpoint);
 
-        var body = BrokerJson.Serialize(request);
+        var body = BrokerSerializer.Serialize(request);
         EnsureRequestBodySize(body, capabilities, endpoint);
 
         var headers = new Dictionary<string, string>
@@ -542,8 +542,8 @@ public sealed class BrokerClient : IDisposable
         try
         {
             var value = strictSuccessBody
-                ? BrokerJson.DeserializeStrict<TResponse>(response.Body)
-                : BrokerJson.Deserialize<TResponse>(response.Body);
+                ? BrokerSerializer.DeserializeStrict<TResponse>(response.Body)
+                : BrokerSerializer.Deserialize<TResponse>(response.Body);
             if (value is null)
             {
                 throw new BrokerClientException(
@@ -573,7 +573,7 @@ public sealed class BrokerClient : IDisposable
     {
         try
         {
-            error = BrokerJson.Deserialize<ErrorResponse>(body);
+            error = BrokerSerializer.Deserialize<ErrorResponse>(body);
             parseError = null;
             return error is not null;
         }

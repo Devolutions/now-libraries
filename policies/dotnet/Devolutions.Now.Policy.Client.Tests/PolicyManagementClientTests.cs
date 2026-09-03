@@ -54,7 +54,7 @@ public class PolicyManagementClientTests
         PolicyReplacementOperation operation,
         PolicyConflictHandling conflictHandling)
     {
-        var request = BrokerJson.DeserializeStrict<PolicyReplacementRequest>(await ReadFixture("requests", fixture))!;
+        var request = BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(await ReadFixture("requests", fixture))!;
         var body = await ReadFixture("responses", "policy-replacement.response.json");
         var transport = new FakeBrokerTransport(new BrokerTransportResponse { StatusCode = 200, Body = body });
 
@@ -73,7 +73,7 @@ public class PolicyManagementClientTests
     [Fact]
     public async Task ReplacePolicy_preserves_structured_stale_token_findings()
     {
-        var request = BrokerJson.DeserializeStrict<PolicyReplacementRequest>(
+        var request = BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(
             await ReadFixture("requests", "policy-replacement.update.request.json"))!;
         var errorBody = await ReadFixture("responses", "policy-stale-token.error.json");
         var transport = new FakeBrokerTransport(new BrokerTransportResponse { StatusCode = 409, Body = errorBody });
@@ -89,7 +89,7 @@ public class PolicyManagementClientTests
     [Fact]
     public async Task ReplacePolicy_parses_unsupported_json_path_format()
     {
-        var request = BrokerJson.DeserializeStrict<PolicyReplacementRequest>(
+        var request = BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(
             await ReadFixture("requests", "policy-replacement.update.request.json"))!;
         var errorBody = await ReadFixture("responses", "policy-unsupported-format.error.json");
         var transport = new FakeBrokerTransport(new BrokerTransportResponse { StatusCode = 422, Body = errorBody });
@@ -108,21 +108,21 @@ public class PolicyManagementClientTests
     {
         var management = JsonNode.Parse(
             await ReadFixture("responses", "policy-management.unsupported-format.response.json"))!;
-        var parsedManagement = BrokerJson.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString())!;
+        var parsedManagement = BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString())!;
         Assert.Equal(PolicyReadOnlyReason.UnsupportedFormat, parsedManagement.Management.ReadOnlyReason);
-        Assert.Contains("\"ReadOnlyReason\":\"UnsupportedFormat\"", BrokerJson.Serialize(parsedManagement));
+        Assert.Contains("\"ReadOnlyReason\":\"UnsupportedFormat\"", BrokerSerializer.Serialize(parsedManagement));
 
         management["Management"]!["ReadOnlyReason"] = JsonNode.Parse("\"unsupportedformat\"");
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString()));
 
         var error = JsonNode.Parse(await ReadFixture("responses", "policy-unsupported-format.error.json"))!;
-        var parsedError = BrokerJson.DeserializeStrict<ErrorResponse>(error.ToJsonString())!;
+        var parsedError = BrokerSerializer.DeserializeStrict<ErrorResponse>(error.ToJsonString())!;
         Assert.Equal(ErrorCode.UnsupportedPolicyFormat, parsedError.Code);
-        Assert.Contains("\"Code\":\"UnsupportedPolicyFormat\"", BrokerJson.Serialize(parsedError));
+        Assert.Contains("\"Code\":\"UnsupportedPolicyFormat\"", BrokerSerializer.Serialize(parsedError));
 
         error["Code"] = JsonNode.Parse("\"unsupportedpolicyformat\"");
-        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<ErrorResponse>(error.ToJsonString()));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<ErrorResponse>(error.ToJsonString()));
     }
 
     [Fact]
@@ -143,7 +143,7 @@ public class PolicyManagementClientTests
             BrokerApi.MaxPolicyManagementBodyBytes,
             Encoding.UTF8.GetByteCount(Assert.Single(validationTransport.Requests).Body!));
 
-        var replacementRequest = BrokerJson.DeserializeStrict<PolicyReplacementRequest>(
+        var replacementRequest = BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(
             await ReadFixture("requests", "policy-replacement.update.request.json"))!;
         replacementRequest.Draft = DraftForSerializedRequestSize(
             replacementRequest,
@@ -175,7 +175,7 @@ public class PolicyManagementClientTests
         Assert.Equal(BrokerClientErrorKind.RequestTooLarge, validationException.Kind);
         Assert.Empty(validationTransport.Requests);
 
-        var replacementRequest = BrokerJson.DeserializeStrict<PolicyReplacementRequest>(
+        var replacementRequest = BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(
             await ReadFixture("requests", "policy-replacement.update.request.json"))!;
         replacementRequest.Draft = DraftForSerializedRequestSize(
             replacementRequest,
@@ -213,7 +213,7 @@ public class PolicyManagementClientTests
             "validation" => await Assert.ThrowsAsync<BrokerClientException>(
                 () => client.ValidatePolicy(JsonDocument.Parse("{}").RootElement)),
             _ => await Assert.ThrowsAsync<BrokerClientException>(
-                async () => await client.ReplacePolicy(BrokerJson.DeserializeStrict<PolicyReplacementRequest>(
+                async () => await client.ReplacePolicy(BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(
                     await ReadFixture("requests", "policy-replacement.update.request.json"))!)),
         };
 
@@ -246,7 +246,7 @@ public class PolicyManagementClientTests
             : JsonValue.Create((string)value);
 
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyManagementResponse>(document.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(document.ToJsonString()));
     }
 
     [Fact]
@@ -255,16 +255,16 @@ public class PolicyManagementClientTests
         var management = JsonNode.Parse(await ReadFixture("responses", "policy-management.active.response.json"))!;
         management["Management"]!["StoreToken"] = "";
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString()));
 
         var replacement = JsonNode.Parse(await ReadFixture("requests", "policy-replacement.update.request.json"))!;
         replacement["ExpectedStoreToken"] = "";
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyReplacementRequest>(replacement.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(replacement.ToJsonString()));
         replacement["ExpectedStoreToken"] = "store:active:7";
         replacement["ValidationReceipt"] = "";
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyReplacementRequest>(replacement.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(replacement.ToJsonString()));
     }
 
     [Fact]
@@ -273,26 +273,26 @@ public class PolicyManagementClientTests
         var management = JsonNode.Parse(await ReadFixture("responses", "policy-management.active.response.json"))!;
         management["Management"]!["StoreToken"] = "store:activé:7";
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString()));
         Assert.NotEmpty(
             (await TestData.SchemaAsync("PolicyManagementResponse")).Validate(management.ToJsonString()));
 
         var replacement = JsonNode.Parse(await ReadFixture("requests", "policy-replacement.update.request.json"))!;
         replacement["ValidationReceipt"] = "receipt:é";
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyReplacementRequest>(replacement.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(replacement.ToJsonString()));
         Assert.NotEmpty(
             (await TestData.SchemaAsync("PolicyReplacementRequest")).Validate(replacement.ToJsonString()));
 
-        var managementDto = BrokerJson.DeserializeStrict<PolicyManagementResponse>(
+        var managementDto = BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(
             await ReadFixture("responses", "policy-management.active.response.json"))!;
         managementDto.Management.StoreToken = "store:activé:7";
-        Assert.Throws<JsonException>(() => BrokerJson.Serialize(managementDto));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(managementDto));
 
-        var replacementDto = BrokerJson.DeserializeStrict<PolicyReplacementRequest>(
+        var replacementDto = BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(
             await ReadFixture("requests", "policy-replacement.update.request.json"))!;
         replacementDto.ValidationReceipt = "receipt:é";
-        Assert.Throws<JsonException>(() => BrokerJson.Serialize(replacementDto));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(replacementDto));
     }
 
     [Fact]
@@ -301,17 +301,17 @@ public class PolicyManagementClientTests
         var valid = JsonNode.Parse(await ReadFixture("responses", "policy-validation.valid.response.json"))!;
         valid["Validation"]!.AsObject().Remove("CanonicalDraft");
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyValidationResponse>(valid.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyValidationResponse>(valid.ToJsonString()));
 
         var invalid = JsonNode.Parse(await ReadFixture("responses", "policy-validation.invalid.response.json"))!;
         invalid["Validation"]!["ValidationReceipt"] = "unexpected-receipt";
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyValidationResponse>(invalid.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyValidationResponse>(invalid.ToJsonString()));
 
         var validWithNull = JsonNode.Parse(await ReadFixture("responses", "policy-validation.valid.response.json"))!;
         validWithNull["Validation"]!["CanonicalDraft"] = null;
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyValidationResponse>(validWithNull.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyValidationResponse>(validWithNull.ToJsonString()));
         Assert.NotEmpty(
             (await TestData.SchemaAsync("PolicyValidationResponse")).Validate(validWithNull.ToJsonString()));
     }
@@ -323,7 +323,7 @@ public class PolicyManagementClientTests
         active["Management"]!["Policy"] = null;
 
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyManagementResponse>(active.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(active.ToJsonString()));
         Assert.NotEmpty(
             (await TestData.SchemaAsync("PolicyManagementResponse")).Validate(active.ToJsonString()));
     }
@@ -334,14 +334,14 @@ public class PolicyManagementClientTests
         var invalid = JsonNode.Parse(await ReadFixture("responses", "policy-validation.invalid.response.json"))!;
         invalid["Validation"]!["CanonicalDraft"] = null;
         invalid["Validation"]!["ValidationReceipt"] = null;
-        Assert.NotNull(BrokerJson.DeserializeStrict<PolicyValidationResponse>(invalid.ToJsonString()));
+        Assert.NotNull(BrokerSerializer.DeserializeStrict<PolicyValidationResponse>(invalid.ToJsonString()));
         Assert.Empty((await TestData.SchemaAsync("PolicyValidationResponse")).Validate(invalid.ToJsonString()));
 
         var missing = JsonNode.Parse(await ReadFixture("responses", "policy-management.missing.response.json"))!;
         missing["Management"]!["Policy"] = null;
         missing["Management"]!["InvalidDiagnostics"] = null;
         missing["Management"]!["ReadOnlyReason"] = null;
-        Assert.NotNull(BrokerJson.DeserializeStrict<PolicyManagementResponse>(missing.ToJsonString()));
+        Assert.NotNull(BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(missing.ToJsonString()));
         Assert.Empty((await TestData.SchemaAsync("PolicyManagementResponse")).Validate(missing.ToJsonString()));
     }
 
@@ -352,7 +352,7 @@ public class PolicyManagementClientTests
     public async Task Strict_validation_response_rejects_contradictory_findings(string fixture)
     {
         var json = await ReadFixture(Path.Combine("invalid", "responses"), fixture);
-        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyValidationResponse>(json));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PolicyValidationResponse>(json));
     }
 
     [Theory]
@@ -362,7 +362,7 @@ public class PolicyManagementClientTests
     public async Task Strict_management_response_rejects_contradictory_snapshot(string fixture)
     {
         var json = await ReadFixture(Path.Combine("invalid", "responses"), fixture);
-        Assert.Throws<JsonException>(() => BrokerJson.DeserializeStrict<PolicyManagementResponse>(json));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(json));
     }
 
     [Fact]
@@ -371,16 +371,16 @@ public class PolicyManagementClientTests
         var validation = JsonNode.Parse(await ReadFixture("responses", "policy-validation.valid.response.json"))!;
         validation["Validation"]!["Findings"] = new JsonArray((JsonNode?)null);
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyValidationResponse>(validation.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyValidationResponse>(validation.ToJsonString()));
         Assert.Throws<JsonException>(
-            () => BrokerJson.Deserialize<PolicyValidationResponse>(validation.ToJsonString()));
+            () => BrokerSerializer.Deserialize<PolicyValidationResponse>(validation.ToJsonString()));
 
         var management = JsonNode.Parse(await ReadFixture("responses", "policy-management.invalid.response.json"))!;
         management["Management"]!["InvalidDiagnostics"]!["Findings"] = new JsonArray((JsonNode?)null);
         Assert.Throws<JsonException>(
-            () => BrokerJson.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString()));
+            () => BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(management.ToJsonString()));
         Assert.Throws<JsonException>(
-            () => BrokerJson.Deserialize<PolicyManagementResponse>(management.ToJsonString()));
+            () => BrokerSerializer.Deserialize<PolicyManagementResponse>(management.ToJsonString()));
     }
 
     [Theory]
@@ -393,11 +393,11 @@ public class PolicyManagementClientTests
         var json = await ReadFixture(Path.Combine("invalid", "responses"), fixture);
         if (validation)
         {
-            Assert.Throws<JsonException>(() => BrokerJson.Deserialize<PolicyValidationResponse>(json));
+            Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<PolicyValidationResponse>(json));
         }
         else
         {
-            Assert.Throws<JsonException>(() => BrokerJson.Deserialize<PolicyManagementResponse>(json));
+            Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<PolicyManagementResponse>(json));
         }
     }
 
@@ -410,7 +410,7 @@ public class PolicyManagementClientTests
         response["Validation"]!.AsObject().Remove("ValidationReceipt");
 
         Assert.Throws<JsonException>(
-            () => BrokerJson.Deserialize<PolicyReplacementResponse>(response.ToJsonString()));
+            () => BrokerSerializer.Deserialize<PolicyReplacementResponse>(response.ToJsonString()));
     }
 
     [Theory]
@@ -430,15 +430,15 @@ public class PolicyManagementClientTests
     [Fact]
     public async Task Serialization_rejects_contradictory_policy_management_contracts()
     {
-        var validation = BrokerJson.DeserializeStrict<PolicyValidationResponse>(
+        var validation = BrokerSerializer.DeserializeStrict<PolicyValidationResponse>(
             await ReadFixture("responses", "policy-validation.invalid.response.json"))!;
         validation.Validation.Findings.Clear();
-        Assert.Throws<JsonException>(() => BrokerJson.Serialize(validation));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(validation));
 
-        var management = BrokerJson.DeserializeStrict<PolicyManagementResponse>(
+        var management = BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(
             await ReadFixture("responses", "policy-management.missing.response.json"))!;
         management.Management.State = PolicyManagementState.Active;
-        Assert.Throws<JsonException>(() => BrokerJson.Serialize(management));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(management));
     }
 
     [Theory]
@@ -449,7 +449,7 @@ public class PolicyManagementClientTests
         var error = JsonNode.Parse(await ReadFixture("responses", "policy-stale-token.error.json"))!;
         error["Code"] = JsonNode.Parse(value);
 
-        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<ErrorResponse>(error.ToJsonString()));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<ErrorResponse>(error.ToJsonString()));
     }
 
     [Fact]
@@ -458,7 +458,7 @@ public class PolicyManagementClientTests
         var error = JsonNode.Parse(await ReadFixture("responses", "policy-stale-token.error.json"))!;
         error["Validation"]!["IsValid"] = true;
 
-        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<ErrorResponse>(error.ToJsonString()));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<ErrorResponse>(error.ToJsonString()));
     }
 
     [Fact]
@@ -467,19 +467,19 @@ public class PolicyManagementClientTests
         var error = JsonNode.Parse(await ReadFixture("responses", "policy-stale-token.error.json"))!;
         error.AsObject().Remove("Management");
 
-        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<ErrorResponse>(error.ToJsonString()));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<ErrorResponse>(error.ToJsonString()));
         Assert.NotEmpty((await TestData.SchemaAsync("ErrorResponse")).Validate(error.ToJsonString()));
 
         var contradictory = JsonNode.Parse(await ReadFixture("responses", "policy-stale-token.error.json"))!;
         contradictory["Management"]!.AsObject().Remove("Policy");
-        Assert.Throws<JsonException>(() => BrokerJson.Deserialize<ErrorResponse>(contradictory.ToJsonString()));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<ErrorResponse>(contradictory.ToJsonString()));
 
         var dto = new ErrorResponse
         {
             Code = ErrorCode.StalePolicyStoreToken,
             Message = "stale",
         };
-        Assert.Throws<JsonException>(() => BrokerJson.Serialize(dto));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(dto));
     }
 
     [Theory]
@@ -509,7 +509,7 @@ public class PolicyManagementClientTests
     {
         using var emptyDraft = JsonDocument.Parse("""{"Padding":""}""");
         setDraft(request, emptyDraft.RootElement.Clone());
-        var baseSize = Encoding.UTF8.GetByteCount(BrokerJson.Serialize(request));
+        var baseSize = Encoding.UTF8.GetByteCount(BrokerSerializer.Serialize(request));
         var paddingLength = targetSize - baseSize;
         Assert.True(paddingLength >= 0);
 

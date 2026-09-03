@@ -5,7 +5,7 @@
 use std::path::PathBuf;
 
 use chrono::{TimeZone, Utc};
-use now_policy::{CustomParameterString, PolicyDocument, PolicyDraftDocument, StringPattern, VersionString};
+use now_policy::{CustomParameterString, PolicyDocument, StringPattern, VersionString};
 
 fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/samples")
@@ -38,7 +38,7 @@ fn draft_conversion_omits_and_restores_server_metadata() {
     let content = std::fs::read_to_string(path).unwrap();
     let committed: PolicyDocument = serde_json::from_str(&content).unwrap();
 
-    let draft = PolicyDraftDocument::from(&committed);
+    let draft = committed.to_draft();
     let draft_json = serde_json::to_value(&draft).unwrap();
     assert!(draft_json["Metadata"].get("Revision").is_none());
     assert!(draft_json["Metadata"].get("PublishedAt").is_none());
@@ -54,7 +54,7 @@ fn draft_conversion_omits_and_restores_server_metadata() {
 fn draft_conversion_rejects_zero_revision() {
     let path = samples_dir().join("corporate-allowlist.policy.json");
     let committed: PolicyDocument = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
-    let draft = PolicyDraftDocument::from(&committed);
+    let draft = committed.to_draft();
     let published_at = Utc.with_ymd_and_hms(2026, 8, 29, 0, 0, 0).unwrap();
 
     assert!(draft.into_policy_document(0, published_at).is_err());

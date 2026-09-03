@@ -97,11 +97,11 @@ public class DtoRoundTripTests
         var original = await File.ReadAllTextAsync(samplePath);
 
         // 1. Deserialize the canonical sample into the DTO (strict: every field must map).
-        var dto = BrokerJson.DeserializeStrict<T>(original);
+        var dto = BrokerSerializer.DeserializeStrict<T>(original);
         Assert.NotNull(dto);
 
         // 2. Re-serialize and validate the output against the same schema.
-        var reserialized = BrokerJson.Serialize(dto);
+        var reserialized = BrokerSerializer.Serialize(dto);
         var errors = schema.Validate(reserialized);
 
         Assert.True(

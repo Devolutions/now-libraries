@@ -5,9 +5,9 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace Devolutions.Now.Policy.Model;
 
-public static class PolicyJson
+public static class PolicySerializer
 {
-    public static readonly JsonSerializerOptions Options = new(PolicyJsonSerializerContext.Default.Options)
+    public static readonly JsonSerializerOptions Options = new(PolicySerializerContext.Default.Options)
     {
     };
 
@@ -19,23 +19,23 @@ public static class PolicyJson
     public static string Serialize(PolicyDocument value)
     {
         ValidateRequiredCollectionElements(value);
-        return JsonSerializer.Serialize(value, PolicyJsonSerializerContext.Default.PolicyDocument);
+        return JsonSerializer.Serialize(value, PolicySerializerContext.Default.PolicyDocument);
     }
 
     public static string Serialize(PolicyDraftDocument value)
     {
         ValidateRequiredCollectionElements(value);
-        return JsonSerializer.Serialize(value, PolicyJsonSerializerContext.Default.PolicyDraftDocument);
+        return JsonSerializer.Serialize(value, PolicySerializerContext.Default.PolicyDraftDocument);
     }
 
     public static PolicyDocument? DeserializePolicyDocument(string json) =>
-        Validate(JsonSerializer.Deserialize(json, PolicyJsonSerializerContext.Default.PolicyDocument));
+        Validate(JsonSerializer.Deserialize(json, PolicySerializerContext.Default.PolicyDocument));
 
     public static PolicyDocument? DeserializePolicyDocumentStrict(string json) =>
-        Validate(JsonSerializer.Deserialize(json, PolicyJsonStrictSerializerContext.Default.PolicyDocument));
+        Validate(JsonSerializer.Deserialize(json, PolicyStrictSerializerContext.Default.PolicyDocument));
 
     public static PolicyDraftDocument? DeserializePolicyDraftDocumentStrict(string json) =>
-        Validate(JsonSerializer.Deserialize(json, PolicyJsonStrictSerializerContext.Default.PolicyDraftDocument));
+        Validate(JsonSerializer.Deserialize(json, PolicyStrictSerializerContext.Default.PolicyDraftDocument));
 
     public static string Serialize<T>(T value)
     {
@@ -190,27 +190,27 @@ public static class PolicyJson
     }
 
     private static JsonTypeInfo<T> TypeInfo<T>() =>
-        typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicyJsonSerializerContext.Default.PolicyDocument) :
-        typeof(T) == typeof(PolicyDraftDocument) ? Cast<T>(PolicyJsonSerializerContext.Default.PolicyDraftDocument) :
-        typeof(T) == typeof(PolicyMetadata) ? Cast<T>(PolicyJsonSerializerContext.Default.PolicyMetadata) :
-        typeof(T) == typeof(PolicyDraftMetadata) ? Cast<T>(PolicyJsonSerializerContext.Default.PolicyDraftMetadata) :
-        typeof(T) == typeof(PolicyEnforcement) ? Cast<T>(PolicyJsonSerializerContext.Default.PolicyEnforcement) :
-        typeof(T) == typeof(PolicyRule) ? Cast<T>(PolicyJsonSerializerContext.Default.PolicyRule) :
-        typeof(T) == typeof(PolicyMatch) ? Cast<T>(PolicyJsonSerializerContext.Default.PolicyMatch) :
-        typeof(T) == typeof(VersionRange) ? Cast<T>(PolicyJsonSerializerContext.Default.VersionRange) :
-        typeof(T) == typeof(PolicyConstraints) ? Cast<T>(PolicyJsonSerializerContext.Default.PolicyConstraints) :
+        typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicySerializerContext.Default.PolicyDocument) :
+        typeof(T) == typeof(PolicyDraftDocument) ? Cast<T>(PolicySerializerContext.Default.PolicyDraftDocument) :
+        typeof(T) == typeof(PolicyMetadata) ? Cast<T>(PolicySerializerContext.Default.PolicyMetadata) :
+        typeof(T) == typeof(PolicyDraftMetadata) ? Cast<T>(PolicySerializerContext.Default.PolicyDraftMetadata) :
+        typeof(T) == typeof(PolicyEnforcement) ? Cast<T>(PolicySerializerContext.Default.PolicyEnforcement) :
+        typeof(T) == typeof(PolicyRule) ? Cast<T>(PolicySerializerContext.Default.PolicyRule) :
+        typeof(T) == typeof(PolicyMatch) ? Cast<T>(PolicySerializerContext.Default.PolicyMatch) :
+        typeof(T) == typeof(VersionRange) ? Cast<T>(PolicySerializerContext.Default.VersionRange) :
+        typeof(T) == typeof(PolicyConstraints) ? Cast<T>(PolicySerializerContext.Default.PolicyConstraints) :
         throw new NotSupportedException($"Policy JSON serialization for {typeof(T).FullName} is not source-generated.");
 
     private static JsonTypeInfo<T> StrictTypeInfo<T>() =>
-        typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicyJsonStrictSerializerContext.Default.PolicyDocument) :
-        typeof(T) == typeof(PolicyDraftDocument) ? Cast<T>(PolicyJsonStrictSerializerContext.Default.PolicyDraftDocument) :
-        typeof(T) == typeof(PolicyMetadata) ? Cast<T>(PolicyJsonStrictSerializerContext.Default.PolicyMetadata) :
-        typeof(T) == typeof(PolicyDraftMetadata) ? Cast<T>(PolicyJsonStrictSerializerContext.Default.PolicyDraftMetadata) :
-        typeof(T) == typeof(PolicyEnforcement) ? Cast<T>(PolicyJsonStrictSerializerContext.Default.PolicyEnforcement) :
-        typeof(T) == typeof(PolicyRule) ? Cast<T>(PolicyJsonStrictSerializerContext.Default.PolicyRule) :
-        typeof(T) == typeof(PolicyMatch) ? Cast<T>(PolicyJsonStrictSerializerContext.Default.PolicyMatch) :
-        typeof(T) == typeof(VersionRange) ? Cast<T>(PolicyJsonStrictSerializerContext.Default.VersionRange) :
-        typeof(T) == typeof(PolicyConstraints) ? Cast<T>(PolicyJsonStrictSerializerContext.Default.PolicyConstraints) :
+        typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDocument) :
+        typeof(T) == typeof(PolicyDraftDocument) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDraftDocument) :
+        typeof(T) == typeof(PolicyMetadata) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyMetadata) :
+        typeof(T) == typeof(PolicyDraftMetadata) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDraftMetadata) :
+        typeof(T) == typeof(PolicyEnforcement) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyEnforcement) :
+        typeof(T) == typeof(PolicyRule) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyRule) :
+        typeof(T) == typeof(PolicyMatch) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyMatch) :
+        typeof(T) == typeof(VersionRange) ? Cast<T>(PolicyStrictSerializerContext.Default.VersionRange) :
+        typeof(T) == typeof(PolicyConstraints) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyConstraints) :
         throw new NotSupportedException($"Strict policy JSON deserialization for {typeof(T).FullName} is not source-generated.");
 
     private static JsonTypeInfo<T> Cast<T>(JsonTypeInfo jsonTypeInfo) =>
@@ -230,7 +230,7 @@ public static class PolicyJson
 [JsonSerializable(typeof(PolicyMatch))]
 [JsonSerializable(typeof(VersionRange))]
 [JsonSerializable(typeof(PolicyConstraints))]
-internal sealed partial class PolicyJsonSerializerContext : JsonSerializerContext;
+internal sealed partial class PolicySerializerContext : JsonSerializerContext;
 
 [JsonSourceGenerationOptions(
     WriteIndented = true,
@@ -246,4 +246,4 @@ internal sealed partial class PolicyJsonSerializerContext : JsonSerializerContex
 [JsonSerializable(typeof(PolicyMatch))]
 [JsonSerializable(typeof(VersionRange))]
 [JsonSerializable(typeof(PolicyConstraints))]
-internal sealed partial class PolicyJsonStrictSerializerContext : JsonSerializerContext;
+internal sealed partial class PolicyStrictSerializerContext : JsonSerializerContext;

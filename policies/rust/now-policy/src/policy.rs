@@ -38,15 +38,16 @@ pub struct PolicyDocument {
     pub rules: Vec<PolicyRule>,
 }
 
-impl From<&PolicyDocument> for PolicyDraftDocument {
-    fn from(value: &PolicyDocument) -> Self {
-        Self {
-            _schema: value._schema,
-            policy_version: value.policy_version.clone(),
-            policy_type: value.policy_type,
-            metadata: PolicyDraftMetadata::from(&value.metadata),
-            enforcement: value.enforcement.clone(),
-            rules: value.rules.clone(),
+impl PolicyDocument {
+    /// Create an editable draft, intentionally omitting server-managed commit metadata.
+    pub fn to_draft(&self) -> PolicyDraftDocument {
+        PolicyDraftDocument {
+            _schema: self._schema,
+            policy_version: self.policy_version.clone(),
+            policy_type: self.policy_type,
+            metadata: self.metadata.to_draft(),
+            enforcement: self.enforcement.clone(),
+            rules: self.rules.clone(),
         }
     }
 }
@@ -172,15 +173,15 @@ pub struct PolicyDraftMetadata {
     pub support_url: Option<HttpUrl>,
 }
 
-impl From<&PolicyMetadata> for PolicyDraftMetadata {
-    fn from(value: &PolicyMetadata) -> Self {
-        Self {
-            id: value.id.clone(),
-            publisher: value.publisher.clone(),
-            valid_from: value.valid_from,
-            valid_until: value.valid_until,
-            description: value.description.clone(),
-            support_url: value.support_url.clone(),
+impl PolicyMetadata {
+    fn to_draft(&self) -> PolicyDraftMetadata {
+        PolicyDraftMetadata {
+            id: self.id.clone(),
+            publisher: self.publisher.clone(),
+            valid_from: self.valid_from,
+            valid_until: self.valid_until,
+            description: self.description.clone(),
+            support_url: self.support_url.clone(),
         }
     }
 }

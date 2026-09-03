@@ -58,7 +58,7 @@ public class PolicyTests
 
         var schema = await JsonSchema.FromFileAsync(PolicySchema);
         var json = policy.ToJson();
-        var reparsed = PolicyJson.DeserializeStrict<PolicyDocument>(json);
+        var reparsed = PolicySerializer.DeserializeStrict<PolicyDocument>(json);
         var errors = schema.Validate(json);
 
         Assert.NotNull(reparsed);
@@ -216,12 +216,12 @@ public class PolicyTests
         const string RuleJson =
             """{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{"Interactive":[false,true]}}""";
 
-        Assert.Throws<JsonException>(() => PolicyJson.DeserializeStrict<PolicyMatch>(MatchJson));
-        Assert.Throws<JsonException>(() => PolicyJson.DeserializeStrict<PolicyRule>(RuleJson));
-        Assert.NotNull(PolicyJson.DeserializeStrict<PolicyMatch>("""{"Interactive":[]}"""));
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson));
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyRule>(RuleJson));
+        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyMatch>("""{"Interactive":[]}"""));
 
         var match = new PolicyMatch { Interactive = [false, true] };
-        Assert.Throws<JsonException>(() => PolicyJson.Serialize(match));
+        Assert.Throws<JsonException>(() => PolicySerializer.Serialize(match));
     }
 
     [Theory]

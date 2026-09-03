@@ -56,7 +56,7 @@ public sealed class PolicyDocument
 
     public static PolicyDocument ParseJson(string json)
     {
-        return PolicyJson.DeserializePolicyDocumentStrict(json)
+        return PolicySerializer.DeserializePolicyDocumentStrict(json)
             ?? throw new JsonException("policy document was null");
     }
 
@@ -73,7 +73,7 @@ public sealed class PolicyDocument
         };
     }
 
-    public string ToJson() => PolicyJson.Serialize(this);
+    public string ToJson() => PolicySerializer.Serialize(this);
 }
 
 /// <summary>An editable policy document without server-managed commit metadata.</summary>
@@ -125,7 +125,7 @@ public sealed class PolicyDraftDocument
 
     public static PolicyDraftDocument ParseJson(string json)
     {
-        return PolicyJson.DeserializePolicyDraftDocumentStrict(json)
+        return PolicySerializer.DeserializePolicyDraftDocumentStrict(json)
             ?? throw new JsonException("policy draft document was null");
     }
 
@@ -147,7 +147,7 @@ public sealed class PolicyDraftDocument
         };
     }
 
-    public string ToJson() => PolicyJson.Serialize(this);
+    public string ToJson() => PolicySerializer.Serialize(this);
 }
 
 public sealed class PolicyMetadata

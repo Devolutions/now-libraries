@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - [**breaking**] Make policy documents JSON-only and remove `parse_policy_yaml`.
-- Add editable `PolicyDraftDocument` and explicit committed/draft conversions.
+- Add editable `PolicyDraftDocument` and explicit named committed/draft conversion methods.
 - Reject boolean match arrays containing more than one value.
 
 
