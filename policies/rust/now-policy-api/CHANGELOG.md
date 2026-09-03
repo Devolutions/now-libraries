@@ -11,100 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### <!-- 1 -->Features
 
-- Add active package policy inspection contract ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6)) 
-
-  - add canonical `GET /v1/policy` support across the Rust server
-  contract, generated OpenAPI, C# DTOs, and
-  `BrokerClient.GetPolicy(CancellationToken)`
-  - return the existing canonical `PolicyDocument` inside a versioned
-  `PolicyResponse`, with structured `404 NotFound` behavior when no active
-  policy is configured
-  - make policy inspection unconditional: remove `policy-compat` and its
-  cross-model conversion impls, and keep runtime mapping ownership in
-  broker implementations
-  - name the required Rust server accessor `active_policy`, leaving clear
-  room for a future explicit `replace_policy` operation backed by a
-  separate policy-store abstraction
-  - harden C# successful-response validation for required/null fields,
-  collection elements, unknown members, and canonical enum casing
-  - preserve existing OpenAPI component names by namespacing colliding
-  embedded policy components as `PolicyModel…`
-  - run workspace Rust tests and Clippy with all features through the
-  standard xtask commands
-  
-  ## API changes
-  
-  ### Rust
-  
-  - `now-policy-api` adds public `PolicyResponse` and
-  `PolicyResponseKind`; `now-policy` is now a normal dependency because
-  `PolicyDocument` is part of the permanent wire contract
-  - `PackageBrokerServer` adds the required method:
-  
-    ```rust
-  async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse>;
-    ```
-  
-  - `now-policy-server-template` registers the route unconditionally and
-  extends its mock with policy response/error builders
-  - `policy-compat` and its `From`/`TryFrom` conversions are removed
-  
-  ### C#
-  
-  - `Devolutions.Now.Policy.Api` adds `PolicyResponse`, embedding
-  `Devolutions.Now.Policy.Model.PolicyDocument`
-  - `Devolutions.Now.Policy.Client` adds `GetPolicy(CancellationToken)`
-  with strict validation of successful response bodies
-  - policy-model deserialization now enforces required members, non-null
-  collection elements, and canonical enum casing
-  
-  ### HTTP
-  
-  - adds read-only `GET /v1/policy`
-  - `200`: `PolicyResponse`
-  - `404`: structured `ErrorResponse` when no active policy is configured
-  - other failures use the existing `ErrorResponse` contract
-  - no policy mutation endpoint is introduced
-  
-  ---------
-
-- [**breaking**] Add package policy management contract ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b)) 
-
-  Add a versioned package-policy management contract alongside the
-  unchanged active-policy inspection API. New management, validation, and
-  replacement endpoints expose atomic Active/Missing/Invalid snapshots,
-  raw-draft authoritative validation with structured findings and
-  warning-bound receipts, and exact-token optimistic replacement with
-  explicit Update, ReplaceIdentity, Create, and Repair intents. Rust
-  server implementations gain the corresponding required trait methods and
-  routes, while .NET gains NativeAOT-safe DTOs and cancellation-aware
-  client APIs.
-  
-  Make policy documents JSON-only, removing Rust `parse_policy_yaml` and
-  .NET `PolicyDocument.ParseYaml`. Introduce `PolicyDraftDocument` for
-  authored policy content without server-managed revision and publication
-  metadata, with its own versioned JSON Schema identity and explicit named
-  conversions to and from committed policies. Rename the public .NET
-  serialization helpers to `PolicySerializer` and `BrokerSerializer`, and
-  replace Rust’s lossy `From<&PolicyDocument>` draft projection with
-  `PolicyDocument::to_draft()`.
-  
-  Tighten cross-language contract validation for boolean matches, revision
-  bounds, Unicode text lengths, opaque ASCII tokens and receipts,
-  validation results, management snapshots, stale-token errors, and
-  nullable schema fields. Unsafe paths and stale state use conflict
-  semantics, unsupported policy formats and filesystems use
-  unprocessable-entity semantics, and absent newer routes remain ordinary
-  404 responses. Validation and replacement accept complete HTTP request
-  bodies up to 16 MiB through public Rust and .NET constants, while
-  package-operation limits remain unchanged.
-
-
-
-### Added
-
-- Add versioned policy management, raw-draft validation, structured findings/receipts, optimistic replacement, and management error contracts, including the atomic current snapshot required on stale-token errors, explicit unsupported non-JSON path semantics, and generated 16 MiB full-request-body metadata for management write endpoints.
-
+- Add `PolicyResponse` for active policy inspection ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- [**breaking**] Make `now-policy` a required dependency because `PolicyDocument` is part of `PolicyResponse` ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- [**breaking**] Remove the `policy-compat` feature and its cross-model conversions ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- Add policy management snapshots for active, missing, and invalid policies ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add raw-draft validation contracts with structured findings and receipts ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add optimistic policy replacement contracts with explicit update, identity replacement, creation, and repair operations ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add policy management error contracts, including the current snapshot on stale-token errors ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
 
 ## [[0.3.1](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.3.0...now-policy-api-v0.3.1)] - 2026-08-13
 

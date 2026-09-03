@@ -11,116 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### <!-- 1 -->Features
 
-- Add active package policy inspection contract ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6)) 
-
-  - add canonical `GET /v1/policy` support across the Rust server
-  contract, generated OpenAPI, C# DTOs, and
-  `BrokerClient.GetPolicy(CancellationToken)`
-  - return the existing canonical `PolicyDocument` inside a versioned
-  `PolicyResponse`, with structured `404 NotFound` behavior when no active
-  policy is configured
-  - make policy inspection unconditional: remove `policy-compat` and its
-  cross-model conversion impls, and keep runtime mapping ownership in
-  broker implementations
-  - name the required Rust server accessor `active_policy`, leaving clear
-  room for a future explicit `replace_policy` operation backed by a
-  separate policy-store abstraction
-  - harden C# successful-response validation for required/null fields,
-  collection elements, unknown members, and canonical enum casing
-  - preserve existing OpenAPI component names by namespacing colliding
-  embedded policy components as `PolicyModel…`
-  - run workspace Rust tests and Clippy with all features through the
-  standard xtask commands
-  
-  ## API changes
-  
-  ### Rust
-  
-  - `now-policy-api` adds public `PolicyResponse` and
-  `PolicyResponseKind`; `now-policy` is now a normal dependency because
-  `PolicyDocument` is part of the permanent wire contract
-  - `PackageBrokerServer` adds the required method:
-  
-    ```rust
-  async fn active_policy(&self) -> Result<PolicyResponse, ErrorResponse>;
-    ```
-  
-  - `now-policy-server-template` registers the route unconditionally and
-  extends its mock with policy response/error builders
-  - `policy-compat` and its `From`/`TryFrom` conversions are removed
-  
-  ### C#
-  
-  - `Devolutions.Now.Policy.Api` adds `PolicyResponse`, embedding
-  `Devolutions.Now.Policy.Model.PolicyDocument`
-  - `Devolutions.Now.Policy.Client` adds `GetPolicy(CancellationToken)`
-  with strict validation of successful response bodies
-  - policy-model deserialization now enforces required members, non-null
-  collection elements, and canonical enum casing
-  
-  ### HTTP
-  
-  - adds read-only `GET /v1/policy`
-  - `200`: `PolicyResponse`
-  - `404`: structured `ErrorResponse` when no active policy is configured
-  - other failures use the existing `ErrorResponse` contract
-  - no policy mutation endpoint is introduced
-  
-  ---------
-
-- [**breaking**] Add package policy management contract ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b)) 
-
-  Add a versioned package-policy management contract alongside the
-  unchanged active-policy inspection API. New management, validation, and
-  replacement endpoints expose atomic Active/Missing/Invalid snapshots,
-  raw-draft authoritative validation with structured findings and
-  warning-bound receipts, and exact-token optimistic replacement with
-  explicit Update, ReplaceIdentity, Create, and Repair intents. Rust
-  server implementations gain the corresponding required trait methods and
-  routes, while .NET gains NativeAOT-safe DTOs and cancellation-aware
-  client APIs.
-  
-  Make policy documents JSON-only, removing Rust `parse_policy_yaml` and
-  .NET `PolicyDocument.ParseYaml`. Introduce `PolicyDraftDocument` for
-  authored policy content without server-managed revision and publication
-  metadata, with its own versioned JSON Schema identity and explicit named
-  conversions to and from committed policies. Rename the public .NET
-  serialization helpers to `PolicySerializer` and `BrokerSerializer`, and
-  replace Rust’s lossy `From<&PolicyDocument>` draft projection with
-  `PolicyDocument::to_draft()`.
-  
-  Tighten cross-language contract validation for boolean matches, revision
-  bounds, Unicode text lengths, opaque ASCII tokens and receipts,
-  validation results, management snapshots, stale-token errors, and
-  nullable schema fields. Unsafe paths and stale state use conflict
-  semantics, unsupported policy formats and filesystems use
-  unprocessable-entity semantics, and absent newer routes remain ordinary
-  404 responses. Validation and replacement accept complete HTTP request
-  bodies up to 16 MiB through public Rust and .NET constants, while
-  package-operation limits remain unchanged.
+- [**breaking**] Add the required `PackageBrokerServer::active_policy` method ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- Expose active policy inspection through `GET /v1/policy` ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- Return `404 Not Found` when no active policy is configured ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- [**breaking**] Add the required `PackageBrokerServer::policy_management` method and expose it through `GET /v1/policy/management` ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- [**breaking**] Add the required `PackageBrokerServer::validate_policy` method and expose it through `POST /v1/policy/validate` ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- [**breaking**] Add the required `PackageBrokerServer::replace_policy` method and expose it through `PUT /v1/policy` ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Map policy management failures to structured HTTP status responses ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add the public 16 MiB `MAX_POLICY_MANAGEMENT_BODY_BYTES` limit for policy validation and replacement requests ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
 
 ### <!-- 4 -->Bug Fixes
 
-- [**breaking**] Keep policy mock server out of the public API ([#97](https://github.com/Devolutions/now-libraries/issues/97)) ([2f8f425def](https://github.com/Devolutions/now-libraries/commit/2f8f425def03720189a96a657571551918e1034d)) 
-
-  The package broker mock is an internal test double, so exposing it from
-  the published server-template crate creates an unnecessary API
-  commitment. Shared protocol fixtures also belong at repository scope
-  rather than under one language's crate.
-  
-  - move `MockPackageBrokerServer` into private integration-test support
-  - keep all mock-backed router tests enabled in the default test run
-  - remove the mock from the crate API, metadata, and public documentation
-  - relocate shared package-broker fixtures to
-  `policies/test-data/package-broker` and update Rust, .NET, and protocol
-  documentation references
-
-
-
-### Added
-
-- [**breaking**] Add required policy management, validation, and optimistic replacement trait methods, routes, status mappings, and OpenAPI operations. Unsafe policy paths map to HTTP 409, unsupported non-JSON policy paths map to HTTP 422, and absent routes retain ordinary HTTP 404 behavior. Validation and replacement use a separate public 16 MiB full-request-body limit while package operations retain their 256 KiB limit.
-
+- [**breaking**] Remove the public `MockPackageBrokerServer` test double from the crate API ([#97](https://github.com/Devolutions/now-libraries/issues/97)) ([2f8f425def](https://github.com/Devolutions/now-libraries/commit/2f8f425def03720189a96a657571551918e1034d))
 
 ## [[0.3.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.2.0...now-policy-server-template-v0.3.0)] - 2026-08-05
 
