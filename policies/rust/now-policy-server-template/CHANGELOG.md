@@ -7,10 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Added
+## [[0.4.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.3.0...now-policy-server-template-v0.4.0)] - 2026-09-03
 
-- [**breaking**] Add required policy management, validation, and optimistic replacement trait methods, routes, status mappings, and OpenAPI operations. Unsafe policy paths map to HTTP 409, unsupported non-JSON policy paths map to HTTP 422, and absent routes retain ordinary HTTP 404 behavior. Validation and replacement use a separate public 16 MiB full-request-body limit while package operations retain their 256 KiB limit.
+### <!-- 1 -->Features
 
+- [**breaking**] Add the required `PackageBrokerServer::active_policy` method ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- Expose active policy inspection through `GET /v1/policy` ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- Return `404 Not Found` when no active policy is configured ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- [**breaking**] Add the required `PackageBrokerServer::policy_management` method and expose it through `GET /v1/policy/management` ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- [**breaking**] Add the required `PackageBrokerServer::validate_policy` method and expose it through `POST /v1/policy/validate` ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- [**breaking**] Add the required `PackageBrokerServer::replace_policy` method and expose it through `PUT /v1/policy` ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Map policy management failures to structured HTTP status responses ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add the public 16 MiB `MAX_POLICY_MANAGEMENT_BODY_BYTES` limit for policy validation and replacement requests ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+
+### <!-- 4 -->Bug Fixes
+
+- [**breaking**] Remove the public `MockPackageBrokerServer` test double from the crate API ([#97](https://github.com/Devolutions/now-libraries/issues/97)) ([2f8f425def](https://github.com/Devolutions/now-libraries/commit/2f8f425def03720189a96a657571551918e1034d))
 
 ## [[0.3.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.2.0...now-policy-server-template-v0.3.0)] - 2026-08-05
 

@@ -7,16 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [[0.3.0](https://github.com/Devolutions/now-libraries/compare/now-policy-v0.2.0...now-policy-v0.3.0)] - 2026-09-03
+
+### <!-- 1 -->Features
+
+- [**breaking**] Make policy documents JSON-only by removing `parse_policy_yaml` ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add `PolicyDraftDocument` for authored policy content without server-managed metadata ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add the versioned `now-policy-draft` JSON Schema ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add `PolicyDocument::to_draft()` for creating editable policy drafts ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add `PolicyDraftDocument::into_policy_document()` for committing drafts with server-managed metadata ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- [**breaking**] Reject boolean match arrays containing multiple values ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+
 ### Fixed
 
-- Count Unicode scalar values for `StringPattern`, `VersionString`, and `CustomParameterString` length bounds, matching JSON Schema and .NET policy validation semantics.
-
-### Changed
-
-- [**breaking**] Make policy documents JSON-only and remove `parse_policy_yaml`.
-- Add editable `PolicyDraftDocument` and explicit named committed/draft conversion methods.
-- Reject boolean match arrays containing more than one value.
-
+- Count Unicode scalar values for `StringPattern` length bounds ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Count Unicode scalar values for `VersionString` length bounds ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Count Unicode scalar values for `CustomParameterString` length bounds ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
 
 ## [[0.2.0](https://github.com/Devolutions/now-libraries/compare/now-policy-v0.1.0...now-policy-v0.2.0)] - 2026-07-27
 

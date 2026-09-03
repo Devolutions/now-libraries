@@ -7,10 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Added
+## [[0.4.0](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.3.1...now-policy-api-v0.4.0)] - 2026-09-03
 
-- Add versioned policy management, raw-draft validation, structured findings/receipts, optimistic replacement, and management error contracts, including the atomic current snapshot required on stale-token errors, explicit unsupported non-JSON path semantics, and generated 16 MiB full-request-body metadata for management write endpoints.
+### <!-- 1 -->Features
 
+- Add `PolicyResponse` for active policy inspection ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- [**breaking**] Make `now-policy` a required dependency because `PolicyDocument` is part of `PolicyResponse` ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- [**breaking**] Remove the `policy-compat` feature and its cross-model conversions ([#93](https://github.com/Devolutions/now-libraries/issues/93)) ([cd5a6e9f8e](https://github.com/Devolutions/now-libraries/commit/cd5a6e9f8eeb3c70cc9ef9003ffeb46716ceced6))
+- Add policy management snapshots for active, missing, and invalid policies ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add raw-draft validation contracts with structured findings and receipts ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add optimistic policy replacement contracts with explicit update, identity replacement, creation, and repair operations ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
+- Add policy management error contracts, including the current snapshot on stale-token errors ([#99](https://github.com/Devolutions/now-libraries/issues/99)) ([cd7f3ba741](https://github.com/Devolutions/now-libraries/commit/cd7f3ba7416358f9cc137dcd1774511e9aab0e9b))
 
 ## [[0.3.1](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.3.0...now-policy-api-v0.3.1)] - 2026-08-13
 
