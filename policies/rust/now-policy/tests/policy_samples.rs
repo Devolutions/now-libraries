@@ -51,13 +51,19 @@ fn draft_conversion_omits_and_restores_server_metadata() {
 }
 
 #[test]
-fn draft_conversion_rejects_zero_revision() {
+fn draft_conversion_enforces_revision_bounds() {
     let path = samples_dir().join("corporate-allowlist.policy.json");
     let committed: PolicyDocument = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
     let draft = committed.to_draft();
     let published_at = Utc.with_ymd_and_hms(2026, 8, 29, 0, 0, 0).unwrap();
 
     assert!(draft.into_policy_document(0, published_at).is_err());
+
+    let draft = committed.to_draft();
+    assert!(draft.into_policy_document(2_147_483_647, published_at).is_ok());
+
+    let draft = committed.to_draft();
+    assert!(draft.into_policy_document(2_147_483_648, published_at).is_err());
 }
 
 #[test]
@@ -71,6 +77,10 @@ fn mixed_boolean_match_values_are_rejected() {
 
     let empty: now_policy::PolicyMatch = serde_json::from_value(serde_json::json!({ "Interactive": [] })).unwrap();
     assert!(empty.interactive.is_empty());
+
+    let mut invalid = now_policy::PolicyMatch::default();
+    invalid.interactive.extend([false, true]);
+    assert!(serde_json::to_value(invalid).is_err());
 }
 
 #[test]

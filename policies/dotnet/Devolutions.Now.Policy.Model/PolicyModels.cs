@@ -79,6 +79,8 @@ public sealed class PolicyDocument
 /// <summary>An editable policy document without server-managed commit metadata.</summary>
 public sealed class PolicyDraftDocument
 {
+    private const uint MaxRevision = int.MaxValue;
+
     [JsonPropertyName("$schema")]
     [JsonRequired]
     public string Schema { get; set; } = SchemaUris.Policy;
@@ -131,9 +133,11 @@ public sealed class PolicyDraftDocument
 
     public PolicyDocument ToPolicyDocument(uint revision, DateTimeOffset publishedAt)
     {
-        if (revision == 0)
+        if (revision is 0 or > MaxRevision)
         {
-            throw new ArgumentOutOfRangeException(nameof(revision), "Policy revisions start at 1.");
+            throw new ArgumentOutOfRangeException(
+                nameof(revision),
+                $"Policy revisions must be between 1 and {MaxRevision}.");
         }
 
         return new PolicyDocument

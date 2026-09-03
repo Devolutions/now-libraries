@@ -423,6 +423,7 @@ fn policy_replacement_docs(op: TransformOperation<'_>) -> TransformOperation<'_>
         .response::<403, Json<ErrorResponse>>()
         .response::<409, Json<ErrorResponse>>()
         .response::<413, Json<ErrorResponse>>()
+        .response::<415, Json<ErrorResponse>>()
         .response::<422, Json<ErrorResponse>>()
         .response::<500, Json<ErrorResponse>>()
         .response::<501, Json<ErrorResponse>>()
@@ -513,6 +514,17 @@ mod tests {
         );
         assert_eq!(
             responses["404"]["content"]["application/json"]["schema"]["$ref"],
+            "#/components/schemas/ErrorResponse"
+        );
+    }
+
+    #[test]
+    fn policy_replacement_openapi_documents_unsupported_media_type() {
+        let api = serde_json::to_value(openapi()).expect("OpenAPI should serialize");
+        let response = &api["paths"]["/v1/policy"]["put"]["responses"]["415"];
+
+        assert_eq!(
+            response["content"]["application/json"]["schema"]["$ref"],
             "#/components/schemas/ErrorResponse"
         );
     }

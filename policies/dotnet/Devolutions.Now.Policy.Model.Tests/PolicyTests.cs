@@ -200,6 +200,19 @@ public class PolicyTests
     }
 
     [Fact]
+    public void Draft_conversion_enforces_revision_bounds()
+    {
+        var draft = PolicyDraftDocument.Create("contoso.policy", "Contoso IT");
+        var publishedAt = DateTimeOffset.Parse("2026-08-29T00:00:00Z");
+
+        Assert.Equal(
+            (uint)int.MaxValue,
+            draft.ToPolicyDocument(int.MaxValue, publishedAt).Metadata.Revision);
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => draft.ToPolicyDocument((uint)int.MaxValue + 1, publishedAt));
+    }
+
+    [Fact]
     public void Mixed_boolean_match_values_are_rejected()
     {
         var document = JsonNode.Parse(

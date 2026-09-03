@@ -11,6 +11,8 @@ use crate::{
     PackageBrokerPolicy, PolicySchemaUri, ResourceId, Scope, SemanticVersion, StringPattern, VersionString,
 };
 
+const MAX_POLICY_REVISION: u32 = 2_147_483_647;
+
 /// A policy document governing which package operations are allowed or denied.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "PolicyDocument")]
@@ -86,10 +88,10 @@ impl PolicyDraftDocument {
         revision: u32,
         published_at: DateTime<Utc>,
     ) -> Result<PolicyDocument, ModelValidationError> {
-        if revision == 0 {
+        if !(1..=MAX_POLICY_REVISION).contains(&revision) {
             return Err(ModelValidationError::Invalid {
                 type_name: "PolicyDocument",
-                reason: "revision must be at least 1".to_owned(),
+                reason: format!("revision must be between 1 and {MAX_POLICY_REVISION}"),
             });
         }
 
@@ -353,6 +355,7 @@ pub struct PolicyMatch {
     #[serde(
         default,
         skip_serializing_if = "BTreeSet::is_empty",
+        serialize_with = "serialize_boolean_match",
         deserialize_with = "deserialize_boolean_match"
     )]
     #[schemars(length(max = 1))]
@@ -362,6 +365,7 @@ pub struct PolicyMatch {
     #[serde(
         default,
         skip_serializing_if = "BTreeSet::is_empty",
+        serialize_with = "serialize_boolean_match",
         deserialize_with = "deserialize_boolean_match"
     )]
     #[schemars(length(max = 1))]
@@ -371,6 +375,7 @@ pub struct PolicyMatch {
     #[serde(
         default,
         skip_serializing_if = "BTreeSet::is_empty",
+        serialize_with = "serialize_boolean_match",
         deserialize_with = "deserialize_boolean_match"
     )]
     #[schemars(length(max = 1))]
@@ -380,6 +385,7 @@ pub struct PolicyMatch {
     #[serde(
         default,
         skip_serializing_if = "BTreeSet::is_empty",
+        serialize_with = "serialize_boolean_match",
         deserialize_with = "deserialize_boolean_match"
     )]
     #[schemars(length(max = 1))]
@@ -389,6 +395,7 @@ pub struct PolicyMatch {
     #[serde(
         default,
         skip_serializing_if = "BTreeSet::is_empty",
+        serialize_with = "serialize_boolean_match",
         deserialize_with = "deserialize_boolean_match"
     )]
     #[schemars(length(max = 1))]
@@ -398,6 +405,7 @@ pub struct PolicyMatch {
     #[serde(
         default,
         skip_serializing_if = "BTreeSet::is_empty",
+        serialize_with = "serialize_boolean_match",
         deserialize_with = "deserialize_boolean_match"
     )]
     #[schemars(length(max = 1))]
@@ -407,6 +415,7 @@ pub struct PolicyMatch {
     #[serde(
         default,
         skip_serializing_if = "BTreeSet::is_empty",
+        serialize_with = "serialize_boolean_match",
         deserialize_with = "deserialize_boolean_match"
     )]
     #[schemars(length(max = 1))]
@@ -416,6 +425,7 @@ pub struct PolicyMatch {
     #[serde(
         default,
         skip_serializing_if = "BTreeSet::is_empty",
+        serialize_with = "serialize_boolean_match",
         deserialize_with = "deserialize_boolean_match"
     )]
     #[schemars(length(max = 1))]
@@ -431,6 +441,16 @@ fn deserialize_boolean_match<'de, D: serde::Deserializer<'de>>(deserializer: D) 
     }
 
     Ok(values.into_iter().collect())
+}
+
+fn serialize_boolean_match<S: serde::Serializer>(values: &BTreeSet<bool>, serializer: S) -> Result<S::Ok, S::Error> {
+    if values.len() > 1 {
+        return Err(serde::ser::Error::custom(
+            "boolean match arrays must contain at most one value",
+        ));
+    }
+
+    values.serialize(serializer)
 }
 
 impl PolicyMatch {

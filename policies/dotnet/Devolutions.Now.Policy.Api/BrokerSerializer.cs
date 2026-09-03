@@ -45,7 +45,7 @@ public static class BrokerSerializer
         return value;
     }
 
-    private static void ValidateSemanticValue<T>(T value)
+    private static void ValidateSemanticValue(object? value)
     {
         switch (value)
         {
@@ -218,15 +218,31 @@ public static class BrokerSerializer
         }
     }
 
-    private static JsonSerializerOptions CreateOptions(bool writeIndented) =>
-        new(BrokerSerializerContext.Default.Options)
-        {
-            TypeInfoResolver = JsonTypeInfoResolver.Combine(
+    private static JsonSerializerOptions CreateOptions(bool writeIndented)
+    {
+        var resolver = JsonTypeInfoResolver.Combine(
                 BrokerSerializerContext.Default,
                 BrokerPolicySerializerContext.Default,
-                BrokerErrorSerializerContext.Default),
+                BrokerErrorSerializerContext.Default)
+            .WithAddedModifier(AttachSemanticValidation);
+
+        return new JsonSerializerOptions(BrokerSerializerContext.Default.Options)
+        {
+            TypeInfoResolver = resolver,
             WriteIndented = writeIndented,
         };
+    }
+
+    private static void AttachSemanticValidation(JsonTypeInfo typeInfo)
+    {
+        if (typeInfo.Kind != JsonTypeInfoKind.Object)
+        {
+            return;
+        }
+
+        typeInfo.OnSerializing = ValidateSemanticValue;
+        typeInfo.OnDeserialized = ValidateSemanticValue;
+    }
 }
 
 [JsonSourceGenerationOptions(

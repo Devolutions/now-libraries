@@ -441,6 +441,24 @@ public class PolicyManagementClientTests
         Assert.Throws<JsonException>(() => BrokerSerializer.Serialize(management));
     }
 
+    [Fact]
+    public async Task Public_serializer_options_enforce_semantic_invariants()
+    {
+        var invalidValidation = await ReadFixture(
+            Path.Combine("invalid", "responses"),
+            "policy-validation.valid-with-error.response.json");
+        var management = BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(
+            await ReadFixture("responses", "policy-management.missing.response.json"))!;
+        management.Management.State = PolicyManagementState.Active;
+
+        foreach (var options in new[] { BrokerSerializer.Options, BrokerSerializer.PrettyOptions })
+        {
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyValidationResponse>(invalidValidation, options));
+            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(management, options));
+        }
+    }
+
     [Theory]
     [InlineData("\"stalepolicystoretoken\"")]
     [InlineData("16")]
