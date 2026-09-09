@@ -190,6 +190,16 @@ impl<'a> NowExecPwshMsg<'a> {
     }
 
     #[must_use]
+    pub fn with_elevated(mut self) -> Self {
+        self.flags |= NowExecWinPsFlags::ELEVATED;
+        self
+    }
+
+    pub fn is_elevated(&self) -> bool {
+        self.flags.contains(NowExecWinPsFlags::ELEVATED)
+    }
+
+    #[must_use]
     pub fn with_detached(mut self) -> Self {
         self.flags |= NowExecWinPsFlags::DETACHED;
         self
