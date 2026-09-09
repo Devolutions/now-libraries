@@ -16,6 +16,12 @@ bitflags! {
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_RUN_DIRECTORY_SET
         const DIRECTORY_SET = 0x0001;
+        /// Execute the command with elevated privileges. The elevation mechanism is chosen by the
+        /// host and advertised in `execCapset`; a host that cannot elevate fails the request
+        /// instead of silently executing without elevation.
+        ///
+        /// NOW-PROTO: NOW_EXEC_FLAG_RUN_ELEVATED
+        const ELEVATED = 0x0002;
     }
 }
 
@@ -72,6 +78,16 @@ impl<'a> NowExecRunMsg<'a> {
         self.ensure_message_size()?;
 
         Ok(self)
+    }
+
+    #[must_use]
+    pub fn with_elevated(mut self) -> Self {
+        self.flags |= NowExecRunFlags::ELEVATED;
+        self
+    }
+
+    pub fn is_elevated(&self) -> bool {
+        self.flags.contains(NowExecRunFlags::ELEVATED)
     }
 
     pub fn session_id(&self) -> u32 {

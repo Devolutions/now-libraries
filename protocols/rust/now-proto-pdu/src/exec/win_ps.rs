@@ -64,6 +64,12 @@ bitflags! {
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_PS_UNICODE_CONSOLE
         const UNICODE_CONSOLE = 0x0400;
+        /// Execute the command with elevated privileges. The elevation mechanism is chosen by the
+        /// host and advertised in `execCapset`; a host that cannot elevate fails the request
+        /// instead of silently executing without elevation.
+        ///
+        /// NOW-PROTO: NOW_EXEC_FLAG_PS_ELEVATED
+        const ELEVATED = 0x0800;
 
         /// Enable stdio (stdout, stderr, stdin) redirection.
         ///
@@ -294,6 +300,16 @@ impl<'a> NowExecWinPsMsg<'a> {
 
     pub fn is_unicode_console(&self) -> bool {
         self.flags.contains(NowExecWinPsFlags::UNICODE_CONSOLE)
+    }
+
+    #[must_use]
+    pub fn with_elevated(mut self) -> Self {
+        self.flags |= NowExecWinPsFlags::ELEVATED;
+        self
+    }
+
+    pub fn is_elevated(&self) -> bool {
+        self.flags.contains(NowExecWinPsFlags::ELEVATED)
     }
 
     #[must_use]

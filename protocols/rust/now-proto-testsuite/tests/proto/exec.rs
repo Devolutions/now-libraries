@@ -444,3 +444,151 @@ fn roundtrip_exec_pwsh_simple() {
     assert!(actual.execution_policy().is_none());
     assert!(actual.configuration_name().is_none());
 }
+
+// Elevation flag round-trips for every exec style. The encoded flags field must carry the
+// per-message ELEVATED bit and nothing else, so a host cannot mistake it for another option.
+
+#[test]
+fn roundtrip_exec_run_elevated() {
+    let msg = NowExecRunMsg::new(0x12345678, "a").unwrap().with_elevated();
+
+    let decoded = now_msg_roundtrip(
+        msg,
+        expect!["[09, 00, 00, 00, 13, 10, 02, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
+    );
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::Run(msg)) => msg,
+        _ => panic!("Expected NowExecRunMsg"),
+    };
+
+    assert!(actual.is_elevated());
+}
+
+#[test]
+fn roundtrip_exec_process_elevated() {
+    let msg = NowExecProcessMsg::new(0x12345678, "a").unwrap().with_elevated();
+
+    let decoded = now_msg_roundtrip(
+        msg,
+        expect!["[0B, 00, 00, 00, 13, 11, 08, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00]"],
+    );
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::Process(msg)) => msg,
+        _ => panic!("Expected NowExecProcessMsg"),
+    };
+
+    assert!(actual.is_elevated());
+}
+
+#[test]
+fn roundtrip_exec_shell_elevated() {
+    let msg = NowExecShellMsg::new(0x12345678, "a").unwrap().with_elevated();
+
+    let decoded = now_msg_roundtrip(
+        msg,
+        expect!["[0B, 00, 00, 00, 13, 12, 08, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00]"],
+    );
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::Shell(msg)) => msg,
+        _ => panic!("Expected NowExecShellMsg"),
+    };
+
+    assert!(actual.is_elevated());
+}
+
+#[test]
+fn roundtrip_exec_batch_elevated_no_exit() {
+    let msg = NowExecBatchMsg::new(0x12345678, "a")
+        .unwrap()
+        .with_elevated()
+        .with_no_exit();
+
+    let decoded = now_msg_roundtrip(
+        msg,
+        expect!["[09, 00, 00, 00, 13, 13, 18, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
+    );
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::Batch(msg)) => msg,
+        _ => panic!("Expected NowExecBatchMsg"),
+    };
+
+    assert!(actual.is_elevated());
+    assert!(actual.is_no_exit());
+}
+
+#[test]
+fn roundtrip_exec_winps_elevated() {
+    let msg = NowExecWinPsMsg::new(0x12345678, "a").unwrap().with_elevated();
+
+    let decoded = now_msg_roundtrip(
+        msg,
+        expect!["[0D, 00, 00, 00, 13, 14, 00, 08, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00, 00, 00]"],
+    );
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::WinPs(msg)) => msg,
+        _ => panic!("Expected NowExecWinPsMsg"),
+    };
+
+    assert!(actual.is_elevated());
+}
+
+#[test]
+fn roundtrip_exec_pwsh_elevated() {
+    let msg = NowExecPwshMsg::new(0x12345678, "a").unwrap().with_elevated();
+
+    let decoded = now_msg_roundtrip(
+        msg,
+        expect!["[0D, 00, 00, 00, 13, 15, 00, 08, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00, 00, 00]"],
+    );
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::Pwsh(msg)) => msg,
+        _ => panic!("Expected NowExecPwshMsg"),
+    };
+
+    assert!(actual.is_elevated());
+}
+
+// ELEVATED and NO_EXIT are asserted independently as well as together: the combined 0x0018 mask
+// alone would stay green if the two constants were swapped.
+
+#[test]
+fn roundtrip_exec_batch_elevated_only() {
+    let msg = NowExecBatchMsg::new(0x12345678, "a").unwrap().with_elevated();
+
+    let decoded = now_msg_roundtrip(
+        msg,
+        expect!["[09, 00, 00, 00, 13, 13, 08, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
+    );
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::Batch(msg)) => msg,
+        _ => panic!("Expected NowExecBatchMsg"),
+    };
+
+    assert!(actual.is_elevated());
+    assert!(!actual.is_no_exit());
+}
+
+#[test]
+fn roundtrip_exec_batch_no_exit_only() {
+    let msg = NowExecBatchMsg::new(0x12345678, "a").unwrap().with_no_exit();
+
+    let decoded = now_msg_roundtrip(
+        msg,
+        expect!["[09, 00, 00, 00, 13, 13, 10, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
+    );
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::Batch(msg)) => msg,
+        _ => panic!("Expected NowExecBatchMsg"),
+    };
+
+    assert!(actual.is_no_exit());
+    assert!(!actual.is_elevated());
+}

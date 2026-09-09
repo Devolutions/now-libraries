@@ -23,7 +23,8 @@ namespace Devolutions.NowProto.Messages
         // -- INowSerialize --
 
         ushort INowSerialize.Flags => (ushort)(
-            !string.IsNullOrEmpty(Directory) ? MsgFlags.DirectorySet : 0
+            (!string.IsNullOrEmpty(Directory) ? MsgFlags.DirectorySet : 0) |
+            (Elevated ? MsgFlags.Elevated : 0)
         );
 
         uint INowSerialize.BodySize => FixedPartSize
@@ -60,7 +61,8 @@ namespace Devolutions.NowProto.Messages
             {
                 SessionId = sessionId,
                 Command = command,
-                Directory = directory
+                Directory = directory,
+                Elevated = ((MsgFlags)flags).HasFlag(MsgFlags.Elevated)
             };
         }
 
@@ -71,6 +73,7 @@ namespace Devolutions.NowProto.Messages
             SessionId = sessionId;
             Command = command;
             Directory = null;
+            Elevated = false;
         }
 
         private NowMsgExecRun()
@@ -78,6 +81,7 @@ namespace Devolutions.NowProto.Messages
             SessionId = 0;
             Command = string.Empty;
             Directory = null;
+            Elevated = false;
         }
 
         [Flags]
@@ -89,6 +93,14 @@ namespace Devolutions.NowProto.Messages
             /// NOW-PROTO: NOW_EXEC_FLAG_RUN_DIRECTORY_SET
             /// </summary>
             DirectorySet = 0x0001,
+
+            /// <summary>
+            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
+            /// the host and advertised in execCapset.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_RUN_ELEVATED
+            /// </summary>
+            Elevated = 0x0002,
         }
 
         private const uint FixedPartSize = 4; // u32 SessionId
@@ -101,21 +113,30 @@ namespace Devolutions.NowProto.Messages
                 return this;
             }
 
+            public Builder EnableElevated()
+            {
+                _elevated = true;
+                return this;
+            }
+
             public NowMsgExecRun Build()
             {
                 return new NowMsgExecRun
                 {
                     SessionId = sessionId,
                     Command = command,
-                    Directory = _directory
+                    Directory = _directory,
+                    Elevated = _elevated
                 };
             }
 
             private string? _directory = null;
+            private bool _elevated = false;
         }
 
         public uint SessionId { get; private init; }
         public string Command { get; private init; }
         public string? Directory { get; private init; }
+        public bool Elevated { get; private init; }
     }
 }

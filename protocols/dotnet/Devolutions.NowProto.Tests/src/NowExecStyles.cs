@@ -278,5 +278,163 @@
             Assert.False(decoded.NonInteractive);
             Assert.False(decoded.NoExit);
         }
+
+        // Elevation flag round-trips for every exec style. Byte arrays are the same wire encodings
+        // asserted by the Rust test suite, which keeps both implementations in lockstep.
+
+        [Fact]
+        public void RunElevated()
+        {
+            var msg = new NowMsgExecRun.Builder(0x12345678, "a")
+                .EnableElevated()
+                .Build();
+
+            var encoded = new byte[]
+            {
+                0x09, 0x00, 0x00, 0x00, 0x13, 0x10, 0x02, 0x00, 0x78, 0x56,
+                0x34, 0x12, 0x01, 0x61, 0x00, 0x00, 0x00
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.True(decoded.Elevated);
+        }
+
+        [Fact]
+        public void ProcessElevated()
+        {
+            var msg = new NowMsgExecProcess.Builder(0x12345678, "a")
+                .EnableElevated()
+                .Build();
+
+            var encoded = new byte[]
+            {
+                0x0B, 0x00, 0x00, 0x00, 0x13, 0x11, 0x08, 0x00, 0x78, 0x56,
+                0x34, 0x12, 0x01, 0x61, 0x00, 0x00, 0x00, 0x00, 0x00
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.True(decoded.Elevated);
+        }
+
+        [Fact]
+        public void ShellElevated()
+        {
+            var msg = new NowMsgExecShell.Builder(0x12345678, "a")
+                .EnableElevated()
+                .Build();
+
+            var encoded = new byte[]
+            {
+                0x0B, 0x00, 0x00, 0x00, 0x13, 0x12, 0x08, 0x00, 0x78, 0x56,
+                0x34, 0x12, 0x01, 0x61, 0x00, 0x00, 0x00, 0x00, 0x00
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.True(decoded.Elevated);
+        }
+
+        [Fact]
+        public void BatchElevatedNoExit()
+        {
+            var msg = new NowMsgExecBatch.Builder(0x12345678, "a")
+                .EnableElevated()
+                .EnableNoExit()
+                .Build();
+
+            var encoded = new byte[]
+            {
+                0x09, 0x00, 0x00, 0x00, 0x13, 0x13, 0x18, 0x00, 0x78, 0x56,
+                0x34, 0x12, 0x01, 0x61, 0x00, 0x00, 0x00
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.True(decoded.Elevated);
+            Assert.True(decoded.NoExit);
+        }
+
+        [Fact]
+        public void WinPsElevated()
+        {
+            var msg = new NowMsgExecWinPs.Builder(0x12345678, "a")
+                .EnableElevated()
+                .Build();
+
+            var encoded = new byte[]
+            {
+                0x0D, 0x00, 0x00, 0x00, 0x13, 0x14, 0x00, 0x08, 0x78, 0x56,
+                0x34, 0x12, 0x01, 0x61, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.True(decoded.Elevated);
+        }
+
+        [Fact]
+        public void PwshElevated()
+        {
+            var msg = new NowMsgExecPwsh.Builder(0x12345678, "a")
+                .EnableElevated()
+                .Build();
+
+            var encoded = new byte[]
+            {
+                0x0D, 0x00, 0x00, 0x00, 0x13, 0x15, 0x00, 0x08, 0x78, 0x56,
+                0x34, 0x12, 0x01, 0x61, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.True(decoded.Elevated);
+        }
+
+
+        // ELEVATED and NO_EXIT are asserted independently as well as together: the combined 0x0018
+        // mask alone would stay green if the two constants were swapped.
+
+        [Fact]
+        public void BatchElevatedOnly()
+        {
+            var msg = new NowMsgExecBatch.Builder(0x12345678, "a")
+                .EnableElevated()
+                .Build();
+
+            var encoded = new byte[]
+            {
+                0x09, 0x00, 0x00, 0x00, 0x13, 0x13, 0x08, 0x00, 0x78, 0x56,
+                0x34, 0x12, 0x01, 0x61, 0x00, 0x00, 0x00
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.True(decoded.Elevated);
+            Assert.False(decoded.NoExit);
+        }
+
+        [Fact]
+        public void BatchNoExitOnly()
+        {
+            var msg = new NowMsgExecBatch.Builder(0x12345678, "a")
+                .EnableNoExit()
+                .Build();
+
+            var encoded = new byte[]
+            {
+                0x09, 0x00, 0x00, 0x00, 0x13, 0x13, 0x10, 0x00, 0x78, 0x56,
+                0x34, 0x12, 0x01, 0x61, 0x00, 0x00, 0x00
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.True(decoded.NoExit);
+            Assert.False(decoded.Elevated);
+        }
+
     }
 }

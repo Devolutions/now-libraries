@@ -23,6 +23,7 @@ namespace Devolutions.NowProto.Messages
             (Parameters != null ? MsgFlags.ParametersSet : 0)
             | (Directory != null ? MsgFlags.DirectorySet : 0)
             | (EncodingUtf8 ? MsgFlags.EncodingUtf8 : 0)
+            | (Elevated ? MsgFlags.Elevated : 0)
             | (IoRedirection ? MsgFlags.IoRedirection : 0)
             | (Detached ? MsgFlags.Detached : 0)
         );
@@ -57,6 +58,7 @@ namespace Devolutions.NowProto.Messages
                 msgFlags.HasFlag(MsgFlags.ParametersSet) ? parameters : null,
                 msgFlags.HasFlag(MsgFlags.DirectorySet) ? directory : null,
                 msgFlags.HasFlag(MsgFlags.EncodingUtf8),
+                msgFlags.HasFlag(MsgFlags.Elevated),
                 msgFlags.HasFlag(MsgFlags.IoRedirection),
                 msgFlags.HasFlag(MsgFlags.Detached)
             );
@@ -88,6 +90,14 @@ namespace Devolutions.NowProto.Messages
             /// NOW-PROTO: NOW_EXEC_FLAG_PROCESS_ENCODING_UTF8
             /// </summary>
             EncodingUtf8 = 0x0004,
+
+            /// <summary>
+            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
+            /// the host and advertised in execCapset.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_PROCESS_ELEVATED
+            /// </summary>
+            Elevated = 0x0008,
 
             /// <summary>
             /// Enable stdio (stdout, stderr, stdin) redirection.
@@ -132,6 +142,12 @@ namespace Devolutions.NowProto.Messages
                 return this;
             }
 
+            public Builder EnableElevated()
+            {
+                _elevated = true;
+                return this;
+            }
+
             public Builder EnableDetached()
             {
                 _detached = true;
@@ -140,7 +156,7 @@ namespace Devolutions.NowProto.Messages
 
             public NowMsgExecProcess Build()
             {
-                return new NowMsgExecProcess(_sessionId, _filename, _parameters, _directory, _encodingUtf8, _ioRedirection, _detached);
+                return new NowMsgExecProcess(_sessionId, _filename, _parameters, _directory, _encodingUtf8, _elevated, _ioRedirection, _detached);
             }
 
             private readonly uint _sessionId = sessionId;
@@ -148,17 +164,19 @@ namespace Devolutions.NowProto.Messages
             private string? _parameters = null;
             private string? _directory = null;
             private bool _encodingUtf8 = false;
+            private bool _elevated = false;
             private bool _ioRedirection = false;
             private bool _detached = false;
         }
 
-        internal NowMsgExecProcess(uint sessionId, string filename, string? parameters, string? directory, bool encodingUtf8, bool ioRedirection, bool detached)
+        internal NowMsgExecProcess(uint sessionId, string filename, string? parameters, string? directory, bool encodingUtf8, bool elevated, bool ioRedirection, bool detached)
         {
             SessionId = sessionId;
             Filename = filename;
             Parameters = parameters;
             Directory = directory;
             EncodingUtf8 = encodingUtf8;
+            Elevated = elevated;
             IoRedirection = ioRedirection;
             Detached = detached;
         }
@@ -168,6 +186,7 @@ namespace Devolutions.NowProto.Messages
         public string? Parameters { get; }
         public string? Directory { get; }
         public bool EncodingUtf8 { get; }
+        public bool Elevated { get; }
         public bool IoRedirection { get; }
         public bool Detached { get; }
     }

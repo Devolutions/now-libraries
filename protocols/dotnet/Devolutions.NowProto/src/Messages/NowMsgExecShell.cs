@@ -22,6 +22,7 @@ namespace Devolutions.NowProto.Messages
         ushort INowSerialize.Flags => (ushort)(
             (Shell != null ? MsgFlags.ShellSet : 0)
             | (Directory != null ? MsgFlags.DirectorySet : 0)
+            | (Elevated ? MsgFlags.Elevated : 0)
             | (IoRedirection ? MsgFlags.IoRedirection : 0)
             | (Detached ? MsgFlags.Detached : 0)
         );
@@ -56,6 +57,7 @@ namespace Devolutions.NowProto.Messages
                 filename,
                 msgFlags.HasFlag(MsgFlags.ShellSet) ? parameters : null,
                 msgFlags.HasFlag(MsgFlags.DirectorySet) ? directory : null,
+                msgFlags.HasFlag(MsgFlags.Elevated),
                 msgFlags.HasFlag(MsgFlags.IoRedirection),
                 msgFlags.HasFlag(MsgFlags.Detached)
             );
@@ -79,6 +81,14 @@ namespace Devolutions.NowProto.Messages
             /// NOW-PROTO: NOW_EXEC_FLAG_SHELL_DIRECTORY_SET
             /// </summary>
             DirectorySet = 0x0002,
+
+            /// <summary>
+            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
+            /// the host and advertised in execCapset.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_SHELL_ELEVATED
+            /// </summary>
+            Elevated = 0x0008,
 
             /// <summary>
             /// Enable stdio (stdout, stderr, stdin) redirection.
@@ -117,6 +127,12 @@ namespace Devolutions.NowProto.Messages
                 return this;
             }
 
+            public Builder EnableElevated()
+            {
+                _elevated = true;
+                return this;
+            }
+
             public Builder EnableDetached()
             {
                 _detached = true;
@@ -125,23 +141,25 @@ namespace Devolutions.NowProto.Messages
 
             public NowMsgExecShell Build()
             {
-                return new NowMsgExecShell(_sessionId, _filename, _shell, _directory, _ioRedirection, _detached);
+                return new NowMsgExecShell(_sessionId, _filename, _shell, _directory, _elevated, _ioRedirection, _detached);
             }
 
             private readonly uint _sessionId = sessionId;
             private readonly string _filename = filename;
             private string? _shell = null;
             private string? _directory = null;
+            private bool _elevated = false;
             private bool _ioRedirection = false;
             private bool _detached = false;
         }
 
-        internal NowMsgExecShell(uint sessionId, string filename, string? shell, string? directory, bool ioRedirection, bool detached)
+        internal NowMsgExecShell(uint sessionId, string filename, string? shell, string? directory, bool elevated, bool ioRedirection, bool detached)
         {
             SessionId = sessionId;
             Filename = filename;
             Shell = shell;
             Directory = directory;
+            Elevated = elevated;
             IoRedirection = ioRedirection;
             Detached = detached;
         }
@@ -150,6 +168,7 @@ namespace Devolutions.NowProto.Messages
         public string Filename { get; }
         public string? Shell { get; }
         public string? Directory { get; }
+        public bool Elevated { get; }
         public bool IoRedirection { get; }
         public bool Detached { get; }
     }
