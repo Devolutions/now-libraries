@@ -102,23 +102,29 @@ impl<'a> NowExecRunMsg<'a> {
         Self::FIXED_PART_SIZE + self.command.size() + self.directory.size()
     }
 
-    pub(super) fn decode_from_body(_header: NowHeader, src: &mut ReadCursor<'a>) -> DecodeResult<Self> {
+    pub(super) fn decode_from_body(header: NowHeader, src: &mut ReadCursor<'a>) -> DecodeResult<Self> {
         ensure_fixed_part_size!(in: src);
 
-        let mut flags = NowExecRunFlags::empty();
+        // Flags are preserved as sent, otherwise every flag other than DIRECTORY_SET would be
+        // silently dropped on decode.
+        let mut flags = NowExecRunFlags::from_bits_retain(header.flags);
         let session_id = src.read_u32();
         let command: NowVarStr<'_> = NowVarStr::decode(src)?;
 
-        // Directory field has been added in v1.1.
+        // Directory field has been added in v1.1, so DIRECTORY_SET is derived from the payload
+        // instead of being trusted from the header.
         let directory = if !src.is_empty() {
             let directory = NowVarStr::decode(src)?;
 
-            if !directory.is_empty() {
+            if directory.is_empty() {
+                flags.remove(NowExecRunFlags::DIRECTORY_SET);
+            } else {
                 flags |= NowExecRunFlags::DIRECTORY_SET;
             }
 
             directory
         } else {
+            flags.remove(NowExecRunFlags::DIRECTORY_SET);
             NowVarStr::default()
         };
 
