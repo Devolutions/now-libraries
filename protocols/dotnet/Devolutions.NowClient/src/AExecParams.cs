@@ -42,6 +42,12 @@ namespace Devolutions.NowClient
             }
         }
 
+        /// <summary>
+        /// Whether the caller asked for elevated execution. Inspected by <see cref="NowClient"/>
+        /// so a request cannot be sent to a server that never advertised an elevation capability.
+        /// </summary>
+        internal bool IsElevated { get; set; }
+
         internal ExecSession ToExecSession(uint sessionId, ChannelWriter<IClientCommand> commandWriter)
         {
             return new ExecSession(

@@ -103,6 +103,14 @@ namespace Devolutions.NowProto.Messages
             UnicodeConsole = 0x0400,
 
             /// <summary>
+            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
+            /// the host and advertised in execCapset.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_PS_ELEVATED
+            /// </summary>
+            Elevated = 0x0800,
+
+            /// <summary>
             /// Enable stdio (stdout, stderr, stdin) redirection.
             ///
             /// NOW-PROTO: NOW_EXEC_FLAG_PS_IO_REDIRECTION
@@ -218,6 +226,12 @@ namespace Devolutions.NowProto.Messages
                 return this;
             }
 
+            public Builder EnableElevated()
+            {
+                _flags |= MsgFlags.Elevated;
+                return this;
+            }
+
             public Builder EnableDetached()
             {
                 _flags |= MsgFlags.Detached;
@@ -329,6 +343,7 @@ namespace Devolutions.NowProto.Messages
         public bool IoRedirection => _flags.HasFlag(MsgFlags.IoRedirection);
         public bool RawEncoding => _flags.HasFlag(MsgFlags.RawEncoding);
         public bool UnicodeConsole => _flags.HasFlag(MsgFlags.UnicodeConsole);
+        public bool Elevated => _flags.HasFlag(MsgFlags.Elevated);
         public bool ServerMode => _flags.HasFlag(MsgFlags.ServerMode);
         public bool Detached => _flags.HasFlag(MsgFlags.Detached);
 
