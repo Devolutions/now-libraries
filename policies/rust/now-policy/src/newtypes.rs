@@ -114,7 +114,7 @@ pub const CURRENT_POLICY_FORMAT_VERSION: &str = "1.0.0";
 /// Software-managed policy document format version.
 ///
 /// Readers accept SemVer 2.0.0 values in the compatible 1.x line. Applications
-/// must stamp [`CURRENT_POLICY_FORMAT_VERSION`] for new documents and must not expose
+/// must stamp the current value, `1.0.0`, for new documents and must not expose
 /// this value as publisher-authored editable metadata.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct PolicyFormatVersion(

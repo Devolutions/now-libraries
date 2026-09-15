@@ -213,13 +213,14 @@ fn policy_schema_generates_valid_json() {
 }
 
 #[test]
-fn policy_schemas_omit_document_schema_and_fix_policy_format_version() {
+fn policy_schemas_are_repository_local_and_omit_document_schema() {
     for schema in [
         now_policy::schema::policy_schema_json(),
         now_policy::schema::policy_draft_schema_json(),
     ] {
         let properties = schema["properties"].as_object().unwrap();
         let required = schema["required"].as_array().unwrap();
+        assert!(schema.get("$id").is_none());
         assert!(!properties.contains_key("$schema"));
         assert!(!required.iter().any(|value| value == "$schema"));
 

@@ -23,7 +23,7 @@
           "Path": "/PolicyFormatVersion",
           "Arguments": {
             "actual": "2.0.0",
-            "supported": "1.0.0"
+            "supported": "1.x"
           },
           "Message": "The policy format version is not supported."
         }
