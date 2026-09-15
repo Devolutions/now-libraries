@@ -113,7 +113,7 @@ pub const CURRENT_POLICY_FORMAT_VERSION: &str = "1.0.0";
 pub struct PolicyFormatVersion(
     #[schemars(
         length(max = 128),
-        regex(pattern = r"^1\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?![\s\S])")
+        regex(pattern = r"^1\.(0|[1-9][0-9]{0,18})\.(0|[1-9][0-9]{0,18})(?![\s\S])")
     )]
     String,
 );

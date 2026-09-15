@@ -1269,7 +1269,7 @@ components:
          each numeric component to an unsigned 64-bit integer.
       type: string
       maxLength: 128
-      pattern: ^1\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?![\s\S])
+      pattern: ^1\.(0|[1-9][0-9]{0,18})\.(0|[1-9][0-9]{0,18})(?![\s\S])
     PolicyManagementResponse:
       description: Response body for `GET /v1/policy/management`.
       type: object
@@ -2262,7 +2262,7 @@ components:
          each numeric component to an unsigned 64-bit integer.
       type: string
       maxLength: 128
-      pattern: ^1\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?![\s\S])
+      pattern: ^1\.(0|[1-9][0-9]{0,18})\.(0|[1-9][0-9]{0,18})(?![\s\S])
     PolicyModelPolicyMatch:
       description: |-
         Match criteria for a policy rule. All specified fields must match.

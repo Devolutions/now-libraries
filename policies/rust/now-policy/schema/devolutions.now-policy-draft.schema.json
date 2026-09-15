@@ -250,7 +250,7 @@
     "PolicyFormatVersion": {
       "description": "Software-managed policy document format version.\n\n Readers accept canonical numeric versions in the compatible 1.x line.\n Applications must stamp the current value, `1.0.0`, for new documents and\n must not expose this value as publisher-authored editable metadata.\n Schemas describe the canonical shape; runtime readers additionally bound\n each numeric component to an unsigned 64-bit integer.",
       "maxLength": 128,
-      "pattern": "^1\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?![\\s\\S])",
+      "pattern": "^1\\.(0|[1-9][0-9]{0,18})\\.(0|[1-9][0-9]{0,18})(?![\\s\\S])",
       "type": "string"
     },
     "PolicyMatch": {

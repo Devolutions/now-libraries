@@ -276,6 +276,7 @@ public class PolicyTests
     }
 
     [Theory]
+    [InlineData("1.18446744073709551616.0")]
     [InlineData("1.0.0-01")]
     [InlineData("1.0.0-.")]
     [InlineData("1.0.0\n")]
