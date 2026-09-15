@@ -154,6 +154,21 @@ fn unsupported_policy_format_version_is_rejected() {
 }
 
 #[test]
+fn malformed_policy_format_versions_are_rejected() {
+    let path = samples_dir().join("corporate-allowlist.policy.json");
+    let valid: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+
+    for version in ["not-semver", "1.02.3", "1.2.3-١a", "1.0.0\n"] {
+        let mut value = valid.clone();
+        value["PolicyFormatVersion"] = serde_json::json!(version);
+        assert!(
+            serde_json::from_value::<PolicyDocument>(value).is_err(),
+            "{version:?} should be rejected"
+        );
+    }
+}
+
+#[test]
 fn compatible_policy_format_version_is_preserved_by_conversions() {
     let path = samples_dir().join("corporate-allowlist.policy.json");
     let mut value: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
