@@ -616,6 +616,7 @@ name = "now-policy"
 version = "0.3.0"
 dependencies = [
  "chrono",
+ "regex",
  "schemars",
  "semver",
  "serde",

@@ -1,7 +1,16 @@
 //! Schema-validated newtypes used by NOW policy documents.
 
+use std::sync::LazyLock;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+const POLICY_FORMAT_VERSION_PATTERN: &str = r"^1\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$";
+
+static POLICY_FORMAT_VERSION_REGEX: LazyLock<regex::Regex> = LazyLock::new(|| {
+    regex::Regex::new(&format!("{POLICY_FORMAT_VERSION_PATTERN}\\z"))
+        .expect("BUG: policy format version regex must compile")
+});
 
 /// Error returned when a policy newtype fails deserialization validation.
 #[derive(Debug, thiserror::Error)]
@@ -111,9 +120,7 @@ pub const CURRENT_POLICY_FORMAT_VERSION: &str = "1.0.0";
 pub struct PolicyFormatVersion(
     #[schemars(
         length(max = 128),
-        regex(
-            pattern = r"^1\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
-        )
+        regex(pattern = POLICY_FORMAT_VERSION_PATTERN)
     )]
     String,
 );
@@ -128,17 +135,18 @@ impl PolicyFormatVersion {
             });
         }
 
-        let version = semver::Version::parse(s).map_err(|error| ModelValidationError::Invalid {
-            type_name: "PolicyFormatVersion",
-            reason: error.to_string(),
-        })?;
-        if version.major != 1 {
+        if !POLICY_FORMAT_VERSION_REGEX.is_match(s) {
+            let major = s.split_once('.').map_or(s, |(major, _)| major);
+            if major.chars().all(|character| character.is_ascii_digit()) && major != "1" {
+                return Err(ModelValidationError::Invalid {
+                    type_name: "PolicyFormatVersion",
+                    reason: format!("unsupported major version {major}; supported major version is 1"),
+                });
+            }
+
             return Err(ModelValidationError::Invalid {
                 type_name: "PolicyFormatVersion",
-                reason: format!(
-                    "unsupported major version {}; supported major version is 1",
-                    version.major
-                ),
+                reason: "must be a valid SemVer 2.0.0 string in the compatible 1.x line".to_owned(),
             });
         }
 
