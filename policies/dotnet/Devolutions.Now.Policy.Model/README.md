@@ -21,7 +21,8 @@ Architecture
 
 - `PolicyModels.cs` defines committed `PolicyDocument`, editable `PolicyDraftDocument`, their metadata, explicit conversions, enforcement, rules, match criteria, constraints, and version range types.
 - `Enums.cs` defines policy-level enums such as operation, manager, scope, architecture, elevation, decision, and rule precedence.
-- `PolicySerializer.cs` defines shared `JsonSerializerOptions`, including strict parsing that rejects unknown JSON members and JSON null for non-nullable policy members or collection elements.
+- `PolicySerializer.cs` defines shared source-generated `JsonSerializerOptions`, including strict parsing that rejects unknown JSON members and JSON null for non-nullable policy members or collection elements.
+- All policy deserialization entry points, including the non-strict compatibility helper and public serializer options, reject duplicate property names before typed deserialization. The check covers every nested object, decodes escaped names before comparing them, and uses ordinal, case-sensitive equality to match canonical property-name handling.
 
 `PolicyDocument.Create` constructs a committed policy and `PolicyDraftDocument.Create` constructs an editable draft. `PolicyDocument.ToDraft` removes server-managed `Revision` and `PublishedAt`; `PolicyDraftDocument.ToPolicyDocument` requires those values when committing. `ParseJson` is the only policy parsing entry point.
 

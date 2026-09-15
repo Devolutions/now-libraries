@@ -1,13 +1,16 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
+using Devolutions.Now.Policy.Api;
 using Devolutions.Now.Policy.Client;
 
 using Xunit;
 
 using PolicyDocument = Devolutions.Now.Policy.Model.PolicyDocument;
 using PolicyDraftDocument = Devolutions.Now.Policy.Model.PolicyDraftDocument;
+using PolicyMetadata = Devolutions.Now.Policy.Model.PolicyMetadata;
 
 namespace Devolutions.Now.Policy.Client.Tests;
 
@@ -221,6 +224,207 @@ public class PolicyManagementClientTests
         };
 
         Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+    }
+
+    [Fact]
+    public async Task Policy_contract_serializers_reject_duplicates_in_embedded_documents()
+    {
+        var policyResponse = WithEscapedPolicyFormatVersionDuplicate(
+            await ReadFixture("responses", "policy.response.json"));
+        var managementResponse = WithEscapedPolicyFormatVersionDuplicate(
+            await ReadFixture("responses", "policy-management.active.response.json"));
+        var validationRequest = WithEscapedPolicyFormatVersionDuplicate(
+            await ReadFixture("requests", "policy-validation.request.json"));
+        var validationResponse = WithEscapedPolicyFormatVersionDuplicate(
+            await ReadFixture("responses", "policy-validation.valid.response.json"));
+        var replacementRequest = WithEscapedPolicyFormatVersionDuplicate(
+            await ReadFixture("requests", "policy-replacement.update.request.json"));
+        var replacementResponse = WithEscapedPolicyFormatVersionDuplicate(
+            await ReadFixture("responses", "policy-replacement.response.json"));
+        var errorResponse = WithEscapedPolicyFormatVersionDuplicate(
+            await ReadFixture("responses", "policy-stale-token.error.json"));
+
+        Assert.False(JsonSerializer.IsReflectionEnabledByDefault);
+        Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<PolicyResponse>(policyResponse));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PolicyResponse>(policyResponse));
+        Assert.Throws<JsonException>(
+            () => BrokerSerializer.DeserializeStrict<PolicyManagementResponse>(managementResponse));
+        Assert.Throws<JsonException>(
+            () => BrokerSerializer.DeserializeStrict<PolicyValidationRequest>(validationRequest));
+        Assert.Throws<JsonException>(
+            () => BrokerSerializer.DeserializeStrict<PolicyValidationResponse>(validationResponse));
+        Assert.Throws<JsonException>(
+            () => BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(replacementRequest));
+        Assert.Throws<JsonException>(
+            () => BrokerSerializer.DeserializeStrict<PolicyReplacementResponse>(replacementResponse));
+        Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<ErrorResponse>(errorResponse));
+
+        foreach (var options in new[] { BrokerSerializer.Options, BrokerSerializer.PrettyOptions })
+        {
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyResponse>(policyResponse, options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyManagementResponse>(managementResponse, options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyValidationRequest>(validationRequest, options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyValidationResponse>(validationResponse, options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyReplacementRequest>(replacementRequest, options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyReplacementResponse>(replacementResponse, options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<ErrorResponse>(errorResponse, options));
+        }
+    }
+
+    [Fact]
+    public void Public_broker_options_reject_duplicates_in_direct_policy_management_types()
+    {
+        const string Metadata = """
+            {
+              "Id": "first",
+              "\u0049d": "second",
+              "Publisher": "Test",
+              "Revision": 1,
+              "PublishedAt": "2026-01-01T00:00:00Z"
+            }
+            """;
+        const string Finding = """
+            {
+              "FindingVersion": "1.0",
+              "Severity": "Warning",
+              "Code": "DefaultAllow",
+              "Path": "",
+              "Message": "first",
+              "Message": "second"
+            }
+            """;
+        const string Diagnostics = """
+            {
+              "DiagnosticsVersion": "1.0",
+              "DiagnosticsVersion": "2.0",
+              "Findings": []
+            }
+            """;
+
+        foreach (var options in new[] { BrokerSerializer.Options, BrokerSerializer.PrettyOptions })
+        {
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyMetadata>(Metadata, options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyFinding>(Finding, options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<InvalidPolicyDiagnostics>(Diagnostics, options));
+        }
+    }
+
+    [Fact]
+    public void Duplicate_rejecting_broker_options_preserve_caller_strictness()
+    {
+        const string Request = """
+            {
+              "RequestKind": "PolicyValidationRequest",
+              "RequestVersion": "1.0",
+              "Draft": {},
+              "Unexpected": true
+            }
+            """;
+        var options = new JsonSerializerOptions(BrokerSerializer.Options)
+        {
+            UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        };
+
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyValidationRequest>(Request, options));
+    }
+
+    [Fact]
+    public void Invalid_surrogate_in_opaque_draft_remains_a_json_error()
+    {
+        const string Request = """
+            {
+              "RequestKind": "PolicyValidationRequest",
+              "RequestVersion": "1.0",
+              "Draft": {
+                "\uD800": true
+              }
+            }
+            """;
+
+        Assert.ThrowsAny<JsonException>(
+            () => BrokerSerializer.DeserializeStrict<PolicyValidationRequest>(Request));
+        Assert.ThrowsAny<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyValidationRequest>(
+                Request,
+                BrokerSerializer.Options));
+    }
+
+    [Theory]
+    [InlineData("management")]
+    [InlineData("validation")]
+    [InlineData("replacement")]
+    [InlineData("error")]
+    public async Task BrokerClient_rejects_duplicate_policy_properties_in_management_responses(
+        string operation)
+    {
+        var responseFixture = operation switch
+        {
+            "management" => "policy-management.active.response.json",
+            "validation" => "policy-validation.valid.response.json",
+            "replacement" => "policy-replacement.response.json",
+            _ => "policy-stale-token.error.json",
+        };
+        var statusCode = operation == "error" ? 409 : 200;
+        var body = WithEscapedPolicyFormatVersionDuplicate(
+            await ReadFixture("responses", responseFixture));
+        var client = CreateClient(new FakeBrokerTransport(
+            new BrokerTransportResponse { StatusCode = statusCode, Body = body }));
+
+        var exception = operation switch
+        {
+            "management" => await Assert.ThrowsAsync<BrokerClientException>(
+                () => client.GetPolicyManagement()),
+            "validation" => await Assert.ThrowsAsync<BrokerClientException>(
+                () => client.ValidatePolicy(JsonDocument.Parse("{}").RootElement)),
+            "replacement" => await Assert.ThrowsAsync<BrokerClientException>(
+                async () => await client.ReplacePolicy(
+                    BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(
+                        await ReadFixture("requests", "policy-replacement.update.request.json"))!)),
+            _ => await Assert.ThrowsAsync<BrokerClientException>(
+                async () => await client.ReplacePolicy(
+                    BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(
+                        await ReadFixture("requests", "policy-replacement.update.request.json"))!)),
+        };
+
+        Assert.Equal(
+            operation == "error"
+                ? BrokerClientErrorKind.BrokerError
+                : BrokerClientErrorKind.InvalidResponse,
+            exception.Kind);
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
+        Assert.Null(exception.BrokerError);
+    }
+
+    [Fact]
+    public async Task BrokerClient_wraps_invalid_surrogate_names_in_structured_error_responses()
+    {
+        var body = await ReadFixture("responses", "policy-stale-token.error.json");
+        body = body.Replace(
+            "\"Message\": \"The configured policy changed after it was read.\",",
+            "\"Message\": \"The configured policy changed after it was read.\",\n\"\\uD800\": true,",
+            StringComparison.Ordinal);
+        var client = CreateClient(new FakeBrokerTransport(
+            new BrokerTransportResponse { StatusCode = 409, Body = body }));
+        var request = BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(
+            await ReadFixture("requests", "policy-replacement.update.request.json"))!;
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(
+            () => client.ReplacePolicy(request));
+
+        Assert.Equal(BrokerClientErrorKind.BrokerError, exception.Kind);
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
+        Assert.Null(exception.BrokerError);
     }
 
     [Fact]
@@ -614,6 +818,12 @@ public class PolicyManagementClientTests
 
     private static async Task<string> ReadFixture(string directory, string file) =>
         await File.ReadAllTextAsync(Path.Combine(TestData.SamplesDir, directory, file));
+
+    private static string WithEscapedPolicyFormatVersionDuplicate(string json) =>
+        json.Replace(
+            "\"PolicyFormatVersion\": \"1.0.0\",",
+            "\"PolicyFormatVersion\": \"1.0.0\",\n\"PolicyFormatVersi\\u006fn\": \"1.0.0\",",
+            StringComparison.Ordinal);
 
     private static JsonNode ReplaceProperty(JsonNode source, string propertyName, JsonNode value)
     {

@@ -1,0 +1,28 @@
+{
+  "PolicyFormatVersion": "1.0.0",
+  "PolicyType": "PackageBrokerPolicy",
+  "Metadata": {
+    "Id": "duplicate.test",
+    "Publisher": "Test",
+    "Revision": 1,
+    "PublishedAt": "2026-01-01T00:00:00Z"
+  },
+  "Enforcement": {
+    "DefaultDecision": "Deny",
+    "RulePrecedence": "PriorityThenDeny"
+  },
+  "Rules": [
+    {
+      "Id": "duplicate.constraints",
+      "Priority": 1,
+      "Decision": "Allow",
+      "Match": {
+        "Operations": ["Install"]
+      },
+      "Constraints": {
+        "AllowedCustomParameters": ["--quiet"],
+        "AllowedCustomParameters": ["--silent"]
+      }
+    }
+  ]
+}

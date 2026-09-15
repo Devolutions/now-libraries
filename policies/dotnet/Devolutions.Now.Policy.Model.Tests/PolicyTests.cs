@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 using NJsonSchema;
 
@@ -21,6 +22,12 @@ public class PolicyTests
 
     public static IEnumerable<object[]> PolicySamples() =>
         Directory.GetFiles(SamplesDir, "*.policy.json").Select(f => new object[] { f });
+
+    public static IEnumerable<object[]> DuplicatePropertySamples() =>
+        Directory.GetFiles(
+                Path.Combine(SamplesDir, "invalid", "duplicates"),
+                "*.policy.json")
+            .Select(f => new object[] { f });
 
     public static TheoryData<string, int> ConstraintTextCollections() => new()
     {
@@ -104,6 +111,141 @@ public class PolicyTests
         draftJson["$schema"] = "https://example.invalid/policy-draft.schema.json";
         Assert.Throws<JsonException>(
             () => PolicySerializer.DeserializePolicyDraftDocumentStrict(draftJson.ToJsonString()));
+    }
+
+    [Theory]
+    [MemberData(nameof(DuplicatePropertySamples))]
+    public void All_policy_deserialization_entry_points_reject_duplicate_properties(string path)
+    {
+        var json = File.ReadAllText(path);
+
+        Assert.False(JsonSerializer.IsReflectionEnabledByDefault);
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(json));
+        Assert.ThrowsAny<JsonException>(() => PolicySerializer.DeserializePolicyDocument(json));
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializePolicyDocumentStrict(json));
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyDocument>(json));
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDocument>(json, PolicySerializer.Options));
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDocument>(json, PolicySerializer.StrictOptions));
+    }
+
+    [Fact]
+    public void All_draft_deserialization_entry_points_reject_nested_escaped_duplicate_properties()
+    {
+        const string Json = """
+            {
+              "PolicyFormatVersion": "1.0.0",
+              "PolicyType": "PackageBrokerPolicy",
+              "Metadata": {
+                "Id": "duplicate.test",
+                "\u0049d": "duplicate.test",
+                "Publisher": "Test"
+              },
+              "Enforcement": {
+                "DefaultDecision": "Deny",
+                "RulePrecedence": "PriorityThenDeny"
+              },
+              "Rules": []
+            }
+            """;
+
+        Assert.Throws<JsonException>(() => PolicyDraftDocument.ParseJson(Json));
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializePolicyDraftDocumentStrict(Json));
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyDraftDocument>(Json));
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDraftDocument>(Json, PolicySerializer.Options));
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDraftDocument>(Json, PolicySerializer.StrictOptions));
+    }
+
+    [Fact]
+    public void Duplicate_property_comparison_is_ordinal_and_case_sensitive()
+    {
+        var json = MinimalPolicyJson(
+            """
+                "Revision": 1,
+            """,
+            """
+                "policyFormatVersion": "1.1.0",
+                "Rules": []
+            """);
+
+        Assert.NotNull(PolicySerializer.DeserializePolicyDocument(json));
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializePolicyDocumentStrict(json));
+    }
+
+    [Fact]
+    public void Escaped_surrogate_pairs_match_literal_unicode_property_names()
+    {
+        var json = MinimalPolicyJson(
+            """
+                "Revision": 1,
+            """,
+            """
+                "Extension": {
+                    "😀": true,
+                    "\uD83D\uDE00": false
+                },
+                "Rules": []
+            """);
+
+        var exception = Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializePolicyDocument(json));
+        Assert.Contains("Duplicate JSON property name", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Duplicate_preprocessing_observes_the_serializer_depth_limit()
+    {
+        var nested = string.Concat(Enumerable.Repeat("""{"Nested":""", 65))
+            + "true"
+            + new string('}', 65);
+        var json = MinimalPolicyJson(
+            """
+                "Revision": 1,
+            """,
+            $$"""
+                "Extension": {{nested}},
+                "Rules": []
+            """);
+
+        Assert.ThrowsAny<JsonException>(() => PolicySerializer.DeserializePolicyDocument(json));
+    }
+
+    [Fact]
+    public void Invalid_surrogate_property_names_remain_json_errors()
+    {
+        var json = MinimalPolicyJson(
+            """
+                "Revision": 1,
+                "\uD800": true,
+            """,
+            """
+                "Rules": []
+            """);
+
+        Assert.ThrowsAny<JsonException>(() => PolicySerializer.DeserializePolicyDocument(json));
+        Assert.ThrowsAny<JsonException>(() => PolicySerializer.DeserializePolicyDocumentStrict(json));
+        Assert.ThrowsAny<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDocument>(json, PolicySerializer.Options));
+        Assert.ThrowsAny<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDocument>(json, PolicySerializer.StrictOptions));
+    }
+
+    [Fact]
+    public void Duplicate_rejecting_options_preserve_caller_serialization_settings()
+    {
+        var options = new JsonSerializerOptions(PolicySerializer.Options)
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.Never,
+        };
+        var json = JsonSerializer.Serialize(
+            PolicyDocument.Create("custom.options", "Test"),
+            options);
+
+        Assert.Contains("\"ValidFrom\": null", json, StringComparison.Ordinal);
+        Assert.Contains("\"ValidUntil\": null", json, StringComparison.Ordinal);
     }
 
     [Fact]

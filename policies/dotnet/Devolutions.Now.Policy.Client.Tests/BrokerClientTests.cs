@@ -334,6 +334,42 @@ public class BrokerClientTests
     }
 
     [Fact]
+    public async Task GetPolicy_rejects_duplicate_nested_policy_property_before_deserialization()
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var body = await File.ReadAllTextAsync(path);
+        body = body.Replace(
+            "\"PolicyFormatVersion\": \"1.0.0\",",
+            "\"PolicyFormatVersion\": \"1.0.0\",\n\"PolicyFormatVersi\\u006fn\": \"1.0.0\",",
+            StringComparison.Ordinal);
+        var client = CreateClient(new FakeBrokerTransport(body));
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
+    }
+
+    [Fact]
+    public async Task GetPolicy_wraps_invalid_surrogate_property_names()
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var body = await File.ReadAllTextAsync(path);
+        body = body.Replace(
+            "\"PolicyFormatVersion\": \"1.0.0\",",
+            "\"PolicyFormatVersion\": \"1.0.0\",\n\"\\uD800\": true,",
+            StringComparison.Ordinal);
+        var client = CreateClient(new FakeBrokerTransport(body));
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
+    }
+
+    [Fact]
     public async Task GetPolicy_rejects_integer_policy_enum_token()
     {
         var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");

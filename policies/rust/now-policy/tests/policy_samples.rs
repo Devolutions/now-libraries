@@ -201,6 +201,33 @@ fn invalid_policy_fixture_fails_deserialization() {
 }
 
 #[test]
+fn duplicate_property_fixtures_fail_deserialization() {
+    let duplicate_dir = samples_dir().join("invalid/duplicates");
+    let entries = std::fs::read_dir(&duplicate_dir)
+        .unwrap_or_else(|error| panic!("failed to read {}: {error}", duplicate_dir.display()));
+    let mut fixture_count = 0;
+
+    for entry in entries {
+        let path = entry.unwrap().path();
+        if path.extension().is_none_or(|extension| extension != "json") {
+            continue;
+        }
+
+        fixture_count += 1;
+        let content =
+            std::fs::read_to_string(&path).unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
+        let result: Result<PolicyDocument, _> = serde_json::from_str(&content);
+        assert!(
+            result.is_err(),
+            "duplicate property fixture {} should fail deserialization",
+            path.display()
+        );
+    }
+
+    assert_eq!(fixture_count, 8, "all shared duplicate fixtures must be exercised");
+}
+
+#[test]
 fn policy_schema_generates_valid_json() {
     let schema = now_policy::schema::policy_schema_json();
     assert!(schema.is_object());

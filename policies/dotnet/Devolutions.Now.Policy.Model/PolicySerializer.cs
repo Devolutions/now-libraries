@@ -7,9 +7,17 @@ namespace Devolutions.Now.Policy.Model;
 
 public static class PolicySerializer
 {
-    public static readonly JsonSerializerOptions Options = CreateOptions(PolicySerializerContext.Default);
+    /// <summary>
+    /// Source-generated policy JSON options. Deserialization rejects duplicate property names
+    /// throughout the input using ordinal, case-sensitive name comparison.
+    /// </summary>
+    public static readonly JsonSerializerOptions Options = CreateOptions(strict: false);
 
-    public static readonly JsonSerializerOptions StrictOptions = CreateOptions(PolicyStrictSerializerContext.Default);
+    /// <summary>
+    /// Source-generated strict policy JSON options. Deserialization rejects unknown and duplicate
+    /// property names throughout the input using ordinal, case-sensitive name comparison.
+    /// </summary>
+    public static readonly JsonSerializerOptions StrictOptions = CreateOptions(strict: true);
 
     public static string Serialize(PolicyDocument value)
     {
@@ -23,14 +31,23 @@ public static class PolicySerializer
         return JsonSerializer.Serialize(value, PolicySerializerContext.Default.PolicyDraftDocument);
     }
 
-    public static PolicyDocument? DeserializePolicyDocument(string json) =>
-        Validate(JsonSerializer.Deserialize(json, PolicySerializerContext.Default.PolicyDocument));
+    public static PolicyDocument? DeserializePolicyDocument(string json)
+    {
+        PolicyJsonInput.RejectDuplicatePropertyNames(json, PolicySerializerContext.Default.Options);
+        return Validate(JsonSerializer.Deserialize(json, PolicySerializerContext.Default.PolicyDocument));
+    }
 
-    public static PolicyDocument? DeserializePolicyDocumentStrict(string json) =>
-        Validate(JsonSerializer.Deserialize(json, PolicyStrictSerializerContext.Default.PolicyDocument));
+    public static PolicyDocument? DeserializePolicyDocumentStrict(string json)
+    {
+        PolicyJsonInput.RejectDuplicatePropertyNames(json, PolicyStrictSerializerContext.Default.Options);
+        return Validate(JsonSerializer.Deserialize(json, PolicyStrictSerializerContext.Default.PolicyDocument));
+    }
 
-    public static PolicyDraftDocument? DeserializePolicyDraftDocumentStrict(string json) =>
-        Validate(JsonSerializer.Deserialize(json, PolicyStrictSerializerContext.Default.PolicyDraftDocument));
+    public static PolicyDraftDocument? DeserializePolicyDraftDocumentStrict(string json)
+    {
+        PolicyJsonInput.RejectDuplicatePropertyNames(json, PolicyStrictSerializerContext.Default.Options);
+        return Validate(JsonSerializer.Deserialize(json, PolicyStrictSerializerContext.Default.PolicyDraftDocument));
+    }
 
     public static string Serialize<T>(T value)
     {
@@ -40,6 +57,7 @@ public static class PolicySerializer
 
     public static T? DeserializeStrict<T>(string json)
     {
+        PolicyJsonInput.RejectDuplicatePropertyNames(json, PolicyStrictSerializerContext.Default.Options);
         var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
         ValidateSemanticValue(value);
         return value;
@@ -234,11 +252,75 @@ public static class PolicySerializer
     private static JsonTypeInfo<T> Cast<T>(JsonTypeInfo jsonTypeInfo) =>
         (JsonTypeInfo<T>)jsonTypeInfo;
 
-    private static JsonSerializerOptions CreateOptions(JsonSerializerContext context) =>
-        new(context.Options)
+    private static JsonSerializerOptions CreateOptions(bool strict)
+    {
+        JsonSerializerContext context = strict
+            ? PolicyStrictSerializerContext.Default
+            : PolicySerializerContext.Default;
+        var options = new JsonSerializerOptions(context.Options)
         {
             TypeInfoResolver = context.WithAddedModifier(AttachSemanticValidation),
         };
+
+        if (strict)
+        {
+            AddDuplicateRejectingConverters(options, PolicyStrictSerializerContext.Default);
+        }
+        else
+        {
+            AddDuplicateRejectingConverters(options, PolicySerializerContext.Default);
+        }
+
+        return options;
+    }
+
+    private static void AddDuplicateRejectingConverters(
+        JsonSerializerOptions options,
+        PolicySerializerContext context)
+    {
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDocument>(
+            context.PolicyDocument));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftDocument>(
+            context.PolicyDraftDocument));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMetadata>(
+            context.PolicyMetadata));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftMetadata>(
+            context.PolicyDraftMetadata));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyEnforcement>(
+            context.PolicyEnforcement));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyRule>(
+            context.PolicyRule));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMatch>(
+            context.PolicyMatch));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionRange>(
+            context.VersionRange));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyConstraints>(
+            context.PolicyConstraints));
+    }
+
+    private static void AddDuplicateRejectingConverters(
+        JsonSerializerOptions options,
+        PolicyStrictSerializerContext context)
+    {
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDocument>(
+            context.PolicyDocument));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftDocument>(
+            context.PolicyDraftDocument));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMetadata>(
+            context.PolicyMetadata));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftMetadata>(
+            context.PolicyDraftMetadata));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyEnforcement>(
+            context.PolicyEnforcement));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyRule>(
+            context.PolicyRule));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMatch>(
+            context.PolicyMatch));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionRange>(
+            context.VersionRange));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyConstraints>(
+            context.PolicyConstraints));
+    }
 
     private static void AttachSemanticValidation(JsonTypeInfo typeInfo)
     {
