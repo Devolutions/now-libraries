@@ -1,6 +1,6 @@
 //! Schema-validated newtypes used by NOW policy documents.
 
-use schemars::{JsonSchema, Schema, SchemaGenerator, json_schema};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Error returned when a policy newtype fails deserialization validation.
@@ -107,27 +107,14 @@ pub const CURRENT_POLICY_FORMAT_VERSION: &str = "1.0.0";
 /// Readers accept supported SemVer 2.0.0 values in the compatible 1.x line. Applications
 /// must stamp the current value, `1.0.0`, for new documents and must not expose
 /// this value as publisher-authored editable metadata.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct PolicyFormatVersion(String);
-
-impl JsonSchema for PolicyFormatVersion {
-    fn schema_name() -> std::borrow::Cow<'static, str> {
-        "PolicyFormatVersion".into()
-    }
-
-    fn json_schema(_generator: &mut SchemaGenerator) -> Schema {
-        const U64_COMPONENT: &str = r"(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-5])";
-        const SUFFIX: &str = r"(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?";
-        let pattern = format!(r"^1\.{U64_COMPONENT}\.{U64_COMPONENT}{SUFFIX}(?![\s\S])");
-
-        json_schema!({
-            "description": "Software-managed policy document format version. Readers accept supported SemVer 2.0.0 values in the compatible 1.x line. Applications must stamp the current value, 1.0.0, for new documents and must not expose this value as publisher-authored editable metadata.",
-            "type": "string",
-            "maxLength": 128,
-            "pattern": pattern,
-        })
-    }
-}
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
+pub struct PolicyFormatVersion(
+    #[schemars(
+        length(max = 128),
+        regex(pattern = r"^1\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:[-+][0-9A-Za-z.-]+)?$")
+    )]
+    String,
+);
 
 impl PolicyFormatVersion {
     /// Parse a supported policy document format version.

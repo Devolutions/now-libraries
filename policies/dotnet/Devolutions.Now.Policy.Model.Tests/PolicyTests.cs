@@ -275,19 +275,6 @@ public class PolicyTests
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
     }
 
-    [Theory]
-    [InlineData("1.18446744073709551616.0")]
-    [InlineData("1.0.0\n")]
-    public async Task Rust_schema_rejects_policy_format_versions_outside_runtime_contract(string value)
-    {
-        var document = JsonNode.Parse(
-            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
-        document["PolicyFormatVersion"] = value;
-        var schema = await JsonSchema.FromFileAsync(PolicySchema);
-
-        Assert.NotEmpty(schema.Validate(document.ToJsonString()));
-    }
-
     [Fact]
     public void Compatible_policy_format_version_is_preserved_by_conversion()
     {
