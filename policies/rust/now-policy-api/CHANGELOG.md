@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [[0.5.0](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.4.0...now-policy-api-v0.5.0)] - 2026-09-15
+
+### <!-- 1 -->Features
+
+- [**breaking**] Replace `ResponsePolicyInfo::policy_version` with `policy_format_version: now_policy::PolicyFormatVersion`, serialized as `PolicyFormatVersion` ([#106](https://github.com/Devolutions/now-libraries/issues/106)) ([cc841bf6e5](https://github.com/Devolutions/now-libraries/commit/cc841bf6e59547ddefbb6287f7a0ef8466aedb10))
+- [**breaking**] Update embedded `PolicyDocument` and `PolicyDraftDocument` payloads to omit `$schema` and use `PolicyFormatVersion` instead of `PolicyVersion` ([#106](https://github.com/Devolutions/now-libraries/issues/106)) ([cc841bf6e5](https://github.com/Devolutions/now-libraries/commit/cc841bf6e59547ddefbb6287f7a0ef8466aedb10))
+- [**breaking**] Replace `PolicyFindingCode::UnsupportedPolicyVersion` with `UnsupportedPolicyFormatVersion` and remove `UnsupportedSchema` ([#106](https://github.com/Devolutions/now-libraries/issues/106)) ([cc841bf6e5](https://github.com/Devolutions/now-libraries/commit/cc841bf6e59547ddefbb6287f7a0ef8466aedb10))
+
 ## [[0.4.0](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.3.1...now-policy-api-v0.4.0)] - 2026-09-03
 
 ### <!-- 1 -->Features
