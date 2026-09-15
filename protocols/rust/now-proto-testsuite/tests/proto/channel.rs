@@ -15,7 +15,7 @@ fn roundtrip_channel_capset() {
 
     let decoded = now_msg_roundtrip(
         msg,
-        expect!["[0E, 00, 00, 00, 10, 01, 01, 00, 01, 00, 06, 00, 01, 00, 04, 00, 05, 00, 2C, 01, 00, 00]"],
+        expect!["[0E, 00, 00, 00, 10, 01, 01, 00, 01, 00, 07, 00, 01, 00, 04, 00, 05, 00, 2C, 01, 00, 00]"],
     );
 
     let actual = match decoded {
@@ -40,7 +40,7 @@ fn roundtrip_channel_capset_simple() {
 
     let decoded = now_msg_roundtrip(
         msg,
-        expect!["[0E, 00, 00, 00, 10, 01, 00, 00, 01, 00, 06, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]"],
+        expect!["[0E, 00, 00, 00, 10, 01, 00, 00, 01, 00, 07, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00]"],
     );
 
     let actual = match decoded {

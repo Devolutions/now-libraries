@@ -127,6 +127,16 @@ namespace Devolutions.NowClient
             return this;
         }
 
+        /// <summary>
+        /// Execute with elevated privileges. Requires the host to advertise an elevation
+        /// capability; under shell-based elevation the session has no IO redirection.
+        /// </summary>
+        public ExecPwshParams Elevated(bool enable = true)
+        {
+            IsElevated = enable;
+            return this;
+        }
+
         internal NowMsgExecPwsh ToNowMessage(uint sessionId)
         {
             var builder = _serverMode
@@ -191,6 +201,11 @@ namespace Devolutions.NowClient
             if (_unicodeConsole)
             {
                 builder.EnableUnicodeConsole();
+            }
+
+            if (IsElevated)
+            {
+                builder.EnableElevated();
             }
 
             return builder.Build();

@@ -62,6 +62,15 @@
         /// </summary>
         UnicodeConsole = 0x0040,
 
-        All = Run | Process | Shell | Batch | WinPs | Pwsh | IoRedirection | UnicodeConsole,
+        /// <summary>
+        /// Set if host can elevate an exec session using the platform shell. Elevation may prompt
+        /// the interactive user for consent, and IO redirection is unavailable for elevated
+        /// sessions.
+        ///
+        /// NOW-PROTO: NOW_CAP_EXEC_ELEVATE_SHELL
+        /// </summary>
+        ElevateShell = 0x0080,
+
+        All = Run | Process | Shell | Batch | WinPs | Pwsh | IoRedirection | UnicodeConsole | ElevateShell,
     }
 }

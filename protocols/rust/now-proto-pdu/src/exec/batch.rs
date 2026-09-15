@@ -27,6 +27,18 @@ bitflags! {
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_UNICODE_CONSOLE
         const UNICODE_CONSOLE = 0x0004;
+        /// Execute the command with elevated privileges. The elevation mechanism is chosen by the
+        /// host and advertised in `execCapset`; a host that cannot elevate fails the request
+        /// instead of silently executing without elevation.
+        ///
+        /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_ELEVATED
+        const ELEVATED = 0x0008;
+        /// Keeps the command interpreter running after the batch file completes (`cmd /K`
+        /// rather than `/C`). MUST be ignored when the session redirects stdio, where the hidden
+        /// interpreter would never exit.
+        ///
+        /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_NO_EXIT
+        const NO_EXIT = 0x0010;
         /// Enable stdio (stdout, stderr, stdin) redirection.
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_IO_REDIRECTION
@@ -108,6 +120,26 @@ impl<'a> NowExecBatchMsg<'a> {
 
     pub fn is_unicode_console(&self) -> bool {
         self.flags.contains(NowExecBatchFlags::UNICODE_CONSOLE)
+    }
+
+    #[must_use]
+    pub fn with_elevated(mut self) -> Self {
+        self.flags |= NowExecBatchFlags::ELEVATED;
+        self
+    }
+
+    pub fn is_elevated(&self) -> bool {
+        self.flags.contains(NowExecBatchFlags::ELEVATED)
+    }
+
+    #[must_use]
+    pub fn with_no_exit(mut self) -> Self {
+        self.flags |= NowExecBatchFlags::NO_EXIT;
+        self
+    }
+
+    pub fn is_no_exit(&self) -> bool {
+        self.flags.contains(NowExecBatchFlags::NO_EXIT)
     }
 
     #[must_use]

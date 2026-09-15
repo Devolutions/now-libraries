@@ -93,6 +93,12 @@ bitflags! {
         ///
         /// NOW-PROTO: NOW_CAP_EXEC_UNICODE_CONSOLE
         const UNICODE_CONSOLE = 0x0040;
+        /// Set if host can elevate an exec session using the platform shell. Elevation may prompt
+        /// the interactive user for consent, and IO redirection is unavailable for elevated
+        /// sessions.
+        ///
+        /// NOW-PROTO: NOW_CAP_EXEC_ELEVATE_SHELL
+        const ELEVATE_SHELL = 0x0080;
     }
 }
 
@@ -106,7 +112,7 @@ pub struct NowProtoVersion {
 
 impl NowProtoVersion {
     /// Represents the current version of the NOW protocol implemented by the library.
-    pub const CURRENT: Self = Self { major: 1, minor: 6 };
+    pub const CURRENT: Self = Self { major: 1, minor: 7 };
 
     /// Returns `true` if this version supports the encoding control exec flags
     /// (`NOW_EXEC_FLAG_*_RAW_ENCODING`, `NOW_EXEC_FLAG_*_UNICODE_CONSOLE`, and `NOW_EXEC_FLAG_PROCESS_ENCODING_UTF8`).
