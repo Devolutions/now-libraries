@@ -21,6 +21,8 @@ The DTOs are used to:
 - share the same JSON wire shape as the Rust source-of-truth model;
 - provide compatibility conversions between package broker API enums and the `Devolutions.Now.Policy.Model` policy enums.
 
+Embedded policy documents and response policy projections use the software-managed `PolicyFormatVersion` field. New values are stamped as `1.0.0`; compatible SemVer values in the 1.x line are accepted and preserved.
+
 Architecture
 ------------
 

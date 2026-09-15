@@ -22,9 +22,8 @@
       { "FindingVersion": "1.0", "Severity": "Error", "Code": "InvalidWildcardPattern", "Path": "/Rules/0/Match/PackageIdentifiers/0", "RuleId": "duplicate", "Message": "The wildcard pattern is invalid." },
       { "FindingVersion": "1.0", "Severity": "Error", "Code": "ContradictoryConstraints", "Path": "/Rules/0/Constraints", "RuleId": "duplicate", "Message": "The constraints contradict each other." },
       { "FindingVersion": "1.0", "Severity": "Error", "Code": "InvalidValidityInterval", "Path": "/Metadata/ValidUntil", "Message": "ValidUntil must be after ValidFrom." },
-      { "FindingVersion": "1.0", "Severity": "Error", "Code": "UnsupportedSchema", "Path": "/$schema", "Message": "The policy schema is not supported." },
       { "FindingVersion": "1.0", "Severity": "Error", "Code": "UnsupportedPolicyType", "Path": "/PolicyType", "Message": "The policy type is not supported." },
-      { "FindingVersion": "1.0", "Severity": "Error", "Code": "UnsupportedPolicyVersion", "Path": "/PolicyVersion", "Message": "The policy version is not supported." }
+      { "FindingVersion": "1.0", "Severity": "Error", "Code": "UnsupportedPolicyFormatVersion", "Path": "/PolicyFormatVersion", "Message": "The policy version is not supported." }
     ]
   }
 }

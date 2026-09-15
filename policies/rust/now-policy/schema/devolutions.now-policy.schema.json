@@ -1,5 +1,4 @@
 {
-  "$id": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "definitions": {
@@ -187,6 +186,12 @@
         "RulePrecedence"
       ],
       "type": "object"
+    },
+    "PolicyFormatVersion": {
+      "description": "Software-managed policy document format version.\n\n Readers accept SemVer 2.0.0 values in the compatible 1.x line. Applications\n must stamp [`CURRENT_POLICY_FORMAT_VERSION`] for new documents and must not expose\n this value as publisher-authored editable metadata.",
+      "maxLength": 128,
+      "pattern": "^1\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
+      "type": "string"
     },
     "PolicyMatch": {
       "additionalProperties": false,
@@ -502,12 +507,6 @@
       ],
       "type": "object"
     },
-    "PolicySchemaUri": {
-      "enum": [
-        "https://devolutions.net/schemas/now-policy.schema.1.0.json"
-      ],
-      "type": "string"
-    },
     "ResourceId": {
       "description": "Resource identifier (policy IDs, rule IDs, request IDs, audit IDs).",
       "maxLength": 128,
@@ -527,12 +526,6 @@
         "User",
         "Machine"
       ],
-      "type": "string"
-    },
-    "SemanticVersion": {
-      "description": "Semantic version string (SemVer 2.0.0).\n\n Validated at deserialization time using the `semver` crate.",
-      "maxLength": 128,
-      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?$",
       "type": "string"
     },
     "StringPattern": {
@@ -580,14 +573,6 @@
   },
   "description": "A policy document governing which package operations are allowed or denied.",
   "properties": {
-    "$schema": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/PolicySchemaUri"
-        }
-      ],
-      "description": "Policy schema URI constant."
-    },
     "Enforcement": {
       "allOf": [
         {
@@ -604,6 +589,14 @@
       ],
       "description": "Policy metadata."
     },
+    "PolicyFormatVersion": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PolicyFormatVersion"
+        }
+      ],
+      "description": "Software-managed policy document format version.\n\n Applications must not expose this field as publisher-authored editable metadata."
+    },
     "PolicyType": {
       "allOf": [
         {
@@ -611,14 +604,6 @@
         }
       ],
       "description": "Must be `\"PackageBrokerPolicy\"`."
-    },
-    "PolicyVersion": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/SemanticVersion"
-        }
-      ],
-      "description": "Policy syntax version (semver)."
     },
     "Rules": {
       "description": "Ordered list of policy rules (may be empty; enforcement defaults apply).",
@@ -630,8 +615,7 @@
     }
   },
   "required": [
-    "$schema",
-    "PolicyVersion",
+    "PolicyFormatVersion",
     "PolicyType",
     "Metadata",
     "Enforcement",

@@ -99,6 +99,85 @@ impl From<&str> for SemanticVersion {
     }
 }
 
+/// Current policy document format version emitted for new documents.
+pub const CURRENT_POLICY_FORMAT_VERSION: &str = "1.0.0";
+
+/// Software-managed policy document format version.
+///
+/// Readers accept SemVer 2.0.0 values in the compatible 1.x line. Applications
+/// must stamp [`CURRENT_POLICY_FORMAT_VERSION`] for new documents and must not expose
+/// this value as publisher-authored editable metadata.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
+pub struct PolicyFormatVersion(
+    #[schemars(
+        length(max = 128),
+        regex(
+            pattern = r"^1\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
+        )
+    )]
+    String,
+);
+
+impl PolicyFormatVersion {
+    /// Parse a supported policy document format version.
+    pub fn parse(s: &str) -> Result<Self, ModelValidationError> {
+        if s.len() > 128 {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PolicyFormatVersion",
+                reason: format!("length {} exceeds maximum 128", s.len()),
+            });
+        }
+
+        let version = semver::Version::parse(s).map_err(|error| ModelValidationError::Invalid {
+            type_name: "PolicyFormatVersion",
+            reason: error.to_string(),
+        })?;
+        if version.major != 1 {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PolicyFormatVersion",
+                reason: format!(
+                    "unsupported major version {}; supported major version is 1",
+                    version.major
+                ),
+            });
+        }
+
+        Ok(Self(s.to_owned()))
+    }
+
+    /// Return the current version stamped on new documents.
+    pub fn current() -> Self {
+        Self(CURRENT_POLICY_FORMAT_VERSION.to_owned())
+    }
+}
+
+impl Default for PolicyFormatVersion {
+    fn default() -> Self {
+        Self::current()
+    }
+}
+
+impl<'de> Deserialize<'de> for PolicyFormatVersion {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        Self::parse(&value).map_err(serde::de::Error::custom)
+    }
+}
+
+impl std::ops::Deref for PolicyFormatVersion {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for PolicyFormatVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 /// Resource identifier (policy IDs, rule IDs, request IDs, audit IDs).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 pub struct ResourceId(

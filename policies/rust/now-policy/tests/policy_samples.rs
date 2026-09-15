@@ -5,9 +5,7 @@
 use std::path::PathBuf;
 
 use chrono::{TimeZone, Utc};
-use now_policy::{
-    CustomParameterString, POLICY_DRAFT_SCHEMA_URI, POLICY_SCHEMA_URI, PolicyDocument, StringPattern, VersionString,
-};
+use now_policy::{CURRENT_POLICY_FORMAT_VERSION, CustomParameterString, PolicyDocument, StringPattern, VersionString};
 
 fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/samples")
@@ -42,17 +40,22 @@ fn draft_conversion_omits_and_restores_server_metadata() {
 
     let draft = committed.to_draft();
     let draft_json = serde_json::to_value(&draft).unwrap();
-    assert_eq!(draft_json["$schema"], POLICY_DRAFT_SCHEMA_URI);
+    assert!(draft_json.get("$schema").is_none());
+    assert_eq!(draft_json["PolicyFormatVersion"], CURRENT_POLICY_FORMAT_VERSION);
     assert!(draft_json["Metadata"].get("Revision").is_none());
     assert!(draft_json["Metadata"].get("PublishedAt").is_none());
 
     let published_at = Utc.with_ymd_and_hms(2026, 8, 29, 0, 0, 0).unwrap();
     let recommitted = draft.into_policy_document(7, published_at).unwrap();
-    assert_eq!(
-        serde_json::to_value(&recommitted).unwrap()["$schema"],
-        POLICY_SCHEMA_URI
-    );
+    let recommitted_json = serde_json::to_value(&recommitted).unwrap();
+    assert!(recommitted_json.get("$schema").is_none());
+    assert_eq!(recommitted_json["PolicyFormatVersion"], CURRENT_POLICY_FORMAT_VERSION);
     assert_eq!(recommitted.metadata.id.to_string(), committed.metadata.id.to_string());
+    assert_eq!(recommitted.metadata.publisher, committed.metadata.publisher);
+    assert_eq!(recommitted.metadata.description, committed.metadata.description);
+    assert_eq!(recommitted.metadata.support_url, committed.metadata.support_url);
+    assert_eq!(recommitted.metadata.valid_from, committed.metadata.valid_from);
+    assert_eq!(recommitted.metadata.valid_until, committed.metadata.valid_until);
     assert_eq!(recommitted.metadata.revision, 7);
     assert_eq!(recommitted.metadata.published_at, published_at);
 }
@@ -107,8 +110,7 @@ fn policy_text_newtypes_count_unicode_scalars_at_length_boundaries() {
 #[test]
 fn invalid_policy_unknown_field_fails_deserialization() {
     let value = serde_json::json!({
-        "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
-        "PolicyVersion": "1.0.0",
+        "PolicyFormatVersion": "1.0.0",
         "PolicyType": "PackageBrokerPolicy",
         "Metadata": {
             "Id": "test",
@@ -129,6 +131,44 @@ fn invalid_policy_unknown_field_fails_deserialization() {
 }
 
 #[test]
+fn schema_field_is_rejected() {
+    let path = samples_dir().join("corporate-allowlist.policy.json");
+    let mut value: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    value["$schema"] = serde_json::json!("https://example.invalid/policy.schema.json");
+
+    let error = serde_json::from_value::<PolicyDocument>(value).unwrap_err().to_string();
+    assert!(error.contains("unknown field `$schema`"), "unexpected error: {error}");
+}
+
+#[test]
+fn unsupported_policy_format_version_is_rejected() {
+    let path = samples_dir().join("corporate-allowlist.policy.json");
+    let mut value: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    value["PolicyFormatVersion"] = serde_json::json!("2.0.0");
+
+    let error = serde_json::from_value::<PolicyDocument>(value).unwrap_err().to_string();
+    assert!(
+        error.contains("unsupported major version 2"),
+        "unexpected error: {error}"
+    );
+}
+
+#[test]
+fn compatible_policy_format_version_is_preserved_by_conversions() {
+    let path = samples_dir().join("corporate-allowlist.policy.json");
+    let mut value: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    value["PolicyFormatVersion"] = serde_json::json!("1.2.3");
+
+    let committed = serde_json::from_value::<PolicyDocument>(value).unwrap();
+    let draft = committed.to_draft();
+    assert_eq!(draft.policy_format_version.to_string(), "1.2.3");
+    let recommitted = draft
+        .into_policy_document(5, Utc.with_ymd_and_hms(2026, 8, 29, 0, 0, 0).unwrap())
+        .unwrap();
+    assert_eq!(recommitted.policy_format_version.to_string(), "1.2.3");
+}
+
+#[test]
 fn invalid_policy_fixture_fails_deserialization() {
     let path = samples_dir().join("invalid/policies/invalid-failure-decision.policy.json");
     let content = std::fs::read_to_string(&path).unwrap();
@@ -145,6 +185,23 @@ fn policy_schema_generates_valid_json() {
         obj.contains_key("definitions") || obj.contains_key("$defs"),
         "schema should have type definitions"
     );
+}
+
+#[test]
+fn policy_schemas_omit_document_schema_and_fix_policy_format_version() {
+    for schema in [
+        now_policy::schema::policy_schema_json(),
+        now_policy::schema::policy_draft_schema_json(),
+    ] {
+        let properties = schema["properties"].as_object().unwrap();
+        let required = schema["required"].as_array().unwrap();
+        assert!(!properties.contains_key("$schema"));
+        assert!(!required.iter().any(|value| value == "$schema"));
+
+        let version_schema = &schema["definitions"]["PolicyFormatVersion"];
+        assert_eq!(version_schema["type"], "string");
+        assert!(version_schema["pattern"].as_str().unwrap().starts_with("^1\\."));
+    }
 }
 
 #[test]

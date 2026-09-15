@@ -537,10 +537,6 @@ public class PolicyManagementClientTests
             }
 
             var committedDto = JsonSerializer.Deserialize<PolicyDocument>(committed.ToJsonString(), options)!;
-            committedDto.Schema = Devolutions.Now.Policy.Model.SchemaUris.PolicyDraft;
-            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(committedDto, options));
-
-            committedDto = JsonSerializer.Deserialize<PolicyDocument>(committed.ToJsonString(), options)!;
             committedDto.Metadata.Revision = 0;
             Assert.Throws<JsonException>(() => JsonSerializer.Serialize(committedDto, options));
 
@@ -553,10 +549,6 @@ public class PolicyManagementClientTests
             Assert.Throws<JsonException>(() => JsonSerializer.Serialize(committedDto, options));
 
             var draftDto = JsonSerializer.Deserialize<PolicyDraftDocument>(draft.ToJsonString(), options)!;
-            draftDto.Schema = Devolutions.Now.Policy.Model.SchemaUris.Policy;
-            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(draftDto, options));
-
-            draftDto = JsonSerializer.Deserialize<PolicyDraftDocument>(draft.ToJsonString(), options)!;
             draftDto.Rules[0].Match.SkipHashCheck = [false, true];
             Assert.Throws<JsonException>(() => JsonSerializer.Serialize(draftDto, options));
         }
@@ -646,10 +638,6 @@ public class PolicyManagementClientTests
 
     private static IEnumerable<JsonNode> InvalidCommittedPolicies(JsonNode committed)
     {
-        var wrongSchema = committed.DeepClone();
-        wrongSchema["$schema"] = Devolutions.Now.Policy.Model.SchemaUris.PolicyDraft;
-        yield return wrongSchema;
-
         var zeroRevision = committed.DeepClone();
         zeroRevision["Metadata"]!["Revision"] = 0;
         yield return zeroRevision;
@@ -665,10 +653,6 @@ public class PolicyManagementClientTests
 
     private static IEnumerable<JsonNode> InvalidDraftPolicies(JsonNode draft)
     {
-        var wrongSchema = draft.DeepClone();
-        wrongSchema["$schema"] = Devolutions.Now.Policy.Model.SchemaUris.Policy;
-        yield return wrongSchema;
-
         var mixedBooleanMatch = draft.DeepClone();
         mixedBooleanMatch["Rules"]![0]!["Match"]!["SkipHashCheck"] = new JsonArray(false, true);
         yield return mixedBooleanMatch;

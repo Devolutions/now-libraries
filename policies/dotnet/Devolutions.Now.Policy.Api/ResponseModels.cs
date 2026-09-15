@@ -167,8 +167,9 @@ public sealed class ResponsePolicyInfo
     [JsonPropertyName("Revision")]
     public int Revision { get; set; }
 
-    [JsonPropertyName("PolicyVersion")]
-    public string PolicyVersion { get; set; } = "1.0.0";
+    [JsonPropertyName("PolicyFormatVersion")]
+    [JsonRequired]
+    public PolicyFormatVersion PolicyFormatVersion { get; init; } = PolicyFormatVersion.Current;
 }
 
 public sealed class OperationDiagnostics

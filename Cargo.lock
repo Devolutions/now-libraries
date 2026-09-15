@@ -613,7 +613,7 @@ dependencies = [
 
 [[package]]
 name = "now-policy"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "schemars",
@@ -626,7 +626,7 @@ dependencies = [
 
 [[package]]
 name = "now-policy-api"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "chrono",
  "derive_more",
@@ -641,7 +641,7 @@ dependencies = [
 
 [[package]]
 name = "now-policy-server-template"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "aide",
  "async-trait",

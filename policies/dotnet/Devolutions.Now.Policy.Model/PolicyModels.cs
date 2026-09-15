@@ -1,24 +1,100 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace Devolutions.Now.Policy.Model;
 
-public static class SchemaUris
+public static class PolicyFormatVersions
 {
-    public const string Policy = "https://devolutions.net/schemas/now-policy.schema.1.0.json";
-    public const string PolicyDraft = "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json";
+    public const string Current = "1.0.0";
+    public const ulong SupportedMajor = 1;
+}
+
+[JsonConverter(typeof(PolicyFormatVersionJsonConverter))]
+public sealed class PolicyFormatVersion : IEquatable<PolicyFormatVersion>
+{
+    private static readonly Regex SemVerPattern = new(
+        @"^(?<major>0|[1-9][0-9]*)\.(?<minor>0|[1-9][0-9]*)\.(?<patch>0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$",
+        RegexOptions.CultureInvariant);
+
+    private PolicyFormatVersion(string value)
+    {
+        Value = value;
+    }
+
+    public static PolicyFormatVersion Current { get; } = new(PolicyFormatVersions.Current);
+
+    public string Value { get; }
+
+    public static PolicyFormatVersion Parse(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        if (value.Length > 128)
+        {
+            throw new FormatException("PolicyFormatVersion must contain at most 128 characters.");
+        }
+
+        var match = SemVerPattern.Match(value);
+        if (!match.Success
+            || match.Length != value.Length
+            || !ulong.TryParse(match.Groups["major"].Value, out var major)
+            || !ulong.TryParse(match.Groups["minor"].Value, out _)
+            || !ulong.TryParse(match.Groups["patch"].Value, out _))
+        {
+            throw new FormatException("PolicyFormatVersion must be a valid SemVer 2.0.0 string.");
+        }
+        if (major != PolicyFormatVersions.SupportedMajor)
+        {
+            throw new NotSupportedException(
+                $"Policy format major version {major} is unsupported; supported major version is {PolicyFormatVersions.SupportedMajor}.");
+        }
+
+        return new PolicyFormatVersion(value);
+    }
+
+    public bool Equals(PolicyFormatVersion? other) =>
+        other is not null && string.Equals(Value, other.Value, StringComparison.Ordinal);
+
+    public override bool Equals(object? obj) => Equals(obj as PolicyFormatVersion);
+
+    public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(Value);
+
+    public override string ToString() => Value;
+}
+
+internal sealed class PolicyFormatVersionJsonConverter : JsonConverter<PolicyFormatVersion>
+{
+    public override PolicyFormatVersion Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType != JsonTokenType.String)
+        {
+            throw new JsonException("PolicyFormatVersion must be a string.");
+        }
+
+        try
+        {
+            return PolicyFormatVersion.Parse(reader.GetString()!);
+        }
+        catch (Exception exception) when (exception is FormatException or NotSupportedException)
+        {
+            throw new JsonException(exception.Message, exception);
+        }
+    }
+
+    public override void Write(Utf8JsonWriter writer, PolicyFormatVersion value, JsonSerializerOptions options) =>
+        writer.WriteStringValue(value.Value);
 }
 
 /// <summary>A policy document governing which package operations are allowed or denied.</summary>
 public sealed class PolicyDocument
 {
-    [JsonPropertyName("$schema")]
+    /// <summary>
+    /// Software-managed document-format version. Applications must not expose
+    /// this as publisher-authored editable metadata.
+    /// </summary>
+    [JsonPropertyName("PolicyFormatVersion")]
     [JsonRequired]
-    public string Schema { get; set; } = SchemaUris.Policy;
-
-    [JsonPropertyName("PolicyVersion")]
-    [JsonRequired]
-    public string PolicyVersion { get; set; } = "1.0.0";
+    public PolicyFormatVersion PolicyFormatVersion { get; init; } = PolicyFormatVersion.Current;
 
     [JsonPropertyName("PolicyType")]
     [JsonRequired]
@@ -65,8 +141,7 @@ public sealed class PolicyDocument
     {
         return new PolicyDraftDocument
         {
-            Schema = SchemaUris.PolicyDraft,
-            PolicyVersion = PolicyVersion,
+            PolicyFormatVersion = PolicyFormatVersion,
             PolicyType = PolicyType,
             Metadata = PolicyModelClone.ToDraftMetadata(Metadata),
             Enforcement = PolicyModelClone.Enforcement(Enforcement),
@@ -82,13 +157,13 @@ public sealed class PolicyDraftDocument
 {
     private const uint MaxRevision = int.MaxValue;
 
-    [JsonPropertyName("$schema")]
+    /// <summary>
+    /// Software-managed document-format version. Applications must stamp the
+    /// current value for new drafts and must not expose it as authored metadata.
+    /// </summary>
+    [JsonPropertyName("PolicyFormatVersion")]
     [JsonRequired]
-    public string Schema { get; set; } = SchemaUris.PolicyDraft;
-
-    [JsonPropertyName("PolicyVersion")]
-    [JsonRequired]
-    public string PolicyVersion { get; set; } = "1.0.0";
+    public PolicyFormatVersion PolicyFormatVersion { get; init; } = PolicyFormatVersion.Current;
 
     [JsonPropertyName("PolicyType")]
     [JsonRequired]
@@ -143,8 +218,7 @@ public sealed class PolicyDraftDocument
 
         return new PolicyDocument
         {
-            Schema = SchemaUris.Policy,
-            PolicyVersion = PolicyVersion,
+            PolicyFormatVersion = PolicyFormatVersion,
             PolicyType = PolicyType,
             Metadata = PolicyModelClone.ToCommittedMetadata(Metadata, revision, publishedAt),
             Enforcement = PolicyModelClone.Enforcement(Enforcement),

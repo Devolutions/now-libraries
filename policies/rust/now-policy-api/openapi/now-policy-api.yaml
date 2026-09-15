@@ -1247,9 +1247,8 @@ components:
       - InvalidWildcardPattern
       - ContradictoryConstraints
       - InvalidValidityInterval
-      - UnsupportedSchema
       - UnsupportedPolicyType
-      - UnsupportedPolicyVersion
+      - UnsupportedPolicyFormatVersion
       - AuditModeEnabled
       - DefaultAllow
       - SensitiveOptionAllowed
@@ -1259,6 +1258,16 @@ components:
       enum:
       - Error
       - Warning
+    PolicyFormatVersion:
+      description: |-
+        Software-managed policy document format version.
+
+         Readers accept SemVer 2.0.0 values in the compatible 1.x line. Applications
+         must stamp [`CURRENT_POLICY_FORMAT_VERSION`] for new documents and must not expose
+         this value as publisher-authored editable metadata.
+      type: string
+      maxLength: 128
+      pattern: ^1\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$
     PolicyManagementResponse:
       description: Response body for `GET /v1/policy/management`.
       type: object
@@ -1839,10 +1848,10 @@ components:
           description: Policy document identifier.
           allOf:
           - $ref: '#/components/schemas/ResourceId'
-        PolicyVersion:
-          description: Policy syntax version.
+        PolicyFormatVersion:
+          description: Software-managed policy document format version.
           allOf:
-          - $ref: '#/components/schemas/SemanticVersion'
+          - $ref: '#/components/schemas/PolicyFormatVersion'
         Revision:
           description: Policy revision number.
           type: integer
@@ -1853,7 +1862,7 @@ components:
       required:
       - Id
       - Revision
-      - PolicyVersion
+      - PolicyFormatVersion
     RuleId:
       description: Rule ID in responses. Includes sentinel values not valid as policy rule IDs.
       type: string
@@ -1865,11 +1874,6 @@ components:
       enum:
       - User
       - Machine
-    SemanticVersion:
-      description: Semantic version string (SemVer 2.0.0).
-      type: string
-      maxLength: 128
-      pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$
     ServerContext:
       description: Server context included in responses.
       type: object
@@ -2117,10 +2121,6 @@ components:
       description: A policy document governing which package operations are allowed or denied.
       type: object
       properties:
-        $schema:
-          description: Policy schema URI constant.
-          allOf:
-          - $ref: '#/components/schemas/PolicyModelPolicySchemaUri'
         Enforcement:
           description: Enforcement configuration.
           allOf:
@@ -2129,14 +2129,17 @@ components:
           description: Policy metadata.
           allOf:
           - $ref: '#/components/schemas/PolicyModelPolicyMetadata'
+        PolicyFormatVersion:
+          description: |-
+            Software-managed policy document format version.
+
+             Applications must not expose this field as publisher-authored editable metadata.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPolicyFormatVersion'
         PolicyType:
           description: Must be `"PackageBrokerPolicy"`.
           allOf:
           - $ref: '#/components/schemas/PolicyModelPackageBrokerPolicy'
-        PolicyVersion:
-          description: Policy syntax version (semver).
-          allOf:
-          - $ref: '#/components/schemas/PolicyModelSemanticVersion'
         Rules:
           description: Ordered list of policy rules (may be empty; enforcement defaults apply).
           type: array
@@ -2145,8 +2148,7 @@ components:
           maxItems: 1024
       additionalProperties: false
       required:
-      - $schema
-      - PolicyVersion
+      - PolicyFormatVersion
       - PolicyType
       - Metadata
       - Enforcement
@@ -2155,10 +2157,6 @@ components:
       description: An editable policy document without server-managed commit metadata.
       type: object
       properties:
-        $schema:
-          description: Policy schema URI constant.
-          allOf:
-          - $ref: '#/components/schemas/PolicyModelPolicyDraftSchemaUri'
         Enforcement:
           description: Enforcement configuration.
           allOf:
@@ -2167,14 +2165,18 @@ components:
           description: Editable policy metadata.
           allOf:
           - $ref: '#/components/schemas/PolicyModelPolicyDraftMetadata'
+        PolicyFormatVersion:
+          description: |-
+            Software-managed policy document format version.
+
+             Applications must stamp the current value and must not expose this field
+             as publisher-authored editable metadata.
+          allOf:
+          - $ref: '#/components/schemas/PolicyModelPolicyFormatVersion'
         PolicyType:
           description: Must be `"PackageBrokerPolicy"`.
           allOf:
           - $ref: '#/components/schemas/PolicyModelPackageBrokerPolicy'
-        PolicyVersion:
-          description: Policy syntax version (semver).
-          allOf:
-          - $ref: '#/components/schemas/PolicyModelSemanticVersion'
         Rules:
           description: Ordered list of policy rules (may be empty; enforcement defaults apply).
           type: array
@@ -2183,8 +2185,7 @@ components:
           maxItems: 1024
       additionalProperties: false
       required:
-      - $schema
-      - PolicyVersion
+      - PolicyFormatVersion
       - PolicyType
       - Metadata
       - Enforcement
@@ -2228,10 +2229,6 @@ components:
       required:
       - Id
       - Publisher
-    PolicyModelPolicyDraftSchemaUri:
-      type: string
-      enum:
-      - https://devolutions.net/schemas/now-policy-draft.schema.1.0.json
     PolicyModelPolicyEnforcement:
       description: Enforcement configuration.
       type: object
@@ -2252,6 +2249,16 @@ components:
       required:
       - DefaultDecision
       - RulePrecedence
+    PolicyModelPolicyFormatVersion:
+      description: |-
+        Software-managed policy document format version.
+
+         Readers accept SemVer 2.0.0 values in the compatible 1.x line. Applications
+         must stamp [`CURRENT_POLICY_FORMAT_VERSION`] for new documents and must not expose
+         this value as publisher-authored editable metadata.
+      type: string
+      maxLength: 128
+      pattern: ^1\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$
     PolicyModelPolicyMatch:
       description: |-
         Match criteria for a policy rule. All specified fields must match.
@@ -2485,10 +2492,6 @@ components:
       - Priority
       - Decision
       - Match
-    PolicyModelPolicySchemaUri:
-      type: string
-      enum:
-      - https://devolutions.net/schemas/now-policy.schema.1.0.json
     PolicyModelResourceId:
       description: Resource identifier (policy IDs, rule IDs, request IDs, audit IDs).
       type: string
@@ -2505,14 +2508,6 @@ components:
       enum:
       - User
       - Machine
-    PolicyModelSemanticVersion:
-      description: |-
-        Semantic version string (SemVer 2.0.0).
-
-         Validated at deserialization time using the `semver` crate.
-      type: string
-      maxLength: 128
-      pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$
     PolicyModelStringPattern:
       description: Case-insensitive exact value or wildcard pattern.
       type: string

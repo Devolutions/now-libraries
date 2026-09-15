@@ -493,7 +493,6 @@ mod tests {
             "Operation",
             "ResourceId",
             "Scope",
-            "SemanticVersion",
             "VersionString",
         ] {
             assert!(
@@ -509,6 +508,10 @@ mod tests {
                 "component collision must not rename {name}"
             );
         }
+
+        assert!(schemas.contains_key("PolicyFormatVersion"));
+        assert!(schemas.contains_key("PolicyModelPolicyFormatVersion"));
+        assert!(!schemas.contains_key("PolicyFormatVersion2"));
     }
 
     #[test]

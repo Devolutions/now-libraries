@@ -18,7 +18,7 @@
   "Policy": {
     "Id": "contoso.desktop.standard-allowlist",
     "Revision": 4,
-    "PolicyVersion": "1.0.0"
+    "PolicyFormatVersion": "1.0.0"
   },
   "Operation": {
     "OperationId": "op-winget-vscode-install-000001",

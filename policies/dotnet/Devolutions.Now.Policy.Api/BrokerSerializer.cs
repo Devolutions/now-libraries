@@ -7,13 +7,6 @@ using Devolutions.Now.Policy.Model;
 
 namespace Devolutions.Now.Policy.Api;
 
-/// <summary>Canonical schema URI used in the <c>$schema</c> field of policy documents.</summary>
-public static class SchemaUris
-{
-    public const string Policy = "https://devolutions.net/schemas/now-policy.schema.1.0.json";
-    public const string PolicyDraft = "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json";
-}
-
 /// <summary>Shared <see cref="JsonSerializerOptions"/> for broker documents.</summary>
 public static class BrokerSerializer
 {
