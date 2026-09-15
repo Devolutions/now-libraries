@@ -263,6 +263,7 @@ public class PolicyTests
     [Theory]
     [InlineData("not-semver")]
     [InlineData("2.0.0")]
+    [InlineData("1.18446744073709551616.0")]
     [InlineData("1.2.3-١a")]
     [InlineData("1.0.0\n")]
     public void Unsupported_policy_format_versions_are_rejected(string value)
@@ -272,18 +273,6 @@ public class PolicyTests
         document["PolicyFormatVersion"] = value;
 
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
-    }
-
-    [Fact]
-    public void Compatible_policy_format_version_allows_large_numeric_identifiers()
-    {
-        var document = JsonNode.Parse(
-            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
-        document["PolicyFormatVersion"] = "1.18446744073709551616.0";
-
-        var policy = PolicyDocument.ParseJson(document.ToJsonString());
-
-        Assert.Equal("1.18446744073709551616.0", policy.PolicyFormatVersion.Value);
     }
 
     [Fact]

@@ -1262,7 +1262,7 @@ components:
       description: |-
         Software-managed policy document format version.
 
-         Readers accept SemVer 2.0.0 values in the compatible 1.x line. Applications
+         Readers accept supported SemVer 2.0.0 values in the compatible 1.x line. Applications
          must stamp the current value, `1.0.0`, for new documents and must not expose
          this value as publisher-authored editable metadata.
       type: string
@@ -2253,7 +2253,7 @@ components:
       description: |-
         Software-managed policy document format version.
 
-         Readers accept SemVer 2.0.0 values in the compatible 1.x line. Applications
+         Readers accept supported SemVer 2.0.0 values in the compatible 1.x line. Applications
          must stamp the current value, `1.0.0`, for new documents and must not expose
          this value as publisher-authored editable metadata.
       type: string

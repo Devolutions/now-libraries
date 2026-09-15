@@ -184,13 +184,12 @@ fn compatible_policy_format_version_is_preserved_by_conversions() {
 }
 
 #[test]
-fn compatible_policy_format_version_allows_large_numeric_identifiers() {
+fn policy_format_version_rejects_numeric_identifiers_outside_supported_range() {
     let path = samples_dir().join("corporate-allowlist.policy.json");
     let mut value: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
     value["PolicyFormatVersion"] = serde_json::json!("1.18446744073709551616.0");
 
-    let committed = serde_json::from_value::<PolicyDocument>(value).unwrap();
-    assert_eq!(committed.policy_format_version.to_string(), "1.18446744073709551616.0");
+    assert!(serde_json::from_value::<PolicyDocument>(value).is_err());
 }
 
 #[test]

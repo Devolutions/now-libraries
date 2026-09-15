@@ -7,7 +7,7 @@ namespace Devolutions.Now.Policy.Model;
 public static class PolicyFormatVersions
 {
     public const string Current = "1.0.0";
-    public const string SupportedMajor = "1";
+    public const ulong SupportedMajor = 1;
 }
 
 [JsonConverter(typeof(PolicyFormatVersionJsonConverter))]
@@ -35,12 +35,15 @@ public sealed class PolicyFormatVersion : IEquatable<PolicyFormatVersion>
         }
 
         var match = SemVerPattern.Match(value);
-        if (!match.Success || match.Length != value.Length)
+        if (!match.Success
+            || match.Length != value.Length
+            || !ulong.TryParse(match.Groups["major"].Value, out var major)
+            || !ulong.TryParse(match.Groups["minor"].Value, out _)
+            || !ulong.TryParse(match.Groups["patch"].Value, out _))
         {
             throw new FormatException("PolicyFormatVersion must be a valid SemVer 2.0.0 string.");
         }
-        var major = match.Groups["major"].Value;
-        if (!string.Equals(major, PolicyFormatVersions.SupportedMajor, StringComparison.Ordinal))
+        if (major != PolicyFormatVersions.SupportedMajor)
         {
             throw new NotSupportedException(
                 $"Policy format major version {major} is unsupported; supported major version is {PolicyFormatVersions.SupportedMajor}.");
