@@ -25,7 +25,7 @@
             "actual": "2.0.0",
             "supported": "1.0.0"
           },
-          "Message": "The policy version is not supported."
+          "Message": "The policy format version is not supported."
         }
       ]
     }
