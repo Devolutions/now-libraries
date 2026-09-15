@@ -11,20 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### <!-- 1 -->Features
 
-- [**breaking**] Simplify policy document identity ([#106](https://github.com/Devolutions/now-libraries/issues/106)) ([cc841bf6e5](https://github.com/Devolutions/now-libraries/commit/cc841bf6e59547ddefbb6287f7a0ef8466aedb10)) 
-
-  Policy documents no longer contain `$schema`, and `PolicyVersion` is
-  renamed to `PolicyFormatVersion` to identify software-managed
-  document-format compatibility rather than a publisher-authored release
-  version.
-  
-  Consumers must remove `$schema` and use `"PolicyFormatVersion":
-  "1.0.0"`. New documents emit `1.0.0`; readers accept and preserve
-  supported SemVer 1.x values and reject malformed or unsupported-major
-  values. Applications must not expose this field as editable policy
-  metadata. `Revision` and `PublishedAt` remain server-managed.
-
-
+- [**breaking**] Update policy endpoint payloads and generated OpenAPI schemas to omit `$schema` and use `PolicyFormatVersion` instead of `PolicyVersion` ([#106](https://github.com/Devolutions/now-libraries/issues/106)) ([cc841bf6e5](https://github.com/Devolutions/now-libraries/commit/cc841bf6e59547ddefbb6287f7a0ef8466aedb10))
+- [**breaking**] Update the re-exported `PolicyFindingCode` to replace `UnsupportedPolicyVersion` with `UnsupportedPolicyFormatVersion` and remove `UnsupportedSchema` ([#106](https://github.com/Devolutions/now-libraries/issues/106)) ([cc841bf6e5](https://github.com/Devolutions/now-libraries/commit/cc841bf6e59547ddefbb6287f7a0ef8466aedb10))
 
 ## [[0.4.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.3.0...now-policy-server-template-v0.4.0)] - 2026-09-03
 
