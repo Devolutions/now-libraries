@@ -4,7 +4,7 @@ use schemars::generate::SchemaSettings;
 
 use crate::{PolicyDocument, PolicyDraftDocument};
 
-/// Get the generated policy schema as a JSON value.
+/// Get the generated repository-local policy schema as a JSON value.
 pub fn policy_schema_json() -> serde_json::Value {
     let schema = SchemaSettings::draft07()
         .into_generator()
@@ -12,7 +12,7 @@ pub fn policy_schema_json() -> serde_json::Value {
     serde_json::to_value(&schema).expect("BUG: schema serialization failed")
 }
 
-/// Get the generated editable policy draft schema as a JSON value.
+/// Get the generated repository-local editable policy draft schema as a JSON value.
 pub fn policy_draft_schema_json() -> serde_json::Value {
     let schema = SchemaSettings::draft07()
         .into_generator()

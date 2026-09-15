@@ -25,6 +25,8 @@ Architecture
 
 `PolicyDocument.Create` constructs a committed policy and `PolicyDraftDocument.Create` constructs an editable draft. `PolicyDocument.ToDraft` removes server-managed `Revision` and `PublishedAt`; `PolicyDraftDocument.ToPolicyDocument` requires those values when committing. `ParseJson` is the only policy parsing entry point.
 
+`PolicyFormatVersion` is software-managed format compatibility metadata, not a publisher release version. New documents stamp `1.0.0`; readers accept and preserve supported numeric versions in the 1.x line and reject malformed or unsupported-major values. Applications must not expose it as authored metadata. Policy documents contain no `$schema` member, and strict readers reject documents that contain one as unknown-field input.
+
 Breaking change
 ---------------
 

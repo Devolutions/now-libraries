@@ -84,21 +84,24 @@ public class PolicyTests
         var schema = await JsonSchema.FromFileAsync(PolicyDraftSchema);
         var json = draft.ToJson();
 
-        Assert.Equal(SchemaUris.PolicyDraft, draft.Schema);
+        Assert.Equal(PolicyFormatVersions.Current, draft.PolicyFormatVersion.Value);
+        Assert.Null(JsonNode.Parse(json)!["$schema"]);
         Assert.Empty(schema.Validate(json));
-        Assert.Equal(SchemaUris.Policy, draft.ToPolicyDocument(1, DateTimeOffset.UtcNow).Schema);
+        Assert.Equal(
+            PolicyFormatVersions.Current,
+            draft.ToPolicyDocument(1, DateTimeOffset.UtcNow).PolicyFormatVersion.Value);
     }
 
     [Fact]
-    public void Policy_and_draft_parsers_reject_the_other_document_schema()
+    public void Policy_and_draft_parsers_reject_schema_member()
     {
         var policy = PolicyDocument.Create("contoso.policy", "Contoso IT");
         var policyJson = JsonNode.Parse(policy.ToJson())!;
-        policyJson["$schema"] = SchemaUris.PolicyDraft;
+        policyJson["$schema"] = "https://example.invalid/policy.schema.json";
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(policyJson.ToJsonString()));
 
         var draftJson = JsonNode.Parse(policy.ToDraft().ToJson())!;
-        draftJson["$schema"] = SchemaUris.Policy;
+        draftJson["$schema"] = "https://example.invalid/policy-draft.schema.json";
         Assert.Throws<JsonException>(
             () => PolicySerializer.DeserializePolicyDraftDocumentStrict(draftJson.ToJsonString()));
     }
@@ -161,8 +164,7 @@ public class PolicyTests
     }
 
     [Theory]
-    [InlineData("$schema")]
-    [InlineData("PolicyVersion")]
+    [InlineData("PolicyFormatVersion")]
     [InlineData("PolicyType")]
     [InlineData("Metadata")]
     [InlineData("Enforcement")]
@@ -189,8 +191,7 @@ public class PolicyTests
     }
 
     [Theory]
-    [InlineData("$schema")]
-    [InlineData("PolicyVersion")]
+    [InlineData("PolicyFormatVersion")]
     [InlineData("PolicyType")]
     [InlineData("Metadata")]
     [InlineData("Enforcement")]
@@ -238,6 +239,7 @@ public class PolicyTests
 
         var draft = committed.ToDraft();
         var draftJson = JsonNode.Parse(draft.ToJson())!;
+        Assert.Null(draftJson["$schema"]);
         Assert.Null(draftJson["Metadata"]!["Revision"]);
         Assert.Null(draftJson["Metadata"]!["PublishedAt"]);
 
@@ -246,9 +248,58 @@ public class PolicyTests
 
         var publishedAt = DateTimeOffset.Parse("2026-08-29T00:00:00Z");
         var recommitted = draft.ToPolicyDocument(7, publishedAt);
+        Assert.Equal(committed.PolicyFormatVersion, recommitted.PolicyFormatVersion);
+        Assert.Equal(committed.Metadata.Id, recommitted.Metadata.Id);
+        Assert.Equal(committed.Metadata.Publisher, recommitted.Metadata.Publisher);
+        Assert.Equal(committed.Metadata.Description, recommitted.Metadata.Description);
+        Assert.Equal(committed.Metadata.SupportUrl, recommitted.Metadata.SupportUrl);
+        Assert.Equal(committed.Metadata.ValidFrom, recommitted.Metadata.ValidFrom);
+        Assert.Equal(committed.Metadata.ValidUntil, recommitted.Metadata.ValidUntil);
         Assert.Equal(7U, recommitted.Metadata.Revision);
         Assert.Equal(publishedAt, recommitted.Metadata.PublishedAt);
         Assert.Equal("changed", recommitted.Rules[0].Id);
+    }
+
+    [Theory]
+    [InlineData("not-semver")]
+    [InlineData("2.0.0")]
+    [InlineData("1.18446744073709551616.0")]
+    [InlineData("1.2.3-beta")]
+    [InlineData("1.0.0\n")]
+    public void Unsupported_policy_format_versions_are_rejected(string value)
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+        document["PolicyFormatVersion"] = value;
+
+        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
+    [Theory]
+    [InlineData("1.0.0-01")]
+    [InlineData("1.0.0-.")]
+    [InlineData("1.0.0\n")]
+    public async Task Rust_schema_rejects_unsupported_policy_format_versions(string value)
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+        document["PolicyFormatVersion"] = value;
+        var schema = await JsonSchema.FromFileAsync(PolicySchema);
+
+        Assert.NotEmpty(schema.Validate(document.ToJsonString()));
+    }
+
+    [Fact]
+    public void Compatible_policy_format_version_is_preserved_by_conversion()
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+        document["PolicyFormatVersion"] = "1.2.3";
+
+        var committed = PolicyDocument.ParseJson(document.ToJsonString());
+        var recommitted = committed.ToDraft().ToPolicyDocument(8, DateTimeOffset.UtcNow);
+
+        Assert.Equal("1.2.3", recommitted.PolicyFormatVersion.Value);
     }
 
     [Fact]
@@ -420,8 +471,7 @@ public class PolicyTests
     {
         return $$"""
         {
-            "$schema": "https://devolutions.net/schemas/now-policy.schema.1.0.json",
-            "PolicyVersion": "1.0.0",
+            "PolicyFormatVersion": "1.0.0",
             "PolicyType": "PackageBrokerPolicy",
             "Metadata": {
                 "Id": "test.policy",

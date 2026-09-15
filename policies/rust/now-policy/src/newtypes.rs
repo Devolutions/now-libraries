@@ -99,6 +99,110 @@ impl From<&str> for SemanticVersion {
     }
 }
 
+/// Current policy document format version emitted for new documents.
+pub const CURRENT_POLICY_FORMAT_VERSION: &str = "1.0.0";
+
+/// Software-managed policy document format version.
+///
+/// Readers accept canonical numeric versions in the compatible 1.x line.
+/// Applications must stamp the current value, `1.0.0`, for new documents and
+/// must not expose this value as publisher-authored editable metadata.
+/// Schemas describe the canonical shape; runtime readers additionally bound
+/// each numeric component to an unsigned 64-bit integer.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
+pub struct PolicyFormatVersion(
+    #[schemars(
+        length(max = 128),
+        regex(pattern = r"^1\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?![\s\S])")
+    )]
+    String,
+);
+
+impl PolicyFormatVersion {
+    /// Parse a supported policy document format version.
+    pub fn parse(s: &str) -> Result<Self, ModelValidationError> {
+        if s.len() > 128 {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PolicyFormatVersion",
+                reason: format!("length {} exceeds maximum 128", s.len()),
+            });
+        }
+
+        let mut components = s.split('.');
+        let (Some(major), Some(minor), Some(patch), None) = (
+            components.next(),
+            components.next(),
+            components.next(),
+            components.next(),
+        ) else {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PolicyFormatVersion",
+                reason: "must contain exactly three numeric components".to_owned(),
+            });
+        };
+
+        let parse_component = |component: &str| {
+            if component.is_empty()
+                || (component.len() > 1 && component.starts_with('0'))
+                || !component.bytes().all(|byte| byte.is_ascii_digit())
+            {
+                return None;
+            }
+            component.parse::<u64>().ok()
+        };
+
+        let (Some(major), Some(_minor), Some(_patch)) =
+            (parse_component(major), parse_component(minor), parse_component(patch))
+        else {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PolicyFormatVersion",
+                reason: "components must be canonical unsigned 64-bit integers".to_owned(),
+            });
+        };
+
+        if major != 1 {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PolicyFormatVersion",
+                reason: format!("unsupported major version {}; supported major version is 1", major),
+            });
+        }
+
+        Ok(Self(s.to_owned()))
+    }
+
+    /// Return the current version stamped on new documents.
+    pub fn current() -> Self {
+        Self(CURRENT_POLICY_FORMAT_VERSION.to_owned())
+    }
+}
+
+impl Default for PolicyFormatVersion {
+    fn default() -> Self {
+        Self::current()
+    }
+}
+
+impl<'de> Deserialize<'de> for PolicyFormatVersion {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = String::deserialize(deserializer)?;
+        Self::parse(&value).map_err(serde::de::Error::custom)
+    }
+}
+
+impl std::ops::Deref for PolicyFormatVersion {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for PolicyFormatVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 /// Resource identifier (policy IDs, rule IDs, request IDs, audit IDs).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 pub struct ResourceId(

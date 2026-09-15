@@ -8,8 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Architecture, CustomParameterString, Decision, Elevation, HttpUrl, ManagerName, ModelValidationError, Operation,
-    PackageBrokerPolicy, PolicyDraftSchemaUri, PolicySchemaUri, ResourceId, Scope, SemanticVersion, StringPattern,
-    VersionString,
+    PackageBrokerPolicy, PolicyFormatVersion, ResourceId, Scope, StringPattern, VersionString,
 };
 
 const MAX_POLICY_REVISION: u32 = 2_147_483_647;
@@ -20,12 +19,10 @@ const MAX_POLICY_REVISION: u32 = 2_147_483_647;
 #[serde(rename_all = "PascalCase")]
 #[serde(deny_unknown_fields)]
 pub struct PolicyDocument {
-    /// Policy schema URI constant.
-    #[serde(rename = "$schema")]
-    pub _schema: PolicySchemaUri,
-
-    /// Policy syntax version (semver).
-    pub policy_version: SemanticVersion,
+    /// Software-managed policy document format version.
+    ///
+    /// Applications must not expose this field as publisher-authored editable metadata.
+    pub policy_format_version: PolicyFormatVersion,
 
     /// Must be `"PackageBrokerPolicy"`.
     pub policy_type: PackageBrokerPolicy,
@@ -45,8 +42,7 @@ impl PolicyDocument {
     /// Create an editable draft, intentionally omitting server-managed commit metadata.
     pub fn to_draft(&self) -> PolicyDraftDocument {
         PolicyDraftDocument {
-            _schema: PolicyDraftSchemaUri,
-            policy_version: self.policy_version.clone(),
+            policy_format_version: self.policy_format_version.clone(),
             policy_type: self.policy_type,
             metadata: self.metadata.to_draft(),
             enforcement: self.enforcement.clone(),
@@ -61,12 +57,11 @@ impl PolicyDocument {
 #[serde(rename_all = "PascalCase")]
 #[serde(deny_unknown_fields)]
 pub struct PolicyDraftDocument {
-    /// Policy draft schema URI constant.
-    #[serde(rename = "$schema")]
-    pub _schema: PolicyDraftSchemaUri,
-
-    /// Policy syntax version (semver).
-    pub policy_version: SemanticVersion,
+    /// Software-managed policy document format version.
+    ///
+    /// Applications must stamp the current value and must not expose this field
+    /// as publisher-authored editable metadata.
+    pub policy_format_version: PolicyFormatVersion,
 
     /// Must be `"PackageBrokerPolicy"`.
     pub policy_type: PackageBrokerPolicy,
@@ -97,8 +92,7 @@ impl PolicyDraftDocument {
         }
 
         Ok(PolicyDocument {
-            _schema: PolicySchemaUri,
-            policy_version: self.policy_version,
+            policy_format_version: self.policy_format_version,
             policy_type: self.policy_type,
             metadata: self.metadata.into_policy_metadata(revision, published_at),
             enforcement: self.enforcement,

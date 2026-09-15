@@ -72,14 +72,12 @@ public static class PolicySerializer
 
     internal static void ValidateRequiredCollectionElements(PolicyDocument policy)
     {
-        ValidateSchemaUri(policy.Schema, SchemaUris.Policy, "$.$schema");
         ValidatePolicyRevision(policy.Metadata.Revision);
         ValidateRequiredCollectionElements(policy.Rules);
     }
 
     internal static void ValidateRequiredCollectionElements(PolicyDraftDocument policy)
     {
-        ValidateSchemaUri(policy.Schema, SchemaUris.PolicyDraft, "$.$schema");
         ValidateRequiredCollectionElements(policy.Rules);
     }
 
@@ -176,14 +174,6 @@ public static class PolicySerializer
         if (revision is 0 or > int.MaxValue)
         {
             throw new JsonException($"Policy revision must be between 1 and {int.MaxValue}.");
-        }
-    }
-
-    private static void ValidateSchemaUri(string actual, string expected, string path)
-    {
-        if (!string.Equals(actual, expected, StringComparison.Ordinal))
-        {
-            throw new JsonException($"The JSON string at {path} must be '{expected}'.");
         }
     }
 

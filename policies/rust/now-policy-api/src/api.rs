@@ -7,7 +7,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use super::enums::{Architecture, Decision, Elevation, ErrorCode, ManagerName, Operation, Scope, Transport};
 use super::{
     ApiVersion, CommandString, CustomParameterString, ErrorResponseKind, PackageIdentifier, PackageRequestKind,
-    ProcessName, ResourceId, RuleId, SemanticVersion, VersionString,
+    ProcessName, ResourceId, RuleId, VersionString,
 };
 
 /// Canonical request sent by a package broker client to the elevated broker.
@@ -254,8 +254,8 @@ pub struct ResponsePolicyInfo {
     #[schemars(range(min = 1, max = 2147483647))]
     pub revision: u32,
 
-    /// Policy syntax version.
-    pub policy_version: SemanticVersion,
+    /// Software-managed policy document format version.
+    pub policy_format_version: now_policy::PolicyFormatVersion,
 }
 
 /// Optional operation diagnostics.

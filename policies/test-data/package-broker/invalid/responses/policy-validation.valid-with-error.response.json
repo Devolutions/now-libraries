@@ -10,8 +10,7 @@
     "ValidatorVersion": "gateway-policy-validator/1",
     "IsValid": true,
     "CanonicalDraft": {
-      "$schema": "https://devolutions.net/schemas/now-policy-draft.schema.1.0.json",
-      "PolicyVersion": "1.0.0",
+      "PolicyFormatVersion": "1.0.0",
       "PolicyType": "PackageBrokerPolicy",
       "Metadata": {
         "Id": "contoso.package-policy",

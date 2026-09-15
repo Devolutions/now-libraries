@@ -170,6 +170,42 @@ public class MetaModelTests
     }
 
     [Fact]
+    public void Strict_policy_response_rejects_schema_member_and_unsupported_format_version()
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(TestData.SamplesDir, "responses", "policy.response.json")))!;
+        document["Policy"]!["$schema"] = "https://example.invalid/policy.schema.json";
+        Assert.Throws<JsonException>(
+            () => BrokerSerializer.DeserializeStrict<PolicyResponse>(document.ToJsonString()));
+
+        document["Policy"]!.AsObject().Remove("$schema");
+        document["Policy"]!["PolicyFormatVersion"] = "2.0.0";
+        Assert.Throws<JsonException>(
+            () => BrokerSerializer.DeserializeStrict<PolicyResponse>(document.ToJsonString()));
+    }
+
+    [Theory]
+    [InlineData("winget-vscode-install.allowed.response.json", "EvaluationResponse")]
+    [InlineData("execution-winget-vscode-install.response.json", "ExecutionResponse")]
+    public void Strict_operation_response_requires_policy_format_version(string fixture, string responseType)
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(TestData.SamplesDir, "responses", fixture)))!;
+        document["Policy"]!.AsObject().Remove("PolicyFormatVersion");
+
+        if (responseType == "EvaluationResponse")
+        {
+            Assert.Throws<JsonException>(
+                () => BrokerSerializer.DeserializeStrict<EvaluationResponse>(document.ToJsonString()));
+        }
+        else
+        {
+            Assert.Throws<JsonException>(
+                () => BrokerSerializer.DeserializeStrict<ExecutionResponse>(document.ToJsonString()));
+        }
+    }
+
+    [Fact]
     public async Task ErrorResponse_serializes_to_schema_valid_output()
     {
         var full = new ErrorResponse

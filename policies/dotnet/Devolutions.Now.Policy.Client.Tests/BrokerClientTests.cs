@@ -31,7 +31,7 @@ public class BrokerClientTests
         var transport = new FakeBrokerTransport(
             CapabilitiesResponse,
             """
-            {"ResponseKind":"EvaluationResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"unused","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Allow","RuleId":"<default>","Reason":"allowed"},"WouldExecute":true,"Policy":{"Id":"mock.policy","Revision":1,"PolicyVersion":"1.0.0"}}
+            {"ResponseKind":"EvaluationResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"unused","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Allow","RuleId":"<default>","Reason":"allowed"},"WouldExecute":true,"Policy":{"Id":"mock.policy","Revision":1,"PolicyFormatVersion":"1.0.0"}}
             """);
         var client = new BrokerClient(new BrokerClientOptions
         {
@@ -77,7 +77,7 @@ public class BrokerClientTests
         var transport = new FakeBrokerTransport(
             CapabilitiesResponse,
             """
-            {"ResponseKind":"ExecutionResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Allow","RuleId":"<default>","Reason":"allowed"},"Policy":{"Id":"mock.policy","Revision":1,"PolicyVersion":"1.0.0"},"Operation":{"OperationId":"operation:123","Status":"Starting","SubmittedAt":"2026-06-29T12:00:02Z"}}
+            {"ResponseKind":"ExecutionResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Allow","RuleId":"<default>","Reason":"allowed"},"Policy":{"Id":"mock.policy","Revision":1,"PolicyFormatVersion":"1.0.0"},"Operation":{"OperationId":"operation:123","Status":"Starting","SubmittedAt":"2026-06-29T12:00:02Z"}}
             """);
         var client = CreateClient(transport);
         var createdAt = DateTimeOffset.Parse("2026-06-29T12:00:00Z");
@@ -104,7 +104,7 @@ public class BrokerClientTests
         var transport = new FakeBrokerTransport(
             CapabilitiesResponse,
             """
-            {"ResponseKind":"ExecutionResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Deny","RuleId":"block-rule","Reason":"blocked"},"Policy":{"Id":"mock.policy","Revision":1,"PolicyVersion":"1.0.0"}}
+            {"ResponseKind":"ExecutionResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Deny","RuleId":"block-rule","Reason":"blocked"},"Policy":{"Id":"mock.policy","Revision":1,"PolicyFormatVersion":"1.0.0"}}
             """);
         var client = CreateClient(transport);
 
@@ -182,7 +182,7 @@ public class BrokerClientTests
         var transport = new FakeBrokerTransport(
             CapabilitiesResponse,
             """
-            {"ResponseKind":"ExecutionResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Allow","RuleId":"<default>","Reason":"allowed"},"Policy":{"Id":"mock.policy","Revision":1,"PolicyVersion":"1.0.0"},"Operation":{"OperationId":"operation:123","Status":"Starting","SubmittedAt":"2026-06-29T12:00:02Z"}}
+            {"ResponseKind":"ExecutionResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Allow","RuleId":"<default>","Reason":"allowed"},"Policy":{"Id":"mock.policy","Revision":1,"PolicyFormatVersion":"1.0.0"},"Operation":{"OperationId":"operation:123","Status":"Starting","SubmittedAt":"2026-06-29T12:00:02Z"}}
             """,
             """
             {"ResponseKind":"StatusResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"OperationId":"operation:123","RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","Status":"Canceled","Message":"operation was canceled"}
@@ -208,7 +208,7 @@ public class BrokerClientTests
         var transport = new FakeBrokerTransport(
             CapabilitiesResponse,
             """
-            {"ResponseKind":"ExecutionResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Allow","RuleId":"<default>","Reason":"allowed"},"Policy":{"Id":"mock.policy","Revision":1,"PolicyVersion":"1.0.0"},"Operation":{"OperationId":"operation:123","Status":"Starting","SubmittedAt":"2026-06-29T12:00:02Z"}}
+            {"ResponseKind":"ExecutionResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","ReceivedAt":"2026-06-29T12:00:00Z","CompletedAt":"2026-06-29T12:00:01Z","Request":{},"Decision":{"Decision":"Allow","RuleId":"<default>","Reason":"allowed"},"Policy":{"Id":"mock.policy","Revision":1,"PolicyFormatVersion":"1.0.0"},"Operation":{"OperationId":"operation:123","Status":"Starting","SubmittedAt":"2026-06-29T12:00:02Z"}}
             """,
             """
             {"ResponseKind":"CancelResponse","ResponseVersion": "1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"OperationId":"operation:123","RequestId":"6f8f1f54-8c42-4773-932a-ff7c7c9f58f1","Status":"Canceling"}
@@ -412,7 +412,7 @@ public class BrokerClientTests
     [InlineData("Server")]
     [InlineData("Server.ServerVersion")]
     [InlineData("Server.Transport")]
-    [InlineData("Policy.$schema")]
+    [InlineData("Policy.PolicyFormatVersion")]
     [InlineData("Policy.Metadata.Id")]
     [InlineData("Policy.Enforcement.DefaultDecision")]
     [InlineData("Policy.Rules")]
