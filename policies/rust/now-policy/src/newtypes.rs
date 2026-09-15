@@ -107,11 +107,13 @@ pub const CURRENT_POLICY_FORMAT_VERSION: &str = "1.0.0";
 /// Readers accept canonical numeric versions in the compatible 1.x line.
 /// Applications must stamp the current value, `1.0.0`, for new documents and
 /// must not expose this value as publisher-authored editable metadata.
+/// Schemas describe the canonical shape; runtime readers additionally bound
+/// each numeric component to an unsigned 64-bit integer.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct PolicyFormatVersion(
     #[schemars(
         length(max = 128),
-        regex(pattern = r"^1\.(0|[1-9][0-9]?|100)\.(0|[1-9][0-9]?|100)(?![\s\S])")
+        regex(pattern = r"^1\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?![\s\S])")
     )]
     String,
 );
@@ -146,7 +148,7 @@ impl PolicyFormatVersion {
             {
                 return None;
             }
-            component.parse::<u8>().ok().filter(|value| *value <= 100)
+            component.parse::<u64>().ok()
         };
 
         let (Some(major), Some(_minor), Some(_patch)) =
@@ -154,7 +156,7 @@ impl PolicyFormatVersion {
         else {
             return Err(ModelValidationError::Invalid {
                 type_name: "PolicyFormatVersion",
-                reason: "components must be canonical unsigned integers between 0 and 100".to_owned(),
+                reason: "components must be canonical unsigned 64-bit integers".to_owned(),
             });
         };
 

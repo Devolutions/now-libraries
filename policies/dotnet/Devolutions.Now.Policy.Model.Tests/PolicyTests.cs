@@ -263,7 +263,7 @@ public class PolicyTests
     [Theory]
     [InlineData("not-semver")]
     [InlineData("2.0.0")]
-    [InlineData("1.101.0")]
+    [InlineData("1.18446744073709551616.0")]
     [InlineData("1.2.3-beta")]
     [InlineData("1.0.0\n")]
     public void Unsupported_policy_format_versions_are_rejected(string value)
@@ -276,7 +276,6 @@ public class PolicyTests
     }
 
     [Theory]
-    [InlineData("1.101.0")]
     [InlineData("1.0.0-01")]
     [InlineData("1.0.0-.")]
     [InlineData("1.0.0\n")]

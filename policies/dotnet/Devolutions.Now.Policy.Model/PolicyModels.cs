@@ -36,7 +36,7 @@ public sealed class PolicyFormatVersion : IEquatable<PolicyFormatVersion>
             || !TryParseComponent(components[2], out _))
         {
             throw new FormatException(
-                "PolicyFormatVersion must contain three canonical unsigned integer components between 0 and 100.");
+                "PolicyFormatVersion must contain three canonical unsigned 64-bit integer components.");
         }
         if (major != PolicyFormatVersions.SupportedMajor)
         {
@@ -47,17 +47,16 @@ public sealed class PolicyFormatVersion : IEquatable<PolicyFormatVersion>
         return new PolicyFormatVersion(value);
     }
 
-    private static bool TryParseComponent(string component, out byte value)
+    private static bool TryParseComponent(string component, out ulong value)
     {
         value = 0;
-        return component.Length is >= 1 and <= 3
+        return component.Length >= 1
             && (component.Length == 1 || component[0] != '0')
-            && byte.TryParse(
+            && ulong.TryParse(
             component,
             System.Globalization.NumberStyles.None,
             System.Globalization.CultureInfo.InvariantCulture,
-            out value)
-            && value <= 100;
+            out value);
     }
 
     public bool Equals(PolicyFormatVersion? other) =>
