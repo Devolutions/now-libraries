@@ -20,9 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   
   Consumers must remove `$schema` and use `"PolicyFormatVersion":
   "1.0.0"`. New documents emit `1.0.0`; readers accept and preserve
-  supported SemVer 1.x values and reject malformed or unsupported-major
-  values. Applications must not expose this field as editable policy
-  metadata. `Revision` and `PublishedAt` remain server-managed.
+  canonical three-component numeric versions in the 1.x line, with each component
+  bounded to an unsigned 64-bit integer. Readers reject malformed or unsupported-major
+  values. Applications must not expose this field as editable policy metadata. `Revision` and `PublishedAt` remain server-managed.
 
 
 
