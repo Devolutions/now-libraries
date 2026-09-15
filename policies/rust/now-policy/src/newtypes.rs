@@ -111,7 +111,7 @@ pub const CURRENT_POLICY_FORMAT_VERSION: &str = "1.0.0";
 pub struct PolicyFormatVersion(
     #[schemars(
         length(max = 128),
-        regex(pattern = r"^1\.(0|[1-9][0-9]{0,17})\.(0|[1-9][0-9]{0,17})(?![\s\S])")
+        regex(pattern = r"^1\.(0|[1-9][0-9]?|100)\.(0|[1-9][0-9]?|100)(?![\s\S])")
     )]
     String,
 );
@@ -141,13 +141,12 @@ impl PolicyFormatVersion {
 
         let parse_component = |component: &str| {
             if component.is_empty()
-                || component.len() > 18
                 || (component.len() > 1 && component.starts_with('0'))
                 || !component.bytes().all(|byte| byte.is_ascii_digit())
             {
                 return None;
             }
-            component.parse::<u64>().ok()
+            component.parse::<u8>().ok().filter(|value| *value <= 100)
         };
 
         let (Some(major), Some(_minor), Some(_patch)) =
@@ -155,7 +154,7 @@ impl PolicyFormatVersion {
         else {
             return Err(ModelValidationError::Invalid {
                 type_name: "PolicyFormatVersion",
-                reason: "components must be canonical unsigned integers of at most 18 digits".to_owned(),
+                reason: "components must be canonical unsigned integers between 0 and 100".to_owned(),
             });
         };
 
