@@ -24,7 +24,7 @@ Architecture
 - `PolicySerializer.cs` defines shared source-generated `JsonSerializerOptions`, including strict parsing that rejects unknown JSON members and JSON null for non-nullable policy members or collection elements.
 - All policy deserialization entry points, including the non-strict compatibility helper and public serializer options, reject duplicate property names before typed deserialization. The check covers every nested object, decodes escaped names before comparing them, and uses ordinal, case-sensitive equality to match canonical property-name handling.
 
-`PolicyDocument.Create` constructs a committed policy and `PolicyDraftDocument.Create` constructs an editable draft. `PolicyDocument.ToDraft` removes server-managed `Revision` and `PublishedAt`; `PolicyDraftDocument.ToPolicyDocument` requires those values when committing. `ParseJson` is the only policy parsing entry point.
+`PolicyDocument.Create` constructs a committed policy and `PolicyDraftDocument.Create` constructs an editable draft. `PolicyDocument.ToDraft` removes server-managed `Revision` and `PublishedAt`; `PolicyDraftDocument.ToPolicyDocument` requires those values when committing. `ParseJson` is the recommended strict policy parsing entry point.
 
 `PolicyFormatVersion` is software-managed format compatibility metadata, not a publisher release version. New documents stamp `1.0.0`; readers accept and preserve supported numeric versions in the 1.x line and reject malformed or unsupported-major values. Applications must not expose it as authored metadata. Policy documents contain no `$schema` member, and strict readers reject documents that contain one as unknown-field input.
 

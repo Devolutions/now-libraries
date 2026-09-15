@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 using Devolutions.Now.Policy.Api;
 using Devolutions.Now.Policy.Client;
@@ -316,6 +317,39 @@ public class PolicyManagementClientTests
                 () => JsonSerializer.Deserialize<PolicyFinding>(Finding, options));
             Assert.Throws<JsonException>(
                 () => JsonSerializer.Deserialize<InvalidPolicyDiagnostics>(Diagnostics, options));
+        }
+    }
+
+    [Fact]
+    public void Public_broker_options_reject_duplicates_in_every_direct_broker_object_type()
+    {
+        var contractAssemblies = new[]
+        {
+            typeof(BrokerSerializer).Assembly,
+            typeof(PolicyDocument).Assembly,
+        };
+
+        foreach (var options in new[] { BrokerSerializer.Options, BrokerSerializer.PrettyOptions })
+        {
+            var metadataOptions = new JsonSerializerOptions(options);
+            metadataOptions.Converters.Clear();
+            var resolver = Assert.IsAssignableFrom<IJsonTypeInfoResolver>(
+                metadataOptions.TypeInfoResolver);
+            var publicObjectTypes = contractAssemblies
+                .SelectMany(assembly => assembly.ExportedTypes)
+                .Where(type => type.IsClass && !type.IsAbstract)
+                .Where(type => resolver.GetTypeInfo(type, metadataOptions)?.Kind == JsonTypeInfoKind.Object)
+                .ToList();
+
+            Assert.Contains(typeof(RequestSource), publicObjectTypes);
+            Assert.Contains(typeof(ServerContext), publicObjectTypes);
+            Assert.Contains(typeof(ManagerCapability), publicObjectTypes);
+            Assert.Contains(typeof(ErrorDetail), publicObjectTypes);
+
+            foreach (var type in publicObjectTypes)
+            {
+                AssertDirectOptionsRejectDuplicates(type, options);
+            }
         }
     }
 
@@ -824,6 +858,29 @@ public class PolicyManagementClientTests
             "\"PolicyFormatVersion\": \"1.0.0\",",
             "\"PolicyFormatVersion\": \"1.0.0\",\n\"PolicyFormatVersi\\u006fn\": \"1.0.0\",",
             StringComparison.Ordinal);
+
+    private static void AssertDirectOptionsRejectDuplicates(
+        Type type,
+        JsonSerializerOptions options)
+    {
+        foreach (var json in new[]
+        {
+            """{"Duplicate":true,"\u0044uplicate":true}""",
+            """{"Container":{"Duplicate":true,"\u0044uplicate":false}}""",
+        })
+        {
+            var exception = Record.Exception(
+                () => JsonSerializer.Deserialize(json, type, options));
+            Assert.True(
+                exception is JsonException,
+                $"{type.FullName} did not reject duplicate properties: {exception}");
+            var jsonException = (JsonException)exception;
+            Assert.Contains(
+                "Duplicate JSON property name",
+                jsonException.Message,
+                StringComparison.Ordinal);
+        }
+    }
 
     private static JsonNode ReplaceProperty(JsonNode source, string propertyName, JsonNode value)
     {

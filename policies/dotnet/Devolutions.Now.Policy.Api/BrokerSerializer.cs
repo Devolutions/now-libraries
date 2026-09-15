@@ -280,8 +280,18 @@ public static class BrokerSerializer
 
     private static void AddDuplicateRejectingConverters(JsonSerializerOptions options)
     {
+        // Explicit closed-world registrations are Native AOT safe. The client test suite enumerates
+        // all public object metadata from these source-generated contexts to prevent omissions.
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PackageRequest>(
             BrokerSerializerContext.Default.PackageRequest));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<RequestSource>(
+            BrokerSerializerContext.Default.RequestSource));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<RequestPackage>(
+            BrokerSerializerContext.Default.RequestPackage));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<RequestOptions>(
+            BrokerSerializerContext.Default.RequestOptions));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ClientContext>(
+            BrokerSerializerContext.Default.ClientContext));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<StatusRequest>(
             BrokerSerializerContext.Default.StatusRequest));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<CancelRequest>(
@@ -294,6 +304,8 @@ public static class BrokerSerializer
             BrokerSerializerContext.Default.HealthResponse));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<CapabilitiesResponse>(
             BrokerSerializerContext.Default.CapabilitiesResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ManagerCapability>(
+            BrokerSerializerContext.Default.ManagerCapability));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyResponse>(
             BrokerPolicySerializerContext.Default.PolicyResponse));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyManagementResponse>(
@@ -306,12 +318,28 @@ public static class BrokerSerializer
             BrokerSerializerContext.Default.EvaluationResponse));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ExecutionResponse>(
             BrokerSerializerContext.Default.ExecutionResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ServerContext>(
+            BrokerSerializerContext.Default.ServerContext));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<RequestSummary>(
+            BrokerSerializerContext.Default.RequestSummary));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<DecisionInfo>(
+            BrokerSerializerContext.Default.DecisionInfo));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ResponsePolicyInfo>(
+            BrokerSerializerContext.Default.ResponsePolicyInfo));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<OperationDiagnostics>(
+            BrokerSerializerContext.Default.OperationDiagnostics));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<OperationSubmission>(
+            BrokerSerializerContext.Default.OperationSubmission));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<EventChannel>(
+            BrokerSerializerContext.Default.EventChannel));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<StatusResponse>(
             BrokerSerializerContext.Default.StatusResponse));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<CancelResponse>(
             BrokerSerializerContext.Default.CancelResponse));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ErrorResponse>(
             BrokerErrorSerializerContext.Default.ErrorResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ErrorDetail>(
+            BrokerErrorSerializerContext.Default.ErrorDetail));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDocument>(
             BrokerPolicySerializerContext.Default.PolicyDocument));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftDocument>(
