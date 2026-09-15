@@ -104,14 +104,14 @@ pub const CURRENT_POLICY_FORMAT_VERSION: &str = "1.0.0";
 
 /// Software-managed policy document format version.
 ///
-/// Readers accept supported SemVer 2.0.0 values in the compatible 1.x line. Applications
-/// must stamp the current value, `1.0.0`, for new documents and must not expose
-/// this value as publisher-authored editable metadata.
+/// Readers accept canonical numeric versions in the compatible 1.x line.
+/// Applications must stamp the current value, `1.0.0`, for new documents and
+/// must not expose this value as publisher-authored editable metadata.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct PolicyFormatVersion(
     #[schemars(
         length(max = 128),
-        regex(pattern = r"^1\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:[-+][0-9A-Za-z.-]+)?$")
+        regex(pattern = r"^1\.(0|[1-9][0-9]{0,17})\.(0|[1-9][0-9]{0,17})(?![\s\S])")
     )]
     String,
 );
@@ -126,17 +126,43 @@ impl PolicyFormatVersion {
             });
         }
 
-        let version = semver::Version::parse(s).map_err(|error| ModelValidationError::Invalid {
-            type_name: "PolicyFormatVersion",
-            reason: error.to_string(),
-        })?;
-        if version.major != 1 {
+        let mut components = s.split('.');
+        let (Some(major), Some(minor), Some(patch), None) = (
+            components.next(),
+            components.next(),
+            components.next(),
+            components.next(),
+        ) else {
             return Err(ModelValidationError::Invalid {
                 type_name: "PolicyFormatVersion",
-                reason: format!(
-                    "unsupported major version {}; supported major version is 1",
-                    version.major
-                ),
+                reason: "must contain exactly three numeric components".to_owned(),
+            });
+        };
+
+        let parse_component = |component: &str| {
+            if component.is_empty()
+                || component.len() > 18
+                || (component.len() > 1 && component.starts_with('0'))
+                || !component.bytes().all(|byte| byte.is_ascii_digit())
+            {
+                return None;
+            }
+            component.parse::<u64>().ok()
+        };
+
+        let (Some(major), Some(_minor), Some(_patch)) =
+            (parse_component(major), parse_component(minor), parse_component(patch))
+        else {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PolicyFormatVersion",
+                reason: "components must be canonical unsigned integers of at most 18 digits".to_owned(),
+            });
+        };
+
+        if major != 1 {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PolicyFormatVersion",
+                reason: format!("unsupported major version {}; supported major version is 1", major),
             });
         }
 

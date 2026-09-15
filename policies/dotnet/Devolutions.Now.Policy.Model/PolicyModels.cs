@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 
 namespace Devolutions.Now.Policy.Model;
 
@@ -13,10 +12,6 @@ public static class PolicyFormatVersions
 [JsonConverter(typeof(PolicyFormatVersionJsonConverter))]
 public sealed class PolicyFormatVersion : IEquatable<PolicyFormatVersion>
 {
-    private static readonly Regex SemVerPattern = new(
-        @"^(?<major>0|[1-9][0-9]*)\.(?<minor>0|[1-9][0-9]*)\.(?<patch>0|[1-9][0-9]*)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$",
-        RegexOptions.CultureInvariant);
-
     private PolicyFormatVersion(string value)
     {
         Value = value;
@@ -34,14 +29,14 @@ public sealed class PolicyFormatVersion : IEquatable<PolicyFormatVersion>
             throw new FormatException("PolicyFormatVersion must contain at most 128 characters.");
         }
 
-        var match = SemVerPattern.Match(value);
-        if (!match.Success
-            || match.Length != value.Length
-            || !ulong.TryParse(match.Groups["major"].Value, out var major)
-            || !ulong.TryParse(match.Groups["minor"].Value, out _)
-            || !ulong.TryParse(match.Groups["patch"].Value, out _))
+        var components = value.Split('.');
+        if (components.Length != 3
+            || !TryParseComponent(components[0], out var major)
+            || !TryParseComponent(components[1], out _)
+            || !TryParseComponent(components[2], out _))
         {
-            throw new FormatException("PolicyFormatVersion must be a valid SemVer 2.0.0 string.");
+            throw new FormatException(
+                "PolicyFormatVersion must contain three canonical unsigned integer components of at most 18 digits.");
         }
         if (major != PolicyFormatVersions.SupportedMajor)
         {
@@ -50,6 +45,18 @@ public sealed class PolicyFormatVersion : IEquatable<PolicyFormatVersion>
         }
 
         return new PolicyFormatVersion(value);
+    }
+
+    private static bool TryParseComponent(string component, out ulong value)
+    {
+        value = 0;
+        return component.Length is >= 1 and <= 18
+            && (component.Length == 1 || component[0] != '0')
+            && ulong.TryParse(
+            component,
+            System.Globalization.NumberStyles.None,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out value);
     }
 
     public bool Equals(PolicyFormatVersion? other) =>

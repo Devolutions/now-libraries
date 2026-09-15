@@ -264,7 +264,7 @@ public class PolicyTests
     [InlineData("not-semver")]
     [InlineData("2.0.0")]
     [InlineData("1.18446744073709551616.0")]
-    [InlineData("1.2.3-١a")]
+    [InlineData("1.2.3-beta")]
     [InlineData("1.0.0\n")]
     public void Unsupported_policy_format_versions_are_rejected(string value)
     {
@@ -273,6 +273,21 @@ public class PolicyTests
         document["PolicyFormatVersion"] = value;
 
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+    }
+
+    [Theory]
+    [InlineData("1.18446744073709551616.0")]
+    [InlineData("1.0.0-01")]
+    [InlineData("1.0.0-.")]
+    [InlineData("1.0.0\n")]
+    public async Task Rust_schema_rejects_unsupported_policy_format_versions(string value)
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+        document["PolicyFormatVersion"] = value;
+        var schema = await JsonSchema.FromFileAsync(PolicySchema);
+
+        Assert.NotEmpty(schema.Validate(document.ToJsonString()));
     }
 
     [Fact]
