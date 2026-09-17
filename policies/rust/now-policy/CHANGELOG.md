@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [[0.5.0](https://github.com/Devolutions/now-libraries/compare/now-policy-v0.4.0...now-policy-v0.5.0)] - 2026-09-17
+
+### <!-- 1 -->Features
+
+- [**breaking**] Remove `PolicyDocument::policy_type`, `PolicyDraftDocument::policy_type`, and `PolicyEnforcement::rule_precedence`; rule precedence is now fixed by priority, deny ties, and document order ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- [**breaking**] Replace `PolicyMatch::package_identifiers` with `Option<PackageIdentifierCondition>` using exactly one `Exact` or `Patterns` mode, and remove `PolicyMatch::package_names` ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- [**breaking**] Replace `PolicyMatch::versions` and `version_range` with `version: Option<VersionCondition>`; range bounds now use `SemanticVersion` ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- [**breaking**] Rename `PolicyMatch::sources` to `source_names`, which uses exact `SourceName` values and requires exactly one manager when nonempty ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- [**breaking**] Rename `PolicyMatch::elevation` to `execution_elevation`, which matches effective execution privilege ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- [**breaking**] Change the boolean `PolicyMatch` filters from `BTreeSet<bool>` to optional scalar booleans ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- Reject duplicate values in collection match filters and omit empty filters from serialized policies ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- Reject policy metadata whose `ValidFrom` is not earlier than `ValidUntil` ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- Reject `PolicyRule::constraints` on deny rules ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+
+
+
 ## [[0.4.0](https://github.com/Devolutions/now-libraries/compare/now-policy-v0.3.0...now-policy-v0.4.0)] - 2026-09-15
 
 ### <!-- 1 -->Features

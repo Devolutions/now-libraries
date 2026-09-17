@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [[0.6.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.5.0...now-policy-server-template-v0.6.0)] - 2026-09-17
+
+### <!-- 1 -->Features
+
+- [**breaking**] Update the re-exported policy API models to the `now-policy-api` 0.6 and `now-policy` 0.5 policy document contract ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- Generate OpenAPI documents with OpenAPI 3.1 type unions for nullable values instead of the legacy `nullable` keyword ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+
+
+
 ## [[0.5.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.4.0...now-policy-server-template-v0.5.0)] - 2026-09-15
 
 ### <!-- 1 -->Features

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [[0.6.0](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.5.0...now-policy-api-v0.6.0)] - 2026-09-17
+
+### <!-- 1 -->Features
+
+- [**breaking**] Update policy-bearing API models and OpenAPI schemas to the `now-policy` 0.5 policy document contract ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- [**breaking**] Remove `PolicyFindingCode::IneffectiveBooleanMatch` and `PolicyFindingCode::UnsupportedPolicyType` ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+- Represent nullable values in the published OpenAPI schema with OpenAPI 3.1 type unions instead of the legacy `nullable` keyword ([#109](https://github.com/Devolutions/now-libraries/issues/109)) ([3ab49ad765](https://github.com/Devolutions/now-libraries/commit/3ab49ad76590c325293f50ac4129230ec2b2191a))
+
+
+
 ## [[0.5.0](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.4.0...now-policy-api-v0.5.0)] - 2026-09-15
 
 ### <!-- 1 -->Features
