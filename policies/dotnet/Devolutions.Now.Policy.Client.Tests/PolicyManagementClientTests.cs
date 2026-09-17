@@ -15,6 +15,7 @@ using PolicyDocument = Devolutions.Now.Policy.Model.PolicyDocument;
 using PolicyDraftDocument = Devolutions.Now.Policy.Model.PolicyDraftDocument;
 using PolicyMetadata = Devolutions.Now.Policy.Model.PolicyMetadata;
 using VersionCondition = Devolutions.Now.Policy.Model.VersionCondition;
+using VersionRange = Devolutions.Now.Policy.Model.VersionRange;
 
 namespace Devolutions.Now.Policy.Client.Tests;
 
@@ -356,6 +357,17 @@ public class PolicyManagementClientTests
                 () => JsonSerializer.Serialize(new PackageIdentifierCondition(), options));
             Assert.Throws<JsonException>(
                 () => JsonSerializer.Serialize(new VersionCondition(), options));
+            foreach (var invalid in new[]
+            {
+                "{}",
+                """{"MinVersion":"not-semver"}""",
+            })
+            {
+                Assert.Throws<JsonException>(
+                    () => JsonSerializer.Deserialize<VersionRange>(invalid, options));
+            }
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Serialize(new VersionRange(), options));
         }
     }
 

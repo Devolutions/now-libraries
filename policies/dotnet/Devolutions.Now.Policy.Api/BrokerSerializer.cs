@@ -58,6 +58,7 @@ public static class BrokerSerializer
                 or PolicyMatch
                 or PackageIdentifierCondition
                 or VersionCondition
+                or VersionRange
                 or PolicyConstraints:
                 PolicySerializer.ValidateSemanticValue(value);
                 break;
