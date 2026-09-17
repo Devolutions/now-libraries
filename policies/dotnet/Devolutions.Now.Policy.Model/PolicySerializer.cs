@@ -159,6 +159,12 @@ public static class PolicySerializer
 
     private static void ValidateRequiredCollectionElements(PolicyMatch match, string path)
     {
+        RejectDuplicateElements(match.Operations, $"{path}.Operations");
+        RejectDuplicateElements(match.Managers, $"{path}.Managers");
+        RejectDuplicateElements(match.SourceNames, $"{path}.SourceNames");
+        RejectDuplicateElements(match.Scopes, $"{path}.Scopes");
+        RejectDuplicateElements(match.Architectures, $"{path}.Architectures");
+        RejectDuplicateElements(match.ExecutionElevation, $"{path}.ExecutionElevation");
         RejectBoundedStrings(match.SourceNames, 1, 128, $"{path}.SourceNames");
         if (match.SourceNames.Count > 0 && match.Managers.Count != 1)
         {
@@ -195,6 +201,7 @@ public static class PolicySerializer
                 throw new JsonException($"The JSON array at {path}.Exact must contain between 1 and 1024 values.");
             }
             RejectPackageIdentifiers(exact, $"{path}.Exact");
+            RejectDuplicateElements(exact, $"{path}.Exact");
         }
         if (identifiers.Patterns is { } patterns)
         {
@@ -203,6 +210,7 @@ public static class PolicySerializer
                 throw new JsonException($"The JSON array at {path}.Patterns must contain between 1 and 1024 values.");
             }
             RejectBoundedStrings(patterns, 1, 256, $"{path}.Patterns");
+            RejectDuplicateElements(patterns, $"{path}.Patterns");
         }
     }
 
@@ -240,6 +248,7 @@ public static class PolicySerializer
                 throw new JsonException($"The JSON array at {path}.Exact must contain between 1 and 256 values.");
             }
             RejectBoundedStrings(exact, 1, 128, $"{path}.Exact");
+            RejectDuplicateElements(exact, $"{path}.Exact");
         }
     }
 
@@ -301,6 +310,18 @@ public static class PolicySerializer
         }
     }
 
+    private static void RejectDuplicateElements<T>(IReadOnlyList<T> values, string path)
+    {
+        var unique = new HashSet<T>();
+        for (var index = 0; index < values.Count; index++)
+        {
+            if (!unique.Add(values[index]))
+            {
+                throw new JsonException($"The JSON array at {path} must not contain duplicate values.");
+            }
+        }
+    }
+
     private static void RejectBoundedStrings(
         IReadOnlyList<string> values,
         int minLength,
@@ -340,18 +361,18 @@ public static class PolicySerializer
     }
 
     private static JsonTypeInfo<T> StrictTypeInfo<T>() =>
-        typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDocument) :
-        typeof(T) == typeof(PolicyDraftDocument) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDraftDocument) :
-        typeof(T) == typeof(PolicyMetadata) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyMetadata) :
-        typeof(T) == typeof(PolicyDraftMetadata) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDraftMetadata) :
-        typeof(T) == typeof(PolicyEnforcement) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyEnforcement) :
-        typeof(T) == typeof(PolicyRule) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyRule) :
-        typeof(T) == typeof(PolicyMatch) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyMatch) :
-        typeof(T) == typeof(PackageIdentifierCondition) ? Cast<T>(PolicyStrictSerializerContext.Default.PackageIdentifierCondition) :
-        typeof(T) == typeof(VersionCondition) ? Cast<T>(PolicyStrictSerializerContext.Default.VersionCondition) :
-        typeof(T) == typeof(VersionRange) ? Cast<T>(PolicyStrictSerializerContext.Default.VersionRange) :
-        typeof(T) == typeof(PolicyConstraints) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyConstraints) :
-        throw new NotSupportedException($"Strict policy JSON deserialization for {typeof(T).FullName} is not source-generated.");
+    typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDocument) :
+    typeof(T) == typeof(PolicyDraftDocument) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDraftDocument) :
+    typeof(T) == typeof(PolicyMetadata) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyMetadata) :
+    typeof(T) == typeof(PolicyDraftMetadata) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDraftMetadata) :
+    typeof(T) == typeof(PolicyEnforcement) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyEnforcement) :
+    typeof(T) == typeof(PolicyRule) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyRule) :
+    typeof(T) == typeof(PolicyMatch) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyMatch) :
+    typeof(T) == typeof(PackageIdentifierCondition) ? Cast<T>(PolicyStrictSerializerContext.Default.PackageIdentifierCondition) :
+    typeof(T) == typeof(VersionCondition) ? Cast<T>(PolicyStrictSerializerContext.Default.VersionCondition) :
+    typeof(T) == typeof(VersionRange) ? Cast<T>(PolicyStrictSerializerContext.Default.VersionRange) :
+    typeof(T) == typeof(PolicyConstraints) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyConstraints) :
+    throw new NotSupportedException($"Strict policy JSON deserialization for {typeof(T).FullName} is not source-generated.");
 
     private static JsonTypeInfo<T> Cast<T>(JsonTypeInfo jsonTypeInfo) =>
         (JsonTypeInfo<T>)jsonTypeInfo;

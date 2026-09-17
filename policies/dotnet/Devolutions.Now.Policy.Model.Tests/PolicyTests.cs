@@ -831,6 +831,27 @@ public class PolicyTests
         Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyRule>(emptyOnly.ToJsonString()));
     }
 
+    [Theory]
+    [MemberData(nameof(CollectionMatchProperties))]
+    public void Collection_match_filters_reject_duplicate_values(
+        string propertyName,
+        string elementJson)
+    {
+        var match = new JsonObject
+        {
+            [propertyName] = new JsonArray(
+                JsonNode.Parse(elementJson),
+                JsonNode.Parse(elementJson)),
+        };
+        if (propertyName == nameof(PolicyMatch.SourceNames))
+        {
+            match[nameof(PolicyMatch.Managers)] = new JsonArray("Winget");
+        }
+
+        Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializeStrict<PolicyMatch>(match.ToJsonString()));
+    }
+
     [Fact]
     public void Source_names_require_managers_and_preserve_exact_literal_names()
     {
@@ -927,6 +948,8 @@ public class PolicyTests
             """{"Patterns":["Microsoft.*"],"Exact":null}""",
             """{"Exact":null,"Patterns":["Microsoft.*"]}""",
             """{"Exact":["Microsoft.*"]}""",
+            """{"Exact":["Git.Git","Git.Git"]}""",
+            """{"Patterns":["Git.*","Git.*"]}""",
             """{"Exact":["Microsoft.VisualStudioCode"],"\u0045xact":["Git.Git"]}""",
         })
         {
@@ -969,6 +992,7 @@ public class PolicyTests
             """{"Range":null,"Exact":["1.0.0"]}""",
             """{"Range":{"MinVersion":"1.0.0"},"Exact":null}""",
             """{"Exact":null,"Range":{"MinVersion":"1.0.0"}}""",
+            """{"Exact":["1.0.0","1.0.0"]}""",
             """{"Exact":["1.0.0"],"\u0045xact":["2.0.0"]}""",
         })
         {

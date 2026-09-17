@@ -565,21 +565,21 @@ fn enforce_source_names_schema(schema: &mut Schema) {
 #[serde(deny_unknown_fields)]
 struct PolicyMatchWire {
     #[serde(default)]
-    operations: BTreeSet<Operation>,
+    operations: Vec<Operation>,
     #[serde(default)]
-    managers: BTreeSet<ManagerName>,
+    managers: Vec<ManagerName>,
     #[serde(default)]
-    source_names: BTreeSet<SourceName>,
+    source_names: Vec<SourceName>,
     #[serde(default)]
     package_identifiers: Option<PackageIdentifierCondition>,
     #[serde(default)]
     version: Option<VersionCondition>,
     #[serde(default)]
-    scopes: BTreeSet<Scope>,
+    scopes: Vec<Scope>,
     #[serde(default)]
-    architectures: BTreeSet<Architecture>,
+    architectures: Vec<Architecture>,
     #[serde(default)]
-    execution_elevation: BTreeSet<Elevation>,
+    execution_elevation: Vec<Elevation>,
     #[serde(default)]
     interactive: Option<bool>,
     #[serde(default)]
@@ -642,17 +642,49 @@ fn validate_policy_match(value: &PolicyMatch) -> Result<(), &'static str> {
     Ok(())
 }
 
-impl From<PolicyMatchWire> for PolicyMatch {
-    fn from(value: PolicyMatchWire) -> Self {
-        Self {
-            operations: value.operations,
-            managers: value.managers,
-            source_names: value.source_names,
+fn reject_duplicate_values<T: Ord>(values: &[T], path: &'static str) -> Result<(), &'static str> {
+    let unique = values.iter().collect::<BTreeSet<_>>();
+    if unique.len() != values.len() {
+        return Err(path);
+    }
+    Ok(())
+}
+
+impl TryFrom<PolicyMatchWire> for PolicyMatch {
+    type Error = &'static str;
+
+    fn try_from(value: PolicyMatchWire) -> Result<Self, Self::Error> {
+        reject_duplicate_values(
+            &value.operations,
+            "PolicyMatch.Operations must not contain duplicate values",
+        )?;
+        reject_duplicate_values(
+            &value.managers,
+            "PolicyMatch.Managers must not contain duplicate values",
+        )?;
+        reject_duplicate_values(
+            &value.source_names,
+            "PolicyMatch.SourceNames must not contain duplicate values",
+        )?;
+        reject_duplicate_values(&value.scopes, "PolicyMatch.Scopes must not contain duplicate values")?;
+        reject_duplicate_values(
+            &value.architectures,
+            "PolicyMatch.Architectures must not contain duplicate values",
+        )?;
+        reject_duplicate_values(
+            &value.execution_elevation,
+            "PolicyMatch.ExecutionElevation must not contain duplicate values",
+        )?;
+
+        let result = Self {
+            operations: value.operations.into_iter().collect(),
+            managers: value.managers.into_iter().collect(),
+            source_names: value.source_names.into_iter().collect(),
             package_identifiers: value.package_identifiers,
             version: value.version,
-            scopes: value.scopes,
-            architectures: value.architectures,
-            execution_elevation: value.execution_elevation,
+            scopes: value.scopes.into_iter().collect(),
+            architectures: value.architectures.into_iter().collect(),
+            execution_elevation: value.execution_elevation.into_iter().collect(),
             interactive: value.interactive,
             skip_hash_check: value.skip_hash_check,
             pre_release: value.pre_release,
@@ -661,7 +693,9 @@ impl From<PolicyMatchWire> for PolicyMatch {
             has_pre_post_commands: value.has_pre_post_commands,
             has_kill_before_operation: value.has_kill_before_operation,
             has_uninstall_previous: value.has_uninstall_previous,
-        }
+        };
+        validate_policy_match(&result)?;
+        Ok(result)
     }
 }
 
@@ -670,9 +704,7 @@ impl<'de> Deserialize<'de> for PolicyMatch {
     where
         D: serde::Deserializer<'de>,
     {
-        let value = Self::from(PolicyMatchWire::deserialize(deserializer)?);
-        validate_policy_match(&value).map_err(serde::de::Error::custom)?;
-        Ok(value)
+        Self::try_from(PolicyMatchWire::deserialize(deserializer)?).map_err(serde::de::Error::custom)
     }
 }
 
@@ -749,11 +781,19 @@ impl<'de> Deserialize<'de> for PackageIdentifierCondition {
             PackageIdentifierConditionWire::Exact(values) if values.is_empty() || values.len() > 1024 => Err(
                 serde::de::Error::custom("PackageIdentifiers.Exact must contain between 1 and 1024 values"),
             ),
-            PackageIdentifierConditionWire::Exact(values) => Ok(Self::Exact(values.into_iter().collect())),
+            PackageIdentifierConditionWire::Exact(values) => {
+                reject_duplicate_values(&values, "PackageIdentifiers.Exact must not contain duplicate values")
+                    .map_err(serde::de::Error::custom)?;
+                Ok(Self::Exact(values.into_iter().collect()))
+            }
             PackageIdentifierConditionWire::Patterns(values) if values.is_empty() || values.len() > 1024 => Err(
                 serde::de::Error::custom("PackageIdentifiers.Patterns must contain between 1 and 1024 values"),
             ),
-            PackageIdentifierConditionWire::Patterns(values) => Ok(Self::Patterns(values.into_iter().collect())),
+            PackageIdentifierConditionWire::Patterns(values) => {
+                reject_duplicate_values(&values, "PackageIdentifiers.Patterns must not contain duplicate values")
+                    .map_err(serde::de::Error::custom)?;
+                Ok(Self::Patterns(values.into_iter().collect()))
+            }
         }
     }
 }
@@ -857,7 +897,11 @@ impl<'de> Deserialize<'de> for VersionCondition {
             VersionConditionWire::Exact(values) if values.is_empty() || values.len() > 256 => Err(
                 serde::de::Error::custom("Version.Exact must contain between 1 and 256 values"),
             ),
-            VersionConditionWire::Exact(values) => Ok(Self::Exact(values.into_iter().collect())),
+            VersionConditionWire::Exact(values) => {
+                reject_duplicate_values(&values, "Version.Exact must not contain duplicate values")
+                    .map_err(serde::de::Error::custom)?;
+                Ok(Self::Exact(values.into_iter().collect()))
+            }
             VersionConditionWire::Range(range) => Ok(Self::Range(range)),
         }
     }

@@ -322,6 +322,33 @@ fn empty_collection_only_match_is_not_an_effective_rule_criterion() {
 }
 
 #[test]
+fn collection_match_filters_reject_duplicate_values() {
+    let properties = [
+        ("Operations", "\"Install\""),
+        ("Managers", "\"Winget\""),
+        ("SourceNames", "\"winget\""),
+        ("Scopes", "\"User\""),
+        ("Architectures", "\"X64\""),
+        ("ExecutionElevation", "\"Standard\""),
+    ];
+
+    for (property_name, element_json) in properties {
+        let json = format!(
+            r#"{{"{property_name}":[{element_json},{element_json}]{} }}"#,
+            if property_name == "SourceNames" {
+                r#","Managers":["Winget"]"#
+            } else {
+                ""
+            }
+        );
+        assert!(
+            serde_json::from_str::<now_policy::PolicyMatch>(&json).is_err(),
+            "{property_name} should reject duplicate values"
+        );
+    }
+}
+
+#[test]
 fn source_names_require_managers_and_preserve_exact_literal_names() {
     let without_manager = r#"{
         "Id":"source.rule",
@@ -392,6 +419,8 @@ fn package_identifier_condition_requires_exactly_one_nonempty_mode() {
         r#"{"Patterns":["Microsoft.*"],"Exact":null}"#,
         r#"{"Exact":null,"Patterns":["Microsoft.*"]}"#,
         r#"{"Exact":["Microsoft.*"]}"#,
+        r#"{"Exact":["Git.Git","Git.Git"]}"#,
+        r#"{"Patterns":["Git.*","Git.*"]}"#,
         r#"{"Exact":["Microsoft.VisualStudioCode"],"\u0045xact":["Git.Git"]}"#,
     ] {
         assert!(
@@ -431,6 +460,7 @@ fn version_condition_requires_exactly_one_nonempty_mode() {
         r#"{"Range":null,"Exact":["1.0.0"]}"#,
         r#"{"Range":{"MinVersion":"1.0.0"},"Exact":null}"#,
         r#"{"Exact":null,"Range":{"MinVersion":"1.0.0"}}"#,
+        r#"{"Exact":["1.0.0","1.0.0"]}"#,
         r#"{"Exact":["1.0.0"],"\u0045xact":["2.0.0"]}"#,
     ] {
         assert!(
