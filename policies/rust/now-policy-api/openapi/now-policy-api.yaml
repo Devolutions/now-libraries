@@ -1209,7 +1209,6 @@ components:
       - InvalidFieldType
       - InvalidFieldValue
       - DuplicateRuleId
-      - IneffectiveBooleanMatch
       - InvalidVersionRange
       - EmptyVersionRange
       - InvalidWildcardPattern

@@ -96,7 +96,6 @@ pub enum PolicyFindingCode {
     InvalidFieldType,
     InvalidFieldValue,
     DuplicateRuleId,
-    IneffectiveBooleanMatch,
     InvalidVersionRange,
     EmptyVersionRange,
     InvalidWildcardPattern,
