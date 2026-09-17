@@ -197,7 +197,7 @@
     },
     "PolicyDraftMetadata": {
       "additionalProperties": false,
-      "description": "Editable policy metadata without server-managed revision and publication time.",
+      "description": "Editable policy metadata without server-managed revision and publication time. When both\n validity bounds are present, `ValidFrom` must be strictly earlier than `ValidUntil`.",
       "properties": {
         "Description": {
           "description": "Human-readable description.",
@@ -233,7 +233,7 @@
           "description": "URL for support or documentation."
         },
         "ValidFrom": {
-          "description": "Policy becomes active at this time.",
+          "description": "Earliest instant when the policy is active. When both bounds are present, this must be\n strictly earlier than `ValidUntil`.",
           "format": "date-time",
           "type": [
             "string",
@@ -241,7 +241,7 @@
           ]
         },
         "ValidUntil": {
-          "description": "Policy expires at this time.",
+          "description": "Instant after which the policy is inactive. When both bounds are present, this must be\n strictly later than `ValidFrom`.",
           "format": "date-time",
           "type": [
             "string",

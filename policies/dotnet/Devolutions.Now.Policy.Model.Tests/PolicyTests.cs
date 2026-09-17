@@ -615,6 +615,139 @@ public class PolicyTests
     }
 
     [Fact]
+    public void Validity_windows_accept_absent_one_sided_and_ordered_instants()
+    {
+        foreach (var validity in new[]
+        {
+            "",
+            """
+            ,"ValidFrom": null, "ValidUntil": null
+            """,
+            """
+            ,"ValidFrom": "2026-01-01T00:00:00Z"
+            """,
+            """
+            ,"ValidUntil": "2026-01-01T00:00:00Z"
+            """,
+            """
+            ,"ValidFrom": "2026-01-01T01:00:00+01:00",
+             "ValidUntil": "2026-01-01T00:30:00Z"
+            """,
+        })
+        {
+            var metadataJson = $$"""
+                {
+                  "Id": "validity.test",
+                  "Publisher": "Test",
+                  "Revision": 1,
+                  "PublishedAt": "2026-01-01T00:00:00Z"
+                  {{validity}}
+                }
+                """;
+            var draftMetadataJson = $$"""
+                {
+                  "Id": "validity.test",
+                  "Publisher": "Test"
+                  {{validity}}
+                }
+                """;
+
+            Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyMetadata>(metadataJson));
+            Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyDraftMetadata>(draftMetadataJson));
+            Assert.NotNull(JsonSerializer.Deserialize<PolicyMetadata>(metadataJson, PolicySerializer.Options));
+            Assert.NotNull(JsonSerializer.Deserialize<PolicyDraftMetadata>(
+                draftMetadataJson,
+                PolicySerializer.StrictOptions));
+        }
+
+        var explicitNull = PolicySerializer.DeserializeStrict<PolicyMetadata>(
+            """
+            {
+              "Id": "validity.test",
+              "Publisher": "Test",
+              "Revision": 1,
+              "PublishedAt": "2026-01-01T00:00:00Z",
+              "ValidFrom": null,
+              "ValidUntil": null
+            }
+            """)!;
+        var canonical = JsonNode.Parse(PolicySerializer.Serialize(explicitNull))!;
+        Assert.False(canonical.AsObject().ContainsKey(nameof(PolicyMetadata.ValidFrom)));
+        Assert.False(canonical.AsObject().ContainsKey(nameof(PolicyMetadata.ValidUntil)));
+    }
+
+    [Theory]
+    [InlineData("2026-01-01T01:00:00+01:00", "2026-01-01T00:00:00Z")]
+    [InlineData("2026-01-01T00:30:00Z", "2026-01-01T01:00:00+01:00")]
+    public void Validity_windows_reject_equal_and_inverted_instants(string validFrom, string validUntil)
+    {
+        var metadataJson = $$"""
+            {
+              "Id": "validity.test",
+              "Publisher": "Test",
+              "Revision": 1,
+              "PublishedAt": "2026-01-01T00:00:00Z",
+              "ValidFrom": "{{validFrom}}",
+              "ValidUntil": "{{validUntil}}"
+            }
+            """;
+        var draftMetadataJson = $$"""
+            {
+              "Id": "validity.test",
+              "Publisher": "Test",
+              "ValidFrom": "{{validFrom}}",
+              "ValidUntil": "{{validUntil}}"
+            }
+            """;
+        var policyJson = MinimalPolicyJson(
+            $$"""
+                "Revision": 1,
+                "ValidFrom": "{{validFrom}}",
+                "ValidUntil": "{{validUntil}}",
+            """,
+            """
+                "Rules": []
+            """);
+        var draftJson = $$"""
+            {
+              "PolicyFormatVersion": "1.0.0",
+              "Metadata": {{draftMetadataJson}},
+              "Enforcement": { "DefaultDecision": "Deny" },
+              "Rules": []
+            }
+            """;
+
+        var exception = Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializeStrict<PolicyMetadata>(metadataJson));
+        Assert.Equal("$.ValidUntil", exception.Path);
+        Assert.Contains("$.ValidUntil", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("$.ValidFrom", exception.Message, StringComparison.Ordinal);
+        Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializeStrict<PolicyDraftMetadata>(draftMetadataJson));
+        exception = Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyMetadata>(metadataJson, PolicySerializer.Options));
+        Assert.Equal("$.ValidUntil", exception.Path);
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDraftMetadata>(
+                draftMetadataJson,
+                PolicySerializer.StrictOptions));
+
+        exception = Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(policyJson));
+        Assert.Equal("$.Metadata.ValidUntil", exception.Path);
+        Assert.Contains("$.Metadata.ValidUntil", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("$.Metadata.ValidFrom", exception.Message, StringComparison.Ordinal);
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializePolicyDocument(policyJson));
+        exception = Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDocument>(policyJson, PolicySerializer.Options));
+        Assert.Equal("$.Metadata.ValidUntil", exception.Path);
+        Assert.Throws<JsonException>(() => PolicyDraftDocument.ParseJson(draftJson));
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDraftDocument>(
+                draftJson,
+                PolicySerializer.StrictOptions));
+    }
+
+    [Fact]
     public void Draft_conversions_reject_invalid_union_conditions_before_cloning()
     {
         var committed = PolicyDocument.Create("invalid.clone", "Test");
@@ -629,6 +762,13 @@ public class PolicyTests
                 PackageIdentifiers = new PackageIdentifierCondition(),
             },
         });
+        Assert.Throws<JsonException>(() => committed.ToDraft());
+
+        committed.Rules[0].Match.PackageIdentifiers = new PackageIdentifierCondition
+        {
+            Exact = ["Git.Git"],
+            Patterns = ["Git.*"],
+        };
         Assert.Throws<JsonException>(() => committed.ToDraft());
 
         committed.Rules[0].Match.PackageIdentifiers = new PackageIdentifierCondition
@@ -650,6 +790,14 @@ public class PolicyTests
                 Version = new VersionCondition(),
             },
         });
+        Assert.Throws<JsonException>(
+            () => draft.ToPolicyDocument(1, DateTimeOffset.UtcNow));
+
+        draft.Rules[0].Match.Version = new VersionCondition
+        {
+            Exact = ["1.0.0"],
+            Range = new VersionRange { MinVersion = "1.0.0" },
+        };
         Assert.Throws<JsonException>(
             () => draft.ToPolicyDocument(1, DateTimeOffset.UtcNow));
 
@@ -971,6 +1119,41 @@ public class PolicyTests
     }
 
     [Fact]
+    public async Task Rust_schemas_document_the_runtime_validity_window_invariant()
+    {
+        foreach (var (schemaPath, metadataName) in new[]
+        {
+            (PolicySchema, nameof(PolicyMetadata)),
+            (PolicyDraftSchema, nameof(PolicyDraftMetadata)),
+        })
+        {
+            var schema = JsonNode.Parse(File.ReadAllText(schemaPath))!;
+            var metadata = schema["definitions"]![metadataName]!;
+            Assert.False(metadata["additionalProperties"]!.GetValue<bool>());
+            Assert.Contains(
+                "ValidFrom` must be strictly earlier",
+                metadata["description"]!.GetValue<string>(),
+                StringComparison.Ordinal);
+            Assert.Contains(
+                "strictly later than `ValidFrom`",
+                metadata["properties"]!["ValidUntil"]!["description"]!.GetValue<string>(),
+                StringComparison.Ordinal);
+
+            var document = metadataName == nameof(PolicyMetadata)
+                ? JsonNode.Parse(PolicyDocument.Create("validity.schema", "Test").ToJson())!
+                : JsonNode.Parse(PolicyDraftDocument.Create("validity.schema", "Test").ToJson())!;
+            document["Metadata"]!["Unexpected"] = true;
+            if (metadataName == nameof(PolicyDraftMetadata))
+            {
+                document["Metadata"]!["Revision"] = 1;
+                document["Metadata"]!["PublishedAt"] = "2026-01-01T00:00:00Z";
+            }
+            var jsonSchema = await JsonSchema.FromFileAsync(schemaPath);
+            Assert.NotEmpty(jsonSchema.Validate(document.ToJsonString()));
+        }
+    }
+
+    [Fact]
     public void Package_identifier_condition_requires_exactly_one_nonempty_mode()
     {
         const string Exact = """{"Exact":["Microsoft.VisualStudioCode"]}""";
@@ -982,6 +1165,17 @@ public class PolicyTests
         var patterns = PolicySerializer.DeserializeStrict<PackageIdentifierCondition>(Patterns)!;
         Assert.Equal(["Microsoft.*"], patterns.Patterns);
         Assert.Null(patterns.Exact);
+
+        exact.UsePatterns(["Microsoft.*"]);
+        var switched = JsonNode.Parse(PolicySerializer.Serialize(exact))!;
+        Assert.Null(switched[nameof(PackageIdentifierCondition.Exact)]);
+        Assert.Equal("Microsoft.*", switched[nameof(PackageIdentifierCondition.Patterns)]![0]!.GetValue<string>());
+        exact.UseExact(["Microsoft.VisualStudioCode"]);
+        switched = JsonNode.Parse(PolicySerializer.Serialize(exact))!;
+        Assert.Null(switched[nameof(PackageIdentifierCondition.Patterns)]);
+        Assert.Equal(
+            "Microsoft.VisualStudioCode",
+            switched[nameof(PackageIdentifierCondition.Exact)]![0]!.GetValue<string>());
 
         foreach (var invalid in new[]
         {
@@ -1030,6 +1224,17 @@ public class PolicyTests
         Assert.Null(range.Exact);
         Assert.NotNull(PolicySerializer.DeserializeStrict<VersionCondition>(
             """{"Range":{"MinVersion":"1.0.0-beta.1","IncludePrerelease":true}}"""));
+
+        exact.UseRange(new VersionRange { MinVersion = "1.0.0", MaxVersion = "2.0.0" });
+        var switched = JsonNode.Parse(PolicySerializer.Serialize(exact))!;
+        Assert.Null(switched[nameof(VersionCondition.Exact)]);
+        Assert.Equal(
+            "1.0.0",
+            switched[nameof(VersionCondition.Range)]![nameof(VersionRange.MinVersion)]!.GetValue<string>());
+        exact.UseExact(["5.6.0.0", "2026.09-preview"]);
+        switched = JsonNode.Parse(PolicySerializer.Serialize(exact))!;
+        Assert.Null(switched[nameof(VersionCondition.Range)]);
+        Assert.Equal("5.6.0.0", switched[nameof(VersionCondition.Exact)]![0]!.GetValue<string>());
 
         foreach (var invalid in new[]
         {

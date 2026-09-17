@@ -81,6 +81,85 @@ fn draft_conversion_enforces_revision_bounds() {
 }
 
 #[test]
+fn validity_windows_are_operational_and_strictly_ordered_by_instant() {
+    fn committed_metadata(validity: &str) -> String {
+        format!(
+            r#"{{
+                "Id":"validity.test",
+                "Publisher":"Test",
+                "Revision":1,
+                "PublishedAt":"2026-01-01T00:00:00Z"
+                {validity}
+            }}"#
+        )
+    }
+
+    fn draft_metadata(validity: &str) -> String {
+        format!(
+            r#"{{
+                "Id":"validity.test",
+                "Publisher":"Test"
+                {validity}
+            }}"#
+        )
+    }
+
+    for validity in [
+        "",
+        r#","ValidFrom":null,"ValidUntil":null"#,
+        r#","ValidFrom":"2026-01-01T00:00:00Z""#,
+        r#","ValidUntil":"2026-01-01T00:00:00Z""#,
+        r#","ValidFrom":"2026-01-01T01:00:00+01:00","ValidUntil":"2026-01-01T00:30:00Z""#,
+    ] {
+        let metadata: now_policy::PolicyMetadata = serde_json::from_str(&committed_metadata(validity)).unwrap();
+        let draft: now_policy::PolicyDraftMetadata = serde_json::from_str(&draft_metadata(validity)).unwrap();
+        serde_json::to_value(metadata).unwrap();
+        serde_json::to_value(draft).unwrap();
+    }
+
+    let null_metadata: now_policy::PolicyMetadata =
+        serde_json::from_str(&committed_metadata(r#","ValidFrom":null,"ValidUntil":null"#)).unwrap();
+    let canonical = serde_json::to_value(null_metadata).unwrap();
+    assert!(canonical.get("ValidFrom").is_none());
+    assert!(canonical.get("ValidUntil").is_none());
+
+    for validity in [
+        r#","ValidFrom":"2026-01-01T01:00:00+01:00","ValidUntil":"2026-01-01T00:00:00Z""#,
+        r#","ValidFrom":"2026-01-01T00:30:00Z","ValidUntil":"2026-01-01T01:00:00+01:00""#,
+    ] {
+        let error = serde_json::from_str::<now_policy::PolicyMetadata>(&committed_metadata(validity))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("ValidUntil"), "unexpected error: {error}");
+        assert!(error.contains("ValidFrom"), "unexpected error: {error}");
+
+        let error = serde_json::from_str::<now_policy::PolicyDraftMetadata>(&draft_metadata(validity))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("ValidUntil"), "unexpected error: {error}");
+        assert!(error.contains("ValidFrom"), "unexpected error: {error}");
+    }
+
+    let mut invalid: now_policy::PolicyDraftMetadata =
+        serde_json::from_str(&draft_metadata(r#","ValidFrom":"2026-01-01T00:00:00Z""#)).unwrap();
+    invalid.valid_until = invalid.valid_from;
+    let error = serde_json::to_value(&invalid).unwrap_err().to_string();
+    assert!(error.contains("ValidUntil"), "unexpected error: {error}");
+
+    let committed: PolicyDocument =
+        serde_json::from_str(&std::fs::read_to_string(samples_dir().join("corporate-allowlist.policy.json")).unwrap())
+            .unwrap();
+    let mut draft = committed.to_draft();
+    draft.metadata.valid_from = Some(Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap());
+    draft.metadata.valid_until = draft.metadata.valid_from;
+    assert!(
+        draft
+            .into_policy_document(1, Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap())
+            .is_err()
+    );
+}
+
+#[test]
 fn boolean_match_characteristics_accept_omitted_null_false_and_true() {
     let property_names = [
         "Interactive",
@@ -833,6 +912,33 @@ fn policy_schemas_are_repository_local_and_omit_document_schema() {
         let version_schema = &schema["definitions"]["PolicyFormatVersion"];
         assert_eq!(version_schema["type"], "string");
         assert!(version_schema["pattern"].as_str().unwrap().starts_with("^1\\."));
+    }
+}
+
+#[test]
+fn policy_schemas_document_the_runtime_validity_window_invariant() {
+    for (schema, metadata_name) in [
+        (now_policy::schema::policy_schema_json(), "PolicyMetadata"),
+        (now_policy::schema::policy_draft_schema_json(), "PolicyDraftMetadata"),
+    ] {
+        let metadata = &schema["definitions"][metadata_name];
+        assert_eq!(metadata["additionalProperties"], false);
+        assert!(
+            metadata["description"]
+                .as_str()
+                .unwrap()
+                .contains("ValidFrom` must be strictly earlier")
+        );
+        assert!(
+            metadata["properties"]["ValidUntil"]["description"]
+                .as_str()
+                .unwrap()
+                .contains("strictly later than `ValidFrom`")
+        );
+        if metadata_name == "PolicyDraftMetadata" {
+            assert!(metadata["properties"].get("Revision").is_none());
+            assert!(metadata["properties"].get("PublishedAt").is_none());
+        }
     }
 }
 

@@ -54,6 +54,7 @@ public static class BrokerSerializer
                 PolicySerializer.ValidateRequiredCollectionElements(draft);
                 break;
             case PolicyMetadata
+                or PolicyDraftMetadata
                 or PolicyRule
                 or PolicyMatch
                 or PackageIdentifierCondition
@@ -63,13 +64,13 @@ public static class BrokerSerializer
                 PolicySerializer.ValidateSemanticValue(value);
                 break;
             case PolicyResponse response:
-                PolicySerializer.ValidateRequiredCollectionElements(response.Policy);
+                PolicySerializer.ValidateRequiredCollectionElements(response.Policy, "$.Policy");
                 break;
             case PolicyManagementResponse response:
-                ValidateManagement(response.Management);
+                ValidateManagement(response.Management, "$.Management");
                 break;
             case PolicyValidationResponse response:
-                ValidateValidation(response.Validation);
+                ValidateValidation(response.Validation, "$.Validation");
                 break;
             case PolicyReplacementResponse response:
                 ValidateReplacement(response);
@@ -133,7 +134,9 @@ public static class BrokerSerializer
     private static JsonTypeInfo<T> Cast<T>(JsonTypeInfo jsonTypeInfo) =>
         (JsonTypeInfo<T>)jsonTypeInfo;
 
-    private static void ValidateManagement(PolicyManagementSnapshot management)
+    private static void ValidateManagement(
+        PolicyManagementSnapshot management,
+        string path = "$")
     {
         switch (management.State)
         {
@@ -169,7 +172,7 @@ public static class BrokerSerializer
 
         if (management.Policy is { } policy)
         {
-            PolicySerializer.ValidateRequiredCollectionElements(policy);
+            PolicySerializer.ValidateRequiredCollectionElements(policy, $"{path}.Policy");
         }
     }
 
@@ -182,16 +185,18 @@ public static class BrokerSerializer
 
         if (error.Management is { } management)
         {
-            ValidateManagement(management);
+            ValidateManagement(management, "$.Management");
         }
 
         if (error.Validation is { } validation)
         {
-            ValidateValidation(validation);
+            ValidateValidation(validation, "$.Validation");
         }
     }
 
-    private static void ValidateValidation(PolicyValidationResult validation)
+    private static void ValidateValidation(
+        PolicyValidationResult validation,
+        string path = "$")
     {
         RejectNullElements(validation.Findings, "Validation.Findings");
         var hasError = validation.Findings.Any(finding => finding.Severity == PolicyFindingSeverity.Error);
@@ -207,7 +212,9 @@ public static class BrokerSerializer
                 throw new JsonException("Valid policy validation results must not contain Error findings.");
             }
 
-            PolicySerializer.ValidateRequiredCollectionElements(validation.CanonicalDraft);
+            PolicySerializer.ValidateRequiredCollectionElements(
+                validation.CanonicalDraft,
+                $"{path}.CanonicalDraft");
         }
         else
         {
@@ -226,9 +233,9 @@ public static class BrokerSerializer
 
     private static void ValidateReplacement(PolicyReplacementResponse response)
     {
-        PolicySerializer.ValidateRequiredCollectionElements(response.Policy);
-        ValidateValidation(response.Validation);
-        ValidateManagement(response.Management);
+        PolicySerializer.ValidateRequiredCollectionElements(response.Policy, "$.Policy");
+        ValidateValidation(response.Validation, "$.Validation");
+        ValidateManagement(response.Management, "$.Management");
 
         if (!response.Validation.IsValid)
         {
@@ -356,13 +363,17 @@ public static class BrokerSerializer
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ErrorDetail>(
             BrokerErrorSerializerContext.Default.ErrorDetail));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDocument>(
-            BrokerPolicySerializerContext.Default.PolicyDocument));
+            BrokerPolicySerializerContext.Default.PolicyDocument,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftDocument>(
-            BrokerPolicySerializerContext.Default.PolicyDraftDocument));
+            BrokerPolicySerializerContext.Default.PolicyDraftDocument,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMetadata>(
-            BrokerPolicySerializerContext.Default.PolicyMetadata));
+            BrokerPolicySerializerContext.Default.PolicyMetadata,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftMetadata>(
-            BrokerPolicySerializerContext.Default.PolicyDraftMetadata));
+            BrokerPolicySerializerContext.Default.PolicyDraftMetadata,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyEnforcement>(
             BrokerPolicySerializerContext.Default.PolicyEnforcement));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyRule>(
@@ -380,11 +391,13 @@ public static class BrokerSerializer
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyFinding>(
             BrokerPolicySerializerContext.Default.PolicyFinding));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyValidationResult>(
-            BrokerPolicySerializerContext.Default.PolicyValidationResult));
+            BrokerPolicySerializerContext.Default.PolicyValidationResult,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<InvalidPolicyDiagnostics>(
             BrokerPolicySerializerContext.Default.InvalidPolicyDiagnostics));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyManagementSnapshot>(
-            BrokerPolicySerializerContext.Default.PolicyManagementSnapshot));
+            BrokerPolicySerializerContext.Default.PolicyManagementSnapshot,
+            static value => ValidateSemanticValue(value)));
     }
 
     private static void AttachSemanticValidation(JsonTypeInfo typeInfo)
@@ -399,6 +412,15 @@ public static class BrokerSerializer
             typeInfo.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
         }
         PolicySerializer.ConfigureCanonicalSerialization(typeInfo);
+        if (typeInfo.Type == typeof(PolicyDocument)
+            || typeInfo.Type == typeof(PolicyDraftDocument)
+            || typeInfo.Type == typeof(PolicyMetadata)
+            || typeInfo.Type == typeof(PolicyDraftMetadata)
+            || typeInfo.Type == typeof(PolicyManagementSnapshot)
+            || typeInfo.Type == typeof(PolicyValidationResult))
+        {
+            return;
+        }
         typeInfo.OnSerializing = ValidateSemanticValue;
         typeInfo.OnDeserialized = ValidateSemanticValue;
     }

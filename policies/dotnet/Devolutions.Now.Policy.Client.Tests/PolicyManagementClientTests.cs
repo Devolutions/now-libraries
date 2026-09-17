@@ -13,6 +13,7 @@ using PackageIdentifierCondition = Devolutions.Now.Policy.Model.PackageIdentifie
 using PolicyConstraints = Devolutions.Now.Policy.Model.PolicyConstraints;
 using PolicyDocument = Devolutions.Now.Policy.Model.PolicyDocument;
 using PolicyDraftDocument = Devolutions.Now.Policy.Model.PolicyDraftDocument;
+using PolicyDraftMetadata = Devolutions.Now.Policy.Model.PolicyDraftMetadata;
 using PolicyMetadata = Devolutions.Now.Policy.Model.PolicyMetadata;
 using VersionCondition = Devolutions.Now.Policy.Model.VersionCondition;
 using VersionRange = Devolutions.Now.Policy.Model.VersionRange;
@@ -368,6 +369,94 @@ public class PolicyManagementClientTests
             }
             Assert.Throws<JsonException>(
                 () => JsonSerializer.Serialize(new VersionRange(), options));
+        }
+    }
+
+    [Fact]
+    public async Task Public_broker_options_enforce_standalone_validity_windows()
+    {
+        const string Metadata = """
+            {
+              "Id": "validity.test",
+              "Publisher": "Test",
+              "Revision": 1,
+              "PublishedAt": "2026-01-01T00:00:00Z",
+              "ValidFrom": "2026-01-01T01:00:00+01:00",
+              "ValidUntil": "2026-01-01T00:00:00Z"
+            }
+            """;
+        const string DraftMetadata = """
+            {
+              "Id": "validity.test",
+              "Publisher": "Test",
+              "ValidFrom": "2026-01-01T00:30:00Z",
+              "ValidUntil": "2026-01-01T01:00:00+01:00"
+            }
+            """;
+
+        foreach (var options in new[] { BrokerSerializer.Options, BrokerSerializer.PrettyOptions })
+        {
+            var exception = Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyMetadata>(Metadata, options));
+            Assert.Equal("$.ValidUntil", exception.Path);
+            exception = Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyDraftMetadata>(DraftMetadata, options));
+            Assert.Equal("$.ValidUntil", exception.Path);
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Serialize(
+                    new PolicyDraftMetadata
+                    {
+                        Id = "validity.test",
+                        Publisher = "Test",
+                        ValidFrom = DateTimeOffset.Parse("2026-01-01T00:00:00Z"),
+                        ValidUntil = DateTimeOffset.Parse("2026-01-01T00:00:00Z"),
+                    },
+                    options));
+        }
+
+        var response = JsonNode.Parse(await ReadFixture("responses", "policy.response.json"))!;
+        response["Policy"]!["Metadata"]![nameof(PolicyMetadata.ValidFrom)] = "2026-01-01T00:00:00Z";
+        response["Policy"]!["Metadata"]![nameof(PolicyMetadata.ValidUntil)] = "2026-01-01T00:00:00Z";
+        foreach (var options in new[] { BrokerSerializer.Options, BrokerSerializer.PrettyOptions })
+        {
+            var exception = Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyResponse>(response.ToJsonString(), options));
+            Assert.Equal("$.Policy.Metadata.ValidUntil", exception.Path);
+        }
+
+        static void Invalidate(JsonNode metadata)
+        {
+            metadata[nameof(PolicyMetadata.ValidFrom)] = "2026-01-01T00:00:00Z";
+            metadata[nameof(PolicyMetadata.ValidUntil)] = "2026-01-01T00:00:00Z";
+        }
+
+        var management = JsonNode.Parse(
+            await ReadFixture("responses", "policy-management.active.response.json"))!;
+        Invalidate(management["Management"]!["Policy"]!["Metadata"]!);
+        var validation = JsonNode.Parse(
+            await ReadFixture("responses", "policy-validation.valid.response.json"))!;
+        Invalidate(validation["Validation"]!["CanonicalDraft"]!["Metadata"]!);
+        var replacement = JsonNode.Parse(
+            await ReadFixture("responses", "policy-replacement.response.json"))!;
+        Invalidate(replacement["Validation"]!["CanonicalDraft"]!["Metadata"]!);
+        var error = JsonNode.Parse(
+            await ReadFixture("responses", "policy-stale-token.error.json"))!;
+        Invalidate(error["Management"]!["Policy"]!["Metadata"]!);
+
+        foreach (var (document, type, expectedPath) in new[]
+        {
+            (management, typeof(PolicyManagementResponse), "$.Management.Policy.Metadata.ValidUntil"),
+            (validation, typeof(PolicyValidationResponse), "$.Validation.CanonicalDraft.Metadata.ValidUntil"),
+            (replacement, typeof(PolicyReplacementResponse), "$.Validation.CanonicalDraft.Metadata.ValidUntil"),
+            (error, typeof(ErrorResponse), "$.Management.Policy.Metadata.ValidUntil"),
+        })
+        {
+            foreach (var options in new[] { BrokerSerializer.Options, BrokerSerializer.PrettyOptions })
+            {
+                var exception = Assert.Throws<JsonException>(
+                    () => JsonSerializer.Deserialize(document.ToJsonString(), type, options));
+                Assert.Equal(expectedPath, exception.Path);
+            }
         }
     }
 

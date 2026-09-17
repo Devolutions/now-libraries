@@ -2174,7 +2174,9 @@ components:
       - Enforcement
       - Rules
     PolicyModelPolicyDraftMetadata:
-      description: Editable policy metadata without server-managed revision and publication time.
+      description: |-
+        Editable policy metadata without server-managed revision and publication time. When both
+         validity bounds are present, `ValidFrom` must be strictly earlier than `ValidUntil`.
       type: object
       properties:
         Description:
@@ -2199,13 +2201,17 @@ components:
           - enum:
             - null
         ValidFrom:
-          description: Policy becomes active at this time.
+          description: |-
+            Earliest instant when the policy is active. When both bounds are present, this must be
+             strictly earlier than `ValidUntil`.
           type:
           - string
           - 'null'
           format: date-time
         ValidUntil:
-          description: Policy expires at this time.
+          description: |-
+            Instant after which the policy is inactive. When both bounds are present, this must be
+             strictly later than `ValidFrom`.
           type:
           - string
           - 'null'
@@ -2247,7 +2253,9 @@ components:
       maxLength: 128
       pattern: ^1\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?![\s\S])
     PolicyModelPolicyMetadata:
-      description: Policy metadata.
+      description: |-
+        Policy metadata. When both validity bounds are present, `ValidFrom` must be strictly earlier
+         than `ValidUntil`.
       type: object
       properties:
         Description:
@@ -2282,13 +2290,17 @@ components:
           - enum:
             - null
         ValidFrom:
-          description: Policy becomes active at this time.
+          description: |-
+            Earliest instant when the policy is active. When both bounds are present, this must be
+             strictly earlier than `ValidUntil`.
           type:
           - string
           - 'null'
           format: date-time
         ValidUntil:
-          description: Policy expires at this time.
+          description: |-
+            Instant after which the policy is inactive. When both bounds are present, this must be
+             strictly later than `ValidFrom`.
           type:
           - string
           - 'null'

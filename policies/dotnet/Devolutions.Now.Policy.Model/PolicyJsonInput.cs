@@ -106,7 +106,8 @@ internal static class PolicyJsonInput
 internal interface IDuplicatePropertyNameRejectingConverter;
 
 internal sealed class DuplicatePropertyNameRejectingConverter<T>(
-    JsonTypeInfo<T> fallbackTypeInfo)
+    JsonTypeInfo<T> fallbackTypeInfo,
+    Action<T?>? validate = null)
     : JsonConverter<T>, IDuplicatePropertyNameRejectingConverter
 {
     private readonly ConditionalWeakTable<JsonSerializerOptions, JsonTypeInfo<T>> _effectiveTypeInfos = new();
@@ -117,7 +118,9 @@ internal sealed class DuplicatePropertyNameRejectingConverter<T>(
         JsonSerializerOptions options)
     {
         PolicyJsonInput.RejectDuplicatePropertyNames(ref reader);
-        return JsonSerializer.Deserialize(ref reader, EffectiveTypeInfo(options));
+        var value = JsonSerializer.Deserialize(ref reader, EffectiveTypeInfo(options));
+        validate?.Invoke(value);
+        return value;
     }
 
     public override void Write(
@@ -125,6 +128,7 @@ internal sealed class DuplicatePropertyNameRejectingConverter<T>(
         T value,
         JsonSerializerOptions options)
     {
+        validate?.Invoke(value);
         JsonSerializer.Serialize(writer, value, EffectiveTypeInfo(options));
     }
 

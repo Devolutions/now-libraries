@@ -87,18 +87,19 @@ impl PolicyDraftDocument {
 
         Ok(PolicyDocument {
             policy_format_version: self.policy_format_version,
-            metadata: self.metadata.into_policy_metadata(revision, published_at),
+            metadata: self.metadata.into_policy_metadata(revision, published_at)?,
             enforcement: self.enforcement,
             rules: self.rules,
         })
     }
 }
 
-/// Policy metadata.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// Policy metadata. When both validity bounds are present, `ValidFrom` must be strictly earlier
+/// than `ValidUntil`.
+#[derive(Debug, Clone, JsonSchema)]
 #[schemars(rename = "PolicyMetadata")]
-#[serde(rename_all = "PascalCase")]
-#[serde(deny_unknown_fields)]
+#[schemars(rename_all = "PascalCase")]
+#[schemars(deny_unknown_fields)]
 pub struct PolicyMetadata {
     /// Unique policy identifier.
     pub id: ResourceId,
@@ -118,12 +119,12 @@ pub struct PolicyMetadata {
     /// ISO 8601 publication timestamp (RFC 3339).
     pub published_at: DateTime<Utc>,
 
-    /// Policy becomes active at this time.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Earliest instant when the policy is active. When both bounds are present, this must be
+    /// strictly earlier than `ValidUntil`.
     pub valid_from: Option<DateTime<Utc>>,
 
-    /// Policy expires at this time.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Instant after which the policy is inactive. When both bounds are present, this must be
+    /// strictly later than `ValidFrom`.
     pub valid_until: Option<DateTime<Utc>>,
 
     /// Human-readable description.
@@ -147,22 +148,18 @@ fn validate_policy_revision(revision: u32) -> Result<(), ModelValidationError> {
     Ok(())
 }
 
-fn serialize_policy_revision<S: serde::Serializer>(revision: &u32, serializer: S) -> Result<S::Ok, S::Error> {
-    validate_policy_revision(*revision).map_err(serde::ser::Error::custom)?;
-    revision.serialize(serializer)
-}
-
 fn deserialize_policy_revision<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<u32, D::Error> {
     let revision = u32::deserialize(deserializer)?;
     validate_policy_revision(revision).map_err(serde::de::Error::custom)?;
     Ok(revision)
 }
 
-/// Editable policy metadata without server-managed revision and publication time.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// Editable policy metadata without server-managed revision and publication time. When both
+/// validity bounds are present, `ValidFrom` must be strictly earlier than `ValidUntil`.
+#[derive(Debug, Clone, JsonSchema)]
 #[schemars(rename = "PolicyDraftMetadata")]
-#[serde(rename_all = "PascalCase")]
-#[serde(deny_unknown_fields)]
+#[schemars(rename_all = "PascalCase")]
+#[schemars(deny_unknown_fields)]
 pub struct PolicyDraftMetadata {
     /// Unique policy identifier.
     pub id: ResourceId,
@@ -171,12 +168,12 @@ pub struct PolicyDraftMetadata {
     #[schemars(length(min = 1, max = 128))]
     pub publisher: String,
 
-    /// Policy becomes active at this time.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Earliest instant when the policy is active. When both bounds are present, this must be
+    /// strictly earlier than `ValidUntil`.
     pub valid_from: Option<DateTime<Utc>>,
 
-    /// Policy expires at this time.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Instant after which the policy is inactive. When both bounds are present, this must be
+    /// strictly later than `ValidFrom`.
     pub valid_until: Option<DateTime<Utc>>,
 
     /// Human-readable description.
@@ -203,8 +200,17 @@ impl PolicyMetadata {
 }
 
 impl PolicyDraftMetadata {
-    fn into_policy_metadata(self, revision: u32, published_at: DateTime<Utc>) -> PolicyMetadata {
-        PolicyMetadata {
+    fn into_policy_metadata(
+        self,
+        revision: u32,
+        published_at: DateTime<Utc>,
+    ) -> Result<PolicyMetadata, ModelValidationError> {
+        validate_validity_window(
+            "PolicyDraftMetadata",
+            self.valid_from.as_ref(),
+            self.valid_until.as_ref(),
+        )?;
+        Ok(PolicyMetadata {
             id: self.id,
             publisher: self.publisher,
             revision,
@@ -213,7 +219,179 @@ impl PolicyDraftMetadata {
             valid_until: self.valid_until,
             description: self.description,
             support_url: self.support_url,
+        })
+    }
+}
+
+fn validate_validity_window(
+    type_name: &'static str,
+    valid_from: Option<&DateTime<Utc>>,
+    valid_until: Option<&DateTime<Utc>>,
+) -> Result<(), ModelValidationError> {
+    if let (Some(valid_from), Some(valid_until)) = (valid_from, valid_until)
+        && valid_from >= valid_until
+    {
+        return Err(ModelValidationError::Invalid {
+            type_name,
+            reason: "ValidUntil must be strictly later than ValidFrom".to_owned(),
+        });
+    }
+    Ok(())
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[serde(deny_unknown_fields)]
+struct PolicyMetadataWire {
+    id: ResourceId,
+    publisher: String,
+    #[serde(deserialize_with = "deserialize_policy_revision")]
+    revision: u32,
+    published_at: DateTime<Utc>,
+    #[serde(default)]
+    valid_from: Option<DateTime<Utc>>,
+    #[serde(default)]
+    valid_until: Option<DateTime<Utc>>,
+    #[serde(default)]
+    description: Option<String>,
+    #[serde(default)]
+    support_url: Option<HttpUrl>,
+}
+
+impl TryFrom<PolicyMetadataWire> for PolicyMetadata {
+    type Error = ModelValidationError;
+
+    fn try_from(value: PolicyMetadataWire) -> Result<Self, Self::Error> {
+        validate_validity_window("PolicyMetadata", value.valid_from.as_ref(), value.valid_until.as_ref())?;
+        Ok(Self {
+            id: value.id,
+            publisher: value.publisher,
+            revision: value.revision,
+            published_at: value.published_at,
+            valid_from: value.valid_from,
+            valid_until: value.valid_until,
+            description: value.description,
+            support_url: value.support_url,
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for PolicyMetadata {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        Self::try_from(PolicyMetadataWire::deserialize(deserializer)?).map_err(serde::de::Error::custom)
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct PolicyMetadataRef<'a> {
+    id: &'a ResourceId,
+    publisher: &'a str,
+    revision: &'a u32,
+    published_at: &'a DateTime<Utc>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    valid_from: Option<&'a DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    valid_until: Option<&'a DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    description: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    support_url: Option<&'a HttpUrl>,
+}
+
+impl Serialize for PolicyMetadata {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        validate_policy_revision(self.revision).map_err(serde::ser::Error::custom)?;
+        validate_validity_window("PolicyMetadata", self.valid_from.as_ref(), self.valid_until.as_ref())
+            .map_err(serde::ser::Error::custom)?;
+        PolicyMetadataRef {
+            id: &self.id,
+            publisher: &self.publisher,
+            revision: &self.revision,
+            published_at: &self.published_at,
+            valid_from: self.valid_from.as_ref(),
+            valid_until: self.valid_until.as_ref(),
+            description: self.description.as_deref(),
+            support_url: self.support_url.as_ref(),
         }
+        .serialize(serializer)
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[serde(deny_unknown_fields)]
+struct PolicyDraftMetadataWire {
+    id: ResourceId,
+    publisher: String,
+    #[serde(default)]
+    valid_from: Option<DateTime<Utc>>,
+    #[serde(default)]
+    valid_until: Option<DateTime<Utc>>,
+    #[serde(default)]
+    description: Option<String>,
+    #[serde(default)]
+    support_url: Option<HttpUrl>,
+}
+
+impl TryFrom<PolicyDraftMetadataWire> for PolicyDraftMetadata {
+    type Error = ModelValidationError;
+
+    fn try_from(value: PolicyDraftMetadataWire) -> Result<Self, Self::Error> {
+        validate_validity_window(
+            "PolicyDraftMetadata",
+            value.valid_from.as_ref(),
+            value.valid_until.as_ref(),
+        )?;
+        Ok(Self {
+            id: value.id,
+            publisher: value.publisher,
+            valid_from: value.valid_from,
+            valid_until: value.valid_until,
+            description: value.description,
+            support_url: value.support_url,
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for PolicyDraftMetadata {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        Self::try_from(PolicyDraftMetadataWire::deserialize(deserializer)?).map_err(serde::de::Error::custom)
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct PolicyDraftMetadataRef<'a> {
+    id: &'a ResourceId,
+    publisher: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    valid_from: Option<&'a DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    valid_until: Option<&'a DateTime<Utc>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    description: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    support_url: Option<&'a HttpUrl>,
+}
+
+impl Serialize for PolicyDraftMetadata {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        validate_validity_window(
+            "PolicyDraftMetadata",
+            self.valid_from.as_ref(),
+            self.valid_until.as_ref(),
+        )
+        .map_err(serde::ser::Error::custom)?;
+        PolicyDraftMetadataRef {
+            id: &self.id,
+            publisher: &self.publisher,
+            valid_from: self.valid_from.as_ref(),
+            valid_until: self.valid_until.as_ref(),
+            description: self.description.as_deref(),
+            support_url: self.support_url.as_ref(),
+        }
+        .serialize(serializer)
     }
 }
 

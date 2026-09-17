@@ -77,6 +77,10 @@ public static partial class PolicySerializer
                 break;
             case PolicyMetadata metadata:
                 ValidatePolicyRevision(metadata.Revision);
+                ValidateValidityWindow(metadata.ValidFrom, metadata.ValidUntil, "$");
+                break;
+            case PolicyDraftMetadata metadata:
+                ValidateValidityWindow(metadata.ValidFrom, metadata.ValidUntil, "$");
                 break;
             case PolicyDraftDocument draft:
                 ValidateRequiredCollectionElements(draft);
@@ -102,24 +106,38 @@ public static partial class PolicySerializer
         }
     }
 
-    internal static void ValidateRequiredCollectionElements(PolicyDocument policy)
+    internal static void ValidateRequiredCollectionElements(
+        PolicyDocument policy,
+        string path = "$")
     {
         ValidatePolicyRevision(policy.Metadata.Revision);
-        ValidateRequiredCollectionElements(policy.Rules);
+        ValidateValidityWindow(
+            policy.Metadata.ValidFrom,
+            policy.Metadata.ValidUntil,
+            $"{path}.Metadata");
+        ValidateRequiredCollectionElements(policy.Rules, $"{path}.Rules");
     }
 
-    internal static void ValidateRequiredCollectionElements(PolicyDraftDocument policy)
+    internal static void ValidateRequiredCollectionElements(
+        PolicyDraftDocument policy,
+        string path = "$")
     {
-        ValidateRequiredCollectionElements(policy.Rules);
+        ValidateValidityWindow(
+            policy.Metadata.ValidFrom,
+            policy.Metadata.ValidUntil,
+            $"{path}.Metadata");
+        ValidateRequiredCollectionElements(policy.Rules, $"{path}.Rules");
     }
 
-    private static void ValidateRequiredCollectionElements(IReadOnlyList<PolicyRule> rules)
+    private static void ValidateRequiredCollectionElements(
+        IReadOnlyList<PolicyRule> rules,
+        string path)
     {
-        RejectNullElements(rules, "$.Rules");
+        RejectNullElements(rules, path);
 
         for (var ruleIndex = 0; ruleIndex < rules.Count; ruleIndex++)
         {
-            ValidateRequiredCollectionElements(rules[ruleIndex], $"$.Rules[{ruleIndex}]");
+            ValidateRequiredCollectionElements(rules[ruleIndex], $"{path}[{ruleIndex}]");
         }
     }
 
@@ -362,6 +380,23 @@ public static partial class PolicySerializer
         }
     }
 
+    private static void ValidateValidityWindow(
+        DateTimeOffset? validFrom,
+        DateTimeOffset? validUntil,
+        string path)
+    {
+        if (validFrom is not null
+            && validUntil is not null
+            && validFrom.Value >= validUntil.Value)
+        {
+            throw new JsonException(
+                $"The JSON value at {path}.ValidUntil must be strictly later than {path}.ValidFrom.",
+                $"{path}.ValidUntil",
+                lineNumber: null,
+                bytePositionInLine: null);
+        }
+    }
+
     private static void RejectNullElements<T>(IReadOnlyList<T> values, string path)
         where T : class
     {
@@ -468,13 +503,17 @@ public static partial class PolicySerializer
         PolicySerializerContext context)
     {
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDocument>(
-            context.PolicyDocument));
+            context.PolicyDocument,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftDocument>(
-            context.PolicyDraftDocument));
+            context.PolicyDraftDocument,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMetadata>(
-            context.PolicyMetadata));
+            context.PolicyMetadata,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftMetadata>(
-            context.PolicyDraftMetadata));
+            context.PolicyDraftMetadata,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyEnforcement>(
             context.PolicyEnforcement));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyRule>(
@@ -496,13 +535,17 @@ public static partial class PolicySerializer
         PolicyStrictSerializerContext context)
     {
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDocument>(
-            context.PolicyDocument));
+            context.PolicyDocument,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftDocument>(
-            context.PolicyDraftDocument));
+            context.PolicyDraftDocument,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMetadata>(
-            context.PolicyMetadata));
+            context.PolicyMetadata,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftMetadata>(
-            context.PolicyDraftMetadata));
+            context.PolicyDraftMetadata,
+            static value => ValidateSemanticValue(value)));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyEnforcement>(
             context.PolicyEnforcement));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyRule>(
@@ -527,6 +570,13 @@ public static partial class PolicySerializer
         }
 
         ConfigureCanonicalSerialization(typeInfo);
+        if (typeInfo.Type == typeof(PolicyDocument)
+            || typeInfo.Type == typeof(PolicyDraftDocument)
+            || typeInfo.Type == typeof(PolicyMetadata)
+            || typeInfo.Type == typeof(PolicyDraftMetadata))
+        {
+            return;
+        }
         typeInfo.OnSerializing = ValidateSemanticValue;
         typeInfo.OnDeserialized = ValidateSemanticValue;
     }

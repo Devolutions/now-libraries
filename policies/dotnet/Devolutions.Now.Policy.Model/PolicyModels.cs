@@ -244,9 +244,17 @@ public sealed class PolicyMetadata
     [JsonRequired]
     public DateTimeOffset PublishedAt { get; set; }
 
+    /// <summary>
+    /// Earliest instant when the policy is active. When both bounds are present, this must be
+    /// strictly earlier than <see cref="ValidUntil"/>.
+    /// </summary>
     [JsonPropertyName("ValidFrom")]
     public DateTimeOffset? ValidFrom { get; set; }
 
+    /// <summary>
+    /// Instant after which the policy is inactive. When both bounds are present, this must be
+    /// strictly later than <see cref="ValidFrom"/>.
+    /// </summary>
     [JsonPropertyName("ValidUntil")]
     public DateTimeOffset? ValidUntil { get; set; }
 
@@ -267,9 +275,17 @@ public sealed class PolicyDraftMetadata
     [JsonRequired]
     public string Publisher { get; set; } = "";
 
+    /// <summary>
+    /// Earliest instant when the policy is active. When both bounds are present, this must be
+    /// strictly earlier than <see cref="ValidUntil"/>.
+    /// </summary>
     [JsonPropertyName("ValidFrom")]
     public DateTimeOffset? ValidFrom { get; set; }
 
+    /// <summary>
+    /// Instant after which the policy is inactive. When both bounds are present, this must be
+    /// strictly later than <see cref="ValidFrom"/>.
+    /// </summary>
     [JsonPropertyName("ValidUntil")]
     public DateTimeOffset? ValidUntil { get; set; }
 
@@ -471,6 +487,26 @@ public sealed class VersionCondition
         }
     }
 
+    /// <summary>Selects exact-version matching and clears the range mode.</summary>
+    public void UseExact(List<string> exact)
+    {
+        ArgumentNullException.ThrowIfNull(exact);
+        ExactSpecified = true;
+        _exact = exact;
+        RangeSpecified = false;
+        _range = null;
+    }
+
+    /// <summary>Selects semantic-range matching and clears the exact mode.</summary>
+    public void UseRange(VersionRange range)
+    {
+        ArgumentNullException.ThrowIfNull(range);
+        ExactSpecified = false;
+        _exact = null;
+        RangeSpecified = true;
+        _range = range;
+    }
+
     [JsonIgnore]
     internal bool ExactSpecified { get; private set; }
 
@@ -506,6 +542,26 @@ public sealed class PackageIdentifierCondition
             PatternsSpecified = true;
             _patterns = value;
         }
+    }
+
+    /// <summary>Selects exact-identifier matching and clears the pattern mode.</summary>
+    public void UseExact(List<string> exact)
+    {
+        ArgumentNullException.ThrowIfNull(exact);
+        ExactSpecified = true;
+        _exact = exact;
+        PatternsSpecified = false;
+        _patterns = null;
+    }
+
+    /// <summary>Selects pattern matching and clears the exact mode.</summary>
+    public void UsePatterns(List<string> patterns)
+    {
+        ArgumentNullException.ThrowIfNull(patterns);
+        ExactSpecified = false;
+        _exact = null;
+        PatternsSpecified = true;
+        _patterns = patterns;
     }
 
     [JsonIgnore]
