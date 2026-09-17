@@ -3,6 +3,22 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+macro_rules! u64_component_pattern {
+    () => {
+        r"(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)"
+    };
+}
+
+const SEMANTIC_VERSION_PATTERN: &str = concat!(
+    "^",
+    u64_component_pattern!(),
+    r"\.",
+    u64_component_pattern!(),
+    r"\.",
+    u64_component_pattern!(),
+    r"(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?![\s\S])"
+);
+
 /// Error returned when a policy newtype fails deserialization validation.
 #[derive(Debug, thiserror::Error)]
 pub enum ModelValidationError {
@@ -41,9 +57,7 @@ fn validate_bounded_string(
 pub struct SemanticVersion(
     #[schemars(
         length(max = 128),
-        regex(
-            pattern = r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$"
-        )
+        regex(pattern = SEMANTIC_VERSION_PATTERN)
     )]
     pub String,
 );
@@ -340,7 +354,7 @@ impl From<String> for HttpUrl {
 }
 
 /// Case-insensitive exact value or wildcard pattern.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct StringPattern(#[schemars(length(min = 1, max = 256))] pub String);
 
 impl StringPattern {
@@ -354,6 +368,13 @@ impl<'de> Deserialize<'de> for StringPattern {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
         Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Serialize for StringPattern {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        Self::parse(&self.0).map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&self.0)
     }
 }
 
@@ -377,8 +398,136 @@ impl std::fmt::Display for StringPattern {
     }
 }
 
+/// Exact configured package source name.
+///
+/// Matching uses the selected package manager's source-name comparison semantics.
+/// Wildcard characters have no special meaning and are treated literally.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+pub struct SourceName(#[schemars(length(min = 1, max = 128))] String);
+
+impl SourceName {
+    pub fn parse(s: &str) -> Result<Self, ModelValidationError> {
+        validate_bounded_string(s, 1, 128, "SourceName")?;
+        Ok(Self(s.to_owned()))
+    }
+}
+
+impl<'de> Deserialize<'de> for SourceName {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Serialize for SourceName {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        Self::parse(&self.0).map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&self.0)
+    }
+}
+
+impl std::ops::Deref for SourceName {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl AsRef<str> for SourceName {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for SourceName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+/// Exact stable package identifier used by requests and exact policy matching.
+///
+/// Manager-specific punctuation used by real identifiers is accepted, while
+/// wildcard characters and range/pin operators are rejected.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+pub struct PackageIdentifier(
+    #[schemars(
+        length(min = 1, max = 256),
+        regex(pattern = r"^[A-Za-z0-9._+@/:\[\],#$%{}-]+(?![\s\S])")
+    )]
+    String,
+);
+
+impl PackageIdentifier {
+    pub fn parse(s: &str) -> Result<Self, ModelValidationError> {
+        validate_bounded_string(s, 1, 256, "PackageIdentifier")?;
+        if !s.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric()
+                || matches!(
+                    byte,
+                    b'.' | b'-'
+                        | b'_'
+                        | b'+'
+                        | b'@'
+                        | b'/'
+                        | b':'
+                        | b'['
+                        | b']'
+                        | b','
+                        | b'#'
+                        | b'$'
+                        | b'%'
+                        | b'{'
+                        | b'}'
+                )
+        }) {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PackageIdentifier",
+                reason: "must contain only ASCII alphanumerics or '. - _ + @ / : [ ] , # $ % { }'".to_owned(),
+            });
+        }
+
+        Ok(Self(s.to_owned()))
+    }
+}
+
+impl<'de> Deserialize<'de> for PackageIdentifier {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Serialize for PackageIdentifier {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        Self::parse(&self.0).map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&self.0)
+    }
+}
+
+impl std::ops::Deref for PackageIdentifier {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl AsRef<str> for PackageIdentifier {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for PackageIdentifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 /// A short constrained string for version values.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct VersionString(#[schemars(length(min = 1, max = 128))] pub String);
 
 impl VersionString {
@@ -392,6 +541,13 @@ impl<'de> Deserialize<'de> for VersionString {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
         Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Serialize for VersionString {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        Self::parse(&self.0).map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&self.0)
     }
 }
 

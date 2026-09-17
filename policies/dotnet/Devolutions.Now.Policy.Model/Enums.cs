@@ -82,7 +82,7 @@ public enum Architecture
     Neutral,
 }
 
-/// <summary>Requested elevation level.</summary>
+/// <summary>Effective package-operation execution privilege.</summary>
 [JsonConverter(typeof(ExactCaseStringEnumConverter<Elevation>))]
 public enum Elevation
 {
@@ -96,11 +96,4 @@ public enum Decision
 {
     Allow,
     Deny,
-}
-
-/// <summary>Rule precedence strategy.</summary>
-[JsonConverter(typeof(ExactCaseStringEnumConverter<RulePrecedence>))]
-public enum RulePrecedence
-{
-    PriorityThenDeny,
 }

@@ -1,6 +1,5 @@
 {
   "PolicyFormatVersion": "1.0.0",
-  "PolicyType": "PackageBrokerPolicy",
   "Metadata": {
     "Id": "contoso.invalid.failure-decision",
     "Publisher": "Contoso IT",
@@ -9,8 +8,7 @@
   },
   "Enforcement": {
     "DefaultDecision": "Allow",
-    "failureDecision": "Allow",
-    "RulePrecedence": "PriorityThenDeny"
+    "failureDecision": "Allow"
   },
   "Rules": [
     {
@@ -18,9 +16,11 @@
       "Priority": 100,
       "Decision": "Allow",
       "Match": {
-        "PackageIdentifiers": [
-          "*"
-        ]
+        "PackageIdentifiers": {
+          "Patterns": [
+            "*"
+          ]
+        }
       }
     }
   ]

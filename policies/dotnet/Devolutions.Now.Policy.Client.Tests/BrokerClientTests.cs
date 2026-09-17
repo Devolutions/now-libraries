@@ -334,6 +334,42 @@ public class BrokerClientTests
     }
 
     [Fact]
+    public async Task GetPolicy_rejects_duplicate_nested_policy_property_before_deserialization()
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var body = await File.ReadAllTextAsync(path);
+        body = body.Replace(
+            "\"PolicyFormatVersion\": \"1.0.0\",",
+            "\"PolicyFormatVersion\": \"1.0.0\",\n\"PolicyFormatVersi\\u006fn\": \"1.0.0\",",
+            StringComparison.Ordinal);
+        var client = CreateClient(new FakeBrokerTransport(body));
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
+    }
+
+    [Fact]
+    public async Task GetPolicy_wraps_invalid_surrogate_property_names()
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var body = await File.ReadAllTextAsync(path);
+        body = body.Replace(
+            "\"PolicyFormatVersion\": \"1.0.0\",",
+            "\"PolicyFormatVersion\": \"1.0.0\",\n\"\\uD800\": true,",
+            StringComparison.Ordinal);
+        var client = CreateClient(new FakeBrokerTransport(body));
+
+        var exception = await Assert.ThrowsAsync<BrokerClientException>(() => client.GetPolicy());
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, exception.Kind);
+        Assert.Equal("/v1/policy", exception.Endpoint);
+        Assert.IsAssignableFrom<JsonException>(exception.InnerException);
+    }
+
+    [Fact]
     public async Task GetPolicy_rejects_integer_policy_enum_token()
     {
         var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
@@ -347,7 +383,6 @@ public class BrokerClientTests
     [Theory]
     [InlineData("Server.Transport", "httpnamedpipe")]
     [InlineData("Policy.Enforcement.DefaultDecision", "deny")]
-    [InlineData("Policy.Enforcement.RulePrecedence", "prioritythendeny")]
     [InlineData("Policy.Rules.0.Decision", "deny")]
     [InlineData("Policy.Rules.0.Match.Operations.0", "install")]
     public async Task GetPolicy_rejects_noncanonical_enum_casing(string propertyPath, string value)
@@ -362,13 +397,25 @@ public class BrokerClientTests
 
     [Theory]
     [InlineData("Policy.Rules.0")]
-    [InlineData("Policy.Rules.3.Match.Sources.0")]
+    [InlineData("Policy.Rules.3.Match.SourceNames.0")]
     public async Task GetPolicy_rejects_null_collection_element(string elementPath)
     {
         var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
         var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
             ?? throw new InvalidOperationException("policy response sample should parse");
         SetPropertyToNull(document, elementPath);
+
+        await AssertInvalidPolicyResponse(document);
+    }
+
+    [Fact]
+    public async Task GetPolicy_rejects_constraints_on_deny_rule()
+    {
+        var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
+        var document = JsonNode.Parse(await File.ReadAllTextAsync(path))
+            ?? throw new InvalidOperationException("policy response sample should parse");
+        document["Policy"]!["Rules"]![0]!["Constraints"] =
+            new JsonObject { ["AllowInteractive"] = false };
 
         await AssertInvalidPolicyResponse(document);
     }

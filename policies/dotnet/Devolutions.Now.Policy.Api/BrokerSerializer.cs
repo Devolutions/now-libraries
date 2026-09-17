@@ -14,6 +14,8 @@ public static class BrokerSerializer
     /// Serialization options matching the broker wire format: PascalCase property names
     /// (via explicit <c>[JsonPropertyName]</c> attributes), PascalCase enum values, and
     /// null optionals omitted (mirroring the Rust <c>skip_serializing_if = "Option::is_none"</c>).
+    /// Deserialization rejects duplicate property names throughout the input using ordinal,
+    /// case-sensitive name comparison.
     /// </summary>
     public static readonly JsonSerializerOptions Options = CreateOptions(writeIndented: false);
 
@@ -27,6 +29,7 @@ public static class BrokerSerializer
 
     public static T? Deserialize<T>(string json)
     {
+        PolicyJsonInput.RejectDuplicatePropertyNames(json, BrokerSerializerContext.Default.Options);
         var value = JsonSerializer.Deserialize(json, TypeInfo<T>());
         ValidateSemanticValue(value);
         return value;
@@ -34,6 +37,7 @@ public static class BrokerSerializer
 
     public static T? DeserializeStrict<T>(string json)
     {
+        PolicyJsonInput.RejectDuplicatePropertyNames(json, BrokerStrictSerializerContext.Default.Options);
         var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
         ValidateSemanticValue(value);
         return value;
@@ -49,14 +53,24 @@ public static class BrokerSerializer
             case PolicyDraftDocument draft:
                 PolicySerializer.ValidateRequiredCollectionElements(draft);
                 break;
+            case PolicyMetadata
+                or PolicyDraftMetadata
+                or PolicyRule
+                or PolicyMatch
+                or PackageIdentifierCondition
+                or VersionCondition
+                or VersionRange
+                or PolicyConstraints:
+                PolicySerializer.ValidateSemanticValue(value);
+                break;
             case PolicyResponse response:
-                PolicySerializer.ValidateRequiredCollectionElements(response.Policy);
+                PolicySerializer.ValidateRequiredCollectionElements(response.Policy, "$.Policy");
                 break;
             case PolicyManagementResponse response:
-                ValidateManagement(response.Management);
+                ValidateManagement(response.Management, "$.Management");
                 break;
             case PolicyValidationResponse response:
-                ValidateValidation(response.Validation);
+                ValidateValidation(response.Validation, "$.Validation");
                 break;
             case PolicyReplacementResponse response:
                 ValidateReplacement(response);
@@ -73,24 +87,30 @@ public static class BrokerSerializer
         }
     }
 
-    private static JsonTypeInfo<T> TypeInfo<T>() =>
-        typeof(T) == typeof(PackageRequest) ? Cast<T>(BrokerSerializerContext.Default.PackageRequest) :
-        typeof(T) == typeof(StatusRequest) ? Cast<T>(BrokerSerializerContext.Default.StatusRequest) :
-        typeof(T) == typeof(CancelRequest) ? Cast<T>(BrokerSerializerContext.Default.CancelRequest) :
-        typeof(T) == typeof(PolicyValidationRequest) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyValidationRequest) :
-        typeof(T) == typeof(PolicyReplacementRequest) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyReplacementRequest) :
-        typeof(T) == typeof(HealthResponse) ? Cast<T>(BrokerSerializerContext.Default.HealthResponse) :
-        typeof(T) == typeof(CapabilitiesResponse) ? Cast<T>(BrokerSerializerContext.Default.CapabilitiesResponse) :
-        typeof(T) == typeof(PolicyResponse) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyResponse) :
-        typeof(T) == typeof(PolicyManagementResponse) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyManagementResponse) :
-        typeof(T) == typeof(PolicyValidationResponse) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyValidationResponse) :
-        typeof(T) == typeof(PolicyReplacementResponse) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyReplacementResponse) :
-        typeof(T) == typeof(EvaluationResponse) ? Cast<T>(BrokerSerializerContext.Default.EvaluationResponse) :
-        typeof(T) == typeof(ExecutionResponse) ? Cast<T>(BrokerSerializerContext.Default.ExecutionResponse) :
-        typeof(T) == typeof(StatusResponse) ? Cast<T>(BrokerSerializerContext.Default.StatusResponse) :
-        typeof(T) == typeof(CancelResponse) ? Cast<T>(BrokerSerializerContext.Default.CancelResponse) :
-        typeof(T) == typeof(ErrorResponse) ? Cast<T>(BrokerErrorSerializerContext.Default.ErrorResponse) :
-        throw new NotSupportedException($"Broker JSON serialization for {typeof(T).FullName} is not source-generated.");
+    private static JsonTypeInfo<T> TypeInfo<T>()
+    {
+        _ = typeof(T) == typeof(PackageRequest)
+            || typeof(T) == typeof(StatusRequest)
+            || typeof(T) == typeof(CancelRequest)
+            || typeof(T) == typeof(PolicyValidationRequest)
+            || typeof(T) == typeof(PolicyReplacementRequest)
+            || typeof(T) == typeof(HealthResponse)
+            || typeof(T) == typeof(CapabilitiesResponse)
+            || typeof(T) == typeof(PolicyResponse)
+            || typeof(T) == typeof(PolicyManagementResponse)
+            || typeof(T) == typeof(PolicyValidationResponse)
+            || typeof(T) == typeof(PolicyReplacementResponse)
+            || typeof(T) == typeof(EvaluationResponse)
+            || typeof(T) == typeof(ExecutionResponse)
+            || typeof(T) == typeof(StatusResponse)
+            || typeof(T) == typeof(CancelResponse)
+            || typeof(T) == typeof(ErrorResponse)
+            ? true
+            : throw new NotSupportedException(
+                $"Broker JSON serialization for {typeof(T).FullName} is not source-generated.");
+
+        return Cast<T>(Options.GetTypeInfo(typeof(T)));
+    }
 
     private static JsonTypeInfo<T> StrictTypeInfo<T>() =>
         typeof(T) == typeof(PackageRequest) ? Cast<T>(BrokerStrictSerializerContext.Default.PackageRequest) :
@@ -114,7 +134,9 @@ public static class BrokerSerializer
     private static JsonTypeInfo<T> Cast<T>(JsonTypeInfo jsonTypeInfo) =>
         (JsonTypeInfo<T>)jsonTypeInfo;
 
-    private static void ValidateManagement(PolicyManagementSnapshot management)
+    private static void ValidateManagement(
+        PolicyManagementSnapshot management,
+        string path = "$")
     {
         switch (management.State)
         {
@@ -150,7 +172,7 @@ public static class BrokerSerializer
 
         if (management.Policy is { } policy)
         {
-            PolicySerializer.ValidateRequiredCollectionElements(policy);
+            PolicySerializer.ValidateRequiredCollectionElements(policy, $"{path}.Policy");
         }
     }
 
@@ -163,16 +185,18 @@ public static class BrokerSerializer
 
         if (error.Management is { } management)
         {
-            ValidateManagement(management);
+            ValidateManagement(management, "$.Management");
         }
 
         if (error.Validation is { } validation)
         {
-            ValidateValidation(validation);
+            ValidateValidation(validation, "$.Validation");
         }
     }
 
-    private static void ValidateValidation(PolicyValidationResult validation)
+    private static void ValidateValidation(
+        PolicyValidationResult validation,
+        string path = "$")
     {
         RejectNullElements(validation.Findings, "Validation.Findings");
         var hasError = validation.Findings.Any(finding => finding.Severity == PolicyFindingSeverity.Error);
@@ -188,7 +212,9 @@ public static class BrokerSerializer
                 throw new JsonException("Valid policy validation results must not contain Error findings.");
             }
 
-            PolicySerializer.ValidateRequiredCollectionElements(validation.CanonicalDraft);
+            PolicySerializer.ValidateRequiredCollectionElements(
+                validation.CanonicalDraft,
+                $"{path}.CanonicalDraft");
         }
         else
         {
@@ -207,9 +233,9 @@ public static class BrokerSerializer
 
     private static void ValidateReplacement(PolicyReplacementResponse response)
     {
-        PolicySerializer.ValidateRequiredCollectionElements(response.Policy);
-        ValidateValidation(response.Validation);
-        ValidateManagement(response.Management);
+        PolicySerializer.ValidateRequiredCollectionElements(response.Policy, "$.Policy");
+        ValidateValidation(response.Validation, "$.Validation");
+        ValidateManagement(response.Management, "$.Management");
 
         if (!response.Validation.IsValid)
         {
@@ -264,11 +290,114 @@ public static class BrokerSerializer
                 BrokerErrorSerializerContext.Default)
             .WithAddedModifier(AttachSemanticValidation);
 
-        return new JsonSerializerOptions(BrokerSerializerContext.Default.Options)
+        var options = new JsonSerializerOptions(BrokerSerializerContext.Default.Options)
         {
             TypeInfoResolver = resolver,
             WriteIndented = writeIndented,
         };
+
+        AddDuplicateRejectingConverters(options);
+        return options;
+    }
+
+    private static void AddDuplicateRejectingConverters(JsonSerializerOptions options)
+    {
+        // Explicit closed-world registrations are Native AOT safe. The client test suite enumerates
+        // all public object metadata from these source-generated contexts to prevent omissions.
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PackageRequest>(
+            BrokerSerializerContext.Default.PackageRequest));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<RequestSource>(
+            BrokerSerializerContext.Default.RequestSource));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<RequestPackage>(
+            BrokerSerializerContext.Default.RequestPackage));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<RequestOptions>(
+            BrokerSerializerContext.Default.RequestOptions));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ClientContext>(
+            BrokerSerializerContext.Default.ClientContext));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<StatusRequest>(
+            BrokerSerializerContext.Default.StatusRequest));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<CancelRequest>(
+            BrokerSerializerContext.Default.CancelRequest));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyValidationRequest>(
+            BrokerPolicySerializerContext.Default.PolicyValidationRequest));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyReplacementRequest>(
+            BrokerPolicySerializerContext.Default.PolicyReplacementRequest));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<HealthResponse>(
+            BrokerSerializerContext.Default.HealthResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<CapabilitiesResponse>(
+            BrokerSerializerContext.Default.CapabilitiesResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ManagerCapability>(
+            BrokerSerializerContext.Default.ManagerCapability));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyResponse>(
+            BrokerPolicySerializerContext.Default.PolicyResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyManagementResponse>(
+            BrokerPolicySerializerContext.Default.PolicyManagementResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyValidationResponse>(
+            BrokerPolicySerializerContext.Default.PolicyValidationResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyReplacementResponse>(
+            BrokerPolicySerializerContext.Default.PolicyReplacementResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<EvaluationResponse>(
+            BrokerSerializerContext.Default.EvaluationResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ExecutionResponse>(
+            BrokerSerializerContext.Default.ExecutionResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ServerContext>(
+            BrokerSerializerContext.Default.ServerContext));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<RequestSummary>(
+            BrokerSerializerContext.Default.RequestSummary));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<DecisionInfo>(
+            BrokerSerializerContext.Default.DecisionInfo));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ResponsePolicyInfo>(
+            BrokerSerializerContext.Default.ResponsePolicyInfo));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<OperationDiagnostics>(
+            BrokerSerializerContext.Default.OperationDiagnostics));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<OperationSubmission>(
+            BrokerSerializerContext.Default.OperationSubmission));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<EventChannel>(
+            BrokerSerializerContext.Default.EventChannel));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<StatusResponse>(
+            BrokerSerializerContext.Default.StatusResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<CancelResponse>(
+            BrokerSerializerContext.Default.CancelResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ErrorResponse>(
+            BrokerErrorSerializerContext.Default.ErrorResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ErrorDetail>(
+            BrokerErrorSerializerContext.Default.ErrorDetail));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDocument>(
+            BrokerPolicySerializerContext.Default.PolicyDocument,
+            static value => ValidateSemanticValue(value)));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftDocument>(
+            BrokerPolicySerializerContext.Default.PolicyDraftDocument,
+            static value => ValidateSemanticValue(value)));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMetadata>(
+            BrokerPolicySerializerContext.Default.PolicyMetadata,
+            static value => ValidateSemanticValue(value)));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftMetadata>(
+            BrokerPolicySerializerContext.Default.PolicyDraftMetadata,
+            static value => ValidateSemanticValue(value)));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyEnforcement>(
+            BrokerPolicySerializerContext.Default.PolicyEnforcement));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyRule>(
+            BrokerPolicySerializerContext.Default.PolicyRule));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMatch>(
+            BrokerPolicySerializerContext.Default.PolicyMatch));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PackageIdentifierCondition>(
+            BrokerPolicySerializerContext.Default.PackageIdentifierCondition));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionCondition>(
+            BrokerPolicySerializerContext.Default.VersionCondition));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionRange>(
+            BrokerPolicySerializerContext.Default.VersionRange));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyConstraints>(
+            BrokerPolicySerializerContext.Default.PolicyConstraints));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyFinding>(
+            BrokerPolicySerializerContext.Default.PolicyFinding));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyValidationResult>(
+            BrokerPolicySerializerContext.Default.PolicyValidationResult,
+            static value => ValidateSemanticValue(value)));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<InvalidPolicyDiagnostics>(
+            BrokerPolicySerializerContext.Default.InvalidPolicyDiagnostics));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyManagementSnapshot>(
+            BrokerPolicySerializerContext.Default.PolicyManagementSnapshot,
+            static value => ValidateSemanticValue(value)));
     }
 
     private static void AttachSemanticValidation(JsonTypeInfo typeInfo)
@@ -278,6 +407,20 @@ public static class BrokerSerializer
             return;
         }
 
+        if (typeInfo.Type.Assembly == typeof(PolicyDocument).Assembly)
+        {
+            typeInfo.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
+        }
+        PolicySerializer.ConfigureCanonicalSerialization(typeInfo);
+        if (typeInfo.Type == typeof(PolicyDocument)
+            || typeInfo.Type == typeof(PolicyDraftDocument)
+            || typeInfo.Type == typeof(PolicyMetadata)
+            || typeInfo.Type == typeof(PolicyDraftMetadata)
+            || typeInfo.Type == typeof(PolicyManagementSnapshot)
+            || typeInfo.Type == typeof(PolicyValidationResult))
+        {
+            return;
+        }
         typeInfo.OnSerializing = ValidateSemanticValue;
         typeInfo.OnDeserialized = ValidateSemanticValue;
     }

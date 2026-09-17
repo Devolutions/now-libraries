@@ -422,9 +422,10 @@ components:
       properties:
         Message:
           description: Human-readable message about the cancelation outcome.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 2048
-          nullable: true
         OperationId:
           description: Server-issued stable operation identifier.
           allOf:
@@ -616,10 +617,11 @@ components:
       properties:
         Code:
           description: Machine-stable detail code.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 128
           minLength: 1
-          nullable: true
         Message:
           description: Human-readable detail message.
           type: string
@@ -627,10 +629,11 @@ components:
           minLength: 1
         Path:
           description: JSON pointer, header name, or other location for the error.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 512
           minLength: 1
-          nullable: true
       required:
       - Message
     ErrorResponse:
@@ -665,7 +668,6 @@ components:
           - $ref: '#/components/schemas/PolicyManagementSnapshot'
           - enum:
             - null
-            nullable: true
           default: null
         Message:
           type: string
@@ -682,7 +684,6 @@ components:
           - $ref: '#/components/schemas/PolicyValidationResult'
           - enum:
             - null
-            nullable: true
           default: null
       additionalProperties: false
       required:
@@ -712,7 +713,6 @@ components:
           - $ref: '#/components/schemas/OperationDiagnostics'
           - enum:
             - null
-            nullable: true
         Policy:
           description: Summary of the policy used.
           allOf:
@@ -803,14 +803,12 @@ components:
           - $ref: '#/components/schemas/OperationDiagnostics'
           - enum:
             - null
-            nullable: true
         Operation:
           description: Submitted operation. Omitted when the decision is deny.
           anyOf:
           - $ref: '#/components/schemas/OperationSubmission'
           - enum:
             - null
-            nullable: true
         Policy:
           description: Summary of the policy used.
           allOf:
@@ -925,10 +923,11 @@ components:
           - $ref: '#/components/schemas/ManagerName'
         MaxOperationTimeoutSeconds:
           description: Maximum operation runtime before the broker may time out the process.
-          type: integer
+          type:
+          - integer
+          - 'null'
           format: uint64
           minimum: 0
-          nullable: true
         Operations:
           description: Operations supported for this manager.
           type: array
@@ -1040,7 +1039,6 @@ components:
           - $ref: '#/components/schemas/EventChannel'
           - enum:
             - null
-            nullable: true
         OperationId:
           description: Server-issued stable operation identifier.
           allOf:
@@ -1062,37 +1060,8 @@ components:
       description: |-
         Package identifier string.
 
-         Validated against an explicit allowlist of characters: ASCII alphanumerics
-         plus `. - _ + @ / : [ ] , # $ % { }`.
-
-         - `.`, `-`, `_`, `+`: winget (`Notepad++.Notepad++`), chocolatey, pip, cargo,
-           dotnet, apt/dnf/pacman (`g++`, `libstdc++6`), PowerShell modules;
-
-         - `@`, `/`: scoped npm/Bun packages (`@scope/package`), homebrew and scoop
-           `tap/formula` paths, versioned formulas (`python@3.11`);
-
-         - `:`: npm aliases (`alias:@scope/package@1.0.0`), vcpkg triplets
-           (`curl:x64-windows`);
-
-         - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras
-           (`requests[socks]`);
-
-         - `#`, `$`, `%`, `{`, `}`: additional identifier punctuation (accepted by
-           product decision for forward compatibility). Caveat: these characters
-           carry expansion semantics in some shells (`${VAR}`, `%VAR%`, brace
-           expansion), so downstream command builders must pass identifiers as
-           discrete process arguments and never interpolate them into a shell
-           command line.
-
-         Version range/pin operators (`<`, `>`, `=`, `!`, `|`, `^`, `~`) are
-         rejected: the broker matches against a specific, exact version carried in
-         the request's separate `Package.Version` field, so range expressions do
-         not belong in the identifier (npm aliases must use exact versions, e.g.
-         `alias:pkg@7.20.0`). The wildcards `*` and `?` are also rejected:
-         policy-side package identifier matching is wildcard-based, so wildcards in
-         request identifiers would be ambiguous. Everything else — whitespace,
-         control characters, `"`, `\`, backtick, `& ' ( ) ;`, and non-ASCII — is
-         rejected as well.
+         Validated against an explicit allowlist of characters used by supported
+         package managers. Wildcards and version range operators are rejected.
       type: string
       maxLength: 256
       minLength: 1
@@ -1221,7 +1190,6 @@ components:
           - $ref: '#/components/schemas/ResourceId'
           - enum:
             - null
-            nullable: true
         Severity:
           $ref: '#/components/schemas/PolicyFindingSeverity'
       additionalProperties: false
@@ -1241,13 +1209,11 @@ components:
       - InvalidFieldType
       - InvalidFieldValue
       - DuplicateRuleId
-      - IneffectiveBooleanMatch
       - InvalidVersionRange
       - EmptyVersionRange
       - InvalidWildcardPattern
       - ContradictoryConstraints
       - InvalidValidityInterval
-      - UnsupportedPolicyType
       - UnsupportedPolicyFormatVersion
       - AuditModeEnabled
       - DefaultAllow
@@ -1299,7 +1265,6 @@ components:
             InvalidDiagnostics:
               enum:
               - null
-              nullable: true
             Policy:
               $ref: '#/components/schemas/PolicyDocument'
             State:
@@ -1311,11 +1276,9 @@ components:
             InvalidDiagnostics:
               enum:
               - null
-              nullable: true
             Policy:
               enum:
               - null
-              nullable: true
             State:
               enum:
               - Missing
@@ -1337,7 +1300,6 @@ components:
             Policy:
               enum:
               - null
-              nullable: true
             State:
               enum:
               - Invalid
@@ -1348,7 +1310,6 @@ components:
             ReadOnlyReason:
               enum:
               - null
-              nullable: true
             WriteCapability:
               enum:
               - Writable
@@ -1375,21 +1336,18 @@ components:
           - $ref: '#/components/schemas/InvalidPolicyDiagnostics'
           - enum:
             - null
-            nullable: true
           default: null
         Policy:
           anyOf:
           - $ref: '#/components/schemas/PolicyDocument'
           - enum:
             - null
-            nullable: true
           default: null
         ReadOnlyReason:
           anyOf:
           - $ref: '#/components/schemas/PolicyReadOnlyReason'
           - enum:
             - null
-            nullable: true
           default: null
         Source:
           $ref: '#/components/schemas/PolicyConfigurationSource'
@@ -1627,7 +1585,6 @@ components:
           CanonicalDraft:
             enum:
             - null
-            nullable: true
           Findings:
             minItems: 1
             not:
@@ -1644,7 +1601,6 @@ components:
           ValidationReceipt:
             enum:
             - null
-            nullable: true
     PolicyValidationResultFields:
       type: object
       properties:
@@ -1653,7 +1609,6 @@ components:
           - $ref: '#/components/schemas/PolicyDraftDocument'
           - enum:
             - null
-            nullable: true
           default: null
         Findings:
           type: array
@@ -1668,7 +1623,6 @@ components:
           - $ref: '#/components/schemas/PolicyValidationReceipt'
           - enum:
             - null
-            nullable: true
           default: null
         ValidatorVersion:
           type: string
@@ -1698,9 +1652,10 @@ components:
       properties:
         CustomInstallLocation:
           description: Custom install directory path.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 2048
-          nullable: true
         CustomParameters:
           description: Additional command-line parameters.
           type: array
@@ -1722,14 +1677,16 @@ components:
           default: false
         PostOperationCommand:
           description: Command to execute after the package operation.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 2048
-          nullable: true
         PreOperationCommand:
           description: Command to execute before the package operation.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 2048
-          nullable: true
         PreRelease:
           description: Allow pre-release versions.
           type: boolean
@@ -1739,7 +1696,6 @@ components:
           - $ref: '#/components/schemas/Scope'
           - enum:
             - null
-            nullable: true
         SkipHashCheck:
           description: Skip package hash verification.
           type: boolean
@@ -1762,13 +1718,13 @@ components:
           - $ref: '#/components/schemas/Architecture'
           - enum:
             - null
-            nullable: true
         Channel:
           description: Release channel.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 16
           minLength: 1
-          nullable: true
         Id:
           description: Package identifier (e.g., "Publisher.Package" for WinGet).
           allOf:
@@ -1784,7 +1740,6 @@ components:
           - $ref: '#/components/schemas/VersionString'
           - enum:
             - null
-            nullable: true
       additionalProperties: false
       required:
       - Id
@@ -1799,9 +1754,10 @@ components:
           minLength: 1
         Url:
           description: Optional source URL.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 2048
-          nullable: true
       additionalProperties: false
       required:
       - Name
@@ -1815,27 +1771,25 @@ components:
           - $ref: '#/components/schemas/ManagerName'
           - enum:
             - null
-            nullable: true
         Operation:
           description: Operation from the request (null if not parsed).
           anyOf:
           - $ref: '#/components/schemas/Operation'
           - enum:
             - null
-            nullable: true
         PackageId:
           description: Package identifier from the request (null if not parsed).
           anyOf:
           - $ref: '#/components/schemas/PackageIdentifier'
           - enum:
             - null
-            nullable: true
         Source:
           description: Source name from the request (null if not parsed).
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 256
           minLength: 1
-          nullable: true
       additionalProperties: false
     ResourceId:
       description: Resource identifier (operation IDs, request IDs).
@@ -1928,23 +1882,26 @@ components:
       properties:
         CompletedAt:
           description: UTC timestamp when the operation completed or failed (null if still running).
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
-          nullable: true
         Details:
           description: Manager-specific structured status details.
         ExitCode:
           description: Process exit code (present when status is `completed`, or `failed` due to non-zero exit).
-          type: integer
+          type:
+          - integer
+          - 'null'
           format: int32
-          nullable: true
         Message:
           description: |-
             Human-readable message about the status. For failures this carries the short error
              summary (e.g. "winget.exe exited with code 0x8A150011", or a process-launch error).
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 2048
-          nullable: true
         OperationId:
           description: Server-issued stable operation identifier.
           allOf:
@@ -1967,9 +1924,10 @@ components:
           - $ref: '#/components/schemas/ServerContext'
         StartedAt:
           description: UTC timestamp when the process was actually launched (null if not yet started).
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
-          nullable: true
         Status:
           description: Current status of the operation.
           allOf:
@@ -2016,7 +1974,7 @@ components:
       - Allow
       - Deny
     PolicyModelElevation:
-      description: Requested elevation level.
+      description: Effective package-operation execution privilege.
       type: string
       enum:
       - Standard
@@ -2057,12 +2015,45 @@ components:
       - Install
       - Update
       - Uninstall
-    PolicyModelPackageBrokerPolicy:
+    PolicyModelPackageIdentifier:
+      description: |-
+        Exact stable package identifier used by requests and exact policy matching.
+
+         Manager-specific punctuation used by real identifiers is accepted, while
+         wildcard characters and range/pin operators are rejected.
       type: string
-      enum:
-      - PackageBrokerPolicy
+      maxLength: 256
+      minLength: 1
+      pattern: ^[A-Za-z0-9._+@/:\[\],#$%{}-]+(?![\s\S])
+    PolicyModelPackageIdentifierCondition:
+      description: Exactly one package-identifier mode. Exact authorizes stable identifiers; Patterns explicitly authorizes every identifier matched by a wildcard pattern.
+      oneOf:
+      - type: object
+        properties:
+          Exact:
+            type: array
+            items:
+              $ref: '#/components/schemas/PolicyModelPackageIdentifier'
+            maxItems: 1024
+            minItems: 1
+            uniqueItems: true
+        additionalProperties: false
+        required:
+        - Exact
+      - type: object
+        properties:
+          Patterns:
+            type: array
+            items:
+              $ref: '#/components/schemas/PolicyModelStringPattern'
+            maxItems: 1024
+            minItems: 1
+            uniqueItems: true
+        additionalProperties: false
+        required:
+        - Patterns
     PolicyModelPolicyConstraints:
-      description: Constraints applied after a rule matches.
+      description: Additional safety limits applied after an Allow rule matches.
       type: object
       properties:
         AllowCustomInstallLocation:
@@ -2138,10 +2129,6 @@ components:
              Applications must not expose this field as publisher-authored editable metadata.
           allOf:
           - $ref: '#/components/schemas/PolicyModelPolicyFormatVersion'
-        PolicyType:
-          description: Must be `"PackageBrokerPolicy"`.
-          allOf:
-          - $ref: '#/components/schemas/PolicyModelPackageBrokerPolicy'
         Rules:
           description: Ordered list of policy rules (may be empty; enforcement defaults apply).
           type: array
@@ -2151,7 +2138,6 @@ components:
       additionalProperties: false
       required:
       - PolicyFormatVersion
-      - PolicyType
       - Metadata
       - Enforcement
       - Rules
@@ -2175,10 +2161,6 @@ components:
              as publisher-authored editable metadata.
           allOf:
           - $ref: '#/components/schemas/PolicyModelPolicyFormatVersion'
-        PolicyType:
-          description: Must be `"PackageBrokerPolicy"`.
-          allOf:
-          - $ref: '#/components/schemas/PolicyModelPackageBrokerPolicy'
         Rules:
           description: Ordered list of policy rules (may be empty; enforcement defaults apply).
           type: array
@@ -2188,19 +2170,21 @@ components:
       additionalProperties: false
       required:
       - PolicyFormatVersion
-      - PolicyType
       - Metadata
       - Enforcement
       - Rules
     PolicyModelPolicyDraftMetadata:
-      description: Editable policy metadata without server-managed revision and publication time.
+      description: |-
+        Editable policy metadata without server-managed revision and publication time. When both
+         validity bounds are present, `ValidFrom` must be strictly earlier than `ValidUntil`.
       type: object
       properties:
         Description:
           description: Human-readable description.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 512
-          nullable: true
         Id:
           description: Unique policy identifier.
           allOf:
@@ -2216,41 +2200,46 @@ components:
           - $ref: '#/components/schemas/PolicyModelHttpUrl'
           - enum:
             - null
-            nullable: true
         ValidFrom:
-          description: Policy becomes active at this time.
-          type: string
+          description: |-
+            Earliest instant when the policy is active. When both bounds are present, this must be
+             strictly earlier than `ValidUntil`.
+          type:
+          - string
+          - 'null'
           format: date-time
-          nullable: true
         ValidUntil:
-          description: Policy expires at this time.
-          type: string
+          description: |-
+            Instant after which the policy is inactive. When both bounds are present, this must be
+             strictly later than `ValidFrom`.
+          type:
+          - string
+          - 'null'
           format: date-time
-          nullable: true
       additionalProperties: false
       required:
       - Id
       - Publisher
     PolicyModelPolicyEnforcement:
-      description: Enforcement configuration.
+      description: |-
+        Enforcement configuration.
+
+         Matching rules are evaluated by ascending priority. Deny wins equal-priority
+         Allow/Deny ties; remaining equal-priority ties retain document order.
       type: object
       properties:
         AuditMode:
           description: When true, broker logs decisions but does not enforce.
-          type: boolean
-          nullable: true
+          type:
+          - boolean
+          - 'null'
         DefaultDecision:
           description: Decision when no rule matches.
           allOf:
           - $ref: '#/components/schemas/PolicyModelDecision'
-        RulePrecedence:
-          description: Rule precedence strategy (must be "PriorityThenDeny").
-          allOf:
-          - $ref: '#/components/schemas/PolicyModelRulePrecedence'
       additionalProperties: false
       required:
       - DefaultDecision
-      - RulePrecedence
     PolicyModelPolicyFormatVersion:
       description: |-
         Software-managed policy document format version.
@@ -2263,148 +2252,18 @@ components:
       type: string
       maxLength: 128
       pattern: ^1\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?![\s\S])
-    PolicyModelPolicyMatch:
-      description: |-
-        Match criteria for a policy rule. All specified fields must match.
-         At least one field must be present.
-      type: object
-      properties:
-        Architectures:
-          description: Allowed architectures.
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyModelArchitecture'
-          maxItems: 5
-          uniqueItems: true
-        Elevation:
-          description: Allowed elevation levels.
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyModelElevation'
-          maxItems: 2
-          uniqueItems: true
-        HasCustomInstallLocation:
-          description: Whether request has custom install location.
-          type: array
-          items:
-            type: boolean
-          maxItems: 1
-          uniqueItems: true
-        HasCustomParameters:
-          description: Whether request has custom parameters.
-          type: array
-          items:
-            type: boolean
-          maxItems: 1
-          uniqueItems: true
-        HasKillBeforeOperation:
-          description: Whether request has kill-before-operation entries.
-          type: array
-          items:
-            type: boolean
-          maxItems: 1
-          uniqueItems: true
-        HasPrePostCommands:
-          description: Whether request has pre/post operation commands.
-          type: array
-          items:
-            type: boolean
-          maxItems: 1
-          uniqueItems: true
-        HasUninstallPrevious:
-          description: Whether request has uninstall-previous flag set.
-          type: array
-          items:
-            type: boolean
-          maxItems: 1
-          uniqueItems: true
-        Interactive:
-          description: Allowed interactive values.
-          type: array
-          items:
-            type: boolean
-          maxItems: 1
-          uniqueItems: true
-        Managers:
-          description: Allowed managers.
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyModelManagerName'
-          maxItems: 16
-          uniqueItems: true
-        Operations:
-          description: Allowed operations.
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyModelOperation'
-          maxItems: 3
-          uniqueItems: true
-        PackageIdentifiers:
-          description: Package identifier patterns (wildcard).
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyModelStringPattern'
-          maxItems: 1024
-          uniqueItems: true
-        PackageNames:
-          description: Package name patterns (wildcard).
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyModelStringPattern'
-          maxItems: 1024
-          uniqueItems: true
-        PreRelease:
-          description: Allowed preRelease values.
-          type: array
-          items:
-            type: boolean
-          maxItems: 1
-          uniqueItems: true
-        Scopes:
-          description: Allowed scopes.
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyModelScope'
-          maxItems: 2
-          uniqueItems: true
-        SkipHashCheck:
-          description: Allowed skipHashCheck values.
-          type: array
-          items:
-            type: boolean
-          maxItems: 1
-          uniqueItems: true
-        Sources:
-          description: Source patterns (wildcard).
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyModelStringPattern'
-          maxItems: 128
-          uniqueItems: true
-        VersionRange:
-          description: Semantic version range.
-          anyOf:
-          - $ref: '#/components/schemas/PolicyModelVersionRange'
-          - enum:
-            - null
-            nullable: true
-        Versions:
-          description: Exact version list.
-          type: array
-          items:
-            $ref: '#/components/schemas/PolicyModelVersionString'
-          maxItems: 256
-          uniqueItems: true
-      additionalProperties: false
     PolicyModelPolicyMetadata:
-      description: Policy metadata.
+      description: |-
+        Policy metadata. When both validity bounds are present, `ValidFrom` must be strictly earlier
+         than `ValidUntil`.
       type: object
       properties:
         Description:
           description: Human-readable description.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 512
-          nullable: true
         Id:
           description: Unique policy identifier.
           allOf:
@@ -2430,17 +2289,22 @@ components:
           - $ref: '#/components/schemas/PolicyModelHttpUrl'
           - enum:
             - null
-            nullable: true
         ValidFrom:
-          description: Policy becomes active at this time.
-          type: string
+          description: |-
+            Earliest instant when the policy is active. When both bounds are present, this must be
+             strictly earlier than `ValidUntil`.
+          type:
+          - string
+          - 'null'
           format: date-time
-          nullable: true
         ValidUntil:
-          description: Policy expires at this time.
-          type: string
+          description: |-
+            Instant after which the policy is inactive. When both bounds are present, this must be
+             strictly later than `ValidFrom`.
+          type:
+          - string
+          - 'null'
           format: date-time
-          nullable: true
       additionalProperties: false
       required:
       - Id
@@ -2453,13 +2317,12 @@ components:
       properties:
         Constraints:
           description: |-
-            Additional constraints applied after matching.
-             When absent, no constraints are enforced beyond the match criteria.
+            Additional safety limits applied after an Allow rule matches.
+             Constraints are invalid on Deny rules.
           anyOf:
           - $ref: '#/components/schemas/PolicyModelPolicyConstraints'
           - enum:
             - null
-            nullable: true
         Decision:
           description: Decision if this rule matches.
           allOf:
@@ -2475,10 +2338,235 @@ components:
         Match:
           description: |-
             Match criteria — request must satisfy all specified fields.
-             At least one criterion must be present.
-          allOf:
-          - $ref: '#/components/schemas/PolicyModelPolicyMatch'
+             At least one effective non-null, nonempty criterion must be present.
+          type: object
+          properties:
+            Architectures:
+              description: |-
+                Optional architecture filter. Omitted or empty does not narrow matching;
+                 canonical serialization omits an empty collection.
+              type: array
+              items:
+                $ref: '#/components/schemas/PolicyModelArchitecture'
+              maxItems: 5
+              uniqueItems: true
+            ExecutionElevation:
+              description: |-
+                Optional effective execution-elevation filter. Elevated means the package operation
+                 will run with administrator privileges; Standard means it will not. Omitted or empty
+                 does not narrow matching; canonical serialization omits an empty collection.
+              type: array
+              items:
+                $ref: '#/components/schemas/PolicyModelElevation'
+              maxItems: 2
+              uniqueItems: true
+            HasCustomInstallLocation:
+              description: |-
+                Optional condition on whether the request has a custom install location.
+                 Absent means this characteristic does not affect matching.
+              type:
+              - boolean
+              - 'null'
+            HasCustomParameters:
+              description: |-
+                Optional condition on whether the request has custom parameters.
+                 Absent means this characteristic does not affect matching.
+              type:
+              - boolean
+              - 'null'
+            HasKillBeforeOperation:
+              description: |-
+                Optional condition on whether the request has kill-before-operation entries.
+                 Absent means this characteristic does not affect matching.
+              type:
+              - boolean
+              - 'null'
+            HasPrePostCommands:
+              description: |-
+                Optional condition on whether the request has pre/post commands.
+                 Absent means this characteristic does not affect matching.
+              type:
+              - boolean
+              - 'null'
+            HasUninstallPrevious:
+              description: |-
+                Optional condition on whether the request enables uninstall-previous.
+                 Absent means this characteristic does not affect matching.
+              type:
+              - boolean
+              - 'null'
+            Interactive:
+              description: |-
+                Optional condition on the request's interactive characteristic.
+                 Absent means this characteristic does not affect matching.
+              type:
+              - boolean
+              - 'null'
+            Managers:
+              description: |-
+                Optional manager filter. Omitted or empty does not narrow matching;
+                 canonical serialization omits an empty collection.
+              type: array
+              items:
+                $ref: '#/components/schemas/PolicyModelManagerName'
+              maxItems: 16
+              uniqueItems: true
+            Operations:
+              description: |-
+                Optional operation filter. Omitted or empty does not narrow matching;
+                 canonical serialization omits an empty collection.
+              type: array
+              items:
+                $ref: '#/components/schemas/PolicyModelOperation'
+              maxItems: 3
+              uniqueItems: true
+            PackageIdentifiers:
+              description: |-
+                Optional package-identifier condition. Exact uses validated stable identifiers; Patterns
+                 uses explicit wildcard patterns that may authorize multiple packages. Absent does not
+                 narrow matching.
+              anyOf:
+              - $ref: '#/components/schemas/PolicyModelPackageIdentifierCondition'
+              - enum:
+                - null
+            PreRelease:
+              description: |-
+                Optional condition on the request's preRelease characteristic.
+                 Absent means this characteristic does not affect matching.
+              type:
+              - boolean
+              - 'null'
+            Scopes:
+              description: |-
+                Optional scope filter. Omitted or empty does not narrow matching;
+                 canonical serialization omits an empty collection.
+              type: array
+              items:
+                $ref: '#/components/schemas/PolicyModelScope'
+              maxItems: 2
+              uniqueItems: true
+            SkipHashCheck:
+              description: |-
+                Optional condition on the request's skipHashCheck characteristic.
+                 Absent means this characteristic does not affect matching.
+              type:
+              - boolean
+              - 'null'
+            SourceNames:
+              description: |-
+                Optional exact configured-source-name filter. Matching uses the selected package manager's
+                 source-name comparison semantics; wildcard characters are literal. Nonempty source names
+                 require exactly one manager. Omitted or empty does not narrow matching; canonical
+                 serialization omits an empty collection.
+              type: array
+              items:
+                $ref: '#/components/schemas/PolicyModelSourceName'
+              maxItems: 128
+              uniqueItems: true
+            Version:
+              description: |-
+                Optional package-version condition. Exact supports arbitrary package version strings;
+                 Range applies only to semantic versions. Absent does not narrow matching.
+              anyOf:
+              - $ref: '#/components/schemas/PolicyModelVersionCondition'
+              - enum:
+                - null
+          additionalProperties: false
+          anyOf:
+          - properties:
+              Operations:
+                minItems: 1
+            required:
+            - Operations
+          - properties:
+              Managers:
+                minItems: 1
+            required:
+            - Managers
+          - properties:
+              SourceNames:
+                minItems: 1
+            required:
+            - SourceNames
+          - properties:
+              PackageIdentifiers:
+                type: object
+            required:
+            - PackageIdentifiers
+          - properties:
+              Version:
+                type: object
+            required:
+            - Version
+          - properties:
+              Scopes:
+                minItems: 1
+            required:
+            - Scopes
+          - properties:
+              Architectures:
+                minItems: 1
+            required:
+            - Architectures
+          - properties:
+              ExecutionElevation:
+                minItems: 1
+            required:
+            - ExecutionElevation
+          - properties:
+              Interactive:
+                type: boolean
+            required:
+            - Interactive
+          - properties:
+              SkipHashCheck:
+                type: boolean
+            required:
+            - SkipHashCheck
+          - properties:
+              PreRelease:
+                type: boolean
+            required:
+            - PreRelease
+          - properties:
+              HasCustomParameters:
+                type: boolean
+            required:
+            - HasCustomParameters
+          - properties:
+              HasCustomInstallLocation:
+                type: boolean
+            required:
+            - HasCustomInstallLocation
+          - properties:
+              HasPrePostCommands:
+                type: boolean
+            required:
+            - HasPrePostCommands
+          - properties:
+              HasKillBeforeOperation:
+                type: boolean
+            required:
+            - HasKillBeforeOperation
+          - properties:
+              HasUninstallPrevious:
+                type: boolean
+            required:
+            - HasUninstallPrevious
+          if:
+            properties:
+              SourceNames:
+                minItems: 1
+            required:
+            - SourceNames
           minProperties: 1
+          then:
+            properties:
+              Managers:
+                maxItems: 1
+                minItems: 1
+            required:
+            - Managers
         Priority:
           description: Priority (lower = higher precedence).
           type: integer
@@ -2487,10 +2575,21 @@ components:
           minimum: 0
         Reason:
           description: Reason reported to the client.
-          type: string
+          type:
+          - string
+          - 'null'
           maxLength: 512
-          nullable: true
       additionalProperties: false
+      not:
+        properties:
+          Constraints:
+            type: object
+          Decision:
+            enum:
+            - Deny
+        required:
+        - Decision
+        - Constraints
       required:
       - Id
       - Priority
@@ -2501,24 +2600,58 @@ components:
       type: string
       maxLength: 128
       pattern: ^[A-Za-z0-9][A-Za-z0-9._:\-]{0,127}$
-    PolicyModelRulePrecedence:
-      description: Rule precedence strategy — always PriorityThenDeny.
-      type: string
-      enum:
-      - PriorityThenDeny
     PolicyModelScope:
       description: Package installation scope.
       type: string
       enum:
       - User
       - Machine
+    PolicyModelSemanticVersion:
+      description: |-
+        Semantic version string (SemVer 2.0.0).
+
+         Validated at deserialization time using the `semver` crate.
+      type: string
+      maxLength: 128
+      pattern: ^(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)\.(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)\.(?:0|[1-9][0-9]{0,18}|1[0-7][0-9]{18}|18[0-3][0-9]{17}|184[0-3][0-9]{16}|1844[0-5][0-9]{15}|18446[0-6][0-9]{14}|184467[0-3][0-9]{13}|1844674[0-3][0-9]{12}|184467440[0-6][0-9]{10}|1844674407[0-2][0-9]{9}|18446744073[0-6][0-9]{8}|1844674407370[0-8][0-9]{6}|18446744073709[0-4][0-9]{5}|184467440737095[0-4][0-9]{4}|18446744073709550[0-9]{3}|18446744073709551[0-5][0-9]{2}|1844674407370955160[0-9]|1844674407370955161[0-4]|18446744073709551615)(?:-((?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?![\s\S])
+    PolicyModelSourceName:
+      description: |-
+        Exact configured package source name.
+
+         Matching uses the selected package manager's source-name comparison semantics.
+         Wildcard characters have no special meaning and are treated literally.
+      type: string
+      maxLength: 128
+      minLength: 1
     PolicyModelStringPattern:
       description: Case-insensitive exact value or wildcard pattern.
       type: string
       maxLength: 256
       minLength: 1
+    PolicyModelVersionCondition:
+      description: Exactly one package-version mode. Exact accepts arbitrary package version strings; Range applies only to semantic versions.
+      oneOf:
+      - type: object
+        properties:
+          Exact:
+            type: array
+            items:
+              $ref: '#/components/schemas/PolicyModelVersionString'
+            maxItems: 256
+            minItems: 1
+            uniqueItems: true
+        additionalProperties: false
+        required:
+        - Exact
+      - type: object
+        properties:
+          Range:
+            $ref: '#/components/schemas/PolicyModelVersionRange'
+        additionalProperties: false
+        required:
+        - Range
     PolicyModelVersionRange:
-      description: Semantic version range for matching.
+      description: Nonempty semantic-version range for matching.
       type: object
       properties:
         IncludePrerelease:
@@ -2527,17 +2660,28 @@ components:
           default: false
         MaxVersion:
           description: Maximum version (inclusive).
-          type: string
-          maxLength: 128
-          minLength: 1
-          nullable: true
+          anyOf:
+          - $ref: '#/components/schemas/PolicyModelSemanticVersion'
+          - enum:
+            - null
         MinVersion:
           description: Minimum version (inclusive).
-          type: string
-          maxLength: 128
-          minLength: 1
-          nullable: true
+          anyOf:
+          - $ref: '#/components/schemas/PolicyModelSemanticVersion'
+          - enum:
+            - null
       additionalProperties: false
+      anyOf:
+      - properties:
+          MinVersion:
+            type: string
+        required:
+        - MinVersion
+      - properties:
+          MaxVersion:
+            type: string
+        required:
+        - MaxVersion
     PolicyModelVersionString:
       description: A short constrained string for version values.
       type: string

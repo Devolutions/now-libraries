@@ -103,10 +103,6 @@ public sealed class PolicyDocument
     [JsonRequired]
     public PolicyFormatVersion PolicyFormatVersion { get; init; } = PolicyFormatVersion.Current;
 
-    [JsonPropertyName("PolicyType")]
-    [JsonRequired]
-    public string PolicyType { get; set; } = "PackageBrokerPolicy";
-
     [JsonPropertyName("Metadata")]
     [JsonRequired]
     public PolicyMetadata Metadata { get; set; } = new();
@@ -133,23 +129,22 @@ public sealed class PolicyDocument
             Enforcement = new PolicyEnforcement
             {
                 DefaultDecision = defaultDecision,
-                RulePrecedence = RulePrecedence.PriorityThenDeny,
             },
         };
     }
 
     public static PolicyDocument ParseJson(string json)
     {
-        return PolicySerializer.DeserializePolicyDocumentStrict(json)
+        return PolicySerializer.Deserialize<PolicyDocument>(json)
             ?? throw new JsonException("policy document was null");
     }
 
     public PolicyDraftDocument ToDraft()
     {
+        PolicySerializer.ValidateRequiredCollectionElements(this);
         return new PolicyDraftDocument
         {
             PolicyFormatVersion = PolicyFormatVersion,
-            PolicyType = PolicyType,
             Metadata = PolicyModelClone.ToDraftMetadata(Metadata),
             Enforcement = PolicyModelClone.Enforcement(Enforcement),
             Rules = PolicyModelClone.Rules(Rules),
@@ -171,10 +166,6 @@ public sealed class PolicyDraftDocument
     [JsonPropertyName("PolicyFormatVersion")]
     [JsonRequired]
     public PolicyFormatVersion PolicyFormatVersion { get; init; } = PolicyFormatVersion.Current;
-
-    [JsonPropertyName("PolicyType")]
-    [JsonRequired]
-    public string PolicyType { get; set; } = "PackageBrokerPolicy";
 
     [JsonPropertyName("Metadata")]
     [JsonRequired]
@@ -203,14 +194,13 @@ public sealed class PolicyDraftDocument
             Enforcement = new PolicyEnforcement
             {
                 DefaultDecision = defaultDecision,
-                RulePrecedence = RulePrecedence.PriorityThenDeny,
             },
         };
     }
 
     public static PolicyDraftDocument ParseJson(string json)
     {
-        return PolicySerializer.DeserializePolicyDraftDocumentStrict(json)
+        return PolicySerializer.Deserialize<PolicyDraftDocument>(json)
             ?? throw new JsonException("policy draft document was null");
     }
 
@@ -223,10 +213,10 @@ public sealed class PolicyDraftDocument
                 $"Policy revisions must be between 1 and {MaxRevision}.");
         }
 
+        PolicySerializer.ValidateRequiredCollectionElements(this);
         return new PolicyDocument
         {
             PolicyFormatVersion = PolicyFormatVersion,
-            PolicyType = PolicyType,
             Metadata = PolicyModelClone.ToCommittedMetadata(Metadata, revision, publishedAt),
             Enforcement = PolicyModelClone.Enforcement(Enforcement),
             Rules = PolicyModelClone.Rules(Rules),
@@ -254,9 +244,17 @@ public sealed class PolicyMetadata
     [JsonRequired]
     public DateTimeOffset PublishedAt { get; set; }
 
+    /// <summary>
+    /// Earliest instant when the policy is active. When both bounds are present, this must be
+    /// strictly earlier than <see cref="ValidUntil"/>.
+    /// </summary>
     [JsonPropertyName("ValidFrom")]
     public DateTimeOffset? ValidFrom { get; set; }
 
+    /// <summary>
+    /// Instant after which the policy is inactive. When both bounds are present, this must be
+    /// strictly later than <see cref="ValidFrom"/>.
+    /// </summary>
     [JsonPropertyName("ValidUntil")]
     public DateTimeOffset? ValidUntil { get; set; }
 
@@ -277,9 +275,17 @@ public sealed class PolicyDraftMetadata
     [JsonRequired]
     public string Publisher { get; set; } = "";
 
+    /// <summary>
+    /// Earliest instant when the policy is active. When both bounds are present, this must be
+    /// strictly earlier than <see cref="ValidUntil"/>.
+    /// </summary>
     [JsonPropertyName("ValidFrom")]
     public DateTimeOffset? ValidFrom { get; set; }
 
+    /// <summary>
+    /// Instant after which the policy is inactive. When both bounds are present, this must be
+    /// strictly later than <see cref="ValidFrom"/>.
+    /// </summary>
     [JsonPropertyName("ValidUntil")]
     public DateTimeOffset? ValidUntil { get; set; }
 
@@ -290,15 +296,15 @@ public sealed class PolicyDraftMetadata
     public string? SupportUrl { get; set; }
 }
 
+/// <summary>
+/// Enforcement configuration. Matching rules are evaluated by ascending priority. Deny wins
+/// equal-priority Allow/Deny ties; remaining equal-priority ties retain document order.
+/// </summary>
 public sealed class PolicyEnforcement
 {
     [JsonPropertyName("DefaultDecision")]
     [JsonRequired]
     public Decision DefaultDecision { get; set; }
-
-    [JsonPropertyName("RulePrecedence")]
-    [JsonRequired]
-    public RulePrecedence RulePrecedence { get; set; }
 
     [JsonPropertyName("AuditMode")]
     public bool? AuditMode { get; set; }
@@ -328,65 +334,241 @@ public sealed class PolicyRule
     [JsonRequired]
     public PolicyMatch Match { get; set; } = new();
 
+    /// <summary>Additional safety limits for an Allow rule. Invalid on Deny rules.</summary>
     [JsonPropertyName("Constraints")]
     public PolicyConstraints? Constraints { get; set; }
 }
 
+/// <summary>
+/// Conditions that must all match a request. At least one effective non-null, nonempty condition
+/// is required when used by a <see cref="PolicyRule"/>.
+/// </summary>
 public sealed class PolicyMatch
 {
+    /// <summary>
+    /// Optional operation filter. Omitted/empty does not narrow matching; canonical output omits empty.
+    /// </summary>
     [JsonPropertyName("Operations")]
     public List<Operation> Operations { get; set; } = [];
 
+    /// <summary>
+    /// Optional manager filter. Omitted/empty does not narrow matching; canonical output omits empty.
+    /// </summary>
     [JsonPropertyName("Managers")]
     public List<ManagerName> Managers { get; set; } = [];
 
-    [JsonPropertyName("Sources")]
-    public List<string> Sources { get; set; } = [];
+    /// <summary>
+    /// Exact configured package source names. Comparison follows the selected package manager's
+    /// source-name semantics; wildcard characters are literal. Nonempty source names require
+    /// exactly one manager. Omitted/empty does not narrow matching; canonical output omits empty.
+    /// </summary>
+    [JsonPropertyName("SourceNames")]
+    public List<string> SourceNames { get; set; } = [];
 
+    /// <summary>
+    /// Optional package-identifier condition. Exact uses validated stable identifiers; Patterns
+    /// explicitly uses wildcard patterns that may authorize multiple packages. Null does not
+    /// narrow matching.
+    /// </summary>
     [JsonPropertyName("PackageIdentifiers")]
-    public List<string> PackageIdentifiers { get; set; } = [];
+    public PackageIdentifierCondition? PackageIdentifiers { get; set; }
 
-    [JsonPropertyName("PackageNames")]
-    public List<string> PackageNames { get; set; } = [];
+    /// <summary>
+    /// Optional package-version condition. Exact supports arbitrary package version strings;
+    /// Range applies only to semantic versions. Null does not narrow matching.
+    /// </summary>
+    [JsonPropertyName("Version")]
+    public VersionCondition? Version { get; set; }
 
-    [JsonPropertyName("Versions")]
-    public List<string> Versions { get; set; } = [];
-
-    [JsonPropertyName("VersionRange")]
-    public VersionRange? VersionRange { get; set; }
-
+    /// <summary>
+    /// Optional scope filter. Omitted/empty does not narrow matching; canonical output omits empty.
+    /// </summary>
     [JsonPropertyName("Scopes")]
     public List<Scope> Scopes { get; set; } = [];
 
+    /// <summary>
+    /// Optional architecture filter. Omitted/empty does not narrow matching; canonical output omits empty.
+    /// </summary>
     [JsonPropertyName("Architectures")]
     public List<Architecture> Architectures { get; set; } = [];
 
-    [JsonPropertyName("Elevation")]
-    public List<Elevation> Elevation { get; set; } = [];
+    /// <summary>
+    /// Optional effective execution-elevation filter. Elevated means the package operation will run
+    /// with administrator privileges; Standard means it will not. Omitted/empty does not narrow
+    /// matching; canonical output omits empty.
+    /// </summary>
+    [JsonPropertyName("ExecutionElevation")]
+    public List<Elevation> ExecutionElevation { get; set; } = [];
 
+    /// <summary>
+    /// Optional condition on the request's interactive characteristic.
+    /// Null means this characteristic does not affect matching.
+    /// </summary>
     [JsonPropertyName("Interactive")]
-    public List<bool> Interactive { get; set; } = [];
+    public bool? Interactive { get; set; }
 
+    /// <summary>
+    /// Optional condition on the request's skip-hash-check characteristic.
+    /// Null means this characteristic does not affect matching.
+    /// </summary>
     [JsonPropertyName("SkipHashCheck")]
-    public List<bool> SkipHashCheck { get; set; } = [];
+    public bool? SkipHashCheck { get; set; }
 
+    /// <summary>
+    /// Optional condition on the request's pre-release characteristic.
+    /// Null means this characteristic does not affect matching.
+    /// </summary>
     [JsonPropertyName("PreRelease")]
-    public List<bool> PreRelease { get; set; } = [];
+    public bool? PreRelease { get; set; }
 
+    /// <summary>
+    /// Optional condition on whether the request has custom parameters.
+    /// Null means this characteristic does not affect matching.
+    /// </summary>
     [JsonPropertyName("HasCustomParameters")]
-    public List<bool> HasCustomParameters { get; set; } = [];
+    public bool? HasCustomParameters { get; set; }
 
+    /// <summary>
+    /// Optional condition on whether the request has a custom install location.
+    /// Null means this characteristic does not affect matching.
+    /// </summary>
     [JsonPropertyName("HasCustomInstallLocation")]
-    public List<bool> HasCustomInstallLocation { get; set; } = [];
+    public bool? HasCustomInstallLocation { get; set; }
 
+    /// <summary>
+    /// Optional condition on whether the request has pre/post commands.
+    /// Null means this characteristic does not affect matching.
+    /// </summary>
     [JsonPropertyName("HasPrePostCommands")]
-    public List<bool> HasPrePostCommands { get; set; } = [];
+    public bool? HasPrePostCommands { get; set; }
 
+    /// <summary>
+    /// Optional condition on whether the request has kill-before-operation entries.
+    /// Null means this characteristic does not affect matching.
+    /// </summary>
     [JsonPropertyName("HasKillBeforeOperation")]
-    public List<bool> HasKillBeforeOperation { get; set; } = [];
+    public bool? HasKillBeforeOperation { get; set; }
 
+    /// <summary>
+    /// Optional condition on whether the request enables uninstall-previous.
+    /// Null means this characteristic does not affect matching.
+    /// </summary>
     [JsonPropertyName("HasUninstallPrevious")]
-    public List<bool> HasUninstallPrevious { get; set; } = [];
+    public bool? HasUninstallPrevious { get; set; }
+}
+
+/// <summary>Exactly one package-version matching mode.</summary>
+public sealed class VersionCondition
+{
+    private List<string>? _exact;
+    private VersionRange? _range;
+
+    /// <summary>One or more exact package version strings, including non-SemVer values.</summary>
+    [JsonPropertyName("Exact")]
+    public List<string>? Exact
+    {
+        get => _exact;
+        set
+        {
+            ExactSpecified = true;
+            _exact = value;
+        }
+    }
+
+    /// <summary>A semantic-version range.</summary>
+    [JsonPropertyName("Range")]
+    public VersionRange? Range
+    {
+        get => _range;
+        set
+        {
+            RangeSpecified = true;
+            _range = value;
+        }
+    }
+
+    /// <summary>Selects exact-version matching and clears the range mode.</summary>
+    public void UseExact(List<string> exact)
+    {
+        ArgumentNullException.ThrowIfNull(exact);
+        ExactSpecified = true;
+        _exact = exact;
+        RangeSpecified = false;
+        _range = null;
+    }
+
+    /// <summary>Selects semantic-range matching and clears the exact mode.</summary>
+    public void UseRange(VersionRange range)
+    {
+        ArgumentNullException.ThrowIfNull(range);
+        ExactSpecified = false;
+        _exact = null;
+        RangeSpecified = true;
+        _range = range;
+    }
+
+    [JsonIgnore]
+    internal bool ExactSpecified { get; private set; }
+
+    [JsonIgnore]
+    internal bool RangeSpecified { get; private set; }
+}
+
+/// <summary>Exactly one package-identifier matching mode.</summary>
+public sealed class PackageIdentifierCondition
+{
+    private List<string>? _exact;
+    private List<string>? _patterns;
+
+    /// <summary>One or more validated stable package identifiers.</summary>
+    [JsonPropertyName("Exact")]
+    public List<string>? Exact
+    {
+        get => _exact;
+        set
+        {
+            ExactSpecified = true;
+            _exact = value;
+        }
+    }
+
+    /// <summary>Explicit wildcard patterns that may authorize multiple package identifiers.</summary>
+    [JsonPropertyName("Patterns")]
+    public List<string>? Patterns
+    {
+        get => _patterns;
+        set
+        {
+            PatternsSpecified = true;
+            _patterns = value;
+        }
+    }
+
+    /// <summary>Selects exact-identifier matching and clears the pattern mode.</summary>
+    public void UseExact(List<string> exact)
+    {
+        ArgumentNullException.ThrowIfNull(exact);
+        ExactSpecified = true;
+        _exact = exact;
+        PatternsSpecified = false;
+        _patterns = null;
+    }
+
+    /// <summary>Selects pattern matching and clears the exact mode.</summary>
+    public void UsePatterns(List<string> patterns)
+    {
+        ArgumentNullException.ThrowIfNull(patterns);
+        ExactSpecified = false;
+        _exact = null;
+        PatternsSpecified = true;
+        _patterns = patterns;
+    }
+
+    [JsonIgnore]
+    internal bool ExactSpecified { get; private set; }
+
+    [JsonIgnore]
+    internal bool PatternsSpecified { get; private set; }
 }
 
 public sealed class VersionRange
@@ -401,6 +583,7 @@ public sealed class VersionRange
     public bool IncludePrerelease { get; set; }
 }
 
+/// <summary>Additional safety limits applied after an Allow rule matches.</summary>
 public sealed class PolicyConstraints
 {
     [JsonPropertyName("AllowInteractive")]
@@ -473,7 +656,6 @@ internal static class PolicyModelClone
     internal static PolicyEnforcement Enforcement(PolicyEnforcement value) => new()
     {
         DefaultDecision = value.DefaultDecision,
-        RulePrecedence = value.RulePrecedence,
         AuditMode = value.AuditMode,
     };
 
@@ -494,30 +676,55 @@ internal static class PolicyModelClone
     {
         Operations = [.. value.Operations],
         Managers = [.. value.Managers],
-        Sources = [.. value.Sources],
-        PackageIdentifiers = [.. value.PackageIdentifiers],
-        PackageNames = [.. value.PackageNames],
-        Versions = [.. value.Versions],
-        VersionRange = value.VersionRange is null
-            ? null
-            : new VersionRange
-            {
-                MinVersion = value.VersionRange.MinVersion,
-                MaxVersion = value.VersionRange.MaxVersion,
-                IncludePrerelease = value.VersionRange.IncludePrerelease,
-            },
+        SourceNames = [.. value.SourceNames],
+        PackageIdentifiers = PackageIdentifiers(value.PackageIdentifiers),
+        Version = Version(value.Version),
         Scopes = [.. value.Scopes],
         Architectures = [.. value.Architectures],
-        Elevation = [.. value.Elevation],
-        Interactive = [.. value.Interactive],
-        SkipHashCheck = [.. value.SkipHashCheck],
-        PreRelease = [.. value.PreRelease],
-        HasCustomParameters = [.. value.HasCustomParameters],
-        HasCustomInstallLocation = [.. value.HasCustomInstallLocation],
-        HasPrePostCommands = [.. value.HasPrePostCommands],
-        HasKillBeforeOperation = [.. value.HasKillBeforeOperation],
-        HasUninstallPrevious = [.. value.HasUninstallPrevious],
+        ExecutionElevation = [.. value.ExecutionElevation],
+        Interactive = value.Interactive,
+        SkipHashCheck = value.SkipHashCheck,
+        PreRelease = value.PreRelease,
+        HasCustomParameters = value.HasCustomParameters,
+        HasCustomInstallLocation = value.HasCustomInstallLocation,
+        HasPrePostCommands = value.HasPrePostCommands,
+        HasKillBeforeOperation = value.HasKillBeforeOperation,
+        HasUninstallPrevious = value.HasUninstallPrevious,
     };
+
+    private static PackageIdentifierCondition? PackageIdentifiers(PackageIdentifierCondition? value)
+    {
+        if (value?.Exact is { } exact)
+        {
+            return new PackageIdentifierCondition { Exact = [.. exact] };
+        }
+        if (value?.Patterns is { } patterns)
+        {
+            return new PackageIdentifierCondition { Patterns = [.. patterns] };
+        }
+        return null;
+    }
+
+    private static VersionCondition? Version(VersionCondition? value)
+    {
+        if (value?.Exact is { } exact)
+        {
+            return new VersionCondition { Exact = [.. exact] };
+        }
+        if (value?.Range is { } range)
+        {
+            return new VersionCondition
+            {
+                Range = new VersionRange
+                {
+                    MinVersion = range.MinVersion,
+                    MaxVersion = range.MaxVersion,
+                    IncludePrerelease = range.IncludePrerelease,
+                },
+            };
+        }
+        return null;
+    }
 
     private static PolicyConstraints Constraints(PolicyConstraints value) => new()
     {

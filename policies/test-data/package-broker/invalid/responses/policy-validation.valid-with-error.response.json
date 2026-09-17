@@ -11,14 +11,12 @@
     "IsValid": true,
     "CanonicalDraft": {
       "PolicyFormatVersion": "1.0.0",
-      "PolicyType": "PackageBrokerPolicy",
       "Metadata": {
         "Id": "contoso.package-policy",
         "Publisher": "Contoso IT"
       },
       "Enforcement": {
-        "DefaultDecision": "Deny",
-        "RulePrecedence": "PriorityThenDeny"
+        "DefaultDecision": "Deny"
       },
       "Rules": []
     },

@@ -1,0 +1,52 @@
+{
+  "PolicyFormatVersion": "1.0.0",
+  "Metadata": {
+    "Id": "boolean-characteristics",
+    "Publisher": "Devolutions",
+    "Revision": 1,
+    "PublishedAt": "2026-09-17T00:00:00Z"
+  },
+  "Enforcement": {
+    "DefaultDecision": "Deny"
+  },
+  "Rules": [
+    {
+      "Id": "mixed.boolean-characteristics",
+      "Enabled": true,
+      "Priority": 100,
+      "Decision": "Allow",
+      "Match": {
+        "Operations": [
+          "Install"
+        ],
+        "Managers": [
+          "Winget"
+        ],
+        "SourceNames": [
+          "corp*"
+        ],
+        "PackageIdentifiers": {
+          "Exact": [
+            "Microsoft.VisualStudioCode"
+          ]
+        },
+        "Version": {
+          "Exact": [
+            "5.6.0.0"
+          ]
+        },
+        "ExecutionElevation": [
+          "Elevated"
+        ],
+        "Interactive": false,
+        "SkipHashCheck": true,
+        "PreRelease": false,
+        "HasCustomParameters": true,
+        "HasCustomInstallLocation": false,
+        "HasPrePostCommands": true,
+        "HasKillBeforeOperation": false,
+        "HasUninstallPrevious": true
+      }
+    }
+  ]
+}

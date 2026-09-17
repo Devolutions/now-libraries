@@ -1,0 +1,14 @@
+{
+  "PolicyFormatVersion": "1.0.0",
+  "Metadata": {
+    "Id": "duplicate.test",
+    "Publisher": "First",
+    "Publisher": "Second",
+    "Revision": 1,
+    "PublishedAt": "2026-01-01T00:00:00Z"
+  },
+  "Enforcement": {
+    "DefaultDecision": "Deny"
+  },
+  "Rules": []
+}

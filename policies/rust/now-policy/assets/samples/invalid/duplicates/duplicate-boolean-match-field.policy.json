@@ -1,0 +1,23 @@
+{
+  "PolicyFormatVersion": "1.0.0",
+  "Metadata": {
+    "Id": "duplicate.test",
+    "Publisher": "Test",
+    "Revision": 1,
+    "PublishedAt": "2026-01-01T00:00:00Z"
+  },
+  "Enforcement": {
+    "DefaultDecision": "Deny"
+  },
+  "Rules": [
+    {
+      "Id": "duplicate.boolean-match",
+      "Priority": 1,
+      "Decision": "Deny",
+      "Match": {
+        "Interactive": false,
+        "\u0049nteractive": true
+      }
+    }
+  ]
+}

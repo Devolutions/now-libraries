@@ -16,13 +16,13 @@
       { "FindingVersion": "1.0", "Severity": "Error", "Code": "InvalidFieldType", "Path": "/Rules", "Message": "The property has the wrong JSON type." },
       { "FindingVersion": "1.0", "Severity": "Error", "Code": "InvalidFieldValue", "Path": "/Rules/0/Priority", "RuleId": "duplicate", "Message": "The property value is invalid." },
       { "FindingVersion": "1.0", "Severity": "Error", "Code": "DuplicateRuleId", "Path": "/Rules/1/Id", "RuleId": "duplicate", "Message": "Rule identifiers must be unique." },
-      { "FindingVersion": "1.0", "Severity": "Error", "Code": "IneffectiveBooleanMatch", "Path": "/Rules/0/Match/Interactive", "RuleId": "duplicate", "Message": "A boolean match must contain only true or only false." },
-      { "FindingVersion": "1.0", "Severity": "Error", "Code": "InvalidVersionRange", "Path": "/Rules/0/Match/VersionRange", "RuleId": "duplicate", "Message": "The version range is invalid." },
-      { "FindingVersion": "1.0", "Severity": "Error", "Code": "EmptyVersionRange", "Path": "/Rules/0/Match/VersionRange", "RuleId": "duplicate", "Message": "The version range must specify a boundary." },
-      { "FindingVersion": "1.0", "Severity": "Error", "Code": "InvalidWildcardPattern", "Path": "/Rules/0/Match/PackageIdentifiers/0", "RuleId": "duplicate", "Message": "The wildcard pattern is invalid." },
+      { "FindingVersion": "1.0", "Severity": "Error", "Code": "InvalidFieldType", "Path": "/Rules/0/Match/Interactive", "RuleId": "duplicate", "Message": "The request characteristic condition must be a scalar boolean." },
+      { "FindingVersion": "1.0", "Severity": "Error", "Code": "InvalidVersionRange", "Path": "/Rules/0/Match/Version/Range", "RuleId": "duplicate", "Message": "The semantic version range is invalid." },
+      { "FindingVersion": "1.0", "Severity": "Error", "Code": "EmptyVersionRange", "Path": "/Rules/0/Match/Version/Range", "RuleId": "duplicate", "Message": "The semantic version range must specify a boundary." },
+      { "FindingVersion": "1.0", "Severity": "Error", "Code": "InvalidWildcardPattern", "Path": "/Rules/0/Match/PackageIdentifiers/Patterns/0", "RuleId": "duplicate", "Message": "The wildcard pattern is invalid." },
       { "FindingVersion": "1.0", "Severity": "Error", "Code": "ContradictoryConstraints", "Path": "/Rules/0/Constraints", "RuleId": "duplicate", "Message": "The constraints contradict each other." },
       { "FindingVersion": "1.0", "Severity": "Error", "Code": "InvalidValidityInterval", "Path": "/Metadata/ValidUntil", "Message": "ValidUntil must be after ValidFrom." },
-      { "FindingVersion": "1.0", "Severity": "Error", "Code": "UnsupportedPolicyType", "Path": "/PolicyType", "Message": "The policy type is not supported." },
+      { "FindingVersion": "1.0", "Severity": "Error", "Code": "UnknownField", "Path": "/PolicyType", "Message": "PolicyType is not part of the policy document contract." },
       { "FindingVersion": "1.0", "Severity": "Error", "Code": "UnsupportedPolicyFormatVersion", "Path": "/PolicyFormatVersion", "Message": "The policy format version is not supported." }
     ]
   }

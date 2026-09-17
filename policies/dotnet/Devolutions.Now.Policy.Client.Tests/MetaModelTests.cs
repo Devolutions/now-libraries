@@ -86,7 +86,7 @@ public class MetaModelTests
 
     [Theory]
     [InlineData("Policy.Rules.0")]
-    [InlineData("Policy.Rules.3.Match.Sources.0")]
+    [InlineData("Policy.Rules.3.Match.SourceNames.0")]
     public void Strict_policy_response_rejects_null_collection_element(string elementPath)
     {
         var path = Path.Combine(TestData.SamplesDir, "responses", "policy.response.json");
@@ -142,6 +142,8 @@ public class MetaModelTests
             typeof(PolicyEnforcement),
             typeof(PolicyRule),
             typeof(PolicyMatch),
+            typeof(PackageIdentifierCondition),
+            typeof(VersionCondition),
             typeof(VersionRange),
             typeof(PolicyConstraints),
         ];
@@ -167,6 +169,23 @@ public class MetaModelTests
         Assert.NotNull(JsonSerializer.Deserialize<PolicyResponse>(compact, BrokerSerializer.Options));
         Assert.NotNull(JsonSerializer.Deserialize<PolicyResponse>(pretty, BrokerSerializer.PrettyOptions));
         Assert.Contains(Environment.NewLine, pretty);
+    }
+
+    [Fact]
+    public void Non_strict_broker_policy_inputs_reject_removed_policy_members()
+    {
+        var document = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(TestData.SamplesDir, "responses", "policy.response.json")))!;
+        document["Policy"]!["Rules"]![3]!["Match"]!["PackageNames"] =
+            new JsonArray("Visual Studio Code");
+        var json = document.ToJsonString();
+
+        Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<PolicyResponse>(json));
+        foreach (var options in new[] { BrokerSerializer.Options, BrokerSerializer.PrettyOptions })
+        {
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyResponse>(json, options));
+        }
     }
 
     [Fact]

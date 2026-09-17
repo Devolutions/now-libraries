@@ -1,6 +1,5 @@
 {
   "PolicyFormatVersion": "1.0.0",
-  "PolicyType": "PackageBrokerPolicy",
   "Metadata": {
     "Id": "contoso.powershell.advanced-scenarios",
     "Publisher": "Contoso IT",
@@ -9,8 +8,7 @@
     "Description": "PowerShell policy fixture for source, version range, and update operation coverage."
   },
   "Enforcement": {
-    "DefaultDecision": "Deny",
-    "RulePrecedence": "PriorityThenDeny"
+    "DefaultDecision": "Deny"
   },
   "Rules": [
     {
@@ -22,7 +20,7 @@
         "Managers": [
           "PowerShell"
         ],
-        "Sources": [
+        "SourceNames": [
           "PoshTestGallery"
         ]
       }
@@ -36,9 +34,7 @@
         "Managers": [
           "PowerShell"
         ],
-        "PreRelease": [
-          true
-        ]
+        "PreRelease": true
       }
     },
     {
@@ -54,16 +50,20 @@
         "Managers": [
           "PowerShell"
         ],
-        "Sources": [
+        "SourceNames": [
           "PSGallery"
         ],
-        "PackageIdentifiers": [
-          "Pester"
-        ],
-        "VersionRange": {
-          "MinVersion": "5.0.0",
-          "MaxVersion": "6.0.0",
-          "IncludePrerelease": false
+        "PackageIdentifiers": {
+          "Exact": [
+            "Pester"
+          ]
+        },
+        "Version": {
+          "Range": {
+            "MinVersion": "5.0.0",
+            "MaxVersion": "6.0.0",
+            "IncludePrerelease": false
+          }
         },
         "Scopes": [
           "User"

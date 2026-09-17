@@ -124,6 +124,7 @@ pub fn openapi() -> OpenApi {
     let _ = api_routes().finish_api(&mut api);
     register_policy_management_body_limits(&mut api);
     register_policy_schema(&mut api);
+    normalize_openapi_31_nullable(&mut api);
     api
 }
 
@@ -228,6 +229,65 @@ fn rewrite_policy_schema_refs(
     let mut value = schema;
     rewrite(&mut value, renames);
     schemars::Schema::try_from(value).expect("BUG: rewritten policy schema should remain valid")
+}
+
+fn normalize_openapi_31_nullable(api: &mut OpenApi) {
+    fn normalize(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Array(values) => {
+                for value in values {
+                    normalize(value);
+                }
+            }
+            serde_json::Value::Object(values) => {
+                for value in values.values_mut() {
+                    normalize(value);
+                }
+
+                if values.remove("nullable") != Some(serde_json::Value::Bool(true)) {
+                    return;
+                }
+
+                match values.remove("type") {
+                    Some(serde_json::Value::String(schema_type)) => {
+                        values.insert("type".to_owned(), serde_json::json!([schema_type, "null"]));
+                    }
+                    Some(serde_json::Value::Array(mut schema_types)) => {
+                        if !schema_types.iter().any(|schema_type| schema_type == "null") {
+                            schema_types.push(serde_json::Value::String("null".to_owned()));
+                        }
+                        values.insert("type".to_owned(), serde_json::Value::Array(schema_types));
+                    }
+                    Some(schema_type) => {
+                        values.insert("type".to_owned(), schema_type);
+                    }
+                    _ if values
+                        .get("enum")
+                        .and_then(serde_json::Value::as_array)
+                        .is_some_and(|variants| variants.iter().any(serde_json::Value::is_null)) => {}
+                    _ => {
+                        let non_null_schema = serde_json::Value::Object(std::mem::take(values));
+                        values.insert(
+                            "anyOf".to_owned(),
+                            serde_json::json!([non_null_schema, { "type": "null" }]),
+                        );
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let Some(components) = api.components.as_mut() else {
+        return;
+    };
+    for schema in components.schemas.values_mut() {
+        let mut value =
+            serde_json::to_value(&schema.json_schema).expect("BUG: generated OpenAPI schema should serialize");
+        normalize(&mut value);
+        schema.json_schema =
+            schemars::Schema::try_from(value).expect("BUG: normalized OpenAPI schema should remain valid");
+    }
 }
 
 async fn health_handler(State(server): State<SharedPackageBrokerServer>) -> Json<HealthResponse> {
@@ -563,6 +623,10 @@ mod tests {
     #[test]
     fn policy_openapi_preserves_nullable_optional_document_fields() {
         let api = serde_json::to_value(openapi()).expect("OpenAPI should serialize");
+        assert!(
+            !api.to_string().contains("\"nullable\""),
+            "OpenAPI 3.1 schemas must not use the legacy nullable keyword"
+        );
         for pointer in [
             "/components/schemas/PolicyManagementSnapshotFields/properties/Policy/anyOf",
             "/components/schemas/PolicyValidationResultFields/properties/CanonicalDraft/anyOf",
@@ -573,8 +637,7 @@ mod tests {
                 .unwrap_or_else(|| panic!("missing nullable variants at {pointer}"));
             assert!(
                 variants.iter().any(|variant| {
-                    variant.get("nullable") == Some(&serde_json::Value::Bool(true))
-                        || variant.get("type").and_then(serde_json::Value::as_str) == Some("null")
+                    variant.get("type").and_then(serde_json::Value::as_str) == Some("null")
                         || variant
                             .get("enum")
                             .and_then(serde_json::Value::as_array)
@@ -582,6 +645,33 @@ mod tests {
                 }),
                 "{pointer} should retain an explicit null variant"
             );
+        }
+    }
+
+    #[test]
+    fn policy_openapi_uses_nullable_scalar_boolean_match_conditions() {
+        let api = serde_json::to_value(openapi()).expect("OpenAPI should serialize");
+        for property_name in [
+            "Interactive",
+            "SkipHashCheck",
+            "PreRelease",
+            "HasCustomParameters",
+            "HasCustomInstallLocation",
+            "HasPrePostCommands",
+            "HasKillBeforeOperation",
+            "HasUninstallPrevious",
+        ] {
+            let property = &api["components"]["schemas"]["PolicyModelPolicyRule"]["properties"]["Match"]["properties"]
+                [property_name];
+            let types = property["type"]
+                .as_array()
+                .unwrap_or_else(|| panic!("PolicyMatch.{property_name} should have an OpenAPI 3.1 type union"));
+
+            assert!(types.iter().any(|value| value == "boolean"));
+            assert!(types.iter().any(|value| value == "null"));
+            assert!(property.get("items").is_none());
+            assert!(property.get("maxItems").is_none());
+            assert!(property.get("uniqueItems").is_none());
         }
     }
 

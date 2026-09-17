@@ -5,7 +5,10 @@
 use std::path::PathBuf;
 
 use chrono::{TimeZone, Utc};
-use now_policy::{CURRENT_POLICY_FORMAT_VERSION, CustomParameterString, PolicyDocument, StringPattern, VersionString};
+use now_policy::{
+    CURRENT_POLICY_FORMAT_VERSION, CustomParameterString, ManagerName, PackageIdentifier, PolicyDocument,
+    SemanticVersion, SourceName, StringPattern, VersionString,
+};
 
 fn samples_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets/samples")
@@ -16,6 +19,7 @@ fn all_sample_policies_deserialize() {
     let dir = samples_dir();
 
     let policy_files = [
+        "boolean-characteristics.policy.json",
         "corporate-allowlist.policy.json",
         "deny-risky-options.policy.json",
         "powershell-advanced.policy.json",
@@ -77,20 +81,624 @@ fn draft_conversion_enforces_revision_bounds() {
 }
 
 #[test]
-fn mixed_boolean_match_values_are_rejected() {
-    let path = samples_dir().join("corporate-allowlist.policy.json");
-    let mut value: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
-    value["Rules"][0]["Match"]["Interactive"] = serde_json::json!([false, true]);
+fn validity_windows_are_operational_and_strictly_ordered_by_instant() {
+    fn committed_metadata(validity: &str) -> String {
+        format!(
+            r#"{{
+                "Id":"validity.test",
+                "Publisher":"Test",
+                "Revision":1,
+                "PublishedAt":"2026-01-01T00:00:00Z"
+                {validity}
+            }}"#
+        )
+    }
 
-    let result: Result<PolicyDocument, _> = serde_json::from_value(value);
-    assert!(result.is_err());
+    fn draft_metadata(validity: &str) -> String {
+        format!(
+            r#"{{
+                "Id":"validity.test",
+                "Publisher":"Test"
+                {validity}
+            }}"#
+        )
+    }
 
-    let empty: now_policy::PolicyMatch = serde_json::from_value(serde_json::json!({ "Interactive": [] })).unwrap();
-    assert!(empty.interactive.is_empty());
+    for validity in [
+        "",
+        r#","ValidFrom":null,"ValidUntil":null"#,
+        r#","ValidFrom":"2026-01-01T00:00:00Z""#,
+        r#","ValidUntil":"2026-01-01T00:00:00Z""#,
+        r#","ValidFrom":"2026-01-01T01:00:00+01:00","ValidUntil":"2026-01-01T00:30:00Z""#,
+    ] {
+        let metadata: now_policy::PolicyMetadata = serde_json::from_str(&committed_metadata(validity)).unwrap();
+        let draft: now_policy::PolicyDraftMetadata = serde_json::from_str(&draft_metadata(validity)).unwrap();
+        serde_json::to_value(metadata).unwrap();
+        serde_json::to_value(draft).unwrap();
+    }
 
-    let mut invalid = now_policy::PolicyMatch::default();
-    invalid.interactive.extend([false, true]);
-    assert!(serde_json::to_value(invalid).is_err());
+    let null_metadata: now_policy::PolicyMetadata =
+        serde_json::from_str(&committed_metadata(r#","ValidFrom":null,"ValidUntil":null"#)).unwrap();
+    let canonical = serde_json::to_value(null_metadata).unwrap();
+    assert!(canonical.get("ValidFrom").is_none());
+    assert!(canonical.get("ValidUntil").is_none());
+
+    for validity in [
+        r#","ValidFrom":"2026-01-01T01:00:00+01:00","ValidUntil":"2026-01-01T00:00:00Z""#,
+        r#","ValidFrom":"2026-01-01T00:30:00Z","ValidUntil":"2026-01-01T01:00:00+01:00""#,
+    ] {
+        let error = serde_json::from_str::<now_policy::PolicyMetadata>(&committed_metadata(validity))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("ValidUntil"), "unexpected error: {error}");
+        assert!(error.contains("ValidFrom"), "unexpected error: {error}");
+
+        let error = serde_json::from_str::<now_policy::PolicyDraftMetadata>(&draft_metadata(validity))
+            .unwrap_err()
+            .to_string();
+        assert!(error.contains("ValidUntil"), "unexpected error: {error}");
+        assert!(error.contains("ValidFrom"), "unexpected error: {error}");
+    }
+
+    let mut invalid: now_policy::PolicyDraftMetadata =
+        serde_json::from_str(&draft_metadata(r#","ValidFrom":"2026-01-01T00:00:00Z""#)).unwrap();
+    invalid.valid_until = invalid.valid_from;
+    let error = serde_json::to_value(&invalid).unwrap_err().to_string();
+    assert!(error.contains("ValidUntil"), "unexpected error: {error}");
+
+    let committed: PolicyDocument =
+        serde_json::from_str(&std::fs::read_to_string(samples_dir().join("corporate-allowlist.policy.json")).unwrap())
+            .unwrap();
+    let mut draft = committed.to_draft();
+    draft.metadata.valid_from = Some(Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap());
+    draft.metadata.valid_until = draft.metadata.valid_from;
+    assert!(
+        draft
+            .into_policy_document(1, Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap())
+            .is_err()
+    );
+}
+
+#[test]
+fn boolean_match_characteristics_accept_omitted_null_false_and_true() {
+    let property_names = [
+        "Interactive",
+        "SkipHashCheck",
+        "PreRelease",
+        "HasCustomParameters",
+        "HasCustomInstallLocation",
+        "HasPrePostCommands",
+        "HasKillBeforeOperation",
+        "HasUninstallPrevious",
+    ];
+
+    let omitted: now_policy::PolicyMatch = serde_json::from_str("{}").unwrap();
+    let omitted_json = serde_json::to_value(omitted).unwrap();
+    for property_name in property_names {
+        assert!(omitted_json.get(property_name).is_none());
+
+        let explicit_null: now_policy::PolicyMatch =
+            serde_json::from_str(&format!(r#"{{"{property_name}":null}}"#)).unwrap();
+        assert!(
+            serde_json::to_value(explicit_null)
+                .unwrap()
+                .get(property_name)
+                .is_none()
+        );
+
+        for expected in [false, true] {
+            let value: now_policy::PolicyMatch =
+                serde_json::from_str(&format!(r#"{{"{property_name}":{expected}}}"#)).unwrap();
+            assert_eq!(serde_json::to_value(value).unwrap()[property_name], expected);
+        }
+    }
+}
+
+#[test]
+fn boolean_match_characteristics_reject_legacy_arrays_and_wrong_types() {
+    let property_names = [
+        "Interactive",
+        "SkipHashCheck",
+        "PreRelease",
+        "HasCustomParameters",
+        "HasCustomInstallLocation",
+        "HasPrePostCommands",
+        "HasKillBeforeOperation",
+        "HasUninstallPrevious",
+    ];
+
+    for property_name in property_names {
+        for invalid_value in ["[]", "[false]", "[true]", "[false,true]", "\"true\"", "0", "{}"] {
+            let json = format!(r#"{{"{property_name}":{invalid_value}}}"#);
+            assert!(
+                serde_json::from_str::<now_policy::PolicyMatch>(&json).is_err(),
+                "{property_name} should reject {invalid_value}"
+            );
+        }
+    }
+}
+
+#[test]
+fn null_only_boolean_match_is_not_an_effective_rule_criterion() {
+    let property_names = [
+        "Interactive",
+        "SkipHashCheck",
+        "PreRelease",
+        "HasCustomParameters",
+        "HasCustomInstallLocation",
+        "HasPrePostCommands",
+        "HasKillBeforeOperation",
+        "HasUninstallPrevious",
+    ];
+
+    for property_name in property_names {
+        let null_only =
+            format!(r#"{{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{{"{property_name}":null}}}}"#);
+        assert!(serde_json::from_str::<now_policy::PolicyRule>(&null_only).is_err());
+
+        let with_operation = format!(
+            r#"{{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{{"Operations":["Install"],"{property_name}":null}}}}"#
+        );
+        assert!(serde_json::from_str::<now_policy::PolicyRule>(&with_operation).is_ok());
+    }
+}
+
+#[test]
+fn constraints_are_valid_only_for_allow_rules() {
+    let allow_with_constraints = r#"{
+        "Id":"allow.rule",
+        "Priority":1,
+        "Decision":"Allow",
+        "Match":{"Operations":["Install"]},
+        "Constraints":{"AllowInteractive":false}
+    }"#;
+    let allow: now_policy::PolicyRule = serde_json::from_str(allow_with_constraints).unwrap();
+    assert!(allow.constraints.is_some());
+    assert!(serde_json::to_value(&allow).unwrap().get("Constraints").is_some());
+
+    let allow_without_constraints = r#"{
+        "Id":"allow.rule",
+        "Priority":1,
+        "Decision":"Allow",
+        "Match":{"Operations":["Install"]}
+    }"#;
+    assert!(serde_json::from_str::<now_policy::PolicyRule>(allow_without_constraints).is_ok());
+
+    let deny_without_constraints = r#"{
+        "Id":"deny.rule",
+        "Priority":1,
+        "Decision":"Deny",
+        "Match":{"Operations":["Install"]}
+    }"#;
+    assert!(serde_json::from_str::<now_policy::PolicyRule>(deny_without_constraints).is_ok());
+
+    let deny_with_null_constraints = r#"{
+        "Id":"deny.rule",
+        "Priority":1,
+        "Decision":"Deny",
+        "Match":{"Operations":["Install"]},
+        "Constraints":null
+    }"#;
+    let deny: now_policy::PolicyRule = serde_json::from_str(deny_with_null_constraints).unwrap();
+    assert!(serde_json::to_value(&deny).unwrap().get("Constraints").is_none());
+
+    let deny_with_constraints = r#"{
+        "Id":"deny.rule",
+        "Enabled":false,
+        "Priority":1,
+        "Decision":"Deny",
+        "Match":{"Operations":["Install"]},
+        "Constraints":{"AllowInteractive":false}
+    }"#;
+    let error = serde_json::from_str::<now_policy::PolicyRule>(deny_with_constraints)
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("PolicyRule.Constraints"), "unexpected error: {error}");
+
+    let mut invalid = allow;
+    invalid.decision = now_policy::Decision::Deny;
+    let error = serde_json::to_value(invalid).unwrap_err().to_string();
+    assert!(error.contains("PolicyRule.Constraints"), "unexpected error: {error}");
+}
+
+#[test]
+fn boolean_match_characteristics_round_trip_in_representative_mixed_match() {
+    let json = serde_json::json!({
+        "Operations": ["Install"],
+        "Interactive": false,
+        "SkipHashCheck": true,
+        "HasCustomParameters": false,
+        "HasUninstallPrevious": true
+    });
+    let value: now_policy::PolicyMatch = serde_json::from_value(json).unwrap();
+
+    assert_eq!(value.interactive, Some(false));
+    assert_eq!(value.skip_hash_check, Some(true));
+    assert_eq!(value.has_custom_parameters, Some(false));
+    assert_eq!(value.has_uninstall_previous, Some(true));
+    assert_eq!(value.pre_release, None);
+    assert_eq!(value.has_custom_install_location, None);
+    assert_eq!(value.has_pre_post_commands, None);
+    assert_eq!(value.has_kill_before_operation, None);
+
+    let serialized = serde_json::to_value(value).unwrap();
+    assert_eq!(serialized["Interactive"], false);
+    assert_eq!(serialized["SkipHashCheck"], true);
+    assert!(serialized.get("PreRelease").is_none());
+    assert!(serialized.get("HasCustomInstallLocation").is_none());
+}
+
+#[test]
+fn collection_match_filters_accept_empty_input_and_canonicalize_to_omitted() {
+    let properties = [
+        ("Operations", "\"Install\""),
+        ("Managers", "\"Winget\""),
+        ("SourceNames", "\"winget\""),
+        ("Scopes", "\"User\""),
+        ("Architectures", "\"X64\""),
+        ("ExecutionElevation", "\"Standard\""),
+    ];
+
+    for (property_name, element_json) in properties {
+        let omitted: now_policy::PolicyMatch = serde_json::from_str("{}").unwrap();
+        assert!(serde_json::to_value(omitted).unwrap().get(property_name).is_none());
+
+        let empty: now_policy::PolicyMatch = serde_json::from_str(&format!(r#"{{"{property_name}":[]}}"#)).unwrap();
+        assert!(serde_json::to_value(empty).unwrap().get(property_name).is_none());
+
+        let populated_json = format!(
+            r#"{{"{property_name}":[{element_json}]{} }}"#,
+            if property_name == "SourceNames" {
+                r#","Managers":["Winget"]"#
+            } else {
+                ""
+            }
+        );
+        let populated: now_policy::PolicyMatch = serde_json::from_str(&populated_json).unwrap();
+        assert_eq!(
+            serde_json::to_value(populated).unwrap()[property_name]
+                .as_array()
+                .map(Vec::len),
+            Some(1)
+        );
+    }
+}
+
+#[test]
+fn empty_collection_only_match_is_not_an_effective_rule_criterion() {
+    let properties = [
+        ("Operations", "\"Install\""),
+        ("Managers", "\"Winget\""),
+        ("SourceNames", "\"winget\""),
+        ("Scopes", "\"User\""),
+        ("Architectures", "\"X64\""),
+        ("ExecutionElevation", "\"Standard\""),
+    ];
+
+    for (property_name, element_json) in properties {
+        let empty_only =
+            format!(r#"{{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{{"{property_name}":[]}}}}"#);
+        assert!(serde_json::from_str::<now_policy::PolicyRule>(&empty_only).is_err());
+
+        let with_boolean = format!(
+            r#"{{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{{"{property_name}":[],"Interactive":false}}}}"#
+        );
+        let rule: now_policy::PolicyRule = serde_json::from_str(&with_boolean).unwrap();
+        let serialized = serde_json::to_value(rule).unwrap();
+        assert!(serialized["Match"].get(property_name).is_none());
+        assert_eq!(serialized["Match"]["Interactive"], false);
+
+        let populated = format!(
+            r#"{{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{{"{property_name}":[{element_json}]{} }}}}"#,
+            if property_name == "SourceNames" {
+                r#","Managers":["Winget"]"#
+            } else {
+                ""
+            }
+        );
+        assert!(serde_json::from_str::<now_policy::PolicyRule>(&populated).is_ok());
+    }
+}
+
+#[test]
+fn collection_match_filters_reject_duplicate_values() {
+    let properties = [
+        ("Operations", "\"Install\""),
+        ("Managers", "\"Winget\""),
+        ("SourceNames", "\"winget\""),
+        ("Scopes", "\"User\""),
+        ("Architectures", "\"X64\""),
+        ("ExecutionElevation", "\"Standard\""),
+    ];
+
+    for (property_name, element_json) in properties {
+        let json = format!(
+            r#"{{"{property_name}":[{element_json},{element_json}]{} }}"#,
+            if property_name == "SourceNames" {
+                r#","Managers":["Winget"]"#
+            } else {
+                ""
+            }
+        );
+        assert!(
+            serde_json::from_str::<now_policy::PolicyMatch>(&json).is_err(),
+            "{property_name} should reject duplicate values"
+        );
+    }
+}
+
+#[test]
+fn source_names_require_managers_and_preserve_exact_literal_names() {
+    let without_manager = r#"{
+        "Id":"source.rule",
+        "Priority":1,
+        "Decision":"Allow",
+        "Match":{"SourceNames":["corp*"]}
+    }"#;
+    let error = serde_json::from_str::<now_policy::PolicyRule>(without_manager)
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("SourceNames"), "unexpected error: {error}");
+
+    let with_manager = r#"{
+        "Id":"source.rule",
+        "Priority":1,
+        "Decision":"Allow",
+        "Match":{
+            "Managers":["Winget"],
+            "SourceNames":["corp*","PSGallery"]
+        }
+    }"#;
+    let mut rule: now_policy::PolicyRule = serde_json::from_str(with_manager).unwrap();
+    assert_eq!(rule.match_criteria.managers.len(), 1);
+    assert_eq!(rule.match_criteria.source_names.len(), 2);
+    assert!(
+        rule.match_criteria
+            .source_names
+            .iter()
+            .any(|name| name.as_ref() == "corp*")
+    );
+
+    rule.match_criteria.managers.clear();
+    let error = serde_json::to_value(rule).unwrap_err().to_string();
+    assert!(error.contains("SourceNames"), "unexpected error: {error}");
+
+    let multiple_managers = r#"{
+        "Id":"source.rule",
+        "Priority":1,
+        "Decision":"Allow",
+        "Match":{
+            "Managers":["Winget","PowerShell"],
+            "SourceNames":["corp"]
+        }
+    }"#;
+    let error = serde_json::from_str::<now_policy::PolicyRule>(multiple_managers)
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("SourceNames"), "unexpected error: {error}");
+}
+
+#[test]
+fn managers_enforce_schema_collection_bound_on_input_and_output() {
+    let manager_names = [
+        "Winget",
+        "PowerShell",
+        "PowerShell7",
+        "Apt",
+        "Bun",
+        "Cargo",
+        "Chocolatey",
+        "Dnf",
+        "Dotnet",
+        "Flatpak",
+        "Homebrew",
+        "Npm",
+        "Pacman",
+        "Pip",
+        "Scoop",
+        "Snap",
+        "Vcpkg",
+    ];
+    let managers = manager_names[..16]
+        .iter()
+        .map(|name| format!(r#""{name}""#))
+        .collect::<Vec<_>>()
+        .join(",");
+    let json = format!(r#"{{"Managers":[{managers}]}}"#);
+    let mut maximum: now_policy::PolicyMatch = serde_json::from_str(&json).unwrap();
+    assert_eq!(maximum.managers.len(), 16);
+    serde_json::to_value(&maximum).unwrap();
+
+    let too_many = format!(r#"{{"Managers":[{managers},"Vcpkg"]}}"#);
+    let error = serde_json::from_str::<now_policy::PolicyMatch>(&too_many)
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("at most 16"), "unexpected error: {error}");
+
+    maximum.managers.insert(ManagerName::Vcpkg);
+    let error = serde_json::to_value(maximum).unwrap_err().to_string();
+    assert!(error.contains("at most 16"), "unexpected error: {error}");
+}
+
+#[test]
+fn source_names_enforce_schema_collection_bound_on_input_and_output() {
+    let source_names = (0..128)
+        .map(|index| format!(r#""source-{index}""#))
+        .collect::<Vec<_>>()
+        .join(",");
+    let json = format!(r#"{{"Managers":["Winget"],"SourceNames":[{source_names}]}}"#);
+    let mut maximum: now_policy::PolicyMatch = serde_json::from_str(&json).unwrap();
+    assert_eq!(maximum.source_names.len(), 128);
+    serde_json::to_value(&maximum).unwrap();
+
+    let too_many = format!(r#"{{"Managers":["Winget"],"SourceNames":[{source_names},"source-128"]}}"#);
+    let error = serde_json::from_str::<now_policy::PolicyMatch>(&too_many)
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("at most 128"), "unexpected error: {error}");
+
+    maximum.source_names.insert(SourceName::parse("source-128").unwrap());
+    let error = serde_json::to_value(maximum).unwrap_err().to_string();
+    assert!(error.contains("at most 128"), "unexpected error: {error}");
+}
+
+#[test]
+fn package_identifier_condition_requires_exactly_one_nonempty_mode() {
+    let exact: now_policy::PackageIdentifierCondition =
+        serde_json::from_str(r#"{"Exact":["Microsoft.VisualStudioCode"]}"#).unwrap();
+    assert!(matches!(exact, now_policy::PackageIdentifierCondition::Exact(_)));
+
+    let patterns: now_policy::PackageIdentifierCondition =
+        serde_json::from_str(r#"{"Patterns":["Microsoft.*"]}"#).unwrap();
+    assert!(matches!(patterns, now_policy::PackageIdentifierCondition::Patterns(_)));
+
+    for invalid in [
+        "{}",
+        r#"{"Exact":[]}"#,
+        r#"{"Patterns":[]}"#,
+        r#"{"Exact":["Microsoft.VisualStudioCode"],"Patterns":["Microsoft.*"]}"#,
+        r#"{"Exact":["Microsoft.VisualStudioCode"],"Patterns":null}"#,
+        r#"{"Patterns":null,"Exact":["Microsoft.VisualStudioCode"]}"#,
+        r#"{"Patterns":["Microsoft.*"],"Exact":null}"#,
+        r#"{"Exact":null,"Patterns":["Microsoft.*"]}"#,
+        r#"{"Exact":["Microsoft.*"]}"#,
+        r#"{"Exact":["Git.Git","Git.Git"]}"#,
+        r#"{"Patterns":["Git.*","Git.*"]}"#,
+        r#"{"Exact":["Microsoft.VisualStudioCode"],"\u0045xact":["Git.Git"]}"#,
+    ] {
+        assert!(
+            serde_json::from_str::<now_policy::PackageIdentifierCondition>(invalid).is_err(),
+            "should reject {invalid}"
+        );
+    }
+
+    assert!(
+        serde_json::from_str::<now_policy::PolicyMatch>(r#"{"PackageIdentifiers":["Microsoft.VisualStudioCode"]}"#)
+            .is_err()
+    );
+    let absent: now_policy::PolicyMatch = serde_json::from_str(r#"{"PackageIdentifiers":null}"#).unwrap();
+    assert!(
+        serde_json::to_value(absent)
+            .unwrap()
+            .get("PackageIdentifiers")
+            .is_none()
+    );
+}
+
+#[test]
+fn version_condition_requires_exactly_one_nonempty_mode() {
+    let exact: now_policy::VersionCondition =
+        serde_json::from_str(r#"{"Exact":["5.6.0.0","2026.09-preview"]}"#).unwrap();
+    assert!(matches!(exact, now_policy::VersionCondition::Exact(_)));
+
+    let range: now_policy::VersionCondition =
+        serde_json::from_str(r#"{"Range":{"MinVersion":"1.0.0","MaxVersion":"2.0.0"}}"#).unwrap();
+    assert!(matches!(range, now_policy::VersionCondition::Range(_)));
+    assert!(
+        serde_json::from_str::<now_policy::VersionCondition>(
+            r#"{"Range":{"MinVersion":"1.0.0-beta.1","IncludePrerelease":true}}"#
+        )
+        .is_ok()
+    );
+
+    for invalid in [
+        "{}",
+        r#"{"Exact":[]}"#,
+        r#"{"Range":{}}"#,
+        r#"{"Range":{"MinVersion":null,"MaxVersion":null}}"#,
+        r#"{"Range":{"MinVersion":"not-semver"}}"#,
+        r#"{"Range":{"MinVersion":"1.18446744073709551616.0"}}"#,
+        r#"{"Range":{"MinVersion":"1.0.0-١a"}}"#,
+        "{\"Range\":{\"MaxVersion\":\"1.0.0\\n\"}}",
+        r#"{"Exact":["1.0.0"],"Range":{"MinVersion":"1.0.0"}}"#,
+        r#"{"Exact":["1.0.0"],"Range":null}"#,
+        r#"{"Range":null,"Exact":["1.0.0"]}"#,
+        r#"{"Range":{"MinVersion":"1.0.0"},"Exact":null}"#,
+        r#"{"Exact":null,"Range":{"MinVersion":"1.0.0"}}"#,
+        r#"{"Exact":["1.0.0","1.0.0"]}"#,
+        r#"{"Exact":["1.0.0"],"\u0045xact":["2.0.0"]}"#,
+    ] {
+        assert!(
+            serde_json::from_str::<now_policy::VersionCondition>(invalid).is_err(),
+            "should reject {invalid}"
+        );
+    }
+
+    for old in [
+        r#"{"Versions":["1.0.0"]}"#,
+        r#"{"VersionRange":{"MinVersion":"1.0.0"}}"#,
+    ] {
+        assert!(
+            serde_json::from_str::<now_policy::PolicyMatch>(old).is_err(),
+            "should reject {old}"
+        );
+    }
+    let absent: now_policy::PolicyMatch = serde_json::from_str(r#"{"Version":null}"#).unwrap();
+    assert!(serde_json::to_value(absent).unwrap().get("Version").is_none());
+}
+
+#[test]
+fn package_identifier_and_version_condition_bounds_apply_on_input_and_output() {
+    let identifiers = (0..=1024).map(|index| format!("Package.{index}")).collect::<Vec<_>>();
+    let identifier_json = serde_json::json!({ "Exact": identifiers });
+    assert!(serde_json::from_value::<now_policy::PackageIdentifierCondition>(identifier_json).is_err());
+
+    let versions = (0..=256).map(|index| format!("1.0.{index}")).collect::<Vec<_>>();
+    let version_json = serde_json::json!({ "Exact": versions });
+    assert!(serde_json::from_value::<now_policy::VersionCondition>(version_json).is_err());
+
+    let identifiers = (0..=1024)
+        .map(|index| PackageIdentifier::parse(&format!("Package.{index}")).unwrap())
+        .collect();
+    assert!(serde_json::to_value(now_policy::PackageIdentifierCondition::Exact(identifiers)).is_err());
+
+    let versions = (0..=256)
+        .map(|index| VersionString::parse(&format!("1.0.{index}")).unwrap())
+        .collect();
+    assert!(serde_json::to_value(now_policy::VersionCondition::Exact(versions)).is_err());
+
+    assert!(serde_json::to_value(now_policy::VersionRange::default()).is_err());
+    let invalid_range = now_policy::VersionRange {
+        min_version: Some(SemanticVersion::from("not-semver")),
+        max_version: None,
+        include_prerelease: false,
+    };
+    assert!(serde_json::to_value(invalid_range).is_err());
+
+    let mut invalid_patterns = std::collections::BTreeSet::new();
+    invalid_patterns.insert(StringPattern(String::new()));
+    assert!(serde_json::to_value(now_policy::PackageIdentifierCondition::Patterns(invalid_patterns)).is_err());
+
+    let mut invalid_versions = std::collections::BTreeSet::new();
+    invalid_versions.insert(VersionString(String::new()));
+    assert!(serde_json::to_value(now_policy::VersionCondition::Exact(invalid_versions)).is_err());
+}
+
+#[test]
+fn shared_boolean_characteristics_sample_has_expected_scalar_values() {
+    let path = samples_dir().join("boolean-characteristics.policy.json");
+    let policy: PolicyDocument = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+    let match_criteria = &policy.rules[0].match_criteria;
+
+    assert_eq!(match_criteria.interactive, Some(false));
+    assert_eq!(match_criteria.skip_hash_check, Some(true));
+    assert_eq!(match_criteria.pre_release, Some(false));
+    assert_eq!(match_criteria.has_custom_parameters, Some(true));
+    assert_eq!(match_criteria.has_custom_install_location, Some(false));
+    assert_eq!(match_criteria.has_pre_post_commands, Some(true));
+    assert_eq!(match_criteria.has_kill_before_operation, Some(false));
+    assert_eq!(match_criteria.has_uninstall_previous, Some(true));
+    assert_eq!(match_criteria.managers.len(), 1);
+    assert_eq!(match_criteria.source_names.len(), 1);
+    assert_eq!(match_criteria.execution_elevation.len(), 1);
+    assert!(matches!(
+        match_criteria.package_identifiers.as_ref(),
+        Some(now_policy::PackageIdentifierCondition::Exact(_))
+    ));
+    assert!(matches!(
+        match_criteria.version.as_ref(),
+        Some(now_policy::VersionCondition::Exact(_))
+    ));
 }
 
 #[test]
@@ -99,6 +707,14 @@ fn policy_text_newtypes_count_unicode_scalars_at_length_boundaries() {
 
     assert!(StringPattern::parse(&multibyte_scalar.repeat(256)).is_ok());
     assert!(StringPattern::parse(&multibyte_scalar.repeat(257)).is_err());
+
+    assert!(SourceName::parse(&multibyte_scalar.repeat(128)).is_ok());
+    assert!(SourceName::parse(&multibyte_scalar.repeat(129)).is_err());
+    assert_eq!(SourceName::parse("corp*").unwrap().as_ref(), "corp*");
+
+    assert!(PackageIdentifier::parse("Microsoft.VisualStudioCode").is_ok());
+    assert!(PackageIdentifier::parse("Microsoft.*").is_err());
+    assert!(PackageIdentifier::parse("Git.Git\n").is_err());
 
     assert!(VersionString::parse(&multibyte_scalar.repeat(128)).is_ok());
     assert!(VersionString::parse(&multibyte_scalar.repeat(129)).is_err());
@@ -111,7 +727,6 @@ fn policy_text_newtypes_count_unicode_scalars_at_length_boundaries() {
 fn invalid_policy_unknown_field_fails_deserialization() {
     let value = serde_json::json!({
         "PolicyFormatVersion": "1.0.0",
-        "PolicyType": "PackageBrokerPolicy",
         "Metadata": {
             "Id": "test",
             "Publisher": "Test",
@@ -120,7 +735,6 @@ fn invalid_policy_unknown_field_fails_deserialization() {
         },
         "Enforcement": {
             "DefaultDecision": "Deny",
-            "RulePrecedence": "PriorityThenDeny",
             "UnknownField": true
         },
         "Rules": []
@@ -128,6 +742,41 @@ fn invalid_policy_unknown_field_fails_deserialization() {
 
     let result: Result<PolicyDocument, _> = serde_json::from_value(value);
     assert!(result.is_err(), "policy with unknown field should fail deserialization");
+}
+
+#[test]
+fn removed_policy_members_fail_deserialization() {
+    let path = samples_dir().join("corporate-allowlist.policy.json");
+    let valid: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap();
+
+    for removed_member in [
+        "PolicyType",
+        "RulePrecedence",
+        "PackageNames",
+        "Elevation",
+        "Sources",
+        "Versions",
+        "VersionRange",
+    ] {
+        let mut value = valid.clone();
+        match removed_member {
+            "PolicyType" => value[removed_member] = serde_json::json!("PackageBrokerPolicy"),
+            "RulePrecedence" => value["Enforcement"][removed_member] = serde_json::json!("PriorityThenDeny"),
+            "PackageNames" => {
+                value["Rules"][0]["Match"][removed_member] = serde_json::json!(["Friendly package name"]);
+            }
+            "Elevation" => value["Rules"][0]["Match"][removed_member] = serde_json::json!(["Elevated"]),
+            "VersionRange" => {
+                value["Rules"][0]["Match"][removed_member] = serde_json::json!({ "MinVersion": "1.0.0" });
+            }
+            _ => value["Rules"][0]["Match"][removed_member] = serde_json::json!(["winget"]),
+        }
+
+        assert!(
+            serde_json::from_value::<PolicyDocument>(value).is_err(),
+            "{removed_member} should be rejected as unknown"
+        );
+    }
 }
 
 #[test]
@@ -198,6 +847,43 @@ fn invalid_policy_fixture_fails_deserialization() {
     let content = std::fs::read_to_string(&path).unwrap();
     let result: Result<PolicyDocument, _> = serde_json::from_str(&content);
     assert!(result.is_err(), "invalid policy fixture should fail deserialization");
+
+    let mut corrected: serde_json::Value = serde_json::from_str(&content).unwrap();
+    corrected["Enforcement"]
+        .as_object_mut()
+        .expect("Enforcement should be an object")
+        .remove("failureDecision");
+    assert!(
+        serde_json::from_value::<PolicyDocument>(corrected).is_ok(),
+        "fixture should be valid after removing its intentionally invalid member"
+    );
+}
+
+#[test]
+fn duplicate_property_fixtures_fail_deserialization() {
+    let duplicate_dir = samples_dir().join("invalid/duplicates");
+    let entries = std::fs::read_dir(&duplicate_dir)
+        .unwrap_or_else(|error| panic!("failed to read {}: {error}", duplicate_dir.display()));
+    let mut fixture_count = 0;
+
+    for entry in entries {
+        let path = entry.unwrap().path();
+        if path.extension().is_none_or(|extension| extension != "json") {
+            continue;
+        }
+
+        fixture_count += 1;
+        let content =
+            std::fs::read_to_string(&path).unwrap_or_else(|error| panic!("failed to read {}: {error}", path.display()));
+        let result: Result<PolicyDocument, _> = serde_json::from_str(&content);
+        assert!(
+            result.is_err(),
+            "duplicate property fixture {} should fail deserialization",
+            path.display()
+        );
+    }
+
+    assert_eq!(fixture_count, 9, "all shared duplicate fixtures must be exercised");
 }
 
 #[test]
@@ -226,6 +912,33 @@ fn policy_schemas_are_repository_local_and_omit_document_schema() {
         let version_schema = &schema["definitions"]["PolicyFormatVersion"];
         assert_eq!(version_schema["type"], "string");
         assert!(version_schema["pattern"].as_str().unwrap().starts_with("^1\\."));
+    }
+}
+
+#[test]
+fn policy_schemas_document_the_runtime_validity_window_invariant() {
+    for (schema, metadata_name) in [
+        (now_policy::schema::policy_schema_json(), "PolicyMetadata"),
+        (now_policy::schema::policy_draft_schema_json(), "PolicyDraftMetadata"),
+    ] {
+        let metadata = &schema["definitions"][metadata_name];
+        assert_eq!(metadata["additionalProperties"], false);
+        assert!(
+            metadata["description"]
+                .as_str()
+                .unwrap()
+                .contains("ValidFrom` must be strictly earlier")
+        );
+        assert!(
+            metadata["properties"]["ValidUntil"]["description"]
+                .as_str()
+                .unwrap()
+                .contains("strictly later than `ValidFrom`")
+        );
+        if metadata_name == "PolicyDraftMetadata" {
+            assert!(metadata["properties"].get("Revision").is_none());
+            assert!(metadata["properties"].get("PublishedAt").is_none());
+        }
     }
 }
 
@@ -259,14 +972,44 @@ fn policy_match_schema_requires_at_least_one_property() {
 }
 
 #[test]
-fn policy_match_schema_limits_boolean_arrays_to_one_item() {
+fn policy_match_schema_uses_nullable_scalar_booleans() {
     let schema = now_policy::schema::policy_schema_json();
-    let max_items = [
-        "/definitions/PolicyMatch/properties/Interactive/maxItems",
-        "/$defs/PolicyMatch/properties/Interactive/maxItems",
-    ]
-    .into_iter()
-    .find_map(|path| schema.pointer(path).and_then(serde_json::Value::as_u64));
+    let property_names = [
+        "Interactive",
+        "SkipHashCheck",
+        "PreRelease",
+        "HasCustomParameters",
+        "HasCustomInstallLocation",
+        "HasPrePostCommands",
+        "HasKillBeforeOperation",
+        "HasUninstallPrevious",
+    ];
 
-    assert_eq!(max_items, Some(1));
+    for property_name in property_names {
+        let property = [
+            format!("/definitions/PolicyRule/properties/Match/properties/{property_name}"),
+            format!("/$defs/PolicyRule/properties/Match/properties/{property_name}"),
+        ]
+        .into_iter()
+        .find_map(|path| schema.pointer(&path))
+        .unwrap_or_else(|| panic!("missing PolicyMatch.{property_name} schema"));
+        let types = property["type"].as_array().expect("optional boolean type array");
+
+        assert!(types.iter().any(|value| value == "boolean"));
+        assert!(types.iter().any(|value| value == "null"));
+        assert!(property.get("items").is_none());
+        assert!(property.get("maxItems").is_none());
+        assert!(property.get("uniqueItems").is_none());
+    }
+}
+
+#[test]
+fn standalone_policy_match_schema_requires_exactly_one_manager_for_source_names() {
+    let schema = serde_json::to_value(schemars::schema_for!(now_policy::PolicyMatch)).unwrap();
+    let root = schema.as_object().expect("PolicyMatch schema should be an object");
+
+    assert!(root.contains_key("if"));
+    assert!(root.contains_key("then"));
+    assert_eq!(schema["then"]["properties"]["Managers"]["minItems"], 1);
+    assert_eq!(schema["then"]["properties"]["Managers"]["maxItems"], 1);
 }
