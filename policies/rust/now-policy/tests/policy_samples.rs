@@ -6,8 +6,8 @@ use std::path::PathBuf;
 
 use chrono::{TimeZone, Utc};
 use now_policy::{
-    CURRENT_POLICY_FORMAT_VERSION, CustomParameterString, PackageIdentifier, PolicyDocument, SourceName, StringPattern,
-    VersionString,
+    CURRENT_POLICY_FORMAT_VERSION, CustomParameterString, PackageIdentifier, PolicyDocument, SemanticVersion,
+    SourceName, StringPattern, VersionString,
 };
 
 fn samples_dir() -> PathBuf {
@@ -451,10 +451,20 @@ fn version_condition_requires_exactly_one_nonempty_mode() {
     let range: now_policy::VersionCondition =
         serde_json::from_str(r#"{"Range":{"MinVersion":"1.0.0","MaxVersion":"2.0.0"}}"#).unwrap();
     assert!(matches!(range, now_policy::VersionCondition::Range(_)));
+    assert!(
+        serde_json::from_str::<now_policy::VersionCondition>(
+            r#"{"Range":{"MinVersion":"1.0.0-beta.1","IncludePrerelease":true}}"#
+        )
+        .is_ok()
+    );
 
     for invalid in [
         "{}",
         r#"{"Exact":[]}"#,
+        r#"{"Range":{}}"#,
+        r#"{"Range":{"MinVersion":null,"MaxVersion":null}}"#,
+        r#"{"Range":{"MinVersion":"not-semver"}}"#,
+        "{\"Range\":{\"MaxVersion\":\"1.0.0\\n\"}}",
         r#"{"Exact":["1.0.0"],"Range":{"MinVersion":"1.0.0"}}"#,
         r#"{"Exact":["1.0.0"],"Range":null}"#,
         r#"{"Range":null,"Exact":["1.0.0"]}"#,
@@ -501,6 +511,14 @@ fn package_identifier_and_version_condition_bounds_apply_on_input_and_output() {
         .map(|index| VersionString::parse(&format!("1.0.{index}")).unwrap())
         .collect();
     assert!(serde_json::to_value(now_policy::VersionCondition::Exact(versions)).is_err());
+
+    assert!(serde_json::to_value(now_policy::VersionRange::default()).is_err());
+    let invalid_range = now_policy::VersionRange {
+        min_version: Some(SemanticVersion::from("not-semver")),
+        max_version: None,
+        include_prerelease: false,
+    };
+    assert!(serde_json::to_value(invalid_range).is_err());
 }
 
 #[test]

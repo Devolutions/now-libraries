@@ -2,10 +2,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using System.Text.RegularExpressions;
 
 namespace Devolutions.Now.Policy.Model;
 
-public static class PolicySerializer
+public static partial class PolicySerializer
 {
     /// <summary>
     /// Source-generated policy JSON options. Deserialization rejects duplicate property names
@@ -87,6 +88,9 @@ public static class PolicySerializer
                 break;
             case VersionCondition version:
                 ValidateVersionCondition(version, "$");
+                break;
+            case VersionRange range:
+                ValidateVersionRange(range, "$");
                 break;
             case PolicyConstraints constraints:
                 ValidateRequiredCollectionElements(constraints, "$");
@@ -249,6 +253,32 @@ public static class PolicySerializer
             }
             RejectBoundedStrings(exact, 1, 128, $"{path}.Exact");
             RejectDuplicateElements(exact, $"{path}.Exact");
+        }
+        if (version.Range is { } range)
+        {
+            ValidateVersionRange(range, $"{path}.Range");
+        }
+    }
+
+    private static void ValidateVersionRange(VersionRange range, string path)
+    {
+        if (range.MinVersion is null && range.MaxVersion is null)
+        {
+            throw new JsonException(
+                $"The JSON object at {path} must specify MinVersion or MaxVersion.");
+        }
+        foreach (var (name, value) in new[]
+        {
+            (nameof(VersionRange.MinVersion), range.MinVersion),
+            (nameof(VersionRange.MaxVersion), range.MaxVersion),
+        })
+        {
+            if (value is not null
+                && (value.Length > 128 || !SemanticVersionRegex().IsMatch(value)))
+            {
+                throw new JsonException(
+                    $"The JSON string at {path}.{name} must be a canonical semantic version.");
+            }
         }
     }
 
@@ -492,6 +522,11 @@ public static class PolicySerializer
             or nameof(PolicyMatch.Scopes)
             or nameof(PolicyMatch.Architectures)
             or nameof(PolicyMatch.ExecutionElevation);
+
+    [GeneratedRegex(
+        @"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?\z",
+        RegexOptions.CultureInvariant)]
+    private static partial Regex SemanticVersionRegex();
 }
 
 [JsonSourceGenerationOptions(

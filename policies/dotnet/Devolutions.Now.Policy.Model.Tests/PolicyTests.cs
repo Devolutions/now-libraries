@@ -982,11 +982,17 @@ public class PolicyTests
         var range = PolicySerializer.DeserializeStrict<VersionCondition>(Range)!;
         Assert.Equal("1.0.0", range.Range!.MinVersion);
         Assert.Null(range.Exact);
+        Assert.NotNull(PolicySerializer.DeserializeStrict<VersionCondition>(
+            """{"Range":{"MinVersion":"1.0.0-beta.1","IncludePrerelease":true}}"""));
 
         foreach (var invalid in new[]
         {
             "{}",
             """{"Exact":[]}""",
+            """{"Range":{}}""",
+            """{"Range":{"MinVersion":null,"MaxVersion":null}}""",
+            """{"Range":{"MinVersion":"not-semver"}}""",
+            """{"Range":{"MaxVersion":"1.0.0\n"}}""",
             """{"Exact":["1.0.0"],"Range":{"MinVersion":"1.0.0"}}""",
             """{"Exact":["1.0.0"],"Range":null}""",
             """{"Range":null,"Exact":["1.0.0"]}""",
@@ -1011,6 +1017,11 @@ public class PolicyTests
 
         var absent = PolicySerializer.DeserializeStrict<PolicyMatch>("""{"Version":null}""")!;
         Assert.DoesNotContain("\"Version\"", PolicySerializer.Serialize(absent));
+
+        Assert.Throws<JsonException>(
+            () => PolicySerializer.Serialize(new VersionRange()));
+        Assert.Throws<JsonException>(
+            () => PolicySerializer.Serialize(new VersionRange { MinVersion = "not-semver" }));
     }
 
     [Fact]
@@ -1059,6 +1070,11 @@ public class PolicyTests
             {
                 new JsonObject(),
                 new JsonObject { ["Exact"] = new JsonArray() },
+                new JsonObject { ["Range"] = new JsonObject() },
+                new JsonObject
+                {
+                    ["Range"] = new JsonObject { ["MinVersion"] = "not-semver" },
+                },
                 new JsonObject
                 {
                     ["Exact"] = new JsonArray("1.0.0"),

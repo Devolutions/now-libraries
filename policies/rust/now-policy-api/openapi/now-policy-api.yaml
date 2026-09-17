@@ -2594,6 +2594,14 @@ components:
       enum:
       - User
       - Machine
+    PolicyModelSemanticVersion:
+      description: |-
+        Semantic version string (SemVer 2.0.0).
+
+         Validated at deserialization time using the `semver` crate.
+      type: string
+      maxLength: 128
+      pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?![\s\S])
     PolicyModelSourceName:
       description: |-
         Exact configured package source name.
@@ -2631,7 +2639,7 @@ components:
         required:
         - Range
     PolicyModelVersionRange:
-      description: Semantic version range for matching.
+      description: Nonempty semantic-version range for matching.
       type: object
       properties:
         IncludePrerelease:
@@ -2640,19 +2648,28 @@ components:
           default: false
         MaxVersion:
           description: Maximum version (inclusive).
-          type:
-          - string
-          - 'null'
-          maxLength: 128
-          minLength: 1
+          anyOf:
+          - $ref: '#/components/schemas/PolicyModelSemanticVersion'
+          - enum:
+            - null
         MinVersion:
           description: Minimum version (inclusive).
-          type:
-          - string
-          - 'null'
-          maxLength: 128
-          minLength: 1
+          anyOf:
+          - $ref: '#/components/schemas/PolicyModelSemanticVersion'
+          - enum:
+            - null
       additionalProperties: false
+      anyOf:
+      - properties:
+          MinVersion:
+            type: string
+        required:
+        - MinVersion
+      - properties:
+          MaxVersion:
+            type: string
+        required:
+        - MaxVersion
     PolicyModelVersionString:
       description: A short constrained string for version values.
       type: string

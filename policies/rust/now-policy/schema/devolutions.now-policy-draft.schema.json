@@ -699,6 +699,12 @@
       ],
       "type": "string"
     },
+    "SemanticVersion": {
+      "description": "Semantic version string (SemVer 2.0.0).\n\n Validated at deserialization time using the `semver` crate.",
+      "maxLength": 128,
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\\+([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?![\\s\\S])",
+      "type": "string"
+    },
     "SourceName": {
       "description": "Exact configured package source name.\n\n Matching uses the selected package manager's source-name comparison semantics.\n Wildcard characters have no special meaning and are treated literally.",
       "maxLength": 128,
@@ -748,7 +754,29 @@
     },
     "VersionRange": {
       "additionalProperties": false,
-      "description": "Semantic version range for matching.",
+      "anyOf": [
+        {
+          "properties": {
+            "MinVersion": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "MinVersion"
+          ]
+        },
+        {
+          "properties": {
+            "MaxVersion": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "MaxVersion"
+          ]
+        }
+      ],
+      "description": "Nonempty semantic-version range for matching.",
       "properties": {
         "IncludePrerelease": {
           "default": false,
@@ -756,22 +784,26 @@
           "type": "boolean"
         },
         "MaxVersion": {
-          "description": "Maximum version (inclusive).",
-          "maxLength": 128,
-          "minLength": 1,
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SemanticVersion"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Maximum version (inclusive)."
         },
         "MinVersion": {
-          "description": "Minimum version (inclusive).",
-          "maxLength": 128,
-          "minLength": 1,
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SemanticVersion"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Minimum version (inclusive)."
         }
       },
       "type": "object"

@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Architecture, CustomParameterString, Decision, Elevation, HttpUrl, ManagerName, ModelValidationError, Operation,
-    PackageIdentifier, PolicyFormatVersion, ResourceId, Scope, SourceName, StringPattern, VersionString,
+    PackageIdentifier, PolicyFormatVersion, ResourceId, Scope, SemanticVersion, SourceName, StringPattern,
+    VersionString,
 };
 
 const MAX_POLICY_REVISION: u32 = 2_147_483_647;
@@ -972,25 +973,93 @@ impl JsonSchema for VersionCondition {
     }
 }
 
-/// Semantic version range for matching.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+/// Nonempty semantic-version range for matching.
+#[derive(Debug, Clone, Default, JsonSchema)]
 #[schemars(rename = "VersionRange")]
-#[serde(rename_all = "PascalCase")]
-#[serde(deny_unknown_fields)]
+#[schemars(rename_all = "PascalCase")]
+#[schemars(deny_unknown_fields)]
+#[schemars(transform = require_version_range_boundary)]
 pub struct VersionRange {
     /// Minimum version (inclusive).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[schemars(length(min = 1, max = 128))]
-    pub min_version: Option<String>,
+    pub min_version: Option<SemanticVersion>,
 
     /// Maximum version (inclusive).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[schemars(length(min = 1, max = 128))]
-    pub max_version: Option<String>,
+    pub max_version: Option<SemanticVersion>,
 
     /// Whether to include pre-release versions.
     #[serde(default)]
     pub include_prerelease: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[serde(deny_unknown_fields)]
+struct VersionRangeWire {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    min_version: Option<SemanticVersion>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    max_version: Option<SemanticVersion>,
+    #[serde(default)]
+    include_prerelease: bool,
+}
+
+fn validate_version_range(range: &VersionRange) -> Result<(), &'static str> {
+    if range.min_version.is_none() && range.max_version.is_none() {
+        return Err("Version.Range must specify MinVersion or MaxVersion");
+    }
+    for version in [range.min_version.as_ref(), range.max_version.as_ref()]
+        .into_iter()
+        .flatten()
+    {
+        if SemanticVersion::parse(version).is_err() {
+            return Err("Version.Range boundaries must be canonical semantic versions");
+        }
+    }
+    Ok(())
+}
+
+impl<'de> Deserialize<'de> for VersionRange {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let wire = VersionRangeWire::deserialize(deserializer)?;
+        let range = Self {
+            min_version: wire.min_version,
+            max_version: wire.max_version,
+            include_prerelease: wire.include_prerelease,
+        };
+        validate_version_range(&range).map_err(serde::de::Error::custom)?;
+        Ok(range)
+    }
+}
+
+impl Serialize for VersionRange {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        validate_version_range(self).map_err(serde::ser::Error::custom)?;
+        VersionRangeWire {
+            min_version: self.min_version.clone(),
+            max_version: self.max_version.clone(),
+            include_prerelease: self.include_prerelease,
+        }
+        .serialize(serializer)
+    }
+}
+
+fn require_version_range_boundary(schema: &mut Schema) {
+    schema
+        .as_object_mut()
+        .expect("VersionRange schema should be an object")
+        .insert(
+            "anyOf".to_owned(),
+            serde_json::json!([
+                { "required": ["MinVersion"], "properties": { "MinVersion": { "type": "string" } } },
+                { "required": ["MaxVersion"], "properties": { "MaxVersion": { "type": "string" } } }
+            ]),
+        );
 }
 
 /// Additional safety limits applied after an Allow rule matches.
