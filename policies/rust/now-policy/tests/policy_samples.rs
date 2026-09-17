@@ -6,8 +6,8 @@ use std::path::PathBuf;
 
 use chrono::{TimeZone, Utc};
 use now_policy::{
-    CURRENT_POLICY_FORMAT_VERSION, CustomParameterString, PackageIdentifier, PolicyDocument, SemanticVersion,
-    SourceName, StringPattern, VersionString,
+    CURRENT_POLICY_FORMAT_VERSION, CustomParameterString, ManagerName, PackageIdentifier, PolicyDocument,
+    SemanticVersion, SourceName, StringPattern, VersionString,
 };
 
 fn samples_dir() -> PathBuf {
@@ -397,6 +397,48 @@ fn source_names_require_managers_and_preserve_exact_literal_names() {
         .unwrap_err()
         .to_string();
     assert!(error.contains("SourceNames"), "unexpected error: {error}");
+}
+
+#[test]
+fn managers_enforce_schema_collection_bound_on_input_and_output() {
+    let manager_names = [
+        "Winget",
+        "PowerShell",
+        "PowerShell7",
+        "Apt",
+        "Bun",
+        "Cargo",
+        "Chocolatey",
+        "Dnf",
+        "Dotnet",
+        "Flatpak",
+        "Homebrew",
+        "Npm",
+        "Pacman",
+        "Pip",
+        "Scoop",
+        "Snap",
+        "Vcpkg",
+    ];
+    let managers = manager_names[..16]
+        .iter()
+        .map(|name| format!(r#""{name}""#))
+        .collect::<Vec<_>>()
+        .join(",");
+    let json = format!(r#"{{"Managers":[{managers}]}}"#);
+    let mut maximum: now_policy::PolicyMatch = serde_json::from_str(&json).unwrap();
+    assert_eq!(maximum.managers.len(), 16);
+    serde_json::to_value(&maximum).unwrap();
+
+    let too_many = format!(r#"{{"Managers":[{managers},"Vcpkg"]}}"#);
+    let error = serde_json::from_str::<now_policy::PolicyMatch>(&too_many)
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("at most 16"), "unexpected error: {error}");
+
+    maximum.managers.insert(ManagerName::Vcpkg);
+    let error = serde_json::to_value(maximum).unwrap_err().to_string();
+    assert!(error.contains("at most 16"), "unexpected error: {error}");
 }
 
 #[test]

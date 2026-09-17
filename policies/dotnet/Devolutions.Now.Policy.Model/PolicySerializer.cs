@@ -9,6 +9,7 @@ namespace Devolutions.Now.Policy.Model;
 
 public static partial class PolicySerializer
 {
+    private const int MaxManagers = 16;
     private const int MaxSourceNames = 128;
 
     /// <summary>
@@ -172,6 +173,11 @@ public static partial class PolicySerializer
         RejectDuplicateElements(match.Scopes, $"{path}.Scopes");
         RejectDuplicateElements(match.Architectures, $"{path}.Architectures");
         RejectDuplicateElements(match.ExecutionElevation, $"{path}.ExecutionElevation");
+        if (match.Managers.Count > MaxManagers)
+        {
+            throw new JsonException(
+                $"The JSON array at {path}.Managers must contain at most {MaxManagers} values.");
+        }
         if (match.SourceNames.Count > MaxSourceNames)
         {
             throw new JsonException(

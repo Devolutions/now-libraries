@@ -906,6 +906,30 @@ public class PolicyTests
     }
 
     [Fact]
+    public void Managers_enforce_schema_collection_bound_on_input_and_output()
+    {
+        var managerNames = Enum.GetNames<ManagerName>();
+        Assert.Equal(17, managerNames.Length);
+
+        static string MatchJson(IEnumerable<string> managers) =>
+            new JsonObject
+            {
+                [nameof(PolicyMatch.Managers)] = new JsonArray(
+                    managers.Select(name => JsonValue.Create(name)).ToArray()),
+            }.ToJsonString();
+
+        var maximum = PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson(managerNames.Take(16)))!;
+        Assert.Equal(16, maximum.Managers.Count);
+        Assert.NotEmpty(PolicySerializer.Serialize(maximum));
+
+        Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson(managerNames)));
+
+        maximum.Managers.Add(ManagerName.Vcpkg);
+        Assert.Throws<JsonException>(() => PolicySerializer.Serialize(maximum));
+    }
+
+    [Fact]
     public void Source_names_enforce_schema_collection_bound_on_input_and_output()
     {
         static string MatchJson(int count) =>
