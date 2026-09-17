@@ -377,6 +377,134 @@ impl std::fmt::Display for StringPattern {
     }
 }
 
+/// Exact configured package source name.
+///
+/// Matching uses the selected package manager's source-name comparison semantics.
+/// Wildcard characters have no special meaning and are treated literally.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+pub struct SourceName(#[schemars(length(min = 1, max = 128))] String);
+
+impl SourceName {
+    pub fn parse(s: &str) -> Result<Self, ModelValidationError> {
+        validate_bounded_string(s, 1, 128, "SourceName")?;
+        Ok(Self(s.to_owned()))
+    }
+}
+
+impl<'de> Deserialize<'de> for SourceName {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Serialize for SourceName {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        Self::parse(&self.0).map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&self.0)
+    }
+}
+
+impl std::ops::Deref for SourceName {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl AsRef<str> for SourceName {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for SourceName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+/// Exact stable package identifier used by requests and exact policy matching.
+///
+/// Manager-specific punctuation used by real identifiers is accepted, while
+/// wildcard characters and range/pin operators are rejected.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+pub struct PackageIdentifier(
+    #[schemars(
+        length(min = 1, max = 256),
+        regex(pattern = r"^[A-Za-z0-9._+@/:\[\],#$%{}-]+(?![\s\S])")
+    )]
+    String,
+);
+
+impl PackageIdentifier {
+    pub fn parse(s: &str) -> Result<Self, ModelValidationError> {
+        validate_bounded_string(s, 1, 256, "PackageIdentifier")?;
+        if !s.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric()
+                || matches!(
+                    byte,
+                    b'.' | b'-'
+                        | b'_'
+                        | b'+'
+                        | b'@'
+                        | b'/'
+                        | b':'
+                        | b'['
+                        | b']'
+                        | b','
+                        | b'#'
+                        | b'$'
+                        | b'%'
+                        | b'{'
+                        | b'}'
+                )
+        }) {
+            return Err(ModelValidationError::Invalid {
+                type_name: "PackageIdentifier",
+                reason: "must contain only ASCII alphanumerics or '. - _ + @ / : [ ] , # $ % { }'".to_owned(),
+            });
+        }
+
+        Ok(Self(s.to_owned()))
+    }
+}
+
+impl<'de> Deserialize<'de> for PackageIdentifier {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Serialize for PackageIdentifier {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        Self::parse(&self.0).map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&self.0)
+    }
+}
+
+impl std::ops::Deref for PackageIdentifier {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl AsRef<str> for PackageIdentifier {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for PackageIdentifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 /// A short constrained string for version values.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
 pub struct VersionString(#[schemars(length(min = 1, max = 128))] pub String);

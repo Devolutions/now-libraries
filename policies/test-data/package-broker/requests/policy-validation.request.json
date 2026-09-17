@@ -3,14 +3,12 @@
   "RequestVersion": "1.0",
   "Draft": {
     "PolicyFormatVersion": "1.0.0",
-    "PolicyType": "PackageBrokerPolicy",
     "Metadata": {
       "Id": "contoso.package-policy",
       "Publisher": "Contoso IT"
     },
     "Enforcement": {
       "DefaultDecision": "Allow",
-      "RulePrecedence": "PriorityThenDeny",
       "AuditMode": true
     },
     "Rules": [
@@ -20,9 +18,15 @@
         "Priority": 100,
         "Decision": "Allow",
         "Match": {
-          "Managers": ["Winget"],
-          "PackageIdentifiers": ["Microsoft.VisualStudioCode"],
-          "SkipHashCheck": [true]
+          "Managers": [
+            "Winget"
+          ],
+          "PackageIdentifiers": {
+            "Exact": [
+              "Microsoft.VisualStudioCode"
+            ]
+          },
+          "SkipHashCheck": true
         }
       }
     ],

@@ -1,6 +1,5 @@
 {
   "PolicyFormatVersion": "1.0.0",
-  "PolicyType": "PackageBrokerPolicy",
   "Metadata": {
     "Id": "contoso.desktop.scenario-coverage",
     "Publisher": "Contoso IT",
@@ -9,8 +8,7 @@
     "Description": "Focused policy used to exercise simulator precedence, version, and constraint behavior."
   },
   "Enforcement": {
-    "DefaultDecision": "Deny",
-    "RulePrecedence": "PriorityThenDeny"
+    "DefaultDecision": "Deny"
   },
   "Rules": [
     {
@@ -23,9 +21,11 @@
         "Managers": [
           "Winget"
         ],
-        "PackageIdentifiers": [
-          "Microsoft.PowerToys"
-        ]
+        "PackageIdentifiers": {
+          "Exact": [
+            "Microsoft.PowerToys"
+          ]
+        }
       }
     },
     {
@@ -34,9 +34,7 @@
       "Decision": "Deny",
       "Reason": "Interactive brokered installs are not allowed in the scenario coverage policy.",
       "Match": {
-        "Interactive": [
-          true
-        ]
+        "Interactive": true
       }
     },
     {
@@ -48,12 +46,12 @@
         "Managers": [
           "Winget"
         ],
-        "PackageIdentifiers": [
-          "Microsoft.VisualStudioCode"
-        ],
-        "HasCustomParameters": [
-          true
-        ]
+        "PackageIdentifiers": {
+          "Exact": [
+            "Microsoft.VisualStudioCode"
+          ]
+        },
+        "HasCustomParameters": true
       }
     },
     {
@@ -65,12 +63,12 @@
         "Managers": [
           "Winget"
         ],
-        "PackageIdentifiers": [
-          "Microsoft.VisualStudioCode"
-        ],
-        "HasCustomParameters": [
-          true
-        ]
+        "PackageIdentifiers": {
+          "Exact": [
+            "Microsoft.VisualStudioCode"
+          ]
+        },
+        "HasCustomParameters": true
       },
       "Constraints": {
         "AllowCustomParameters": true
@@ -82,9 +80,7 @@
       "Decision": "Deny",
       "Reason": "Pre and post commands are outside the package manager trust boundary.",
       "Match": {
-        "HasPrePostCommands": [
-          true
-        ]
+        "HasPrePostCommands": true
       }
     },
     {
@@ -93,9 +89,7 @@
       "Decision": "Deny",
       "Reason": "Killing processes before a brokered operation is not allowed.",
       "Match": {
-        "HasKillBeforeOperation": [
-          true
-        ]
+        "HasKillBeforeOperation": true
       }
     },
     {
@@ -111,12 +105,14 @@
         "Managers": [
           "Winget"
         ],
-        "Sources": [
+        "SourceNames": [
           "winget"
         ],
-        "PackageIdentifiers": [
-          "Microsoft.PowerToys"
-        ],
+        "PackageIdentifiers": {
+          "Exact": [
+            "Microsoft.PowerToys"
+          ]
+        },
         "Scopes": [
           "Machine"
         ],
@@ -146,16 +142,20 @@
         "Managers": [
           "Winget"
         ],
-        "Sources": [
+        "SourceNames": [
           "winget"
         ],
-        "PackageIdentifiers": [
-          "Microsoft.VisualStudioCode"
-        ],
-        "VersionRange": {
-          "MinVersion": "1.90.0",
-          "MaxVersion": "2.0.0",
-          "IncludePrerelease": false
+        "PackageIdentifiers": {
+          "Exact": [
+            "Microsoft.VisualStudioCode"
+          ]
+        },
+        "Version": {
+          "Range": {
+            "MinVersion": "1.90.0",
+            "MaxVersion": "2.0.0",
+            "IncludePrerelease": false
+          }
         },
         "Scopes": [
           "Machine"
@@ -186,12 +186,14 @@
         "Managers": [
           "Winget"
         ],
-        "Sources": [
+        "SourceNames": [
           "winget"
         ],
-        "PackageIdentifiers": [
-          "Git.Git"
-        ],
+        "PackageIdentifiers": {
+          "Exact": [
+            "Git.Git"
+          ]
+        },
         "Scopes": [
           "Machine"
         ],
@@ -230,12 +232,14 @@
         "Managers": [
           "Winget"
         ],
-        "Sources": [
+        "SourceNames": [
           "winget"
         ],
-        "PackageIdentifiers": [
-          "Git.Git"
-        ],
+        "PackageIdentifiers": {
+          "Exact": [
+            "Git.Git"
+          ]
+        },
         "Scopes": [
           "Machine"
         ],

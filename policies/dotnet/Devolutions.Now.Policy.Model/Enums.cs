@@ -97,10 +97,3 @@ public enum Decision
     Allow,
     Deny,
 }
-
-/// <summary>Rule precedence strategy.</summary>
-[JsonConverter(typeof(ExactCaseStringEnumConverter<RulePrecedence>))]
-public enum RulePrecedence
-{
-    PriorityThenDeny,
-}

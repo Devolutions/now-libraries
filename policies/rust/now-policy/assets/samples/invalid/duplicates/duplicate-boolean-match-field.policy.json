@@ -1,6 +1,5 @@
 {
   "PolicyFormatVersion": "1.0.0",
-  "PolicyFormatVersion": "1.1.0",
   "Metadata": {
     "Id": "duplicate.test",
     "Publisher": "Test",
@@ -10,5 +9,15 @@
   "Enforcement": {
     "DefaultDecision": "Deny"
   },
-  "Rules": []
+  "Rules": [
+    {
+      "Id": "duplicate.boolean-match",
+      "Priority": 1,
+      "Decision": "Deny",
+      "Match": {
+        "Interactive": false,
+        "\u0049nteractive": true
+      }
+    }
+  ]
 }

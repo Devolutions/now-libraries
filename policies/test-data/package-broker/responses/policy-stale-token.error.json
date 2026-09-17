@@ -16,7 +16,6 @@
     "ElevationRequired": true,
     "Policy": {
       "PolicyFormatVersion": "1.0.0",
-      "PolicyType": "PackageBrokerPolicy",
       "Metadata": {
         "Id": "contoso.package-policy",
         "Publisher": "Contoso IT",
@@ -24,8 +23,7 @@
         "PublishedAt": "2026-08-29T01:00:00Z"
       },
       "Enforcement": {
-        "DefaultDecision": "Deny",
-        "RulePrecedence": "PriorityThenDeny"
+        "DefaultDecision": "Deny"
       },
       "Rules": []
     }

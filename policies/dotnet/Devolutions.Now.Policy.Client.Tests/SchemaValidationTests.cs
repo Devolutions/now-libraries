@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+
 using NJsonSchema;
 
 using Xunit;
@@ -86,6 +88,47 @@ public class SchemaValidationTests
     [MemberData(nameof(TestData.PolicyResponseSamples), MemberType = typeof(TestData))]
     public async Task Policy_response_samples_are_schema_valid(string path)
         => await AssertValid(path, await TestData.SchemaAsync("PolicyResponse"));
+
+    [Fact]
+    public async Task OpenApi_policy_match_boolean_characteristics_are_optional_nullable_scalars()
+    {
+        var schema = await TestData.SchemaAsync("PolicyResponse");
+        var template = JsonNode.Parse(
+            await File.ReadAllTextAsync(
+                Path.Combine(TestData.SamplesDir, "responses", "policy.response.json")))!;
+        var propertyNames = new[]
+        {
+            "Interactive",
+            "SkipHashCheck",
+            "PreRelease",
+            "HasCustomParameters",
+            "HasCustomInstallLocation",
+            "HasPrePostCommands",
+            "HasKillBeforeOperation",
+            "HasUninstallPrevious",
+        };
+
+        foreach (var propertyName in propertyNames)
+        {
+            foreach (var validValue in new JsonNode?[] { null, false, true })
+            {
+                var document = template.DeepClone();
+                document["Policy"]!["Rules"]![0]!["Match"]![propertyName] = validValue?.DeepClone();
+                Assert.Empty(schema.Validate(document.ToJsonString()));
+            }
+
+            foreach (var invalidValue in new[] { "[]", "[false]", "[true]", "[false,true]", "\"true\"", "0", "{}" })
+            {
+                var document = template.DeepClone();
+                document["Policy"]!["Rules"]![0]!["Match"]![propertyName] = JsonNode.Parse(invalidValue);
+                Assert.NotEmpty(schema.Validate(document.ToJsonString()));
+            }
+
+            var omitted = template.DeepClone();
+            omitted["Policy"]!["Rules"]![0]!["Match"]!.AsObject().Remove(propertyName);
+            Assert.Empty(schema.Validate(omitted.ToJsonString()));
+        }
+    }
 
     [Fact]
     public async Task Invalid_request_is_rejected_by_schema()

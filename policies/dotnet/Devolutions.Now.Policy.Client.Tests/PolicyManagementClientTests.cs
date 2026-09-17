@@ -9,9 +9,12 @@ using Devolutions.Now.Policy.Client;
 
 using Xunit;
 
+using PackageIdentifierCondition = Devolutions.Now.Policy.Model.PackageIdentifierCondition;
+using PolicyConstraints = Devolutions.Now.Policy.Model.PolicyConstraints;
 using PolicyDocument = Devolutions.Now.Policy.Model.PolicyDocument;
 using PolicyDraftDocument = Devolutions.Now.Policy.Model.PolicyDraftDocument;
 using PolicyMetadata = Devolutions.Now.Policy.Model.PolicyMetadata;
+using VersionCondition = Devolutions.Now.Policy.Model.VersionCondition;
 
 namespace Devolutions.Now.Policy.Client.Tests;
 
@@ -317,6 +320,42 @@ public class PolicyManagementClientTests
                 () => JsonSerializer.Deserialize<PolicyFinding>(Finding, options));
             Assert.Throws<JsonException>(
                 () => JsonSerializer.Deserialize<InvalidPolicyDiagnostics>(Diagnostics, options));
+        }
+    }
+
+    [Fact]
+    public void Public_broker_options_enforce_standalone_policy_condition_invariants()
+    {
+        foreach (var options in new[] { BrokerSerializer.Options, BrokerSerializer.PrettyOptions })
+        {
+            foreach (var invalid in new[]
+            {
+                "{}",
+                """{"Exact":["Microsoft.*"]}""",
+                """{"Exact":["Git.Git"],"Patterns":["Git.*"]}""",
+                """{"Exact":["Git.Git"],"Patterns":null}""",
+            })
+            {
+                Assert.Throws<JsonException>(
+                    () => JsonSerializer.Deserialize<PackageIdentifierCondition>(invalid, options));
+            }
+
+            foreach (var invalid in new[]
+            {
+                "{}",
+                """{"Exact":[]}""",
+                """{"Exact":["1.0.0"],"Range":{"MinVersion":"1.0.0"}}""",
+                """{"Exact":["1.0.0"],"Range":null}""",
+            })
+            {
+                Assert.Throws<JsonException>(
+                    () => JsonSerializer.Deserialize<VersionCondition>(invalid, options));
+            }
+
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Serialize(new PackageIdentifierCondition(), options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Serialize(new VersionCondition(), options));
         }
     }
 
@@ -782,13 +821,21 @@ public class PolicyManagementClientTests
             committedDto.Metadata.Revision = (uint)int.MaxValue + 1;
             Assert.Throws<JsonException>(() => JsonSerializer.Serialize(committedDto, options));
 
-            committedDto = JsonSerializer.Deserialize<PolicyDocument>(committed.ToJsonString(), options)!;
-            committedDto.Rules[0].Match.SkipHashCheck = [false, true];
-            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(committedDto, options));
-
             var draftDto = JsonSerializer.Deserialize<PolicyDraftDocument>(draft.ToJsonString(), options)!;
-            draftDto.Rules[0].Match.SkipHashCheck = [false, true];
-            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(draftDto, options));
+            draftDto.Rules[0].Match.SkipHashCheck = null;
+            draftDto.Rules[0].Match.Operations.Clear();
+            Assert.DoesNotContain(
+                "\"SkipHashCheck\"",
+                JsonSerializer.Serialize(draftDto, options),
+                StringComparison.Ordinal);
+            Assert.DoesNotContain(
+                "\"Operations\"",
+                JsonSerializer.Serialize(draftDto, options),
+                StringComparison.Ordinal);
+
+            committedDto = JsonSerializer.Deserialize<PolicyDocument>(committed.ToJsonString(), options)!;
+            committedDto.Rules[0].Constraints = new PolicyConstraints { AllowInteractive = false };
+            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(committedDto, options));
         }
     }
 
@@ -916,6 +963,10 @@ public class PolicyManagementClientTests
         var mixedBooleanMatch = committed.DeepClone();
         mixedBooleanMatch["Rules"]![0]!["Match"]!["SkipHashCheck"] = new JsonArray(false, true);
         yield return mixedBooleanMatch;
+
+        var constraintsOnDeny = committed.DeepClone();
+        constraintsOnDeny["Rules"]![0]!["Constraints"] = new JsonObject { ["AllowInteractive"] = false };
+        yield return constraintsOnDeny;
     }
 
     private static IEnumerable<JsonNode> InvalidDraftPolicies(JsonNode draft)

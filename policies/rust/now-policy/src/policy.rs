@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     Architecture, CustomParameterString, Decision, Elevation, HttpUrl, ManagerName, ModelValidationError, Operation,
-    PackageBrokerPolicy, PolicyFormatVersion, ResourceId, Scope, StringPattern, VersionString,
+    PackageIdentifier, PolicyFormatVersion, ResourceId, Scope, SourceName, StringPattern, VersionString,
 };
 
 const MAX_POLICY_REVISION: u32 = 2_147_483_647;
@@ -23,9 +23,6 @@ pub struct PolicyDocument {
     ///
     /// Applications must not expose this field as publisher-authored editable metadata.
     pub policy_format_version: PolicyFormatVersion,
-
-    /// Must be `"PackageBrokerPolicy"`.
-    pub policy_type: PackageBrokerPolicy,
 
     /// Policy metadata.
     pub metadata: PolicyMetadata,
@@ -43,7 +40,6 @@ impl PolicyDocument {
     pub fn to_draft(&self) -> PolicyDraftDocument {
         PolicyDraftDocument {
             policy_format_version: self.policy_format_version.clone(),
-            policy_type: self.policy_type,
             metadata: self.metadata.to_draft(),
             enforcement: self.enforcement.clone(),
             rules: self.rules.clone(),
@@ -62,9 +58,6 @@ pub struct PolicyDraftDocument {
     /// Applications must stamp the current value and must not expose this field
     /// as publisher-authored editable metadata.
     pub policy_format_version: PolicyFormatVersion,
-
-    /// Must be `"PackageBrokerPolicy"`.
-    pub policy_type: PackageBrokerPolicy,
 
     /// Editable policy metadata.
     pub metadata: PolicyDraftMetadata,
@@ -93,7 +86,6 @@ impl PolicyDraftDocument {
 
         Ok(PolicyDocument {
             policy_format_version: self.policy_format_version,
-            policy_type: self.policy_type,
             metadata: self.metadata.into_policy_metadata(revision, published_at),
             enforcement: self.enforcement,
             rules: self.rules,
@@ -225,6 +217,9 @@ impl PolicyDraftMetadata {
 }
 
 /// Enforcement configuration.
+///
+/// Matching rules are evaluated by ascending priority. Deny wins equal-priority
+/// Allow/Deny ties; remaining equal-priority ties retain document order.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "PolicyEnforcement")]
 #[serde(rename_all = "PascalCase")]
@@ -233,24 +228,15 @@ pub struct PolicyEnforcement {
     /// Decision when no rule matches.
     pub default_decision: Decision,
 
-    /// Rule precedence strategy (must be "PriorityThenDeny").
-    pub rule_precedence: RulePrecedence,
-
     /// When true, broker logs decisions but does not enforce.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub audit_mode: Option<bool>,
 }
 
-/// Rule precedence strategy — always PriorityThenDeny.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename = "RulePrecedence")]
-pub enum RulePrecedence {
-    PriorityThenDeny,
-}
-
 /// A single policy rule.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema)]
 #[schemars(rename = "PolicyRule")]
+#[schemars(transform = enforce_allow_constraints_schema)]
 #[serde(rename_all = "PascalCase")]
 #[serde(deny_unknown_fields)]
 pub struct PolicyRule {
@@ -274,19 +260,135 @@ pub struct PolicyRule {
     pub reason: Option<String>,
 
     /// Match criteria — request must satisfy all specified fields.
-    /// At least one criterion must be present.
+    /// At least one effective non-null, nonempty criterion must be present.
     #[serde(rename = "Match", deserialize_with = "deserialize_non_empty_match")]
     #[schemars(with = "NonEmptyPolicyMatchSchema")]
     pub match_criteria: PolicyMatch,
 
-    /// Additional constraints applied after matching.
-    /// When absent, no constraints are enforced beyond the match criteria.
+    /// Additional safety limits applied after an Allow rule matches.
+    /// Constraints are invalid on Deny rules.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub constraints: Option<PolicyConstraints>,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[serde(deny_unknown_fields)]
+struct PolicyRuleWire {
+    id: ResourceId,
+    #[serde(default = "default_true")]
+    enabled: bool,
+    priority: u32,
+    decision: Decision,
+    #[serde(default)]
+    reason: Option<String>,
+    #[serde(rename = "Match", deserialize_with = "deserialize_non_empty_match")]
+    match_criteria: PolicyMatch,
+    #[serde(default)]
+    constraints: Option<PolicyConstraints>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct PolicyRuleRef<'a> {
+    id: &'a ResourceId,
+    enabled: bool,
+    priority: u32,
+    decision: Decision,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<&'a String>,
+    #[serde(rename = "Match")]
+    match_criteria: &'a PolicyMatch,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    constraints: Option<&'a PolicyConstraints>,
+}
+
 fn default_true() -> bool {
     true
+}
+
+fn validate_policy_rule(
+    decision: Decision,
+    match_criteria: &PolicyMatch,
+    constraints: Option<&PolicyConstraints>,
+) -> Result<(), &'static str> {
+    if match_criteria.is_empty() {
+        return Err("PolicyRule.Match must contain at least one effective criterion");
+    }
+    if decision == Decision::Deny && constraints.is_some() {
+        return Err("PolicyRule.Constraints are valid only when Decision is Allow");
+    }
+    if !match_criteria.source_names.is_empty() && match_criteria.managers.len() != 1 {
+        return Err("PolicyRule.Match.SourceNames requires exactly one PolicyRule.Match.Managers value");
+    }
+
+    Ok(())
+}
+
+impl TryFrom<PolicyRuleWire> for PolicyRule {
+    type Error = &'static str;
+
+    fn try_from(value: PolicyRuleWire) -> Result<Self, Self::Error> {
+        validate_policy_rule(value.decision, &value.match_criteria, value.constraints.as_ref())?;
+        Ok(Self {
+            id: value.id,
+            enabled: value.enabled,
+            priority: value.priority,
+            decision: value.decision,
+            reason: value.reason,
+            match_criteria: value.match_criteria,
+            constraints: value.constraints,
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for PolicyRule {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        Self::try_from(PolicyRuleWire::deserialize(deserializer)?).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Serialize for PolicyRule {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        validate_policy_rule(self.decision, &self.match_criteria, self.constraints.as_ref())
+            .map_err(serde::ser::Error::custom)?;
+        PolicyRuleRef {
+            id: &self.id,
+            enabled: self.enabled,
+            priority: self.priority,
+            decision: self.decision,
+            reason: self.reason.as_ref(),
+            match_criteria: &self.match_criteria,
+            constraints: self.constraints.as_ref(),
+        }
+        .serialize(serializer)
+    }
+}
+
+fn enforce_allow_constraints_schema(schema: &mut Schema) {
+    schema
+        .as_object_mut()
+        .expect("PolicyRule schema should be an object")
+        .extend(
+            json_schema!({
+                "not": {
+                    "required": ["Decision", "Constraints"],
+                    "properties": {
+                        "Decision": { "enum": ["Deny"] },
+                        "Constraints": { "type": "object" }
+                    }
+                }
+            })
+            .as_object()
+            .expect("PolicyRule conditional schema should be an object")
+            .clone(),
+        );
 }
 
 fn deserialize_non_empty_match<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<PolicyMatch, D::Error> {
@@ -309,169 +411,297 @@ impl JsonSchema for NonEmptyPolicyMatchSchema {
     }
 
     fn json_schema(generator: &mut SchemaGenerator) -> Schema {
-        json_schema!({
-            "minProperties": 1,
-            "allOf": [generator.subschema_for::<PolicyMatch>()],
-        })
+        let mut schema = PolicyMatch::json_schema(generator);
+        let schema_object = schema.as_object_mut().expect("PolicyMatch schema should be an object");
+        schema_object.insert("minProperties".to_owned(), serde_json::json!(1));
+        schema_object.insert(
+            "anyOf".to_owned(),
+            serde_json::json!([
+                { "required": ["Operations"], "properties": { "Operations": { "minItems": 1 } } },
+                { "required": ["Managers"], "properties": { "Managers": { "minItems": 1 } } },
+                { "required": ["SourceNames"], "properties": { "SourceNames": { "minItems": 1 } } },
+                { "required": ["PackageIdentifiers"], "properties": { "PackageIdentifiers": { "type": "object" } } },
+                { "required": ["Version"], "properties": { "Version": { "type": "object" } } },
+                { "required": ["Scopes"], "properties": { "Scopes": { "minItems": 1 } } },
+                { "required": ["Architectures"], "properties": { "Architectures": { "minItems": 1 } } },
+                { "required": ["ExecutionElevation"], "properties": { "ExecutionElevation": { "minItems": 1 } } },
+                { "required": ["Interactive"], "properties": { "Interactive": { "type": "boolean" } } },
+                { "required": ["SkipHashCheck"], "properties": { "SkipHashCheck": { "type": "boolean" } } },
+                { "required": ["PreRelease"], "properties": { "PreRelease": { "type": "boolean" } } },
+                { "required": ["HasCustomParameters"], "properties": { "HasCustomParameters": { "type": "boolean" } } },
+                { "required": ["HasCustomInstallLocation"], "properties": { "HasCustomInstallLocation": { "type": "boolean" } } },
+                { "required": ["HasPrePostCommands"], "properties": { "HasPrePostCommands": { "type": "boolean" } } },
+                { "required": ["HasKillBeforeOperation"], "properties": { "HasKillBeforeOperation": { "type": "boolean" } } },
+                { "required": ["HasUninstallPrevious"], "properties": { "HasUninstallPrevious": { "type": "boolean" } } }
+            ]),
+        );
+        schema
     }
 }
 
 /// Match criteria for a policy rule. All specified fields must match.
-/// At least one field must be present.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+/// At least one effective non-null, nonempty criterion must be present.
+#[derive(Debug, Clone, Default, JsonSchema)]
 #[schemars(rename = "PolicyMatch")]
-#[serde(rename_all = "PascalCase")]
-#[serde(deny_unknown_fields)]
+#[schemars(rename_all = "PascalCase")]
+#[schemars(deny_unknown_fields)]
+#[schemars(transform = enforce_source_names_schema)]
 pub struct PolicyMatch {
-    /// Allowed operations.
+    /// Optional operation filter. Omitted or empty does not narrow matching;
+    /// canonical serialization omits an empty collection.
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     #[schemars(length(max = 3))]
     pub operations: BTreeSet<Operation>,
 
-    /// Allowed managers.
+    /// Optional manager filter. Omitted or empty does not narrow matching;
+    /// canonical serialization omits an empty collection.
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     #[schemars(length(max = 16))]
     pub managers: BTreeSet<ManagerName>,
 
-    /// Source patterns (wildcard).
+    /// Optional exact configured-source-name filter. Matching uses the selected package manager's
+    /// source-name comparison semantics; wildcard characters are literal. Nonempty source names
+    /// require exactly one manager. Omitted or empty does not narrow matching; canonical
+    /// serialization omits an empty collection.
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     #[schemars(length(max = 128))]
-    pub sources: BTreeSet<StringPattern>,
+    pub source_names: BTreeSet<SourceName>,
 
-    /// Package identifier patterns (wildcard).
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[schemars(length(max = 1024))]
-    pub package_identifiers: BTreeSet<StringPattern>,
-
-    /// Package name patterns (wildcard).
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[schemars(length(max = 1024))]
-    pub package_names: BTreeSet<StringPattern>,
-
-    /// Exact version list.
-    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
-    #[schemars(length(max = 256))]
-    pub versions: BTreeSet<VersionString>,
-
-    /// Semantic version range.
+    /// Optional package-identifier condition. Exact uses validated stable identifiers; Patterns
+    /// uses explicit wildcard patterns that may authorize multiple packages. Absent does not
+    /// narrow matching.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub version_range: Option<VersionRange>,
+    pub package_identifiers: Option<PackageIdentifierCondition>,
 
-    /// Allowed scopes.
+    /// Optional package-version condition. Exact supports arbitrary package version strings;
+    /// Range applies only to semantic versions. Absent does not narrow matching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version: Option<VersionCondition>,
+
+    /// Optional scope filter. Omitted or empty does not narrow matching;
+    /// canonical serialization omits an empty collection.
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     #[schemars(length(max = 2))]
     pub scopes: BTreeSet<Scope>,
 
-    /// Allowed architectures.
+    /// Optional architecture filter. Omitted or empty does not narrow matching;
+    /// canonical serialization omits an empty collection.
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     #[schemars(length(max = 5))]
     pub architectures: BTreeSet<Architecture>,
 
-    /// Allowed elevation levels.
+    /// Optional effective execution-elevation filter. Elevated means the package operation
+    /// will run with administrator privileges; Standard means it will not. Omitted or empty
+    /// does not narrow matching; canonical serialization omits an empty collection.
     #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
     #[schemars(length(max = 2))]
-    pub elevation: BTreeSet<Elevation>,
+    pub execution_elevation: BTreeSet<Elevation>,
 
-    /// Allowed interactive values.
-    #[serde(
-        default,
-        skip_serializing_if = "BTreeSet::is_empty",
-        serialize_with = "serialize_boolean_match",
-        deserialize_with = "deserialize_boolean_match"
-    )]
-    #[schemars(length(max = 1))]
-    pub interactive: BTreeSet<bool>,
+    /// Optional condition on the request's interactive characteristic.
+    /// Absent means this characteristic does not affect matching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interactive: Option<bool>,
 
-    /// Allowed skipHashCheck values.
-    #[serde(
-        default,
-        skip_serializing_if = "BTreeSet::is_empty",
-        serialize_with = "serialize_boolean_match",
-        deserialize_with = "deserialize_boolean_match"
-    )]
-    #[schemars(length(max = 1))]
-    pub skip_hash_check: BTreeSet<bool>,
+    /// Optional condition on the request's skipHashCheck characteristic.
+    /// Absent means this characteristic does not affect matching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skip_hash_check: Option<bool>,
 
-    /// Allowed preRelease values.
-    #[serde(
-        default,
-        skip_serializing_if = "BTreeSet::is_empty",
-        serialize_with = "serialize_boolean_match",
-        deserialize_with = "deserialize_boolean_match"
-    )]
-    #[schemars(length(max = 1))]
-    pub pre_release: BTreeSet<bool>,
+    /// Optional condition on the request's preRelease characteristic.
+    /// Absent means this characteristic does not affect matching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pre_release: Option<bool>,
 
-    /// Whether request has custom parameters.
-    #[serde(
-        default,
-        skip_serializing_if = "BTreeSet::is_empty",
-        serialize_with = "serialize_boolean_match",
-        deserialize_with = "deserialize_boolean_match"
-    )]
-    #[schemars(length(max = 1))]
-    pub has_custom_parameters: BTreeSet<bool>,
+    /// Optional condition on whether the request has custom parameters.
+    /// Absent means this characteristic does not affect matching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub has_custom_parameters: Option<bool>,
 
-    /// Whether request has custom install location.
-    #[serde(
-        default,
-        skip_serializing_if = "BTreeSet::is_empty",
-        serialize_with = "serialize_boolean_match",
-        deserialize_with = "deserialize_boolean_match"
-    )]
-    #[schemars(length(max = 1))]
-    pub has_custom_install_location: BTreeSet<bool>,
+    /// Optional condition on whether the request has a custom install location.
+    /// Absent means this characteristic does not affect matching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub has_custom_install_location: Option<bool>,
 
-    /// Whether request has pre/post operation commands.
-    #[serde(
-        default,
-        skip_serializing_if = "BTreeSet::is_empty",
-        serialize_with = "serialize_boolean_match",
-        deserialize_with = "deserialize_boolean_match"
-    )]
-    #[schemars(length(max = 1))]
-    pub has_pre_post_commands: BTreeSet<bool>,
+    /// Optional condition on whether the request has pre/post commands.
+    /// Absent means this characteristic does not affect matching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub has_pre_post_commands: Option<bool>,
 
-    /// Whether request has kill-before-operation entries.
-    #[serde(
-        default,
-        skip_serializing_if = "BTreeSet::is_empty",
-        serialize_with = "serialize_boolean_match",
-        deserialize_with = "deserialize_boolean_match"
-    )]
-    #[schemars(length(max = 1))]
-    pub has_kill_before_operation: BTreeSet<bool>,
+    /// Optional condition on whether the request has kill-before-operation entries.
+    /// Absent means this characteristic does not affect matching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub has_kill_before_operation: Option<bool>,
 
-    /// Whether request has uninstall-previous flag set.
-    #[serde(
-        default,
-        skip_serializing_if = "BTreeSet::is_empty",
-        serialize_with = "serialize_boolean_match",
-        deserialize_with = "deserialize_boolean_match"
-    )]
-    #[schemars(length(max = 1))]
-    pub has_uninstall_previous: BTreeSet<bool>,
+    /// Optional condition on whether the request enables uninstall-previous.
+    /// Absent means this characteristic does not affect matching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub has_uninstall_previous: Option<bool>,
 }
 
-fn deserialize_boolean_match<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<BTreeSet<bool>, D::Error> {
-    let values = Vec::<bool>::deserialize(deserializer)?;
-    if values.len() > 1 {
-        return Err(serde::de::Error::custom(
-            "boolean match arrays must contain at most one value",
-        ));
-    }
-
-    Ok(values.into_iter().collect())
+fn enforce_source_names_schema(schema: &mut Schema) {
+    let schema = schema.as_object_mut().expect("PolicyMatch schema should be an object");
+    schema.insert(
+        "if".to_owned(),
+        serde_json::json!({
+            "required": ["SourceNames"],
+            "properties": {
+                "SourceNames": { "minItems": 1 }
+            }
+        }),
+    );
+    schema.insert(
+        "then".to_owned(),
+        serde_json::json!({
+            "required": ["Managers"],
+            "properties": {
+                "Managers": { "minItems": 1, "maxItems": 1 }
+            }
+        }),
+    );
 }
 
-fn serialize_boolean_match<S: serde::Serializer>(values: &BTreeSet<bool>, serializer: S) -> Result<S::Ok, S::Error> {
-    if values.len() > 1 {
-        return Err(serde::ser::Error::custom(
-            "boolean match arrays must contain at most one value",
-        ));
-    }
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+#[serde(deny_unknown_fields)]
+struct PolicyMatchWire {
+    #[serde(default)]
+    operations: BTreeSet<Operation>,
+    #[serde(default)]
+    managers: BTreeSet<ManagerName>,
+    #[serde(default)]
+    source_names: BTreeSet<SourceName>,
+    #[serde(default)]
+    package_identifiers: Option<PackageIdentifierCondition>,
+    #[serde(default)]
+    version: Option<VersionCondition>,
+    #[serde(default)]
+    scopes: BTreeSet<Scope>,
+    #[serde(default)]
+    architectures: BTreeSet<Architecture>,
+    #[serde(default)]
+    execution_elevation: BTreeSet<Elevation>,
+    #[serde(default)]
+    interactive: Option<bool>,
+    #[serde(default)]
+    skip_hash_check: Option<bool>,
+    #[serde(default)]
+    pre_release: Option<bool>,
+    #[serde(default)]
+    has_custom_parameters: Option<bool>,
+    #[serde(default)]
+    has_custom_install_location: Option<bool>,
+    #[serde(default)]
+    has_pre_post_commands: Option<bool>,
+    #[serde(default)]
+    has_kill_before_operation: Option<bool>,
+    #[serde(default)]
+    has_uninstall_previous: Option<bool>,
+}
 
-    values.serialize(serializer)
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct PolicyMatchRef<'a> {
+    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
+    operations: &'a BTreeSet<Operation>,
+    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
+    managers: &'a BTreeSet<ManagerName>,
+    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
+    source_names: &'a BTreeSet<SourceName>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    package_identifiers: Option<&'a PackageIdentifierCondition>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    version: Option<&'a VersionCondition>,
+    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
+    scopes: &'a BTreeSet<Scope>,
+    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
+    architectures: &'a BTreeSet<Architecture>,
+    #[serde(skip_serializing_if = "BTreeSet::is_empty")]
+    execution_elevation: &'a BTreeSet<Elevation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    interactive: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    skip_hash_check: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pre_release: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    has_custom_parameters: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    has_custom_install_location: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    has_pre_post_commands: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    has_kill_before_operation: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    has_uninstall_previous: Option<bool>,
+}
+
+fn validate_policy_match(value: &PolicyMatch) -> Result<(), &'static str> {
+    if !value.source_names.is_empty() && value.managers.len() != 1 {
+        return Err("PolicyMatch.SourceNames requires exactly one PolicyMatch.Managers value");
+    }
+    Ok(())
+}
+
+impl From<PolicyMatchWire> for PolicyMatch {
+    fn from(value: PolicyMatchWire) -> Self {
+        Self {
+            operations: value.operations,
+            managers: value.managers,
+            source_names: value.source_names,
+            package_identifiers: value.package_identifiers,
+            version: value.version,
+            scopes: value.scopes,
+            architectures: value.architectures,
+            execution_elevation: value.execution_elevation,
+            interactive: value.interactive,
+            skip_hash_check: value.skip_hash_check,
+            pre_release: value.pre_release,
+            has_custom_parameters: value.has_custom_parameters,
+            has_custom_install_location: value.has_custom_install_location,
+            has_pre_post_commands: value.has_pre_post_commands,
+            has_kill_before_operation: value.has_kill_before_operation,
+            has_uninstall_previous: value.has_uninstall_previous,
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for PolicyMatch {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = Self::from(PolicyMatchWire::deserialize(deserializer)?);
+        validate_policy_match(&value).map_err(serde::de::Error::custom)?;
+        Ok(value)
+    }
+}
+
+impl Serialize for PolicyMatch {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        validate_policy_match(self).map_err(serde::ser::Error::custom)?;
+        PolicyMatchRef {
+            operations: &self.operations,
+            managers: &self.managers,
+            source_names: &self.source_names,
+            package_identifiers: self.package_identifiers.as_ref(),
+            version: self.version.as_ref(),
+            scopes: &self.scopes,
+            architectures: &self.architectures,
+            execution_elevation: &self.execution_elevation,
+            interactive: self.interactive,
+            skip_hash_check: self.skip_hash_check,
+            pre_release: self.pre_release,
+            has_custom_parameters: self.has_custom_parameters,
+            has_custom_install_location: self.has_custom_install_location,
+            has_pre_post_commands: self.has_pre_post_commands,
+            has_kill_before_operation: self.has_kill_before_operation,
+            has_uninstall_previous: self.has_uninstall_previous,
+        }
+        .serialize(serializer)
+    }
 }
 
 impl PolicyMatch {
@@ -479,22 +709,222 @@ impl PolicyMatch {
     pub fn is_empty(&self) -> bool {
         self.operations.is_empty()
             && self.managers.is_empty()
-            && self.sources.is_empty()
-            && self.package_identifiers.is_empty()
-            && self.package_names.is_empty()
-            && self.versions.is_empty()
-            && self.version_range.is_none()
+            && self.source_names.is_empty()
+            && self.package_identifiers.is_none()
+            && self.version.is_none()
             && self.scopes.is_empty()
             && self.architectures.is_empty()
-            && self.elevation.is_empty()
-            && self.interactive.is_empty()
-            && self.skip_hash_check.is_empty()
-            && self.pre_release.is_empty()
-            && self.has_custom_parameters.is_empty()
-            && self.has_custom_install_location.is_empty()
-            && self.has_pre_post_commands.is_empty()
-            && self.has_kill_before_operation.is_empty()
-            && self.has_uninstall_previous.is_empty()
+            && self.execution_elevation.is_empty()
+            && self.interactive.is_none()
+            && self.skip_hash_check.is_none()
+            && self.pre_release.is_none()
+            && self.has_custom_parameters.is_none()
+            && self.has_custom_install_location.is_none()
+            && self.has_pre_post_commands.is_none()
+            && self.has_kill_before_operation.is_none()
+            && self.has_uninstall_previous.is_none()
+    }
+}
+
+/// Mutually exclusive package-identifier matching mode.
+#[derive(Debug, Clone)]
+pub enum PackageIdentifierCondition {
+    Exact(BTreeSet<PackageIdentifier>),
+    Patterns(BTreeSet<StringPattern>),
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+enum PackageIdentifierConditionWire {
+    Exact(Vec<PackageIdentifier>),
+    Patterns(Vec<StringPattern>),
+}
+
+impl<'de> Deserialize<'de> for PackageIdentifierCondition {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        match PackageIdentifierConditionWire::deserialize(deserializer)? {
+            PackageIdentifierConditionWire::Exact(values) if values.is_empty() || values.len() > 1024 => Err(
+                serde::de::Error::custom("PackageIdentifiers.Exact must contain between 1 and 1024 values"),
+            ),
+            PackageIdentifierConditionWire::Exact(values) => Ok(Self::Exact(values.into_iter().collect())),
+            PackageIdentifierConditionWire::Patterns(values) if values.is_empty() || values.len() > 1024 => Err(
+                serde::de::Error::custom("PackageIdentifiers.Patterns must contain between 1 and 1024 values"),
+            ),
+            PackageIdentifierConditionWire::Patterns(values) => Ok(Self::Patterns(values.into_iter().collect())),
+        }
+    }
+}
+
+impl Serialize for PackageIdentifierCondition {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Self::Exact(values) if values.is_empty() || values.len() > 1024 => Err(serde::ser::Error::custom(
+                "PackageIdentifiers.Exact must contain between 1 and 1024 values",
+            )),
+            Self::Exact(values) => {
+                #[derive(Serialize)]
+                #[serde(rename_all = "PascalCase")]
+                enum ExactRef<'a> {
+                    Exact(&'a BTreeSet<PackageIdentifier>),
+                }
+                ExactRef::Exact(values).serialize(serializer)
+            }
+            Self::Patterns(values) if values.is_empty() || values.len() > 1024 => Err(serde::ser::Error::custom(
+                "PackageIdentifiers.Patterns must contain between 1 and 1024 values",
+            )),
+            Self::Patterns(values) => {
+                #[derive(Serialize)]
+                #[serde(rename_all = "PascalCase")]
+                enum PatternsRef<'a> {
+                    Patterns(&'a BTreeSet<StringPattern>),
+                }
+                PatternsRef::Patterns(values).serialize(serializer)
+            }
+        }
+    }
+}
+
+impl JsonSchema for PackageIdentifierCondition {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "PackageIdentifierCondition".into()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        json_schema!({
+            "description": "Exactly one package-identifier mode. Exact authorizes stable identifiers; Patterns explicitly authorizes every identifier matched by a wildcard pattern.",
+            "oneOf": [
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["Exact"],
+                    "properties": {
+                        "Exact": {
+                            "type": "array",
+                            "minItems": 1,
+                            "maxItems": 1024,
+                            "uniqueItems": true,
+                            "items": generator.subschema_for::<PackageIdentifier>()
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["Patterns"],
+                    "properties": {
+                        "Patterns": {
+                            "type": "array",
+                            "minItems": 1,
+                            "maxItems": 1024,
+                            "uniqueItems": true,
+                            "items": generator.subschema_for::<StringPattern>()
+                        }
+                    }
+                }
+            ]
+        })
+    }
+}
+
+/// Mutually exclusive package-version condition.
+#[derive(Debug, Clone)]
+pub enum VersionCondition {
+    /// One or more exact package version strings. Values need not be semantic versions.
+    Exact(BTreeSet<VersionString>),
+    /// Semantic-version range.
+    Range(VersionRange),
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+enum VersionConditionWire {
+    Exact(Vec<VersionString>),
+    Range(VersionRange),
+}
+
+impl<'de> Deserialize<'de> for VersionCondition {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        match VersionConditionWire::deserialize(deserializer)? {
+            VersionConditionWire::Exact(values) if values.is_empty() || values.len() > 256 => Err(
+                serde::de::Error::custom("Version.Exact must contain between 1 and 256 values"),
+            ),
+            VersionConditionWire::Exact(values) => Ok(Self::Exact(values.into_iter().collect())),
+            VersionConditionWire::Range(range) => Ok(Self::Range(range)),
+        }
+    }
+}
+
+impl Serialize for VersionCondition {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Self::Exact(values) if values.is_empty() || values.len() > 256 => Err(serde::ser::Error::custom(
+                "Version.Exact must contain between 1 and 256 values",
+            )),
+            Self::Exact(values) => {
+                #[derive(Serialize)]
+                #[serde(rename_all = "PascalCase")]
+                enum ExactRef<'a> {
+                    Exact(&'a BTreeSet<VersionString>),
+                }
+                ExactRef::Exact(values).serialize(serializer)
+            }
+            Self::Range(range) => {
+                #[derive(Serialize)]
+                #[serde(rename_all = "PascalCase")]
+                enum RangeRef<'a> {
+                    Range(&'a VersionRange),
+                }
+                RangeRef::Range(range).serialize(serializer)
+            }
+        }
+    }
+}
+
+impl JsonSchema for VersionCondition {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "VersionCondition".into()
+    }
+
+    fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+        json_schema!({
+            "description": "Exactly one package-version mode. Exact accepts arbitrary package version strings; Range applies only to semantic versions.",
+            "oneOf": [
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["Exact"],
+                    "properties": {
+                        "Exact": {
+                            "type": "array",
+                            "minItems": 1,
+                            "maxItems": 256,
+                            "uniqueItems": true,
+                            "items": generator.subschema_for::<VersionString>()
+                        }
+                    }
+                },
+                {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["Range"],
+                    "properties": {
+                        "Range": generator.subschema_for::<VersionRange>()
+                    }
+                }
+            ]
+        })
     }
 }
 
@@ -519,7 +949,7 @@ pub struct VersionRange {
     pub include_prerelease: bool,
 }
 
-/// Constraints applied after a rule matches.
+/// Additional safety limits applied after an Allow rule matches.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "PolicyConstraints")]
 #[serde(rename_all = "PascalCase")]

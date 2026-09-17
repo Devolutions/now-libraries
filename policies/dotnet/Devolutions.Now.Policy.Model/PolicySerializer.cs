@@ -22,13 +22,13 @@ public static class PolicySerializer
     public static string Serialize(PolicyDocument value)
     {
         ValidateRequiredCollectionElements(value);
-        return JsonSerializer.Serialize(value, PolicySerializerContext.Default.PolicyDocument);
+        return JsonSerializer.Serialize(value, TypeInfo<PolicyDocument>());
     }
 
     public static string Serialize(PolicyDraftDocument value)
     {
         ValidateRequiredCollectionElements(value);
-        return JsonSerializer.Serialize(value, PolicySerializerContext.Default.PolicyDraftDocument);
+        return JsonSerializer.Serialize(value, TypeInfo<PolicyDraftDocument>());
     }
 
     public static PolicyDocument? DeserializePolicyDocument(string json)
@@ -63,7 +63,7 @@ public static class PolicySerializer
         return value;
     }
 
-    private static void ValidateSemanticValue(object? value)
+    internal static void ValidateSemanticValue(object? value)
     {
         switch (value)
         {
@@ -81,6 +81,12 @@ public static class PolicySerializer
                 break;
             case PolicyMatch match:
                 ValidateRequiredCollectionElements(match, "$");
+                break;
+            case PackageIdentifierCondition identifiers:
+                ValidatePackageIdentifierCondition(identifiers, "$");
+                break;
+            case VersionCondition version:
+                ValidateVersionCondition(version, "$");
                 break;
             case PolicyConstraints constraints:
                 ValidateRequiredCollectionElements(constraints, "$");
@@ -112,7 +118,15 @@ public static class PolicySerializer
     private static void ValidateRequiredCollectionElements(PolicyRule rule, string path)
     {
         ValidateRequiredCollectionElements(rule.Match, $"{path}.Match");
-
+        if (IsEmpty(rule.Match))
+        {
+            throw new JsonException($"The JSON object at {path}.Match must contain at least one effective criterion.");
+        }
+        if (rule.Decision == Decision.Deny && rule.Constraints is not null)
+        {
+            throw new JsonException(
+                $"The JSON value at {path}.Constraints is valid only when {path}.Decision is Allow.");
+        }
         if (rule.Constraints is { } constraints)
         {
             ValidateRequiredCollectionElements(constraints, $"{path}.Constraints");
@@ -145,19 +159,107 @@ public static class PolicySerializer
 
     private static void ValidateRequiredCollectionElements(PolicyMatch match, string path)
     {
-        RejectBoundedStrings(match.Sources, 1, 256, $"{path}.Sources");
-        RejectBoundedStrings(match.PackageIdentifiers, 1, 256, $"{path}.PackageIdentifiers");
-        RejectBoundedStrings(match.PackageNames, 1, 256, $"{path}.PackageNames");
-        RejectBoundedStrings(match.Versions, 1, 128, $"{path}.Versions");
-        RejectBooleanMatch(match.Interactive, $"{path}.Interactive");
-        RejectBooleanMatch(match.SkipHashCheck, $"{path}.SkipHashCheck");
-        RejectBooleanMatch(match.PreRelease, $"{path}.PreRelease");
-        RejectBooleanMatch(match.HasCustomParameters, $"{path}.HasCustomParameters");
-        RejectBooleanMatch(match.HasCustomInstallLocation, $"{path}.HasCustomInstallLocation");
-        RejectBooleanMatch(match.HasPrePostCommands, $"{path}.HasPrePostCommands");
-        RejectBooleanMatch(match.HasKillBeforeOperation, $"{path}.HasKillBeforeOperation");
-        RejectBooleanMatch(match.HasUninstallPrevious, $"{path}.HasUninstallPrevious");
+        RejectBoundedStrings(match.SourceNames, 1, 128, $"{path}.SourceNames");
+        if (match.SourceNames.Count > 0 && match.Managers.Count != 1)
+        {
+            throw new JsonException(
+                $"The JSON array at {path}.SourceNames requires exactly one value at {path}.Managers.");
+        }
+        if (match.PackageIdentifiers is { } identifiers)
+        {
+            ValidatePackageIdentifierCondition(identifiers, $"{path}.PackageIdentifiers");
+        }
+        if (match.Version is { } version)
+        {
+            ValidateVersionCondition(version, $"{path}.Version");
+        }
     }
+
+    private static void ValidatePackageIdentifierCondition(
+        PackageIdentifierCondition identifiers,
+        string path)
+    {
+        if (identifiers.ExactSpecified == identifiers.PatternsSpecified)
+        {
+            throw new JsonException($"The JSON object at {path} must contain exactly one of Exact or Patterns.");
+        }
+        if ((identifiers.ExactSpecified && identifiers.Exact is null)
+            || (identifiers.PatternsSpecified && identifiers.Patterns is null))
+        {
+            throw new JsonException($"The selected package identifier mode at {path} must not be null.");
+        }
+        if (identifiers.Exact is { } exact)
+        {
+            if (exact.Count is 0 or > 1024)
+            {
+                throw new JsonException($"The JSON array at {path}.Exact must contain between 1 and 1024 values.");
+            }
+            RejectPackageIdentifiers(exact, $"{path}.Exact");
+        }
+        if (identifiers.Patterns is { } patterns)
+        {
+            if (patterns.Count is 0 or > 1024)
+            {
+                throw new JsonException($"The JSON array at {path}.Patterns must contain between 1 and 1024 values.");
+            }
+            RejectBoundedStrings(patterns, 1, 256, $"{path}.Patterns");
+        }
+    }
+
+    private static void RejectPackageIdentifiers(IReadOnlyList<string> values, string path)
+    {
+        RejectBoundedStrings(values, 1, 256, path);
+        const string AllowedPunctuation = ".-_+@/:[],#$%{}";
+        for (var index = 0; index < values.Count; index++)
+        {
+            if (values[index].Any(character =>
+                    !char.IsAsciiLetterOrDigit(character)
+                    && !AllowedPunctuation.Contains(character, StringComparison.Ordinal)))
+            {
+                throw new JsonException(
+                    $"The JSON string at {path}[{index}] is not a valid exact package identifier.");
+            }
+        }
+    }
+
+    private static void ValidateVersionCondition(VersionCondition version, string path)
+    {
+        if (version.ExactSpecified == version.RangeSpecified)
+        {
+            throw new JsonException($"The JSON object at {path} must contain exactly one of Exact or Range.");
+        }
+        if ((version.ExactSpecified && version.Exact is null)
+            || (version.RangeSpecified && version.Range is null))
+        {
+            throw new JsonException($"The selected version mode at {path} must not be null.");
+        }
+        if (version.Exact is { } exact)
+        {
+            if (exact.Count is 0 or > 256)
+            {
+                throw new JsonException($"The JSON array at {path}.Exact must contain between 1 and 256 values.");
+            }
+            RejectBoundedStrings(exact, 1, 128, $"{path}.Exact");
+        }
+    }
+
+    private static bool IsEmpty(PolicyMatch match) =>
+        match.Operations.Count == 0
+        && match.Managers.Count == 0
+        && match.SourceNames.Count == 0
+        && match.PackageIdentifiers is null
+        && match.Version is null
+        && match.Scopes.Count == 0
+        && match.Architectures.Count == 0
+        && match.ExecutionElevation.Count == 0
+        && match.Interactive is null
+        && match.SkipHashCheck is null
+        && match.PreRelease is null
+        && match.HasCustomParameters is null
+        && match.HasCustomInstallLocation is null
+        && match.HasPrePostCommands is null
+        && match.HasKillBeforeOperation is null
+        && match.HasUninstallPrevious is null;
 
     private static PolicyDocument? Validate(PolicyDocument? policy)
     {
@@ -177,14 +279,6 @@ public static class PolicySerializer
         }
 
         return policy;
-    }
-
-    private static void RejectBooleanMatch(IReadOnlyList<bool> values, string path)
-    {
-        if (values.Count > 1)
-        {
-            throw new JsonException($"The JSON array at {path} must contain at most one value.");
-        }
     }
 
     private static void ValidatePolicyRevision(uint revision)
@@ -225,17 +319,25 @@ public static class PolicySerializer
         }
     }
 
-    private static JsonTypeInfo<T> TypeInfo<T>() =>
-        typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicySerializerContext.Default.PolicyDocument) :
-        typeof(T) == typeof(PolicyDraftDocument) ? Cast<T>(PolicySerializerContext.Default.PolicyDraftDocument) :
-        typeof(T) == typeof(PolicyMetadata) ? Cast<T>(PolicySerializerContext.Default.PolicyMetadata) :
-        typeof(T) == typeof(PolicyDraftMetadata) ? Cast<T>(PolicySerializerContext.Default.PolicyDraftMetadata) :
-        typeof(T) == typeof(PolicyEnforcement) ? Cast<T>(PolicySerializerContext.Default.PolicyEnforcement) :
-        typeof(T) == typeof(PolicyRule) ? Cast<T>(PolicySerializerContext.Default.PolicyRule) :
-        typeof(T) == typeof(PolicyMatch) ? Cast<T>(PolicySerializerContext.Default.PolicyMatch) :
-        typeof(T) == typeof(VersionRange) ? Cast<T>(PolicySerializerContext.Default.VersionRange) :
-        typeof(T) == typeof(PolicyConstraints) ? Cast<T>(PolicySerializerContext.Default.PolicyConstraints) :
-        throw new NotSupportedException($"Policy JSON serialization for {typeof(T).FullName} is not source-generated.");
+    private static JsonTypeInfo<T> TypeInfo<T>()
+    {
+        _ = typeof(T) == typeof(PolicyDocument)
+            || typeof(T) == typeof(PolicyDraftDocument)
+            || typeof(T) == typeof(PolicyMetadata)
+            || typeof(T) == typeof(PolicyDraftMetadata)
+            || typeof(T) == typeof(PolicyEnforcement)
+            || typeof(T) == typeof(PolicyRule)
+            || typeof(T) == typeof(PolicyMatch)
+            || typeof(T) == typeof(PackageIdentifierCondition)
+            || typeof(T) == typeof(VersionCondition)
+            || typeof(T) == typeof(VersionRange)
+            || typeof(T) == typeof(PolicyConstraints)
+            ? true
+            : throw new NotSupportedException(
+                $"Policy JSON serialization for {typeof(T).FullName} is not source-generated.");
+
+        return Cast<T>(Options.GetTypeInfo(typeof(T)));
+    }
 
     private static JsonTypeInfo<T> StrictTypeInfo<T>() =>
         typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDocument) :
@@ -245,6 +347,8 @@ public static class PolicySerializer
         typeof(T) == typeof(PolicyEnforcement) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyEnforcement) :
         typeof(T) == typeof(PolicyRule) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyRule) :
         typeof(T) == typeof(PolicyMatch) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyMatch) :
+        typeof(T) == typeof(PackageIdentifierCondition) ? Cast<T>(PolicyStrictSerializerContext.Default.PackageIdentifierCondition) :
+        typeof(T) == typeof(VersionCondition) ? Cast<T>(PolicyStrictSerializerContext.Default.VersionCondition) :
         typeof(T) == typeof(VersionRange) ? Cast<T>(PolicyStrictSerializerContext.Default.VersionRange) :
         typeof(T) == typeof(PolicyConstraints) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyConstraints) :
         throw new NotSupportedException($"Strict policy JSON deserialization for {typeof(T).FullName} is not source-generated.");
@@ -292,6 +396,10 @@ public static class PolicySerializer
             context.PolicyRule));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMatch>(
             context.PolicyMatch));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PackageIdentifierCondition>(
+            context.PackageIdentifierCondition));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionCondition>(
+            context.VersionCondition));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionRange>(
             context.VersionRange));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyConstraints>(
@@ -316,6 +424,10 @@ public static class PolicySerializer
             context.PolicyRule));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMatch>(
             context.PolicyMatch));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PackageIdentifierCondition>(
+            context.PackageIdentifierCondition));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionCondition>(
+            context.VersionCondition));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionRange>(
             context.VersionRange));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyConstraints>(
@@ -329,15 +441,43 @@ public static class PolicySerializer
             return;
         }
 
+        ConfigureCanonicalSerialization(typeInfo);
         typeInfo.OnSerializing = ValidateSemanticValue;
         typeInfo.OnDeserialized = ValidateSemanticValue;
     }
+
+    internal static void ConfigureCanonicalSerialization(JsonTypeInfo typeInfo)
+    {
+        if (typeInfo.Type != typeof(PolicyMatch))
+        {
+            return;
+        }
+
+        foreach (var property in typeInfo.Properties)
+        {
+            if (IsPolicyMatchCollectionProperty(property.Name))
+            {
+                property.ShouldSerialize = static (_, value) =>
+                    value is System.Collections.ICollection { Count: > 0 };
+            }
+        }
+    }
+
+    private static bool IsPolicyMatchCollectionProperty(string propertyName) =>
+        propertyName is
+            nameof(PolicyMatch.Operations)
+            or nameof(PolicyMatch.Managers)
+            or nameof(PolicyMatch.SourceNames)
+            or nameof(PolicyMatch.Scopes)
+            or nameof(PolicyMatch.Architectures)
+            or nameof(PolicyMatch.ExecutionElevation);
 }
 
 [JsonSourceGenerationOptions(
     WriteIndented = true,
     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    RespectNullableAnnotations = true)]
+    RespectNullableAnnotations = true,
+    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
 [JsonSerializable(typeof(PolicyDocument))]
 [JsonSerializable(typeof(PolicyDraftDocument))]
 [JsonSerializable(typeof(PolicyMetadata))]
@@ -345,6 +485,8 @@ public static class PolicySerializer
 [JsonSerializable(typeof(PolicyEnforcement))]
 [JsonSerializable(typeof(PolicyRule))]
 [JsonSerializable(typeof(PolicyMatch))]
+[JsonSerializable(typeof(PackageIdentifierCondition))]
+[JsonSerializable(typeof(VersionCondition))]
 [JsonSerializable(typeof(VersionRange))]
 [JsonSerializable(typeof(PolicyConstraints))]
 internal sealed partial class PolicySerializerContext : JsonSerializerContext;
@@ -361,6 +503,8 @@ internal sealed partial class PolicySerializerContext : JsonSerializerContext;
 [JsonSerializable(typeof(PolicyEnforcement))]
 [JsonSerializable(typeof(PolicyRule))]
 [JsonSerializable(typeof(PolicyMatch))]
+[JsonSerializable(typeof(PackageIdentifierCondition))]
+[JsonSerializable(typeof(VersionCondition))]
 [JsonSerializable(typeof(VersionRange))]
 [JsonSerializable(typeof(PolicyConstraints))]
 internal sealed partial class PolicyStrictSerializerContext : JsonSerializerContext;

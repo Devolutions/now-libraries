@@ -1,6 +1,5 @@
 {
   "PolicyFormatVersion": "1.0.0",
-  "PolicyType": "PackageBrokerPolicy",
   "Metadata": {
     "Id": "duplicate.test",
     "Publisher": "First",
@@ -9,8 +8,7 @@
     "PublishedAt": "2026-01-01T00:00:00Z"
   },
   "Enforcement": {
-    "DefaultDecision": "Deny",
-    "RulePrecedence": "PriorityThenDeny"
+    "DefaultDecision": "Deny"
   },
   "Rules": []
 }

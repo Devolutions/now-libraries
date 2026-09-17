@@ -53,6 +53,14 @@ public static class BrokerSerializer
             case PolicyDraftDocument draft:
                 PolicySerializer.ValidateRequiredCollectionElements(draft);
                 break;
+            case PolicyMetadata
+                or PolicyRule
+                or PolicyMatch
+                or PackageIdentifierCondition
+                or VersionCondition
+                or PolicyConstraints:
+                PolicySerializer.ValidateSemanticValue(value);
+                break;
             case PolicyResponse response:
                 PolicySerializer.ValidateRequiredCollectionElements(response.Policy);
                 break;
@@ -77,24 +85,30 @@ public static class BrokerSerializer
         }
     }
 
-    private static JsonTypeInfo<T> TypeInfo<T>() =>
-        typeof(T) == typeof(PackageRequest) ? Cast<T>(BrokerSerializerContext.Default.PackageRequest) :
-        typeof(T) == typeof(StatusRequest) ? Cast<T>(BrokerSerializerContext.Default.StatusRequest) :
-        typeof(T) == typeof(CancelRequest) ? Cast<T>(BrokerSerializerContext.Default.CancelRequest) :
-        typeof(T) == typeof(PolicyValidationRequest) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyValidationRequest) :
-        typeof(T) == typeof(PolicyReplacementRequest) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyReplacementRequest) :
-        typeof(T) == typeof(HealthResponse) ? Cast<T>(BrokerSerializerContext.Default.HealthResponse) :
-        typeof(T) == typeof(CapabilitiesResponse) ? Cast<T>(BrokerSerializerContext.Default.CapabilitiesResponse) :
-        typeof(T) == typeof(PolicyResponse) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyResponse) :
-        typeof(T) == typeof(PolicyManagementResponse) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyManagementResponse) :
-        typeof(T) == typeof(PolicyValidationResponse) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyValidationResponse) :
-        typeof(T) == typeof(PolicyReplacementResponse) ? Cast<T>(BrokerPolicySerializerContext.Default.PolicyReplacementResponse) :
-        typeof(T) == typeof(EvaluationResponse) ? Cast<T>(BrokerSerializerContext.Default.EvaluationResponse) :
-        typeof(T) == typeof(ExecutionResponse) ? Cast<T>(BrokerSerializerContext.Default.ExecutionResponse) :
-        typeof(T) == typeof(StatusResponse) ? Cast<T>(BrokerSerializerContext.Default.StatusResponse) :
-        typeof(T) == typeof(CancelResponse) ? Cast<T>(BrokerSerializerContext.Default.CancelResponse) :
-        typeof(T) == typeof(ErrorResponse) ? Cast<T>(BrokerErrorSerializerContext.Default.ErrorResponse) :
-        throw new NotSupportedException($"Broker JSON serialization for {typeof(T).FullName} is not source-generated.");
+    private static JsonTypeInfo<T> TypeInfo<T>()
+    {
+        _ = typeof(T) == typeof(PackageRequest)
+            || typeof(T) == typeof(StatusRequest)
+            || typeof(T) == typeof(CancelRequest)
+            || typeof(T) == typeof(PolicyValidationRequest)
+            || typeof(T) == typeof(PolicyReplacementRequest)
+            || typeof(T) == typeof(HealthResponse)
+            || typeof(T) == typeof(CapabilitiesResponse)
+            || typeof(T) == typeof(PolicyResponse)
+            || typeof(T) == typeof(PolicyManagementResponse)
+            || typeof(T) == typeof(PolicyValidationResponse)
+            || typeof(T) == typeof(PolicyReplacementResponse)
+            || typeof(T) == typeof(EvaluationResponse)
+            || typeof(T) == typeof(ExecutionResponse)
+            || typeof(T) == typeof(StatusResponse)
+            || typeof(T) == typeof(CancelResponse)
+            || typeof(T) == typeof(ErrorResponse)
+            ? true
+            : throw new NotSupportedException(
+                $"Broker JSON serialization for {typeof(T).FullName} is not source-generated.");
+
+        return Cast<T>(Options.GetTypeInfo(typeof(T)));
+    }
 
     private static JsonTypeInfo<T> StrictTypeInfo<T>() =>
         typeof(T) == typeof(PackageRequest) ? Cast<T>(BrokerStrictSerializerContext.Default.PackageRequest) :
@@ -354,6 +368,10 @@ public static class BrokerSerializer
             BrokerPolicySerializerContext.Default.PolicyRule));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMatch>(
             BrokerPolicySerializerContext.Default.PolicyMatch));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PackageIdentifierCondition>(
+            BrokerPolicySerializerContext.Default.PackageIdentifierCondition));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionCondition>(
+            BrokerPolicySerializerContext.Default.VersionCondition));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionRange>(
             BrokerPolicySerializerContext.Default.VersionRange));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyConstraints>(
@@ -375,6 +393,11 @@ public static class BrokerSerializer
             return;
         }
 
+        if (typeInfo.Type.Assembly == typeof(PolicyDocument).Assembly)
+        {
+            typeInfo.UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow;
+        }
+        PolicySerializer.ConfigureCanonicalSerialization(typeInfo);
         typeInfo.OnSerializing = ValidateSemanticValue;
         typeInfo.OnDeserialized = ValidateSemanticValue;
     }

@@ -102,7 +102,6 @@ pub enum PolicyFindingCode {
     InvalidWildcardPattern,
     ContradictoryConstraints,
     InvalidValidityInterval,
-    UnsupportedPolicyType,
     UnsupportedPolicyFormatVersion,
     AuditModeEnabled,
     DefaultAllow,
@@ -975,9 +974,8 @@ mod tests {
             "IsValid": true,
             "CanonicalDraft": {
                 "PolicyFormatVersion": "1.0.0",
-                "PolicyType": "PackageBrokerPolicy",
                 "Metadata": { "Id": "test", "Publisher": "test" },
-                "Enforcement": { "DefaultDecision": "Deny", "RulePrecedence": "PriorityThenDeny" },
+                "Enforcement": { "DefaultDecision": "Deny" },
                 "Rules": []
             },
             "ValidationReceipt": "receipt",

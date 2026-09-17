@@ -37,6 +37,28 @@ public class PolicyTests
         { nameof(PolicyConstraints.DeniedCustomParameters), 512 },
     };
 
+    public static TheoryData<string> BooleanMatchProperties() => new()
+    {
+        nameof(PolicyMatch.Interactive),
+        nameof(PolicyMatch.SkipHashCheck),
+        nameof(PolicyMatch.PreRelease),
+        nameof(PolicyMatch.HasCustomParameters),
+        nameof(PolicyMatch.HasCustomInstallLocation),
+        nameof(PolicyMatch.HasPrePostCommands),
+        nameof(PolicyMatch.HasKillBeforeOperation),
+        nameof(PolicyMatch.HasUninstallPrevious),
+    };
+
+    public static TheoryData<string, string> CollectionMatchProperties() => new()
+    {
+        { nameof(PolicyMatch.Operations), "\"Install\"" },
+        { nameof(PolicyMatch.Managers), "\"Winget\"" },
+        { nameof(PolicyMatch.SourceNames), "\"winget\"" },
+        { nameof(PolicyMatch.Scopes), "\"User\"" },
+        { nameof(PolicyMatch.Architectures), "\"X64\"" },
+        { nameof(PolicyMatch.ExecutionElevation), "\"Standard\"" },
+    };
+
     [Fact]
     public void Tests_run_with_reflection_json_disabled()
     {
@@ -70,7 +92,10 @@ public class PolicyTests
             {
                 Operations = [Operation.Install],
                 Managers = [ManagerName.Winget],
-                PackageIdentifiers = ["Microsoft.VisualStudioCode"],
+                PackageIdentifiers = new PackageIdentifierCondition
+                {
+                    Exact = ["Microsoft.VisualStudioCode"],
+                },
             },
         });
 
@@ -136,15 +161,13 @@ public class PolicyTests
         const string Json = """
             {
               "PolicyFormatVersion": "1.0.0",
-              "PolicyType": "PackageBrokerPolicy",
               "Metadata": {
                 "Id": "duplicate.test",
                 "\u0049d": "duplicate.test",
                 "Publisher": "Test"
               },
               "Enforcement": {
-                "DefaultDecision": "Deny",
-                "RulePrecedence": "PriorityThenDeny"
+                "DefaultDecision": "Deny"
               },
               "Rules": []
             }
@@ -171,7 +194,9 @@ public class PolicyTests
                 "Rules": []
             """);
 
-        Assert.NotNull(PolicySerializer.DeserializePolicyDocument(json));
+        var exception = Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializePolicyDocument(json));
+        Assert.DoesNotContain("Duplicate JSON property name", exception.Message, StringComparison.Ordinal);
         Assert.Throws<JsonException>(() => PolicySerializer.DeserializePolicyDocumentStrict(json));
     }
 
@@ -211,6 +236,142 @@ public class PolicyTests
             """);
 
         Assert.ThrowsAny<JsonException>(() => PolicySerializer.DeserializePolicyDocument(json));
+    }
+
+    [Theory]
+    [InlineData("PolicyType")]
+    [InlineData("RulePrecedence")]
+    [InlineData("PackageNames")]
+    [InlineData("Elevation")]
+    [InlineData("Sources")]
+    [InlineData("Versions")]
+    [InlineData("VersionRange")]
+    public void Removed_policy_members_are_rejected_as_unknown(string member)
+    {
+        var policy = PolicyDocument.ParseJson(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")));
+        var documents = new (JsonNode Document, Action<string> Parse)[]
+        {
+            (
+                JsonNode.Parse(policy.ToJson())!,
+                json => PolicySerializer.DeserializeStrict<PolicyDocument>(json)),
+            (
+                JsonNode.Parse(policy.ToDraft().ToJson())!,
+                json => PolicySerializer.DeserializeStrict<PolicyDraftDocument>(json)),
+        };
+
+        foreach (var (document, parse) in documents)
+        {
+            switch (member)
+            {
+                case "PolicyType":
+                    document[member] = "PackageBrokerPolicy";
+                    break;
+                case "RulePrecedence":
+                    document["Enforcement"]![member] = "PriorityThenDeny";
+                    break;
+                case "VersionRange":
+                    document["Rules"]![0]!["Match"]![member] = new JsonObject { ["MinVersion"] = "1.0.0" };
+                    break;
+                default:
+                    document["Rules"]![0]!["Match"]![member] = new JsonArray("Friendly package name");
+                    break;
+            }
+
+            Assert.Throws<JsonException>(() => parse(document.ToJsonString()));
+        }
+    }
+
+    [Fact]
+    public void Non_strict_policy_inputs_reject_removed_members_instead_of_broadening_rules()
+    {
+        var committed = JsonNode.Parse(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
+        committed["Rules"]![3]!["Match"]!["PackageNames"] =
+            new JsonArray("Visual Studio Code");
+        committed["Rules"]![3]!["Match"]!["Sources"] =
+            new JsonArray("winget");
+        committed["Rules"]![3]!["Match"]!["Versions"] =
+            new JsonArray("1.0.0");
+        var committedJson = committed.ToJsonString();
+
+        Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializePolicyDocument(committedJson));
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDocument>(
+                committedJson,
+                PolicySerializer.Options));
+
+        var draft = committed.DeepClone();
+        draft["Metadata"]!.AsObject().Remove("Revision");
+        draft["Metadata"]!.AsObject().Remove("PublishedAt");
+        Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyDraftDocument>(
+                draft.ToJsonString(),
+                PolicySerializer.Options));
+    }
+
+    [Theory]
+    [InlineData("PolicyType")]
+    [InlineData("RulePrecedence")]
+    [InlineData("PackageNames")]
+    [InlineData("Elevation")]
+    [InlineData("Sources")]
+    [InlineData("Versions")]
+    [InlineData("VersionRange")]
+    public async Task Rust_schemas_reject_removed_policy_members(string member)
+    {
+        var policy = PolicyDocument.ParseJson(
+            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")));
+        var documents = new[]
+        {
+            (
+                Document: JsonNode.Parse(policy.ToJson())!,
+                Schema: await JsonSchema.FromFileAsync(PolicySchema)),
+            (
+                Document: JsonNode.Parse(policy.ToDraft().ToJson())!,
+                Schema: await JsonSchema.FromFileAsync(PolicyDraftSchema)),
+        };
+
+        foreach (var (document, schema) in documents)
+        {
+            switch (member)
+            {
+                case "PolicyType":
+                    document[member] = "PackageBrokerPolicy";
+                    break;
+                case "RulePrecedence":
+                    document["Enforcement"]![member] = "PriorityThenDeny";
+                    break;
+                case "PackageNames":
+                    document["Rules"]![0]!["Match"]![member] = new JsonArray("Friendly package name");
+                    break;
+                case "VersionRange":
+                    document["Rules"]![0]!["Match"]![member] = new JsonObject { ["MinVersion"] = "1.0.0" };
+                    break;
+                default:
+                    document["Rules"]![0]!["Match"]![member] = new JsonArray("Elevated");
+                    break;
+            }
+
+            Assert.NotEmpty(schema.Validate(document.ToJsonString()));
+        }
+    }
+
+    [Fact]
+    public void Canonical_policy_json_omits_removed_members()
+    {
+        var policy = PolicyDocument.ParseJson(
+            File.ReadAllText(Path.Combine(SamplesDir, "boolean-characteristics.policy.json")));
+        var json = policy.ToJson();
+
+        Assert.DoesNotContain("\"PolicyType\"", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"RulePrecedence\"", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"PackageNames\"", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"Elevation\":", json, StringComparison.Ordinal);
+        Assert.Contains("\"ExecutionElevation\"", json, StringComparison.Ordinal);
+        Assert.Contains("\"SourceNames\"", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"Sources\":", json, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -307,7 +468,6 @@ public class PolicyTests
 
     [Theory]
     [InlineData("PolicyFormatVersion")]
-    [InlineData("PolicyType")]
     [InlineData("Metadata")]
     [InlineData("Enforcement")]
     [InlineData("Rules")]
@@ -316,7 +476,6 @@ public class PolicyTests
     [InlineData("Metadata.Revision")]
     [InlineData("Metadata.PublishedAt")]
     [InlineData("Enforcement.DefaultDecision")]
-    [InlineData("Enforcement.RulePrecedence")]
     [InlineData("Rules.0.Id")]
     [InlineData("Rules.0.Priority")]
     [InlineData("Rules.0.Decision")]
@@ -334,7 +493,6 @@ public class PolicyTests
 
     [Theory]
     [InlineData("PolicyFormatVersion")]
-    [InlineData("PolicyType")]
     [InlineData("Metadata")]
     [InlineData("Enforcement")]
     [InlineData("Rules")]
@@ -343,7 +501,6 @@ public class PolicyTests
     [InlineData("Metadata.Revision")]
     [InlineData("Metadata.PublishedAt")]
     [InlineData("Enforcement.DefaultDecision")]
-    [InlineData("Enforcement.RulePrecedence")]
     [InlineData("Rules.0.Id")]
     [InlineData("Rules.0.Priority")]
     [InlineData("Rules.0.Decision")]
@@ -361,8 +518,8 @@ public class PolicyTests
 
     [Theory]
     [InlineData("Rules.0")]
-    [InlineData("Rules.3.Match.Sources.0")]
-    [InlineData("Rules.3.Match.PackageIdentifiers.0")]
+    [InlineData("Rules.3.Match.SourceNames.0")]
+    [InlineData("Rules.3.Match.PackageIdentifiers.Exact.0")]
     public void Null_policy_collection_element_is_rejected_by_parser(string elementPath)
     {
         var path = Path.Combine(SamplesDir, "corporate-allowlist.policy.json");
@@ -458,52 +615,685 @@ public class PolicyTests
     }
 
     [Fact]
-    public void Mixed_boolean_match_values_are_rejected()
+    public void Draft_conversions_reject_invalid_union_conditions_before_cloning()
     {
-        var document = JsonNode.Parse(
-            File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
-        document["Rules"]![0]!["Match"]!["Interactive"] = new JsonArray(false, true);
+        var committed = PolicyDocument.Create("invalid.clone", "Test");
+        committed.Rules.Add(new PolicyRule
+        {
+            Id = "allow.invalid",
+            Priority = 1,
+            Decision = Decision.Allow,
+            Match = new PolicyMatch
+            {
+                Managers = [ManagerName.Winget],
+                PackageIdentifiers = new PackageIdentifierCondition(),
+            },
+        });
+        Assert.Throws<JsonException>(() => committed.ToDraft());
 
-        Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(document.ToJsonString()));
+        committed.Rules[0].Match.PackageIdentifiers = new PackageIdentifierCondition
+        {
+            Exact = ["Git.Git"],
+            Patterns = null,
+        };
+        Assert.Throws<JsonException>(() => committed.ToDraft());
+
+        var draft = PolicyDraftDocument.Create("invalid.clone", "Test");
+        draft.Rules.Add(new PolicyRule
+        {
+            Id = "allow.invalid",
+            Priority = 1,
+            Decision = Decision.Allow,
+            Match = new PolicyMatch
+            {
+                Managers = [ManagerName.Winget],
+                Version = new VersionCondition(),
+            },
+        });
+        Assert.Throws<JsonException>(
+            () => draft.ToPolicyDocument(1, DateTimeOffset.UtcNow));
+
+        draft.Rules[0].Match.Version = new VersionCondition
+        {
+            Exact = ["1.0.0"],
+            Range = null,
+        };
+        Assert.Throws<JsonException>(
+            () => draft.ToPolicyDocument(1, DateTimeOffset.UtcNow));
+    }
+
+    [Theory]
+    [MemberData(nameof(BooleanMatchProperties))]
+    public void Boolean_match_characteristics_accept_omitted_null_false_and_true(string propertyName)
+    {
+        var omitted = PolicySerializer.DeserializeStrict<PolicyMatch>("{}")!;
+        Assert.Null(GetBooleanMatch(omitted, propertyName));
+        Assert.DoesNotContain($"\"{propertyName}\"", PolicySerializer.Serialize(omitted));
+
+        var explicitNull = PolicySerializer.DeserializeStrict<PolicyMatch>(
+            $$"""{"{{propertyName}}":null}""")!;
+        Assert.Null(GetBooleanMatch(explicitNull, propertyName));
+        Assert.DoesNotContain($"\"{propertyName}\"", PolicySerializer.Serialize(explicitNull));
+
+        foreach (var expected in new[] { false, true })
+        {
+            var match = PolicySerializer.DeserializeStrict<PolicyMatch>(
+                $$"""{"{{propertyName}}":{{expected.ToString().ToLowerInvariant()}}}""")!;
+            Assert.Equal(expected, GetBooleanMatch(match, propertyName));
+
+            var serialized = JsonNode.Parse(PolicySerializer.Serialize(match))!;
+            Assert.Equal(expected, serialized[propertyName]!.GetValue<bool>());
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(BooleanMatchProperties))]
+    public void Boolean_match_characteristics_reject_legacy_arrays_and_wrong_types(string propertyName)
+    {
+        foreach (var invalidValue in new[] { "[]", "[false]", "[true]", "[false,true]", "\"true\"", "0", "{}" })
+        {
+            var matchJson = $$"""{"{{propertyName}}":{{invalidValue}}}""";
+            var ruleJson =
+                $$"""{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{{matchJson}}}""";
+
+            Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyMatch>(matchJson));
+            Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyRule>(ruleJson));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyMatch>(matchJson, PolicySerializer.Options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyMatch>(matchJson, PolicySerializer.StrictOptions));
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(BooleanMatchProperties))]
+    public void Null_only_boolean_match_is_not_an_effective_rule_criterion(string propertyName)
+    {
+        var rule = new JsonObject
+        {
+            ["Id"] = "test.rule",
+            ["Priority"] = 1,
+            ["Decision"] = "Allow",
+            ["Match"] = new JsonObject { [propertyName] = null },
+        };
+        Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializeStrict<PolicyRule>(rule.ToJsonString()));
+
+        rule["Match"] = new JsonObject
+        {
+            ["Operations"] = new JsonArray("Install"),
+            [propertyName] = null,
+        };
+        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyRule>(rule.ToJsonString()));
     }
 
     [Fact]
-    public void Direct_policy_match_and_rule_deserialization_reject_mixed_boolean_values()
+    public void Boolean_match_characteristics_round_trip_in_representative_mixed_match()
     {
-        const string MatchJson = """{"Interactive":[false,true]}""";
-        const string RuleJson =
-            """{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{"Interactive":[false,true]}}""";
+        const string Json = """
+            {
+              "Operations": ["Install"],
+              "Interactive": false,
+              "SkipHashCheck": true,
+              "HasCustomParameters": false,
+              "HasUninstallPrevious": true
+            }
+            """;
 
-        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson));
-        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyRule>(RuleJson));
-        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyMatch>("""{"Interactive":[]}"""));
+        var match = PolicySerializer.DeserializeStrict<PolicyMatch>(Json)!;
+        Assert.Equal([Operation.Install], match.Operations);
+        Assert.False(match.Interactive);
+        Assert.True(match.SkipHashCheck);
+        Assert.False(match.HasCustomParameters);
+        Assert.True(match.HasUninstallPrevious);
+        Assert.Null(match.PreRelease);
+        Assert.Null(match.HasCustomInstallLocation);
+        Assert.Null(match.HasPrePostCommands);
+        Assert.Null(match.HasKillBeforeOperation);
 
-        var match = new PolicyMatch { Interactive = [false, true] };
-        Assert.Throws<JsonException>(() => PolicySerializer.Serialize(match));
-        Assert.Throws<JsonException>(() => JsonSerializer.Serialize(match, PolicySerializer.Options));
+        var serialized = JsonNode.Parse(PolicySerializer.Serialize(match))!;
+        Assert.False(serialized["Interactive"]!.GetValue<bool>());
+        Assert.True(serialized["SkipHashCheck"]!.GetValue<bool>());
+        Assert.Null(serialized["PreRelease"]);
+        Assert.Null(serialized["HasCustomInstallLocation"]);
+    }
+
+    [Theory]
+    [MemberData(nameof(CollectionMatchProperties))]
+    public void Collection_match_filters_accept_empty_input_and_canonicalize_to_omitted(
+        string propertyName,
+        string elementJson)
+    {
+        var omitted = PolicySerializer.DeserializeStrict<PolicyMatch>("{}")!;
+        Assert.Equal(0, GetCollectionMatchCount(omitted, propertyName));
+        Assert.DoesNotContain($"\"{propertyName}\"", PolicySerializer.Serialize(omitted));
+
+        var empty = PolicySerializer.DeserializeStrict<PolicyMatch>(
+            $$"""{"{{propertyName}}":[]}""")!;
+        Assert.Equal(0, GetCollectionMatchCount(empty, propertyName));
+        Assert.DoesNotContain($"\"{propertyName}\"", PolicySerializer.Serialize(empty));
+        foreach (var options in new[] { PolicySerializer.Options, PolicySerializer.StrictOptions })
+        {
+            Assert.DoesNotContain(
+                $"\"{propertyName}\"",
+                JsonSerializer.Serialize(empty, options),
+                StringComparison.Ordinal);
+        }
+
+        var populatedJson = new JsonObject
+        {
+            [propertyName] = new JsonArray(JsonNode.Parse(elementJson)),
+        };
+        if (propertyName == nameof(PolicyMatch.SourceNames))
+        {
+            populatedJson[nameof(PolicyMatch.Managers)] = new JsonArray("Winget");
+        }
+        var populated = PolicySerializer.DeserializeStrict<PolicyMatch>(populatedJson.ToJsonString())!;
+        Assert.Equal(1, GetCollectionMatchCount(populated, propertyName));
+        var serialized = JsonNode.Parse(PolicySerializer.Serialize(populated))!;
+        Assert.Single(serialized[propertyName]!.AsArray());
+    }
+
+    [Theory]
+    [MemberData(nameof(CollectionMatchProperties))]
+    public void Empty_collection_only_match_is_not_an_effective_rule_criterion(
+        string propertyName,
+        string elementJson)
+    {
+        var emptyOnly = new JsonObject
+        {
+            ["Id"] = "test.rule",
+            ["Priority"] = 1,
+            ["Decision"] = "Allow",
+            ["Match"] = new JsonObject { [propertyName] = new JsonArray() },
+        };
         Assert.Throws<JsonException>(
-            () => JsonSerializer.Deserialize<PolicyMatch>(MatchJson, PolicySerializer.Options));
-        Assert.Throws<JsonException>(
-            () => JsonSerializer.Deserialize<PolicyMatch>(MatchJson, PolicySerializer.StrictOptions));
+            () => PolicySerializer.DeserializeStrict<PolicyRule>(emptyOnly.ToJsonString()));
+
+        emptyOnly["Match"] = new JsonObject
+        {
+            [propertyName] = new JsonArray(),
+            ["Interactive"] = false,
+        };
+        var rule = PolicySerializer.DeserializeStrict<PolicyRule>(emptyOnly.ToJsonString())!;
+        var serialized = JsonNode.Parse(PolicySerializer.Serialize(rule))!;
+        Assert.Null(serialized["Match"]![propertyName]);
+        Assert.False(serialized["Match"]!["Interactive"]!.GetValue<bool>());
+
+        emptyOnly["Match"] = new JsonObject
+        {
+            [propertyName] = new JsonArray(JsonNode.Parse(elementJson)),
+        };
+        if (propertyName == nameof(PolicyMatch.SourceNames))
+        {
+            emptyOnly["Match"]!["Managers"] = new JsonArray("Winget");
+        }
+        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyRule>(emptyOnly.ToJsonString()));
+    }
+
+    [Fact]
+    public void Source_names_require_managers_and_preserve_exact_literal_names()
+    {
+        const string WithoutManager = """
+            {
+              "Id": "source.rule",
+              "Priority": 1,
+              "Decision": "Allow",
+              "Match": { "SourceNames": ["corp*"] }
+            }
+            """;
+        var exception = Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializeStrict<PolicyRule>(WithoutManager));
+        Assert.Contains("$.Match.SourceNames", exception.Message, StringComparison.Ordinal);
+
+        const string WithManager = """
+            {
+              "Id": "source.rule",
+              "Priority": 1,
+              "Decision": "Allow",
+              "Match": {
+                "Managers": ["Winget"],
+                "SourceNames": ["corp*", "PSGallery"]
+              }
+            }
+            """;
+        var rule = PolicySerializer.DeserializeStrict<PolicyRule>(WithManager)!;
+        Assert.Equal([ManagerName.Winget], rule.Match.Managers);
+        Assert.Equal(["corp*", "PSGallery"], rule.Match.SourceNames);
+
+        var serialized = JsonNode.Parse(PolicySerializer.Serialize(rule))!;
+        Assert.Equal("corp*", serialized["Match"]!["SourceNames"]![0]!.GetValue<string>());
+
+        rule.Match.Managers.Clear();
+        exception = Assert.Throws<JsonException>(() => PolicySerializer.Serialize(rule));
+        Assert.Contains("$.Match.SourceNames", exception.Message, StringComparison.Ordinal);
+
+        const string MultipleManagers = """
+            {
+              "Id": "source.rule",
+              "Priority": 1,
+              "Decision": "Allow",
+              "Match": {
+                "Managers": ["Winget", "PowerShell"],
+                "SourceNames": ["corp"]
+              }
+            }
+            """;
+        exception = Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializeStrict<PolicyRule>(MultipleManagers));
+        Assert.Contains("$.Match.SourceNames", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Rust_schemas_require_exactly_one_manager_for_source_names()
+    {
+        foreach (var schemaPath in new[] { PolicySchema, PolicyDraftSchema })
+        {
+            var schema = JsonNode.Parse(File.ReadAllText(schemaPath))!;
+            var match = schema["definitions"]!["PolicyRule"]!["properties"]!["Match"]!;
+
+            Assert.Contains(
+                "SourceNames",
+                match["if"]!["required"]!.AsArray().Select(value => value!.GetValue<string>()));
+            Assert.Contains(
+                "Managers",
+                match["then"]!["required"]!.AsArray().Select(value => value!.GetValue<string>()));
+            Assert.Equal(1, match["then"]!["properties"]!["Managers"]!["minItems"]!.GetValue<int>());
+            Assert.Equal(1, match["then"]!["properties"]!["Managers"]!["maxItems"]!.GetValue<int>());
+        }
+    }
+
+    [Fact]
+    public void Package_identifier_condition_requires_exactly_one_nonempty_mode()
+    {
+        const string Exact = """{"Exact":["Microsoft.VisualStudioCode"]}""";
+        var exact = PolicySerializer.DeserializeStrict<PackageIdentifierCondition>(Exact)!;
+        Assert.Equal(["Microsoft.VisualStudioCode"], exact.Exact);
+        Assert.Null(exact.Patterns);
+
+        const string Patterns = """{"Patterns":["Microsoft.*"]}""";
+        var patterns = PolicySerializer.DeserializeStrict<PackageIdentifierCondition>(Patterns)!;
+        Assert.Equal(["Microsoft.*"], patterns.Patterns);
+        Assert.Null(patterns.Exact);
+
+        foreach (var invalid in new[]
+        {
+            "{}",
+            """{"Exact":[]}""",
+            """{"Patterns":[]}""",
+            """{"Exact":["Microsoft.VisualStudioCode"],"Patterns":["Microsoft.*"]}""",
+            """{"Exact":["Microsoft.VisualStudioCode"],"Patterns":null}""",
+            """{"Patterns":null,"Exact":["Microsoft.VisualStudioCode"]}""",
+            """{"Patterns":["Microsoft.*"],"Exact":null}""",
+            """{"Exact":null,"Patterns":["Microsoft.*"]}""",
+            """{"Exact":["Microsoft.*"]}""",
+            """{"Exact":["Microsoft.VisualStudioCode"],"\u0045xact":["Git.Git"]}""",
+        })
+        {
+            Assert.Throws<JsonException>(
+                () => PolicySerializer.DeserializeStrict<PackageIdentifierCondition>(invalid));
+        }
+
+        const string OldFlatList = """{"PackageIdentifiers":["Microsoft.VisualStudioCode"]}""";
+        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyMatch>(OldFlatList));
+
+        var absent = PolicySerializer.DeserializeStrict<PolicyMatch>(
+            """{"PackageIdentifiers":null}""")!;
+        Assert.DoesNotContain("\"PackageIdentifiers\"", PolicySerializer.Serialize(absent));
+
+        var match = PolicySerializer.DeserializeStrict<PolicyMatch>(
+            """{"PackageIdentifiers":{"Patterns":["Microsoft.*"]}}""")!;
+        Assert.Equal(["Microsoft.*"], match.PackageIdentifiers!.Patterns);
+        Assert.Contains("\"Patterns\"", PolicySerializer.Serialize(match), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Version_condition_requires_exactly_one_nonempty_mode()
+    {
+        const string Exact = """{"Exact":["5.6.0.0","2026.09-preview"]}""";
+        var exact = PolicySerializer.DeserializeStrict<VersionCondition>(Exact)!;
+        Assert.Equal(["5.6.0.0", "2026.09-preview"], exact.Exact);
+        Assert.Null(exact.Range);
+
+        const string Range = """{"Range":{"MinVersion":"1.0.0","MaxVersion":"2.0.0"}}""";
+        var range = PolicySerializer.DeserializeStrict<VersionCondition>(Range)!;
+        Assert.Equal("1.0.0", range.Range!.MinVersion);
+        Assert.Null(range.Exact);
+
+        foreach (var invalid in new[]
+        {
+            "{}",
+            """{"Exact":[]}""",
+            """{"Exact":["1.0.0"],"Range":{"MinVersion":"1.0.0"}}""",
+            """{"Exact":["1.0.0"],"Range":null}""",
+            """{"Range":null,"Exact":["1.0.0"]}""",
+            """{"Range":{"MinVersion":"1.0.0"},"Exact":null}""",
+            """{"Exact":null,"Range":{"MinVersion":"1.0.0"}}""",
+            """{"Exact":["1.0.0"],"\u0045xact":["2.0.0"]}""",
+        })
+        {
+            Assert.Throws<JsonException>(
+                () => PolicySerializer.DeserializeStrict<VersionCondition>(invalid));
+        }
+
+        foreach (var old in new[]
+        {
+            """{"Versions":["1.0.0"]}""",
+            """{"VersionRange":{"MinVersion":"1.0.0"}}""",
+        })
+        {
+            Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyMatch>(old));
+        }
+
+        var absent = PolicySerializer.DeserializeStrict<PolicyMatch>("""{"Version":null}""")!;
+        Assert.DoesNotContain("\"Version\"", PolicySerializer.Serialize(absent));
+    }
+
+    [Fact]
+    public async Task Rust_schemas_enforce_package_identifier_and_version_modes()
+    {
+        var policy = PolicyDocument.ParseJson(
+            File.ReadAllText(Path.Combine(SamplesDir, "boolean-characteristics.policy.json")));
+        var documents = new[]
+        {
+            (
+                Document: JsonNode.Parse(policy.ToJson())!,
+                Schema: await JsonSchema.FromFileAsync(PolicySchema)),
+            (
+                Document: JsonNode.Parse(policy.ToDraft().ToJson())!,
+                Schema: await JsonSchema.FromFileAsync(PolicyDraftSchema)),
+        };
+
+        foreach (var (document, schema) in documents)
+        {
+            var match = document["Rules"]![0]!["Match"]!;
+            foreach (var invalidIdentifiers in new JsonNode[]
+            {
+                new JsonArray("Microsoft.VisualStudioCode"),
+                new JsonObject(),
+                new JsonObject { ["Exact"] = new JsonArray() },
+                new JsonObject { ["Exact"] = new JsonArray("Microsoft.*") },
+                new JsonObject { ["Exact"] = new JsonArray("Git.Git\n") },
+                new JsonObject
+                {
+                    ["Exact"] = new JsonArray("Microsoft.VisualStudioCode"),
+                    ["Patterns"] = new JsonArray("Microsoft.*"),
+                },
+            })
+            {
+                match["PackageIdentifiers"] = invalidIdentifiers.DeepClone();
+                Assert.NotEmpty(schema.Validate(document.ToJsonString()));
+            }
+
+            match["PackageIdentifiers"] = new JsonObject
+            {
+                ["Patterns"] = new JsonArray("Microsoft.*"),
+            };
+            Assert.Empty(schema.Validate(document.ToJsonString()));
+
+            foreach (var invalidVersion in new JsonNode[]
+            {
+                new JsonObject(),
+                new JsonObject { ["Exact"] = new JsonArray() },
+                new JsonObject
+                {
+                    ["Exact"] = new JsonArray("1.0.0"),
+                    ["Range"] = new JsonObject { ["MinVersion"] = "1.0.0" },
+                },
+            })
+            {
+                match["Version"] = invalidVersion.DeepClone();
+                Assert.NotEmpty(schema.Validate(document.ToJsonString()));
+            }
+
+            match["Version"] = new JsonObject
+            {
+                ["Range"] = new JsonObject { ["MinVersion"] = "1.0.0" },
+            };
+            Assert.Empty(schema.Validate(document.ToJsonString()));
+        }
+    }
+
+    [Fact]
+    public void Shared_boolean_characteristics_sample_has_expected_scalar_values()
+    {
+        var policy = PolicyDocument.ParseJson(
+            File.ReadAllText(Path.Combine(SamplesDir, "boolean-characteristics.policy.json")));
+        var match = Assert.Single(policy.Rules).Match;
+
+        Assert.False(match.Interactive);
+        Assert.True(match.SkipHashCheck);
+        Assert.False(match.PreRelease);
+        Assert.True(match.HasCustomParameters);
+        Assert.False(match.HasCustomInstallLocation);
+        Assert.True(match.HasPrePostCommands);
+        Assert.False(match.HasKillBeforeOperation);
+        Assert.True(match.HasUninstallPrevious);
+        Assert.Equal([ManagerName.Winget], match.Managers);
+        Assert.Equal(["corp*"], match.SourceNames);
+        Assert.Equal(["Microsoft.VisualStudioCode"], match.PackageIdentifiers!.Exact);
+        Assert.Equal(["5.6.0.0"], match.Version!.Exact);
+        Assert.Equal([Elevation.Elevated], match.ExecutionElevation);
+    }
+
+    [Fact]
+    public void Constraints_are_valid_only_for_allow_rules()
+    {
+        const string AllowWithConstraints = """
+            {
+              "Id": "allow.rule",
+              "Priority": 1,
+              "Decision": "Allow",
+              "Match": { "Operations": ["Install"] },
+              "Constraints": { "AllowInteractive": false }
+            }
+            """;
+        var allow = PolicySerializer.DeserializeStrict<PolicyRule>(AllowWithConstraints)!;
+        Assert.NotNull(allow.Constraints);
+        Assert.Contains("\"Constraints\"", PolicySerializer.Serialize(allow), StringComparison.Ordinal);
+
+        const string AllowWithoutConstraints = """
+            {
+              "Id": "allow.rule",
+              "Priority": 1,
+              "Decision": "Allow",
+              "Match": { "Operations": ["Install"] }
+            }
+            """;
+        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyRule>(AllowWithoutConstraints));
+
+        const string DenyWithoutConstraints = """
+            {
+              "Id": "deny.rule",
+              "Priority": 1,
+              "Decision": "Deny",
+              "Match": { "Operations": ["Install"] }
+            }
+            """;
+        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyRule>(DenyWithoutConstraints));
+
+        const string DenyWithNullConstraints = """
+            {
+              "Id": "deny.rule",
+              "Priority": 1,
+              "Decision": "Deny",
+              "Match": { "Operations": ["Install"] },
+              "Constraints": null
+            }
+            """;
+        var deny = PolicySerializer.DeserializeStrict<PolicyRule>(DenyWithNullConstraints)!;
+        Assert.DoesNotContain("\"Constraints\"", PolicySerializer.Serialize(deny), StringComparison.Ordinal);
+
+        const string DenyWithConstraints = """
+            {
+              "Id": "deny.rule",
+              "Enabled": false,
+              "Priority": 1,
+              "Decision": "Deny",
+              "Match": { "Operations": ["Install"] },
+              "Constraints": { "AllowInteractive": false }
+            }
+            """;
+        var exception = Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializeStrict<PolicyRule>(DenyWithConstraints));
+        Assert.Contains("$.Constraints", exception.Message, StringComparison.Ordinal);
+
+        allow.Decision = Decision.Deny;
+        exception = Assert.Throws<JsonException>(() => PolicySerializer.Serialize(allow));
+        Assert.Contains("$.Constraints", exception.Message, StringComparison.Ordinal);
+
+        foreach (var options in new[] { PolicySerializer.Options, PolicySerializer.StrictOptions })
+        {
+            exception = Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyRule>(DenyWithConstraints, options));
+            Assert.Contains("$.Constraints", exception.Message, StringComparison.Ordinal);
+            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(allow, options));
+        }
+    }
+
+    [Fact]
+    public async Task Rust_schemas_allow_constraints_only_for_allow_rules()
+    {
+        var policy = PolicyDocument.ParseJson(
+            File.ReadAllText(Path.Combine(SamplesDir, "boolean-characteristics.policy.json")));
+        var documents = new[]
+        {
+            (
+                Document: JsonNode.Parse(policy.ToJson())!,
+                Schema: await JsonSchema.FromFileAsync(PolicySchema)),
+            (
+                Document: JsonNode.Parse(policy.ToDraft().ToJson())!,
+                Schema: await JsonSchema.FromFileAsync(PolicyDraftSchema)),
+        };
+
+        foreach (var (document, schema) in documents)
+        {
+            var rule = document["Rules"]!.AsArray()
+                .First(rule => rule!["Decision"]!.GetValue<string>() == "Allow")!;
+            rule["Constraints"] = new JsonObject { ["AllowInteractive"] = false };
+            Assert.Empty(schema.Validate(document.ToJsonString()));
+
+            rule["Decision"] = "Deny";
+            Assert.NotEmpty(schema.Validate(document.ToJsonString()));
+
+            rule["Constraints"] = null;
+            Assert.Empty(schema.Validate(document.ToJsonString()));
+
+            rule.AsObject().Remove("Constraints");
+            Assert.Empty(schema.Validate(document.ToJsonString()));
+        }
+    }
+
+    [Fact]
+    public void Rust_schemas_define_boolean_match_characteristics_as_nullable_scalars()
+    {
+        foreach (var schemaPath in new[] { PolicySchema, PolicyDraftSchema })
+        {
+            var schema = JsonNode.Parse(File.ReadAllText(schemaPath))!;
+            var properties = schema["definitions"]!["PolicyRule"]!["properties"]!["Match"]!["properties"]!;
+
+            foreach (var propertyName in new[]
+            {
+                nameof(PolicyMatch.Interactive),
+                nameof(PolicyMatch.SkipHashCheck),
+                nameof(PolicyMatch.PreRelease),
+                nameof(PolicyMatch.HasCustomParameters),
+                nameof(PolicyMatch.HasCustomInstallLocation),
+                nameof(PolicyMatch.HasPrePostCommands),
+                nameof(PolicyMatch.HasKillBeforeOperation),
+                nameof(PolicyMatch.HasUninstallPrevious),
+            })
+            {
+                var property = properties[propertyName]!;
+                var types = property["type"]!.AsArray().Select(value => value!.GetValue<string>()).ToList();
+
+                Assert.Contains("boolean", types);
+                Assert.Contains("null", types);
+                Assert.Null(property["items"]);
+                Assert.Null(property["maxItems"]);
+                Assert.Null(property["uniqueItems"]);
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(BooleanMatchProperties))]
+    public async Task Rust_schemas_reject_legacy_boolean_match_arrays_and_wrong_types(string propertyName)
+    {
+        var committed = PolicyDocument.ParseJson(
+            File.ReadAllText(Path.Combine(SamplesDir, "boolean-characteristics.policy.json")));
+        var documents = new[]
+        {
+            (
+                Document: JsonNode.Parse(committed.ToJson())!,
+                Schema: await JsonSchema.FromFileAsync(PolicySchema)),
+            (
+                Document: JsonNode.Parse(committed.ToDraft().ToJson())!,
+                Schema: await JsonSchema.FromFileAsync(PolicyDraftSchema)),
+        };
+
+        foreach (var invalidValue in new[] { "[]", "[false]", "[true]", "[false,true]", "\"true\"", "0", "{}" })
+        {
+            foreach (var (document, schema) in documents)
+            {
+                document["Rules"]![0]!["Match"]![propertyName] = JsonNode.Parse(invalidValue);
+                Assert.NotEmpty(schema.Validate(document.ToJsonString()));
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(BooleanMatchProperties))]
+    public async Task Rust_schemas_require_an_effective_rule_criterion_when_boolean_is_null(string propertyName)
+    {
+        var committed = PolicyDocument.ParseJson(
+            File.ReadAllText(Path.Combine(SamplesDir, "boolean-characteristics.policy.json")));
+        var documents = new[]
+        {
+            (
+                Document: JsonNode.Parse(committed.ToJson())!,
+                Schema: await JsonSchema.FromFileAsync(PolicySchema)),
+            (
+                Document: JsonNode.Parse(committed.ToDraft().ToJson())!,
+                Schema: await JsonSchema.FromFileAsync(PolicyDraftSchema)),
+        };
+
+        foreach (var (document, schema) in documents)
+        {
+            document["Rules"]![0]!["Match"] = new JsonObject { [propertyName] = null };
+            Assert.NotEmpty(schema.Validate(document.ToJsonString()));
+
+            document["Rules"]![0]!["Match"] = new JsonObject
+            {
+                ["Operations"] = new JsonArray("Install"),
+                [propertyName] = null,
+            };
+            Assert.Empty(schema.Validate(document.ToJsonString()));
+        }
     }
 
     [Theory]
     [InlineData("StringPattern", 256)]
+    [InlineData("SourceName", 128)]
     [InlineData("VersionString", 128)]
     [InlineData("CustomParameterString", 512)]
     public void Policy_text_lists_count_unicode_scalars_at_length_boundaries(string valueKind, int maximum)
     {
         var document = JsonNode.Parse(
             File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
-        var rule = document["Rules"]![0]!;
+        var rule = document["Rules"]!.AsArray()
+            .First(rule => rule!["Decision"]!.GetValue<string>() == "Allow")!;
         var values = new JsonArray();
         switch (valueKind)
         {
             case "StringPattern":
-                rule["Match"]!["PackageNames"] = values;
+                rule["Match"]!["PackageIdentifiers"] = new JsonObject { ["Patterns"] = values };
+                break;
+            case "SourceName":
+                rule["Match"]!["SourceNames"] = values;
                 break;
             case "VersionString":
-                rule["Match"]!["Versions"] = values;
+                rule["Match"]!["Version"] = new JsonObject { ["Exact"] = values };
                 break;
             default:
                 var constraints = rule["Constraints"] as JsonObject ?? new JsonObject();
@@ -603,6 +1393,32 @@ public class PolicyTests
         return constraints;
     }
 
+    private static bool? GetBooleanMatch(PolicyMatch match, string propertyName) =>
+        propertyName switch
+        {
+            nameof(PolicyMatch.Interactive) => match.Interactive,
+            nameof(PolicyMatch.SkipHashCheck) => match.SkipHashCheck,
+            nameof(PolicyMatch.PreRelease) => match.PreRelease,
+            nameof(PolicyMatch.HasCustomParameters) => match.HasCustomParameters,
+            nameof(PolicyMatch.HasCustomInstallLocation) => match.HasCustomInstallLocation,
+            nameof(PolicyMatch.HasPrePostCommands) => match.HasPrePostCommands,
+            nameof(PolicyMatch.HasKillBeforeOperation) => match.HasKillBeforeOperation,
+            nameof(PolicyMatch.HasUninstallPrevious) => match.HasUninstallPrevious,
+            _ => throw new ArgumentOutOfRangeException(nameof(propertyName), propertyName, null),
+        };
+
+    private static int GetCollectionMatchCount(PolicyMatch match, string propertyName) =>
+        propertyName switch
+        {
+            nameof(PolicyMatch.Operations) => match.Operations.Count,
+            nameof(PolicyMatch.Managers) => match.Managers.Count,
+            nameof(PolicyMatch.SourceNames) => match.SourceNames.Count,
+            nameof(PolicyMatch.Scopes) => match.Scopes.Count,
+            nameof(PolicyMatch.Architectures) => match.Architectures.Count,
+            nameof(PolicyMatch.ExecutionElevation) => match.ExecutionElevation.Count,
+            _ => throw new ArgumentOutOfRangeException(nameof(propertyName), propertyName, null),
+        };
+
     private static string ResolvePolicyCrateRoot([CallerFilePath] string thisFile = "")
     {
         var testsDir = Path.GetDirectoryName(thisFile)!;
@@ -614,7 +1430,6 @@ public class PolicyTests
         return $$"""
         {
             "PolicyFormatVersion": "1.0.0",
-            "PolicyType": "PackageBrokerPolicy",
             "Metadata": {
                 "Id": "test.policy",
                 "Publisher": "Test",
@@ -622,8 +1437,7 @@ public class PolicyTests
                 "PublishedAt": "2026-01-01T00:00:00Z"
             },
             "Enforcement": {
-                "DefaultDecision": "Deny",
-                "RulePrecedence": "PriorityThenDeny"
+                "DefaultDecision": "Deny"
             },
         {{rules}}
         }

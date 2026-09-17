@@ -1,6 +1,5 @@
 {
   "PolicyFormatVersion": "1.0.0",
-  "PolicyType": "PackageBrokerPolicy",
   "Metadata": {
     "Id": "contoso.powershell.current-user-modules",
     "Publisher": "Contoso IT",
@@ -9,8 +8,7 @@
     "Description": "PowerShell Gallery module policy for non-admin CurrentUser installs."
   },
   "Enforcement": {
-    "DefaultDecision": "Deny",
-    "RulePrecedence": "PriorityThenDeny"
+    "DefaultDecision": "Deny"
   },
   "Rules": [
     {
@@ -36,7 +34,7 @@
         "Managers": [
           "PowerShell"
         ],
-        "Elevation": [
+        "ExecutionElevation": [
           "Elevated"
         ]
       }
@@ -50,9 +48,7 @@
         "Managers": [
           "PowerShell"
         ],
-        "PreRelease": [
-          true
-        ]
+        "PreRelease": true
       }
     },
     {
@@ -68,12 +64,14 @@
         "Managers": [
           "PowerShell"
         ],
-        "Sources": [
+        "SourceNames": [
           "PSGallery"
         ],
-        "PackageIdentifiers": [
-          "Pester"
-        ],
+        "PackageIdentifiers": {
+          "Exact": [
+            "Pester"
+          ]
+        },
         "Scopes": [
           "User"
         ]

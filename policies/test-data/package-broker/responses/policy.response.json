@@ -7,7 +7,6 @@
   },
   "Policy": {
     "PolicyFormatVersion": "1.0.0",
-    "PolicyType": "PackageBrokerPolicy",
     "Metadata": {
       "Id": "contoso.desktop.standard-allowlist",
       "Publisher": "Contoso IT",
@@ -16,8 +15,7 @@
       "Description": "Fail-closed policy for standard workstation package installs."
     },
     "Enforcement": {
-      "DefaultDecision": "Deny",
-      "RulePrecedence": "PriorityThenDeny"
+      "DefaultDecision": "Deny"
     },
     "Rules": [
       {
@@ -31,9 +29,7 @@
             "Install",
             "Update"
           ],
-          "SkipHashCheck": [
-            true
-          ]
+          "SkipHashCheck": true
         }
       },
       {
@@ -43,9 +39,7 @@
         "Decision": "Deny",
         "Reason": "Custom package-manager parameters are not allowed in the workstation allow list.",
         "Match": {
-          "HasCustomParameters": [
-            true
-          ]
+          "HasCustomParameters": true
         }
       },
       {
@@ -55,9 +49,7 @@
         "Decision": "Deny",
         "Reason": "Pre and post operation commands are not allowed in the workstation allow list.",
         "Match": {
-          "HasPrePostCommands": [
-            true
-          ]
+          "HasPrePostCommands": true
         }
       },
       {
@@ -74,12 +66,14 @@
           "Managers": [
             "Winget"
           ],
-          "Sources": [
+          "SourceNames": [
             "winget"
           ],
-          "PackageIdentifiers": [
-            "Microsoft.VisualStudioCode"
-          ],
+          "PackageIdentifiers": {
+            "Exact": [
+              "Microsoft.VisualStudioCode"
+            ]
+          },
           "Scopes": [
             "User",
             "Machine"
@@ -112,12 +106,14 @@
           "Managers": [
             "Winget"
           ],
-          "Sources": [
+          "SourceNames": [
             "winget"
           ],
-          "PackageIdentifiers": [
-            "Microsoft.PowerToys"
-          ],
+          "PackageIdentifiers": {
+            "Exact": [
+              "Microsoft.PowerToys"
+            ]
+          },
           "Scopes": [
             "User",
             "Machine"

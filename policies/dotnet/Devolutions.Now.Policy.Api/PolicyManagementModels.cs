@@ -135,7 +135,6 @@ public enum PolicyFindingCode
     InvalidWildcardPattern,
     ContradictoryConstraints,
     InvalidValidityInterval,
-    UnsupportedPolicyType,
     UnsupportedPolicyFormatVersion,
     AuditModeEnabled,
     DefaultAllow,

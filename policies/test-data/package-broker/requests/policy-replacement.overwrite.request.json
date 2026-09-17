@@ -7,9 +7,8 @@
   "WarningsAcknowledged": true,
   "Draft": {
     "PolicyFormatVersion": "1.0.0",
-    "PolicyType": "PackageBrokerPolicy",
     "Metadata": { "Id": "contoso.package-policy", "Publisher": "Contoso IT" },
-    "Enforcement": { "DefaultDecision": "Deny", "RulePrecedence": "PriorityThenDeny" },
+    "Enforcement": { "DefaultDecision": "Deny" },
     "Rules": []
   },
   "ValidationReceipt": "receipt:sha256:overwrite"

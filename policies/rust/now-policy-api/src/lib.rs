@@ -407,37 +407,8 @@ impl From<&str> for RuleId {
 
 /// Package identifier string.
 ///
-/// Validated against an explicit allowlist of characters: ASCII alphanumerics
-/// plus `. - _ + @ / : [ ] , # $ % { }`.
-///
-/// - `.`, `-`, `_`, `+`: winget (`Notepad++.Notepad++`), chocolatey, pip, cargo,
-///   dotnet, apt/dnf/pacman (`g++`, `libstdc++6`), PowerShell modules;
-///
-/// - `@`, `/`: scoped npm/Bun packages (`@scope/package`), homebrew and scoop
-///   `tap/formula` paths, versioned formulas (`python@3.11`);
-///
-/// - `:`: npm aliases (`alias:@scope/package@1.0.0`), vcpkg triplets
-///   (`curl:x64-windows`);
-///
-/// - `[`, `]`, `,`: vcpkg features (`curl[ssl,http2]:x64-windows`), pip extras
-///   (`requests[socks]`);
-///
-/// - `#`, `$`, `%`, `{`, `}`: additional identifier punctuation (accepted by
-///   product decision for forward compatibility). Caveat: these characters
-///   carry expansion semantics in some shells (`${VAR}`, `%VAR%`, brace
-///   expansion), so downstream command builders must pass identifiers as
-///   discrete process arguments and never interpolate them into a shell
-///   command line.
-///
-/// Version range/pin operators (`<`, `>`, `=`, `!`, `|`, `^`, `~`) are
-/// rejected: the broker matches against a specific, exact version carried in
-/// the request's separate `Package.Version` field, so range expressions do
-/// not belong in the identifier (npm aliases must use exact versions, e.g.
-/// `alias:pkg@7.20.0`). The wildcards `*` and `?` are also rejected:
-/// policy-side package identifier matching is wildcard-based, so wildcards in
-/// request identifiers would be ambiguous. Everything else — whitespace,
-/// control characters, `"`, `\`, backtick, `& ' ( ) ;`, and non-ASCII — is
-/// rejected as well.
+/// Validated against an explicit allowlist of characters used by supported
+/// package managers. Wildcards and version range operators are rejected.
 #[derive(
     Debug,
     Clone,
@@ -465,18 +436,16 @@ impl PackageIdentifier {
                 reason: "must not be empty".to_owned(),
             });
         }
-
         if s.len() > 256 {
             return Err(ModelValidationError::Invalid {
                 type_name: "PackageIdentifier",
                 reason: format!("length {} exceeds maximum 256", s.len()),
             });
         }
-
-        if !s.bytes().all(|b| {
-            b.is_ascii_alphanumeric()
+        if !s.bytes().all(|byte| {
+            byte.is_ascii_alphanumeric()
                 || matches!(
-                    b,
+                    byte,
                     b'.' | b'-'
                         | b'_'
                         | b'+'
@@ -505,8 +474,8 @@ impl PackageIdentifier {
 
 impl<'de> Deserialize<'de> for PackageIdentifier {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let s = String::deserialize(deserializer)?;
-        Self::parse(&s).map_err(serde::de::Error::custom)
+        let value = String::deserialize(deserializer)?;
+        Self::parse(&value).map_err(serde::de::Error::custom)
     }
 }
 

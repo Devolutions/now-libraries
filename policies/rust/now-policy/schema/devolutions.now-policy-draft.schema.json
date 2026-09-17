@@ -72,15 +72,57 @@
       ],
       "type": "string"
     },
-    "PackageBrokerPolicy": {
-      "enum": [
-        "PackageBrokerPolicy"
-      ],
+    "PackageIdentifier": {
+      "description": "Exact stable package identifier used by requests and exact policy matching.\n\n Manager-specific punctuation used by real identifiers is accepted, while\n wildcard characters and range/pin operators are rejected.",
+      "maxLength": 256,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._+@/:\\[\\],#$%{}-]+(?![\\s\\S])",
       "type": "string"
+    },
+    "PackageIdentifierCondition": {
+      "description": "Exactly one package-identifier mode. Exact authorizes stable identifiers; Patterns explicitly authorizes every identifier matched by a wildcard pattern.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "Exact": {
+              "items": {
+                "$ref": "#/definitions/PackageIdentifier"
+              },
+              "maxItems": 1024,
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "Exact"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "Patterns": {
+              "items": {
+                "$ref": "#/definitions/StringPattern"
+              },
+              "maxItems": 1024,
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "Patterns"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "PolicyConstraints": {
       "additionalProperties": false,
-      "description": "Constraints applied after a rule matches.",
+      "description": "Additional safety limits applied after an Allow rule matches.",
       "properties": {
         "AllowCustomInstallLocation": {
           "description": "Allow custom install location.",
@@ -215,7 +257,7 @@
     },
     "PolicyEnforcement": {
       "additionalProperties": false,
-      "description": "Enforcement configuration.",
+      "description": "Enforcement configuration.\n\n Matching rules are evaluated by ascending priority. Deny wins equal-priority\n Allow/Deny ties; remaining equal-priority ties retain document order.",
       "properties": {
         "AuditMode": {
           "description": "When true, broker logs decisions but does not enforce.",
@@ -231,19 +273,10 @@
             }
           ],
           "description": "Decision when no rule matches."
-        },
-        "RulePrecedence": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/RulePrecedence"
-            }
-          ],
-          "description": "Rule precedence strategy (must be \"PriorityThenDeny\")."
         }
       },
       "required": [
-        "DefaultDecision",
-        "RulePrecedence"
+        "DefaultDecision"
       ],
       "type": "object"
     },
@@ -253,180 +286,25 @@
       "pattern": "^1\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?![\\s\\S])",
       "type": "string"
     },
-    "PolicyMatch": {
-      "additionalProperties": false,
-      "description": "Match criteria for a policy rule. All specified fields must match.\n At least one field must be present.",
-      "properties": {
-        "Architectures": {
-          "description": "Allowed architectures.",
-          "items": {
-            "$ref": "#/definitions/Architecture"
-          },
-          "maxItems": 5,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "Elevation": {
-          "description": "Allowed elevation levels.",
-          "items": {
-            "$ref": "#/definitions/Elevation"
-          },
-          "maxItems": 2,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "HasCustomInstallLocation": {
-          "description": "Whether request has custom install location.",
-          "items": {
-            "type": "boolean"
-          },
-          "maxItems": 1,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "HasCustomParameters": {
-          "description": "Whether request has custom parameters.",
-          "items": {
-            "type": "boolean"
-          },
-          "maxItems": 1,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "HasKillBeforeOperation": {
-          "description": "Whether request has kill-before-operation entries.",
-          "items": {
-            "type": "boolean"
-          },
-          "maxItems": 1,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "HasPrePostCommands": {
-          "description": "Whether request has pre/post operation commands.",
-          "items": {
-            "type": "boolean"
-          },
-          "maxItems": 1,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "HasUninstallPrevious": {
-          "description": "Whether request has uninstall-previous flag set.",
-          "items": {
-            "type": "boolean"
-          },
-          "maxItems": 1,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "Interactive": {
-          "description": "Allowed interactive values.",
-          "items": {
-            "type": "boolean"
-          },
-          "maxItems": 1,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "Managers": {
-          "description": "Allowed managers.",
-          "items": {
-            "$ref": "#/definitions/ManagerName"
-          },
-          "maxItems": 16,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "Operations": {
-          "description": "Allowed operations.",
-          "items": {
-            "$ref": "#/definitions/Operation"
-          },
-          "maxItems": 3,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "PackageIdentifiers": {
-          "description": "Package identifier patterns (wildcard).",
-          "items": {
-            "$ref": "#/definitions/StringPattern"
-          },
-          "maxItems": 1024,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "PackageNames": {
-          "description": "Package name patterns (wildcard).",
-          "items": {
-            "$ref": "#/definitions/StringPattern"
-          },
-          "maxItems": 1024,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "PreRelease": {
-          "description": "Allowed preRelease values.",
-          "items": {
-            "type": "boolean"
-          },
-          "maxItems": 1,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "Scopes": {
-          "description": "Allowed scopes.",
-          "items": {
-            "$ref": "#/definitions/Scope"
-          },
-          "maxItems": 2,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "SkipHashCheck": {
-          "description": "Allowed skipHashCheck values.",
-          "items": {
-            "type": "boolean"
-          },
-          "maxItems": 1,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "Sources": {
-          "description": "Source patterns (wildcard).",
-          "items": {
-            "$ref": "#/definitions/StringPattern"
-          },
-          "maxItems": 128,
-          "type": "array",
-          "uniqueItems": true
-        },
-        "VersionRange": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/VersionRange"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Semantic version range."
-        },
-        "Versions": {
-          "description": "Exact version list.",
-          "items": {
-            "$ref": "#/definitions/VersionString"
-          },
-          "maxItems": 256,
-          "type": "array",
-          "uniqueItems": true
-        }
-      },
-      "type": "object"
-    },
     "PolicyRule": {
       "additionalProperties": false,
       "description": "A single policy rule.",
+      "not": {
+        "properties": {
+          "Constraints": {
+            "type": "object"
+          },
+          "Decision": {
+            "enum": [
+              "Deny"
+            ]
+          }
+        },
+        "required": [
+          "Decision",
+          "Constraints"
+        ]
+      },
       "properties": {
         "Constraints": {
           "anyOf": [
@@ -437,7 +315,7 @@
               "type": "null"
             }
           ],
-          "description": "Additional constraints applied after matching.\n When absent, no constraints are enforced beyond the match criteria."
+          "description": "Additional safety limits applied after an Allow rule matches.\n Constraints are invalid on Deny rules."
         },
         "Decision": {
           "allOf": [
@@ -461,13 +339,327 @@
           "description": "Unique rule identifier."
         },
         "Match": {
-          "allOf": [
+          "additionalProperties": false,
+          "anyOf": [
             {
-              "$ref": "#/definitions/PolicyMatch"
+              "properties": {
+                "Operations": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "Operations"
+              ]
+            },
+            {
+              "properties": {
+                "Managers": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "Managers"
+              ]
+            },
+            {
+              "properties": {
+                "SourceNames": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "SourceNames"
+              ]
+            },
+            {
+              "properties": {
+                "PackageIdentifiers": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "PackageIdentifiers"
+              ]
+            },
+            {
+              "properties": {
+                "Version": {
+                  "type": "object"
+                }
+              },
+              "required": [
+                "Version"
+              ]
+            },
+            {
+              "properties": {
+                "Scopes": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "Scopes"
+              ]
+            },
+            {
+              "properties": {
+                "Architectures": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "Architectures"
+              ]
+            },
+            {
+              "properties": {
+                "ExecutionElevation": {
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "ExecutionElevation"
+              ]
+            },
+            {
+              "properties": {
+                "Interactive": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "Interactive"
+              ]
+            },
+            {
+              "properties": {
+                "SkipHashCheck": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "SkipHashCheck"
+              ]
+            },
+            {
+              "properties": {
+                "PreRelease": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "PreRelease"
+              ]
+            },
+            {
+              "properties": {
+                "HasCustomParameters": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "HasCustomParameters"
+              ]
+            },
+            {
+              "properties": {
+                "HasCustomInstallLocation": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "HasCustomInstallLocation"
+              ]
+            },
+            {
+              "properties": {
+                "HasPrePostCommands": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "HasPrePostCommands"
+              ]
+            },
+            {
+              "properties": {
+                "HasKillBeforeOperation": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "HasKillBeforeOperation"
+              ]
+            },
+            {
+              "properties": {
+                "HasUninstallPrevious": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "HasUninstallPrevious"
+              ]
             }
           ],
-          "description": "Match criteria — request must satisfy all specified fields.\n At least one criterion must be present.",
-          "minProperties": 1
+          "description": "Match criteria — request must satisfy all specified fields.\n At least one effective non-null, nonempty criterion must be present.",
+          "if": {
+            "properties": {
+              "SourceNames": {
+                "minItems": 1
+              }
+            },
+            "required": [
+              "SourceNames"
+            ]
+          },
+          "minProperties": 1,
+          "properties": {
+            "Architectures": {
+              "description": "Optional architecture filter. Omitted or empty does not narrow matching;\n canonical serialization omits an empty collection.",
+              "items": {
+                "$ref": "#/definitions/Architecture"
+              },
+              "maxItems": 5,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "ExecutionElevation": {
+              "description": "Optional effective execution-elevation filter. Elevated means the package operation\n will run with administrator privileges; Standard means it will not. Omitted or empty\n does not narrow matching; canonical serialization omits an empty collection.",
+              "items": {
+                "$ref": "#/definitions/Elevation"
+              },
+              "maxItems": 2,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "HasCustomInstallLocation": {
+              "description": "Optional condition on whether the request has a custom install location.\n Absent means this characteristic does not affect matching.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "HasCustomParameters": {
+              "description": "Optional condition on whether the request has custom parameters.\n Absent means this characteristic does not affect matching.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "HasKillBeforeOperation": {
+              "description": "Optional condition on whether the request has kill-before-operation entries.\n Absent means this characteristic does not affect matching.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "HasPrePostCommands": {
+              "description": "Optional condition on whether the request has pre/post commands.\n Absent means this characteristic does not affect matching.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "HasUninstallPrevious": {
+              "description": "Optional condition on whether the request enables uninstall-previous.\n Absent means this characteristic does not affect matching.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "Interactive": {
+              "description": "Optional condition on the request's interactive characteristic.\n Absent means this characteristic does not affect matching.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "Managers": {
+              "description": "Optional manager filter. Omitted or empty does not narrow matching;\n canonical serialization omits an empty collection.",
+              "items": {
+                "$ref": "#/definitions/ManagerName"
+              },
+              "maxItems": 16,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "Operations": {
+              "description": "Optional operation filter. Omitted or empty does not narrow matching;\n canonical serialization omits an empty collection.",
+              "items": {
+                "$ref": "#/definitions/Operation"
+              },
+              "maxItems": 3,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "PackageIdentifiers": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/PackageIdentifierCondition"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional package-identifier condition. Exact uses validated stable identifiers; Patterns\n uses explicit wildcard patterns that may authorize multiple packages. Absent does not\n narrow matching."
+            },
+            "PreRelease": {
+              "description": "Optional condition on the request's preRelease characteristic.\n Absent means this characteristic does not affect matching.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "Scopes": {
+              "description": "Optional scope filter. Omitted or empty does not narrow matching;\n canonical serialization omits an empty collection.",
+              "items": {
+                "$ref": "#/definitions/Scope"
+              },
+              "maxItems": 2,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "SkipHashCheck": {
+              "description": "Optional condition on the request's skipHashCheck characteristic.\n Absent means this characteristic does not affect matching.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "SourceNames": {
+              "description": "Optional exact configured-source-name filter. Matching uses the selected package manager's\n source-name comparison semantics; wildcard characters are literal. Nonempty source names\n require exactly one manager. Omitted or empty does not narrow matching; canonical\n serialization omits an empty collection.",
+              "items": {
+                "$ref": "#/definitions/SourceName"
+              },
+              "maxItems": 128,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "Version": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/VersionCondition"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional package-version condition. Exact supports arbitrary package version strings;\n Range applies only to semantic versions. Absent does not narrow matching."
+            }
+          },
+          "then": {
+            "properties": {
+              "Managers": {
+                "maxItems": 1,
+                "minItems": 1
+              }
+            },
+            "required": [
+              "Managers"
+            ]
+          },
+          "type": "object"
         },
         "Priority": {
           "description": "Priority (lower = higher precedence).",
@@ -499,13 +691,6 @@
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._:\\-]{0,127}$",
       "type": "string"
     },
-    "RulePrecedence": {
-      "description": "Rule precedence strategy — always PriorityThenDeny.",
-      "enum": [
-        "PriorityThenDeny"
-      ],
-      "type": "string"
-    },
     "Scope": {
       "description": "Package installation scope.",
       "enum": [
@@ -514,11 +699,52 @@
       ],
       "type": "string"
     },
+    "SourceName": {
+      "description": "Exact configured package source name.\n\n Matching uses the selected package manager's source-name comparison semantics.\n Wildcard characters have no special meaning and are treated literally.",
+      "maxLength": 128,
+      "minLength": 1,
+      "type": "string"
+    },
     "StringPattern": {
       "description": "Case-insensitive exact value or wildcard pattern.",
       "maxLength": 256,
       "minLength": 1,
       "type": "string"
+    },
+    "VersionCondition": {
+      "description": "Exactly one package-version mode. Exact accepts arbitrary package version strings; Range applies only to semantic versions.",
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "Exact": {
+              "items": {
+                "$ref": "#/definitions/VersionString"
+              },
+              "maxItems": 256,
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "Exact"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "Range": {
+              "$ref": "#/definitions/VersionRange"
+            }
+          },
+          "required": [
+            "Range"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "VersionRange": {
       "additionalProperties": false,
@@ -583,14 +809,6 @@
       ],
       "description": "Software-managed policy document format version.\n\n Applications must stamp the current value and must not expose this field\n as publisher-authored editable metadata."
     },
-    "PolicyType": {
-      "allOf": [
-        {
-          "$ref": "#/definitions/PackageBrokerPolicy"
-        }
-      ],
-      "description": "Must be `\"PackageBrokerPolicy\"`."
-    },
     "Rules": {
       "description": "Ordered list of policy rules (may be empty; enforcement defaults apply).",
       "items": {
@@ -602,7 +820,6 @@
   },
   "required": [
     "PolicyFormatVersion",
-    "PolicyType",
     "Metadata",
     "Enforcement",
     "Rules"
