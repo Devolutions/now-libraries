@@ -9,6 +9,8 @@ namespace Devolutions.Now.Policy.Model;
 
 public static partial class PolicySerializer
 {
+    private const int MaxSourceNames = 128;
+
     /// <summary>
     /// Source-generated policy JSON options. Deserialization rejects duplicate property names
     /// throughout the input using ordinal, case-sensitive name comparison.
@@ -170,7 +172,12 @@ public static partial class PolicySerializer
         RejectDuplicateElements(match.Scopes, $"{path}.Scopes");
         RejectDuplicateElements(match.Architectures, $"{path}.Architectures");
         RejectDuplicateElements(match.ExecutionElevation, $"{path}.ExecutionElevation");
-        RejectBoundedStrings(match.SourceNames, 1, 128, $"{path}.SourceNames");
+        if (match.SourceNames.Count > MaxSourceNames)
+        {
+            throw new JsonException(
+                $"The JSON array at {path}.SourceNames must contain at most {MaxSourceNames} values.");
+        }
+        RejectBoundedStrings(match.SourceNames, 1, MaxSourceNames, $"{path}.SourceNames");
         if (match.SourceNames.Count > 0 && match.Managers.Count != 1)
         {
             throw new JsonException(

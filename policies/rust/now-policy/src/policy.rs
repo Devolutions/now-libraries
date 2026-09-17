@@ -636,7 +636,12 @@ struct PolicyMatchRef<'a> {
     has_uninstall_previous: Option<bool>,
 }
 
+const MAX_SOURCE_NAMES: usize = 128;
+
 fn validate_policy_match(value: &PolicyMatch) -> Result<(), &'static str> {
+    if value.source_names.len() > MAX_SOURCE_NAMES {
+        return Err("PolicyMatch.SourceNames must contain at most 128 values");
+    }
     if !value.source_names.is_empty() && value.managers.len() != 1 {
         return Err("PolicyMatch.SourceNames requires exactly one PolicyMatch.Managers value");
     }
@@ -667,6 +672,9 @@ impl TryFrom<PolicyMatchWire> for PolicyMatch {
             &value.source_names,
             "PolicyMatch.SourceNames must not contain duplicate values",
         )?;
+        if value.source_names.len() > MAX_SOURCE_NAMES {
+            return Err("PolicyMatch.SourceNames must contain at most 128 values");
+        }
         reject_duplicate_values(&value.scopes, "PolicyMatch.Scopes must not contain duplicate values")?;
         reject_duplicate_values(
             &value.architectures,

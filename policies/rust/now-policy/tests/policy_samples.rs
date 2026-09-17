@@ -400,6 +400,28 @@ fn source_names_require_managers_and_preserve_exact_literal_names() {
 }
 
 #[test]
+fn source_names_enforce_schema_collection_bound_on_input_and_output() {
+    let source_names = (0..128)
+        .map(|index| format!(r#""source-{index}""#))
+        .collect::<Vec<_>>()
+        .join(",");
+    let json = format!(r#"{{"Managers":["Winget"],"SourceNames":[{source_names}]}}"#);
+    let mut maximum: now_policy::PolicyMatch = serde_json::from_str(&json).unwrap();
+    assert_eq!(maximum.source_names.len(), 128);
+    serde_json::to_value(&maximum).unwrap();
+
+    let too_many = format!(r#"{{"Managers":["Winget"],"SourceNames":[{source_names},"source-128"]}}"#);
+    let error = serde_json::from_str::<now_policy::PolicyMatch>(&too_many)
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("at most 128"), "unexpected error: {error}");
+
+    maximum.source_names.insert(SourceName::parse("source-128").unwrap());
+    let error = serde_json::to_value(maximum).unwrap_err().to_string();
+    assert!(error.contains("at most 128"), "unexpected error: {error}");
+}
+
+#[test]
 fn package_identifier_condition_requires_exactly_one_nonempty_mode() {
     let exact: now_policy::PackageIdentifierCondition =
         serde_json::from_str(r#"{"Exact":["Microsoft.VisualStudioCode"]}"#).unwrap();

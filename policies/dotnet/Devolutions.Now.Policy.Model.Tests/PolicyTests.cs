@@ -906,6 +906,28 @@ public class PolicyTests
     }
 
     [Fact]
+    public void Source_names_enforce_schema_collection_bound_on_input_and_output()
+    {
+        static string MatchJson(int count) =>
+            new JsonObject
+            {
+                [nameof(PolicyMatch.Managers)] = new JsonArray("Winget"),
+                [nameof(PolicyMatch.SourceNames)] = new JsonArray(
+                    Enumerable.Range(0, count).Select(index => JsonValue.Create($"source-{index}")).ToArray()),
+            }.ToJsonString();
+
+        var maximum = PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson(128))!;
+        Assert.Equal(128, maximum.SourceNames.Count);
+        Assert.NotEmpty(PolicySerializer.Serialize(maximum));
+
+        Assert.Throws<JsonException>(
+            () => PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson(129)));
+
+        maximum.SourceNames.Add("source-128");
+        Assert.Throws<JsonException>(() => PolicySerializer.Serialize(maximum));
+    }
+
+    [Fact]
     public void Rust_schemas_require_exactly_one_manager_for_source_names()
     {
         foreach (var schemaPath in new[] { PolicySchema, PolicyDraftSchema })
