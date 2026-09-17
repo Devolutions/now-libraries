@@ -13,16 +13,10 @@ public static partial class PolicySerializer
     private const int MaxSourceNames = 128;
 
     /// <summary>
-    /// Source-generated policy JSON options. Deserialization rejects duplicate property names
-    /// throughout the input using ordinal, case-sensitive name comparison.
-    /// </summary>
-    public static readonly JsonSerializerOptions Options = CreateOptions(strict: false);
-
-    /// <summary>
-    /// Source-generated strict policy JSON options. Deserialization rejects unknown and duplicate
+    /// Source-generated policy JSON options. Deserialization rejects unknown and duplicate
     /// property names throughout the input using ordinal, case-sensitive name comparison.
     /// </summary>
-    public static readonly JsonSerializerOptions StrictOptions = CreateOptions(strict: true);
+    public static readonly JsonSerializerOptions Options = CreateOptions();
 
     public static string Serialize(PolicyDocument value)
     {
@@ -36,34 +30,19 @@ public static partial class PolicySerializer
         return JsonSerializer.Serialize(value, TypeInfo<PolicyDraftDocument>());
     }
 
-    public static PolicyDocument? DeserializePolicyDocument(string json)
-    {
-        PolicyJsonInput.RejectDuplicatePropertyNames(json, PolicySerializerContext.Default.Options);
-        return Validate(JsonSerializer.Deserialize(json, PolicySerializerContext.Default.PolicyDocument));
-    }
-
-    public static PolicyDocument? DeserializePolicyDocumentStrict(string json)
-    {
-        PolicyJsonInput.RejectDuplicatePropertyNames(json, PolicyStrictSerializerContext.Default.Options);
-        return Validate(JsonSerializer.Deserialize(json, PolicyStrictSerializerContext.Default.PolicyDocument));
-    }
-
-    public static PolicyDraftDocument? DeserializePolicyDraftDocumentStrict(string json)
-    {
-        PolicyJsonInput.RejectDuplicatePropertyNames(json, PolicyStrictSerializerContext.Default.Options);
-        return Validate(JsonSerializer.Deserialize(json, PolicyStrictSerializerContext.Default.PolicyDraftDocument));
-    }
-
     public static string Serialize<T>(T value)
     {
         ValidateSemanticValue(value);
         return JsonSerializer.Serialize(value, TypeInfo<T>());
     }
 
-    public static T? DeserializeStrict<T>(string json)
+    /// <summary>
+    /// Deserializes a policy model using the closed, strict contract.
+    /// </summary>
+    public static T? Deserialize<T>(string json)
     {
-        PolicyJsonInput.RejectDuplicatePropertyNames(json, PolicyStrictSerializerContext.Default.Options);
-        var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
+        PolicyJsonInput.RejectDuplicatePropertyNames(json, PolicySerializerContext.Default.Options);
+        var value = JsonSerializer.Deserialize(json, DeserializationTypeInfo<T>());
         ValidateSemanticValue(value);
         return value;
     }
@@ -459,80 +438,37 @@ public static partial class PolicySerializer
         return Cast<T>(Options.GetTypeInfo(typeof(T)));
     }
 
-    private static JsonTypeInfo<T> StrictTypeInfo<T>() =>
-    typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDocument) :
-    typeof(T) == typeof(PolicyDraftDocument) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDraftDocument) :
-    typeof(T) == typeof(PolicyMetadata) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyMetadata) :
-    typeof(T) == typeof(PolicyDraftMetadata) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyDraftMetadata) :
-    typeof(T) == typeof(PolicyEnforcement) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyEnforcement) :
-    typeof(T) == typeof(PolicyRule) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyRule) :
-    typeof(T) == typeof(PolicyMatch) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyMatch) :
-    typeof(T) == typeof(PackageIdentifierCondition) ? Cast<T>(PolicyStrictSerializerContext.Default.PackageIdentifierCondition) :
-    typeof(T) == typeof(VersionCondition) ? Cast<T>(PolicyStrictSerializerContext.Default.VersionCondition) :
-    typeof(T) == typeof(VersionRange) ? Cast<T>(PolicyStrictSerializerContext.Default.VersionRange) :
-    typeof(T) == typeof(PolicyConstraints) ? Cast<T>(PolicyStrictSerializerContext.Default.PolicyConstraints) :
-    throw new NotSupportedException($"Strict policy JSON deserialization for {typeof(T).FullName} is not source-generated.");
+    private static JsonTypeInfo<T> DeserializationTypeInfo<T>() =>
+    typeof(T) == typeof(PolicyDocument) ? Cast<T>(PolicySerializerContext.Default.PolicyDocument) :
+    typeof(T) == typeof(PolicyDraftDocument) ? Cast<T>(PolicySerializerContext.Default.PolicyDraftDocument) :
+    typeof(T) == typeof(PolicyMetadata) ? Cast<T>(PolicySerializerContext.Default.PolicyMetadata) :
+    typeof(T) == typeof(PolicyDraftMetadata) ? Cast<T>(PolicySerializerContext.Default.PolicyDraftMetadata) :
+    typeof(T) == typeof(PolicyEnforcement) ? Cast<T>(PolicySerializerContext.Default.PolicyEnforcement) :
+    typeof(T) == typeof(PolicyRule) ? Cast<T>(PolicySerializerContext.Default.PolicyRule) :
+    typeof(T) == typeof(PolicyMatch) ? Cast<T>(PolicySerializerContext.Default.PolicyMatch) :
+    typeof(T) == typeof(PackageIdentifierCondition) ? Cast<T>(PolicySerializerContext.Default.PackageIdentifierCondition) :
+    typeof(T) == typeof(VersionCondition) ? Cast<T>(PolicySerializerContext.Default.VersionCondition) :
+    typeof(T) == typeof(VersionRange) ? Cast<T>(PolicySerializerContext.Default.VersionRange) :
+    typeof(T) == typeof(PolicyConstraints) ? Cast<T>(PolicySerializerContext.Default.PolicyConstraints) :
+    throw new NotSupportedException($"Policy JSON deserialization for {typeof(T).FullName} is not source-generated.");
 
     private static JsonTypeInfo<T> Cast<T>(JsonTypeInfo jsonTypeInfo) =>
         (JsonTypeInfo<T>)jsonTypeInfo;
 
-    private static JsonSerializerOptions CreateOptions(bool strict)
+    private static JsonSerializerOptions CreateOptions()
     {
-        JsonSerializerContext context = strict
-            ? PolicyStrictSerializerContext.Default
-            : PolicySerializerContext.Default;
-        var options = new JsonSerializerOptions(context.Options)
+        var options = new JsonSerializerOptions(PolicySerializerContext.Default.Options)
         {
-            TypeInfoResolver = context.WithAddedModifier(AttachSemanticValidation),
+            TypeInfoResolver = PolicySerializerContext.Default.WithAddedModifier(AttachSemanticValidation),
         };
 
-        if (strict)
-        {
-            AddDuplicateRejectingConverters(options, PolicyStrictSerializerContext.Default);
-        }
-        else
-        {
-            AddDuplicateRejectingConverters(options, PolicySerializerContext.Default);
-        }
-
+        AddDuplicateRejectingConverters(options, PolicySerializerContext.Default);
         return options;
     }
 
     private static void AddDuplicateRejectingConverters(
         JsonSerializerOptions options,
         PolicySerializerContext context)
-    {
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDocument>(
-            context.PolicyDocument,
-            static value => ValidateSemanticValue(value)));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftDocument>(
-            context.PolicyDraftDocument,
-            static value => ValidateSemanticValue(value)));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMetadata>(
-            context.PolicyMetadata,
-            static value => ValidateSemanticValue(value)));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDraftMetadata>(
-            context.PolicyDraftMetadata,
-            static value => ValidateSemanticValue(value)));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyEnforcement>(
-            context.PolicyEnforcement));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyRule>(
-            context.PolicyRule));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyMatch>(
-            context.PolicyMatch));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PackageIdentifierCondition>(
-            context.PackageIdentifierCondition));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionCondition>(
-            context.VersionCondition));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<VersionRange>(
-            context.VersionRange));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyConstraints>(
-            context.PolicyConstraints));
-    }
-
-    private static void AddDuplicateRejectingConverters(
-        JsonSerializerOptions options,
-        PolicyStrictSerializerContext context)
     {
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<PolicyDocument>(
             context.PolicyDocument,
@@ -630,21 +566,3 @@ public static partial class PolicySerializer
 [JsonSerializable(typeof(VersionRange))]
 [JsonSerializable(typeof(PolicyConstraints))]
 internal sealed partial class PolicySerializerContext : JsonSerializerContext;
-
-[JsonSourceGenerationOptions(
-    WriteIndented = true,
-    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-    RespectNullableAnnotations = true,
-    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow)]
-[JsonSerializable(typeof(PolicyDocument))]
-[JsonSerializable(typeof(PolicyDraftDocument))]
-[JsonSerializable(typeof(PolicyMetadata))]
-[JsonSerializable(typeof(PolicyDraftMetadata))]
-[JsonSerializable(typeof(PolicyEnforcement))]
-[JsonSerializable(typeof(PolicyRule))]
-[JsonSerializable(typeof(PolicyMatch))]
-[JsonSerializable(typeof(PackageIdentifierCondition))]
-[JsonSerializable(typeof(VersionCondition))]
-[JsonSerializable(typeof(VersionRange))]
-[JsonSerializable(typeof(PolicyConstraints))]
-internal sealed partial class PolicyStrictSerializerContext : JsonSerializerContext;

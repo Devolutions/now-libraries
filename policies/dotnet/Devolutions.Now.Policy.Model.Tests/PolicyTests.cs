@@ -101,7 +101,7 @@ public class PolicyTests
 
         var schema = await JsonSchema.FromFileAsync(PolicySchema);
         var json = policy.ToJson();
-        var reparsed = PolicySerializer.DeserializeStrict<PolicyDocument>(json);
+        var reparsed = PolicySerializer.Deserialize<PolicyDocument>(json);
         var errors = schema.Validate(json);
 
         Assert.NotNull(reparsed);
@@ -135,7 +135,7 @@ public class PolicyTests
         var draftJson = JsonNode.Parse(policy.ToDraft().ToJson())!;
         draftJson["$schema"] = "https://example.invalid/policy-draft.schema.json";
         Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializePolicyDraftDocumentStrict(draftJson.ToJsonString()));
+            () => PolicySerializer.Deserialize<PolicyDraftDocument>(draftJson.ToJsonString()));
     }
 
     [Theory]
@@ -146,13 +146,9 @@ public class PolicyTests
 
         Assert.False(JsonSerializer.IsReflectionEnabledByDefault);
         Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(json));
-        Assert.ThrowsAny<JsonException>(() => PolicySerializer.DeserializePolicyDocument(json));
-        Assert.Throws<JsonException>(() => PolicySerializer.DeserializePolicyDocumentStrict(json));
-        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyDocument>(json));
+        Assert.Throws<JsonException>(() => PolicySerializer.Deserialize<PolicyDocument>(json));
         Assert.Throws<JsonException>(
             () => JsonSerializer.Deserialize<PolicyDocument>(json, PolicySerializer.Options));
-        Assert.Throws<JsonException>(
-            () => JsonSerializer.Deserialize<PolicyDocument>(json, PolicySerializer.StrictOptions));
     }
 
     [Fact]
@@ -174,12 +170,9 @@ public class PolicyTests
             """;
 
         Assert.Throws<JsonException>(() => PolicyDraftDocument.ParseJson(Json));
-        Assert.Throws<JsonException>(() => PolicySerializer.DeserializePolicyDraftDocumentStrict(Json));
-        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyDraftDocument>(Json));
+        Assert.Throws<JsonException>(() => PolicySerializer.Deserialize<PolicyDraftDocument>(Json));
         Assert.Throws<JsonException>(
             () => JsonSerializer.Deserialize<PolicyDraftDocument>(Json, PolicySerializer.Options));
-        Assert.Throws<JsonException>(
-            () => JsonSerializer.Deserialize<PolicyDraftDocument>(Json, PolicySerializer.StrictOptions));
     }
 
     [Fact]
@@ -195,9 +188,8 @@ public class PolicyTests
             """);
 
         var exception = Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializePolicyDocument(json));
+            () => PolicySerializer.Deserialize<PolicyDocument>(json));
         Assert.DoesNotContain("Duplicate JSON property name", exception.Message, StringComparison.Ordinal);
-        Assert.Throws<JsonException>(() => PolicySerializer.DeserializePolicyDocumentStrict(json));
     }
 
     [Fact]
@@ -216,7 +208,7 @@ public class PolicyTests
             """);
 
         var exception = Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializePolicyDocument(json));
+            () => PolicySerializer.Deserialize<PolicyDocument>(json));
         Assert.Contains("Duplicate JSON property name", exception.Message, StringComparison.Ordinal);
     }
 
@@ -235,7 +227,7 @@ public class PolicyTests
                 "Rules": []
             """);
 
-        Assert.ThrowsAny<JsonException>(() => PolicySerializer.DeserializePolicyDocument(json));
+        Assert.ThrowsAny<JsonException>(() => PolicySerializer.Deserialize<PolicyDocument>(json));
     }
 
     [Theory]
@@ -254,10 +246,10 @@ public class PolicyTests
         {
             (
                 JsonNode.Parse(policy.ToJson())!,
-                json => PolicySerializer.DeserializeStrict<PolicyDocument>(json)),
+                json => PolicySerializer.Deserialize<PolicyDocument>(json)),
             (
                 JsonNode.Parse(policy.ToDraft().ToJson())!,
-                json => PolicySerializer.DeserializeStrict<PolicyDraftDocument>(json)),
+                json => PolicySerializer.Deserialize<PolicyDraftDocument>(json)),
         };
 
         foreach (var (document, parse) in documents)
@@ -283,7 +275,7 @@ public class PolicyTests
     }
 
     [Fact]
-    public void Non_strict_policy_inputs_reject_removed_members_instead_of_broadening_rules()
+    public void All_policy_inputs_reject_removed_members_instead_of_broadening_rules()
     {
         var committed = JsonNode.Parse(
             File.ReadAllText(Path.Combine(SamplesDir, "corporate-allowlist.policy.json")))!;
@@ -296,7 +288,7 @@ public class PolicyTests
         var committedJson = committed.ToJsonString();
 
         Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializePolicyDocument(committedJson));
+            () => PolicySerializer.Deserialize<PolicyDocument>(committedJson));
         Assert.Throws<JsonException>(
             () => JsonSerializer.Deserialize<PolicyDocument>(
                 committedJson,
@@ -386,12 +378,9 @@ public class PolicyTests
                 "Rules": []
             """);
 
-        Assert.ThrowsAny<JsonException>(() => PolicySerializer.DeserializePolicyDocument(json));
-        Assert.ThrowsAny<JsonException>(() => PolicySerializer.DeserializePolicyDocumentStrict(json));
+        Assert.ThrowsAny<JsonException>(() => PolicySerializer.Deserialize<PolicyDocument>(json));
         Assert.ThrowsAny<JsonException>(
             () => JsonSerializer.Deserialize<PolicyDocument>(json, PolicySerializer.Options));
-        Assert.ThrowsAny<JsonException>(
-            () => JsonSerializer.Deserialize<PolicyDocument>(json, PolicySerializer.StrictOptions));
     }
 
     [Fact]
@@ -652,15 +641,15 @@ public class PolicyTests
                 }
                 """;
 
-            Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyMetadata>(metadataJson));
-            Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyDraftMetadata>(draftMetadataJson));
+            Assert.NotNull(PolicySerializer.Deserialize<PolicyMetadata>(metadataJson));
+            Assert.NotNull(PolicySerializer.Deserialize<PolicyDraftMetadata>(draftMetadataJson));
             Assert.NotNull(JsonSerializer.Deserialize<PolicyMetadata>(metadataJson, PolicySerializer.Options));
             Assert.NotNull(JsonSerializer.Deserialize<PolicyDraftMetadata>(
                 draftMetadataJson,
-                PolicySerializer.StrictOptions));
+                PolicySerializer.Options));
         }
 
-        var explicitNull = PolicySerializer.DeserializeStrict<PolicyMetadata>(
+        var explicitNull = PolicySerializer.Deserialize<PolicyMetadata>(
             """
             {
               "Id": "validity.test",
@@ -718,25 +707,25 @@ public class PolicyTests
             """;
 
         var exception = Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializeStrict<PolicyMetadata>(metadataJson));
+            () => PolicySerializer.Deserialize<PolicyMetadata>(metadataJson));
         Assert.Equal("$.ValidUntil", exception.Path);
         Assert.Contains("$.ValidUntil", exception.Message, StringComparison.Ordinal);
         Assert.Contains("$.ValidFrom", exception.Message, StringComparison.Ordinal);
         Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializeStrict<PolicyDraftMetadata>(draftMetadataJson));
+            () => PolicySerializer.Deserialize<PolicyDraftMetadata>(draftMetadataJson));
         exception = Assert.Throws<JsonException>(
             () => JsonSerializer.Deserialize<PolicyMetadata>(metadataJson, PolicySerializer.Options));
         Assert.Equal("$.ValidUntil", exception.Path);
         Assert.Throws<JsonException>(
             () => JsonSerializer.Deserialize<PolicyDraftMetadata>(
                 draftMetadataJson,
-                PolicySerializer.StrictOptions));
+                PolicySerializer.Options));
 
         exception = Assert.Throws<JsonException>(() => PolicyDocument.ParseJson(policyJson));
         Assert.Equal("$.Metadata.ValidUntil", exception.Path);
         Assert.Contains("$.Metadata.ValidUntil", exception.Message, StringComparison.Ordinal);
         Assert.Contains("$.Metadata.ValidFrom", exception.Message, StringComparison.Ordinal);
-        Assert.Throws<JsonException>(() => PolicySerializer.DeserializePolicyDocument(policyJson));
+        Assert.Throws<JsonException>(() => PolicySerializer.Deserialize<PolicyDocument>(policyJson));
         exception = Assert.Throws<JsonException>(
             () => JsonSerializer.Deserialize<PolicyDocument>(policyJson, PolicySerializer.Options));
         Assert.Equal("$.Metadata.ValidUntil", exception.Path);
@@ -744,7 +733,7 @@ public class PolicyTests
         Assert.Throws<JsonException>(
             () => JsonSerializer.Deserialize<PolicyDraftDocument>(
                 draftJson,
-                PolicySerializer.StrictOptions));
+                PolicySerializer.Options));
     }
 
     [Fact]
@@ -814,18 +803,18 @@ public class PolicyTests
     [MemberData(nameof(BooleanMatchProperties))]
     public void Boolean_match_characteristics_accept_omitted_null_false_and_true(string propertyName)
     {
-        var omitted = PolicySerializer.DeserializeStrict<PolicyMatch>("{}")!;
+        var omitted = PolicySerializer.Deserialize<PolicyMatch>("{}")!;
         Assert.Null(GetBooleanMatch(omitted, propertyName));
         Assert.DoesNotContain($"\"{propertyName}\"", PolicySerializer.Serialize(omitted));
 
-        var explicitNull = PolicySerializer.DeserializeStrict<PolicyMatch>(
+        var explicitNull = PolicySerializer.Deserialize<PolicyMatch>(
             $$"""{"{{propertyName}}":null}""")!;
         Assert.Null(GetBooleanMatch(explicitNull, propertyName));
         Assert.DoesNotContain($"\"{propertyName}\"", PolicySerializer.Serialize(explicitNull));
 
         foreach (var expected in new[] { false, true })
         {
-            var match = PolicySerializer.DeserializeStrict<PolicyMatch>(
+            var match = PolicySerializer.Deserialize<PolicyMatch>(
                 $$"""{"{{propertyName}}":{{expected.ToString().ToLowerInvariant()}}}""")!;
             Assert.Equal(expected, GetBooleanMatch(match, propertyName));
 
@@ -844,12 +833,12 @@ public class PolicyTests
             var ruleJson =
                 $$"""{"Id":"test.rule","Priority":1,"Decision":"Allow","Match":{{matchJson}}}""";
 
-            Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyMatch>(matchJson));
-            Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyRule>(ruleJson));
+            Assert.Throws<JsonException>(() => PolicySerializer.Deserialize<PolicyMatch>(matchJson));
+            Assert.Throws<JsonException>(() => PolicySerializer.Deserialize<PolicyRule>(ruleJson));
             Assert.Throws<JsonException>(
                 () => JsonSerializer.Deserialize<PolicyMatch>(matchJson, PolicySerializer.Options));
             Assert.Throws<JsonException>(
-                () => JsonSerializer.Deserialize<PolicyMatch>(matchJson, PolicySerializer.StrictOptions));
+                () => JsonSerializer.Deserialize<PolicyMatch>(matchJson, PolicySerializer.Options));
         }
     }
 
@@ -865,14 +854,14 @@ public class PolicyTests
             ["Match"] = new JsonObject { [propertyName] = null },
         };
         Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializeStrict<PolicyRule>(rule.ToJsonString()));
+            () => PolicySerializer.Deserialize<PolicyRule>(rule.ToJsonString()));
 
         rule["Match"] = new JsonObject
         {
             ["Operations"] = new JsonArray("Install"),
             [propertyName] = null,
         };
-        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyRule>(rule.ToJsonString()));
+        Assert.NotNull(PolicySerializer.Deserialize<PolicyRule>(rule.ToJsonString()));
     }
 
     [Fact]
@@ -888,7 +877,7 @@ public class PolicyTests
             }
             """;
 
-        var match = PolicySerializer.DeserializeStrict<PolicyMatch>(Json)!;
+        var match = PolicySerializer.Deserialize<PolicyMatch>(Json)!;
         Assert.Equal([Operation.Install], match.Operations);
         Assert.False(match.Interactive);
         Assert.True(match.SkipHashCheck);
@@ -912,21 +901,18 @@ public class PolicyTests
         string propertyName,
         string elementJson)
     {
-        var omitted = PolicySerializer.DeserializeStrict<PolicyMatch>("{}")!;
+        var omitted = PolicySerializer.Deserialize<PolicyMatch>("{}")!;
         Assert.Equal(0, GetCollectionMatchCount(omitted, propertyName));
         Assert.DoesNotContain($"\"{propertyName}\"", PolicySerializer.Serialize(omitted));
 
-        var empty = PolicySerializer.DeserializeStrict<PolicyMatch>(
+        var empty = PolicySerializer.Deserialize<PolicyMatch>(
             $$"""{"{{propertyName}}":[]}""")!;
         Assert.Equal(0, GetCollectionMatchCount(empty, propertyName));
         Assert.DoesNotContain($"\"{propertyName}\"", PolicySerializer.Serialize(empty));
-        foreach (var options in new[] { PolicySerializer.Options, PolicySerializer.StrictOptions })
-        {
-            Assert.DoesNotContain(
-                $"\"{propertyName}\"",
-                JsonSerializer.Serialize(empty, options),
-                StringComparison.Ordinal);
-        }
+        Assert.DoesNotContain(
+            $"\"{propertyName}\"",
+            JsonSerializer.Serialize(empty, PolicySerializer.Options),
+            StringComparison.Ordinal);
 
         var populatedJson = new JsonObject
         {
@@ -936,7 +922,7 @@ public class PolicyTests
         {
             populatedJson[nameof(PolicyMatch.Managers)] = new JsonArray("Winget");
         }
-        var populated = PolicySerializer.DeserializeStrict<PolicyMatch>(populatedJson.ToJsonString())!;
+        var populated = PolicySerializer.Deserialize<PolicyMatch>(populatedJson.ToJsonString())!;
         Assert.Equal(1, GetCollectionMatchCount(populated, propertyName));
         var serialized = JsonNode.Parse(PolicySerializer.Serialize(populated))!;
         Assert.Single(serialized[propertyName]!.AsArray());
@@ -956,14 +942,14 @@ public class PolicyTests
             ["Match"] = new JsonObject { [propertyName] = new JsonArray() },
         };
         Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializeStrict<PolicyRule>(emptyOnly.ToJsonString()));
+            () => PolicySerializer.Deserialize<PolicyRule>(emptyOnly.ToJsonString()));
 
         emptyOnly["Match"] = new JsonObject
         {
             [propertyName] = new JsonArray(),
             ["Interactive"] = false,
         };
-        var rule = PolicySerializer.DeserializeStrict<PolicyRule>(emptyOnly.ToJsonString())!;
+        var rule = PolicySerializer.Deserialize<PolicyRule>(emptyOnly.ToJsonString())!;
         var serialized = JsonNode.Parse(PolicySerializer.Serialize(rule))!;
         Assert.Null(serialized["Match"]![propertyName]);
         Assert.False(serialized["Match"]!["Interactive"]!.GetValue<bool>());
@@ -976,7 +962,7 @@ public class PolicyTests
         {
             emptyOnly["Match"]!["Managers"] = new JsonArray("Winget");
         }
-        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyRule>(emptyOnly.ToJsonString()));
+        Assert.NotNull(PolicySerializer.Deserialize<PolicyRule>(emptyOnly.ToJsonString()));
     }
 
     [Theory]
@@ -997,7 +983,7 @@ public class PolicyTests
         }
 
         Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializeStrict<PolicyMatch>(match.ToJsonString()));
+            () => PolicySerializer.Deserialize<PolicyMatch>(match.ToJsonString()));
     }
 
     [Fact]
@@ -1012,7 +998,7 @@ public class PolicyTests
             }
             """;
         var exception = Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializeStrict<PolicyRule>(WithoutManager));
+            () => PolicySerializer.Deserialize<PolicyRule>(WithoutManager));
         Assert.Contains("$.Match.SourceNames", exception.Message, StringComparison.Ordinal);
 
         const string WithManager = """
@@ -1026,7 +1012,7 @@ public class PolicyTests
               }
             }
             """;
-        var rule = PolicySerializer.DeserializeStrict<PolicyRule>(WithManager)!;
+        var rule = PolicySerializer.Deserialize<PolicyRule>(WithManager)!;
         Assert.Equal([ManagerName.Winget], rule.Match.Managers);
         Assert.Equal(["corp*", "PSGallery"], rule.Match.SourceNames);
 
@@ -1049,7 +1035,7 @@ public class PolicyTests
             }
             """;
         exception = Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializeStrict<PolicyRule>(MultipleManagers));
+            () => PolicySerializer.Deserialize<PolicyRule>(MultipleManagers));
         Assert.Contains("$.Match.SourceNames", exception.Message, StringComparison.Ordinal);
     }
 
@@ -1066,12 +1052,12 @@ public class PolicyTests
                     managers.Select(name => JsonValue.Create(name)).ToArray()),
             }.ToJsonString();
 
-        var maximum = PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson(managerNames.Take(16)))!;
+        var maximum = PolicySerializer.Deserialize<PolicyMatch>(MatchJson(managerNames.Take(16)))!;
         Assert.Equal(16, maximum.Managers.Count);
         Assert.NotEmpty(PolicySerializer.Serialize(maximum));
 
         Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson(managerNames)));
+            () => PolicySerializer.Deserialize<PolicyMatch>(MatchJson(managerNames)));
 
         maximum.Managers.Add(ManagerName.Vcpkg);
         Assert.Throws<JsonException>(() => PolicySerializer.Serialize(maximum));
@@ -1088,12 +1074,12 @@ public class PolicyTests
                     Enumerable.Range(0, count).Select(index => JsonValue.Create($"source-{index}")).ToArray()),
             }.ToJsonString();
 
-        var maximum = PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson(128))!;
+        var maximum = PolicySerializer.Deserialize<PolicyMatch>(MatchJson(128))!;
         Assert.Equal(128, maximum.SourceNames.Count);
         Assert.NotEmpty(PolicySerializer.Serialize(maximum));
 
         Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializeStrict<PolicyMatch>(MatchJson(129)));
+            () => PolicySerializer.Deserialize<PolicyMatch>(MatchJson(129)));
 
         maximum.SourceNames.Add("source-128");
         Assert.Throws<JsonException>(() => PolicySerializer.Serialize(maximum));
@@ -1157,12 +1143,12 @@ public class PolicyTests
     public void Package_identifier_condition_requires_exactly_one_nonempty_mode()
     {
         const string Exact = """{"Exact":["Microsoft.VisualStudioCode"]}""";
-        var exact = PolicySerializer.DeserializeStrict<PackageIdentifierCondition>(Exact)!;
+        var exact = PolicySerializer.Deserialize<PackageIdentifierCondition>(Exact)!;
         Assert.Equal(["Microsoft.VisualStudioCode"], exact.Exact);
         Assert.Null(exact.Patterns);
 
         const string Patterns = """{"Patterns":["Microsoft.*"]}""";
-        var patterns = PolicySerializer.DeserializeStrict<PackageIdentifierCondition>(Patterns)!;
+        var patterns = PolicySerializer.Deserialize<PackageIdentifierCondition>(Patterns)!;
         Assert.Equal(["Microsoft.*"], patterns.Patterns);
         Assert.Null(patterns.Exact);
 
@@ -1194,17 +1180,17 @@ public class PolicyTests
         })
         {
             Assert.Throws<JsonException>(
-                () => PolicySerializer.DeserializeStrict<PackageIdentifierCondition>(invalid));
+                () => PolicySerializer.Deserialize<PackageIdentifierCondition>(invalid));
         }
 
         const string OldFlatList = """{"PackageIdentifiers":["Microsoft.VisualStudioCode"]}""";
-        Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyMatch>(OldFlatList));
+        Assert.Throws<JsonException>(() => PolicySerializer.Deserialize<PolicyMatch>(OldFlatList));
 
-        var absent = PolicySerializer.DeserializeStrict<PolicyMatch>(
+        var absent = PolicySerializer.Deserialize<PolicyMatch>(
             """{"PackageIdentifiers":null}""")!;
         Assert.DoesNotContain("\"PackageIdentifiers\"", PolicySerializer.Serialize(absent));
 
-        var match = PolicySerializer.DeserializeStrict<PolicyMatch>(
+        var match = PolicySerializer.Deserialize<PolicyMatch>(
             """{"PackageIdentifiers":{"Patterns":["Microsoft.*"]}}""")!;
         Assert.Equal(["Microsoft.*"], match.PackageIdentifiers!.Patterns);
         Assert.Contains("\"Patterns\"", PolicySerializer.Serialize(match), StringComparison.Ordinal);
@@ -1214,15 +1200,15 @@ public class PolicyTests
     public void Version_condition_requires_exactly_one_nonempty_mode()
     {
         const string Exact = """{"Exact":["5.6.0.0","2026.09-preview"]}""";
-        var exact = PolicySerializer.DeserializeStrict<VersionCondition>(Exact)!;
+        var exact = PolicySerializer.Deserialize<VersionCondition>(Exact)!;
         Assert.Equal(["5.6.0.0", "2026.09-preview"], exact.Exact);
         Assert.Null(exact.Range);
 
         const string Range = """{"Range":{"MinVersion":"1.0.0","MaxVersion":"2.0.0"}}""";
-        var range = PolicySerializer.DeserializeStrict<VersionCondition>(Range)!;
+        var range = PolicySerializer.Deserialize<VersionCondition>(Range)!;
         Assert.Equal("1.0.0", range.Range!.MinVersion);
         Assert.Null(range.Exact);
-        Assert.NotNull(PolicySerializer.DeserializeStrict<VersionCondition>(
+        Assert.NotNull(PolicySerializer.Deserialize<VersionCondition>(
             """{"Range":{"MinVersion":"1.0.0-beta.1","IncludePrerelease":true}}"""));
 
         exact.UseRange(new VersionRange { MinVersion = "1.0.0", MaxVersion = "2.0.0" });
@@ -1256,7 +1242,7 @@ public class PolicyTests
         })
         {
             Assert.Throws<JsonException>(
-                () => PolicySerializer.DeserializeStrict<VersionCondition>(invalid));
+                () => PolicySerializer.Deserialize<VersionCondition>(invalid));
         }
 
         foreach (var old in new[]
@@ -1265,10 +1251,10 @@ public class PolicyTests
             """{"VersionRange":{"MinVersion":"1.0.0"}}""",
         })
         {
-            Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyMatch>(old));
+            Assert.Throws<JsonException>(() => PolicySerializer.Deserialize<PolicyMatch>(old));
         }
 
-        var absent = PolicySerializer.DeserializeStrict<PolicyMatch>("""{"Version":null}""")!;
+        var absent = PolicySerializer.Deserialize<PolicyMatch>("""{"Version":null}""")!;
         Assert.DoesNotContain("\"Version\"", PolicySerializer.Serialize(absent));
 
         Assert.Throws<JsonException>(
@@ -1392,7 +1378,7 @@ public class PolicyTests
               "Constraints": { "AllowInteractive": false }
             }
             """;
-        var allow = PolicySerializer.DeserializeStrict<PolicyRule>(AllowWithConstraints)!;
+        var allow = PolicySerializer.Deserialize<PolicyRule>(AllowWithConstraints)!;
         Assert.NotNull(allow.Constraints);
         Assert.Contains("\"Constraints\"", PolicySerializer.Serialize(allow), StringComparison.Ordinal);
 
@@ -1404,7 +1390,7 @@ public class PolicyTests
               "Match": { "Operations": ["Install"] }
             }
             """;
-        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyRule>(AllowWithoutConstraints));
+        Assert.NotNull(PolicySerializer.Deserialize<PolicyRule>(AllowWithoutConstraints));
 
         const string DenyWithoutConstraints = """
             {
@@ -1414,7 +1400,7 @@ public class PolicyTests
               "Match": { "Operations": ["Install"] }
             }
             """;
-        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyRule>(DenyWithoutConstraints));
+        Assert.NotNull(PolicySerializer.Deserialize<PolicyRule>(DenyWithoutConstraints));
 
         const string DenyWithNullConstraints = """
             {
@@ -1425,7 +1411,7 @@ public class PolicyTests
               "Constraints": null
             }
             """;
-        var deny = PolicySerializer.DeserializeStrict<PolicyRule>(DenyWithNullConstraints)!;
+        var deny = PolicySerializer.Deserialize<PolicyRule>(DenyWithNullConstraints)!;
         Assert.DoesNotContain("\"Constraints\"", PolicySerializer.Serialize(deny), StringComparison.Ordinal);
 
         const string DenyWithConstraints = """
@@ -1439,20 +1425,17 @@ public class PolicyTests
             }
             """;
         var exception = Assert.Throws<JsonException>(
-            () => PolicySerializer.DeserializeStrict<PolicyRule>(DenyWithConstraints));
+            () => PolicySerializer.Deserialize<PolicyRule>(DenyWithConstraints));
         Assert.Contains("$.Constraints", exception.Message, StringComparison.Ordinal);
 
         allow.Decision = Decision.Deny;
         exception = Assert.Throws<JsonException>(() => PolicySerializer.Serialize(allow));
         Assert.Contains("$.Constraints", exception.Message, StringComparison.Ordinal);
 
-        foreach (var options in new[] { PolicySerializer.Options, PolicySerializer.StrictOptions })
-        {
-            exception = Assert.Throws<JsonException>(
-                () => JsonSerializer.Deserialize<PolicyRule>(DenyWithConstraints, options));
-            Assert.Contains("$.Constraints", exception.Message, StringComparison.Ordinal);
-            Assert.Throws<JsonException>(() => JsonSerializer.Serialize(allow, options));
-        }
+        exception = Assert.Throws<JsonException>(
+            () => JsonSerializer.Deserialize<PolicyRule>(DenyWithConstraints, PolicySerializer.Options));
+        Assert.Contains("$.Constraints", exception.Message, StringComparison.Ordinal);
+        Assert.Throws<JsonException>(() => JsonSerializer.Serialize(allow, PolicySerializer.Options));
     }
 
     [Fact]
@@ -1627,14 +1610,12 @@ public class PolicyTests
             var json = new JsonObject { [collectionName] = new JsonArray(value) }.ToJsonString();
 
             Assert.Throws<JsonException>(() => PolicySerializer.Serialize(constraints));
-            Assert.Throws<JsonException>(() => PolicySerializer.DeserializeStrict<PolicyConstraints>(json));
+            Assert.Throws<JsonException>(() => PolicySerializer.Deserialize<PolicyConstraints>(json));
 
-            foreach (var options in new[] { PolicySerializer.Options, PolicySerializer.StrictOptions })
-            {
-                Assert.Throws<JsonException>(() => JsonSerializer.Serialize(constraints, options));
-                Assert.Throws<JsonException>(
-                    () => JsonSerializer.Deserialize<PolicyConstraints>(json, options));
-            }
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Serialize(constraints, PolicySerializer.Options));
+            Assert.Throws<JsonException>(
+                () => JsonSerializer.Deserialize<PolicyConstraints>(json, PolicySerializer.Options));
         }
     }
 
@@ -1647,13 +1628,10 @@ public class PolicyTests
         var json = new JsonObject { [collectionName] = new JsonArray(value) }.ToJsonString();
 
         Assert.NotNull(PolicySerializer.Serialize(constraints));
-        Assert.NotNull(PolicySerializer.DeserializeStrict<PolicyConstraints>(json));
+        Assert.NotNull(PolicySerializer.Deserialize<PolicyConstraints>(json));
 
-        foreach (var options in new[] { PolicySerializer.Options, PolicySerializer.StrictOptions })
-        {
-            Assert.NotNull(JsonSerializer.Serialize(constraints, options));
-            Assert.NotNull(JsonSerializer.Deserialize<PolicyConstraints>(json, options));
-        }
+        Assert.NotNull(JsonSerializer.Serialize(constraints, PolicySerializer.Options));
+        Assert.NotNull(JsonSerializer.Deserialize<PolicyConstraints>(json, PolicySerializer.Options));
     }
 
     [Fact]

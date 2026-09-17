@@ -135,7 +135,7 @@ public sealed class PolicyDocument
 
     public static PolicyDocument ParseJson(string json)
     {
-        return PolicySerializer.DeserializePolicyDocumentStrict(json)
+        return PolicySerializer.Deserialize<PolicyDocument>(json)
             ?? throw new JsonException("policy document was null");
     }
 
@@ -200,7 +200,7 @@ public sealed class PolicyDraftDocument
 
     public static PolicyDraftDocument ParseJson(string json)
     {
-        return PolicySerializer.DeserializePolicyDraftDocumentStrict(json)
+        return PolicySerializer.Deserialize<PolicyDraftDocument>(json)
             ?? throw new JsonException("policy draft document was null");
     }
 
