@@ -354,7 +354,7 @@ impl From<String> for HttpUrl {
 }
 
 /// Case-insensitive exact value or wildcard pattern.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct StringPattern(#[schemars(length(min = 1, max = 256))] pub String);
 
 impl StringPattern {
@@ -368,6 +368,13 @@ impl<'de> Deserialize<'de> for StringPattern {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
         Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Serialize for StringPattern {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        Self::parse(&self.0).map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&self.0)
     }
 }
 
@@ -520,7 +527,7 @@ impl std::fmt::Display for PackageIdentifier {
 }
 
 /// A short constrained string for version values.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct VersionString(#[schemars(length(min = 1, max = 128))] pub String);
 
 impl VersionString {
@@ -534,6 +541,13 @@ impl<'de> Deserialize<'de> for VersionString {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
         Self::parse(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Serialize for VersionString {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        Self::parse(&self.0).map_err(serde::ser::Error::custom)?;
+        serializer.serialize_str(&self.0)
     }
 }
 

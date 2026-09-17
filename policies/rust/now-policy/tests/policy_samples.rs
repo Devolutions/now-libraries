@@ -521,6 +521,14 @@ fn package_identifier_and_version_condition_bounds_apply_on_input_and_output() {
         include_prerelease: false,
     };
     assert!(serde_json::to_value(invalid_range).is_err());
+
+    let mut invalid_patterns = std::collections::BTreeSet::new();
+    invalid_patterns.insert(StringPattern(String::new()));
+    assert!(serde_json::to_value(now_policy::PackageIdentifierCondition::Patterns(invalid_patterns)).is_err());
+
+    let mut invalid_versions = std::collections::BTreeSet::new();
+    invalid_versions.insert(VersionString(String::new()));
+    assert!(serde_json::to_value(now_policy::VersionCondition::Exact(invalid_versions)).is_err());
 }
 
 #[test]
