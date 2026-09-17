@@ -464,6 +464,7 @@ fn version_condition_requires_exactly_one_nonempty_mode() {
         r#"{"Range":{}}"#,
         r#"{"Range":{"MinVersion":null,"MaxVersion":null}}"#,
         r#"{"Range":{"MinVersion":"not-semver"}}"#,
+        r#"{"Range":{"MinVersion":"1.18446744073709551616.0"}}"#,
         "{\"Range\":{\"MaxVersion\":\"1.0.0\\n\"}}",
         r#"{"Exact":["1.0.0"],"Range":{"MinVersion":"1.0.0"}}"#,
         r#"{"Exact":["1.0.0"],"Range":null}"#,

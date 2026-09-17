@@ -82,7 +82,7 @@ public enum Architecture
     Neutral,
 }
 
-/// <summary>Requested elevation level.</summary>
+/// <summary>Effective package-operation execution privilege.</summary>
 [JsonConverter(typeof(ExactCaseStringEnumConverter<Elevation>))]
 public enum Elevation
 {

@@ -992,6 +992,7 @@ public class PolicyTests
             """{"Range":{}}""",
             """{"Range":{"MinVersion":null,"MaxVersion":null}}""",
             """{"Range":{"MinVersion":"not-semver"}}""",
+            """{"Range":{"MinVersion":"1.18446744073709551616.0"}}""",
             """{"Range":{"MaxVersion":"1.0.0\n"}}""",
             """{"Exact":["1.0.0"],"Range":{"MinVersion":"1.0.0"}}""",
             """{"Exact":["1.0.0"],"Range":null}""",
@@ -1074,6 +1075,13 @@ public class PolicyTests
                 new JsonObject
                 {
                     ["Range"] = new JsonObject { ["MinVersion"] = "not-semver" },
+                },
+                new JsonObject
+                {
+                    ["Range"] = new JsonObject
+                    {
+                        ["MinVersion"] = "1.18446744073709551616.0",
+                    },
                 },
                 new JsonObject
                 {

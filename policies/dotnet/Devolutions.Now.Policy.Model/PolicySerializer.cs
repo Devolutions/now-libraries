@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -274,12 +275,32 @@ public static partial class PolicySerializer
         })
         {
             if (value is not null
-                && (value.Length > 128 || !SemanticVersionRegex().IsMatch(value)))
+                && (value.Length > 128
+                    || !SemanticVersionRegex().IsMatch(value)
+                    || !SemanticVersionCoreFitsUInt64(value)))
             {
                 throw new JsonException(
                     $"The JSON string at {path}.{name} must be a canonical semantic version.");
             }
         }
+    }
+
+    private static bool SemanticVersionCoreFitsUInt64(string value)
+    {
+        var suffixIndex = value.IndexOfAny(['-', '+']);
+        var core = suffixIndex < 0 ? value : value[..suffixIndex];
+        foreach (var component in core.Split('.'))
+        {
+            if (!ulong.TryParse(
+                    component,
+                    NumberStyles.None,
+                    CultureInfo.InvariantCulture,
+                    out _))
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static bool IsEmpty(PolicyMatch match) =>

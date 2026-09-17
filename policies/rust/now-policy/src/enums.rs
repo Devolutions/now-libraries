@@ -61,7 +61,7 @@ pub enum Decision {
     Deny,
 }
 
-/// Requested elevation level.
+/// Effective package-operation execution privilege.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "Elevation")]
 pub enum Elevation {
