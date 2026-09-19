@@ -42,6 +42,9 @@ Opaque policy store tokens and validation receipts are restricted to safe printa
 HTTP body of policy validation and replacement requests. It is separate from the package-operation
 limit advertised by broker capabilities.
 
+Policy replacement retains the validation receipt, expected store token, operation, and explicit overwrite-conflict handling.
+Validation warnings are advisory findings for inline client UX and do not require a wire-level acknowledgement to save a valid draft.
+
 Because policy documents are JSON-only, configured `.yaml`, `.yml`, extensionless, and other
 non-JSON paths use `PolicyReadOnlyReason.UnsupportedFormat` in management snapshots and
 `ErrorCode.UnsupportedPolicyFormat` for structured HTTP 422 errors.

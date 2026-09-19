@@ -4,7 +4,6 @@
   "ExpectedStoreToken": "store:active:7",
   "Operation": "ReplaceIdentity",
   "ConflictHandling": "Reject",
-  "WarningsAcknowledged": false,
   "Draft": {
     "PolicyFormatVersion": "1.0.0",
     "Metadata": { "Id": "fabrikam.package-policy", "Publisher": "Fabrikam IT" },

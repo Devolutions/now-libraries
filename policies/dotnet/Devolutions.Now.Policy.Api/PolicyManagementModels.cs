@@ -359,10 +359,6 @@ public sealed class PolicyReplacementRequest
     [JsonRequired]
     public PolicyConflictHandling ConflictHandling { get; set; }
 
-    [JsonPropertyName("WarningsAcknowledged")]
-    [JsonRequired]
-    public bool WarningsAcknowledged { get; set; }
-
     /// <summary>Raw draft JSON retained for transaction-time reparsing and revalidation.</summary>
     [JsonPropertyName("Draft")]
     [JsonRequired]

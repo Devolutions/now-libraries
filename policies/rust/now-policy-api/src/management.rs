@@ -698,9 +698,6 @@ pub struct PolicyReplacementRequest {
     pub operation: PolicyReplacementOperation,
     pub conflict_handling: PolicyConflictHandling,
 
-    /// Explicit acknowledgement of every warning bound into the validation receipt.
-    pub warnings_acknowledged: bool,
-
     /// Raw draft JSON retained for transaction-time reparsing and revalidation.
     pub draft: serde_json::Value,
 
