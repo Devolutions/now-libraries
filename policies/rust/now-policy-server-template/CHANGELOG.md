@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [[0.7.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.6.0...now-policy-server-template-v0.7.0)] - 2026-09-19
+
+### <!-- 1 -->Features
+
+- [**breaking**] Remove replacement warning acknowledgement ([#111](https://github.com/Devolutions/now-libraries/issues/111)) ([b5201f0581](https://github.com/Devolutions/now-libraries/commit/b5201f0581512deacb21b74e4a91dbcd5a9d4e9e)) 
+
+  - Remove `WarningsAcknowledged` from `PolicyReplacementRequest` in the
+  Rust and .NET API models, OpenAPI schema, and all shared fixtures.
+  - Remove the obsolete `WarningConfirmationRequired` error code while
+  retaining validation receipts, validation findings, store-token
+  concurrency, and explicit overwrite confirmation.
+  - Bump `now-policy-api` and `now-policy-server-template` to 0.7.0 and
+  require the template's new API version.
+
+
+
 ## [[0.6.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.5.0...now-policy-server-template-v0.6.0)] - 2026-09-17
 
 ### <!-- 1 -->Features
