@@ -61,6 +61,9 @@ The generated document contains the unchanged policy inspection route, the manag
 
 Opaque store tokens and validation receipts use safe printable ASCII (`A-Z`, `a-z`, `0-9`, `.`, `_`, `~`, `:`, `-`) and begin with an ASCII alphanumeric character. This keeps length and validation behavior identical across Rust UTF-8 and .NET UTF-16 implementations.
 
+Replacement requests retain their validation receipt, expected store token, operation, and explicit overwrite-conflict handling.
+Validation warnings are advisory findings that clients present inline and never require a protocol-level acknowledgement to save a valid draft.
+
 Validation
 ----------
 

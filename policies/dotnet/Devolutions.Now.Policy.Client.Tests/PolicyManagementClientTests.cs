@@ -83,6 +83,17 @@ public class PolicyManagementClientTests
     }
 
     [Fact]
+    public async Task PolicyReplacement_rejects_legacy_warning_acknowledgement()
+    {
+        var request = JsonNode.Parse(await ReadFixture("requests", "policy-replacement.update.request.json"))!;
+        request["WarningsAcknowledged"] = true;
+
+        var json = request.ToJsonString();
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(json));
+        Assert.NotEmpty((await TestData.SchemaAsync("PolicyReplacementRequest")).Validate(json));
+    }
+
+    [Fact]
     public async Task ReplacePolicy_preserves_structured_stale_token_findings()
     {
         var request = BrokerSerializer.DeserializeStrict<PolicyReplacementRequest>(

@@ -137,6 +137,14 @@ fn all_sample_requests_deserialize() {
 }
 
 #[test]
+fn policy_replacement_rejects_legacy_warning_acknowledgement() {
+    let mut request = load_json_file(&samples_dir().join("requests/policy-replacement.update.request.json"));
+    request["WarningsAcknowledged"] = true.into();
+
+    assert!(serde_json::from_value::<PolicyReplacementRequest>(request).is_err());
+}
+
+#[test]
 fn all_sample_responses_deserialize() {
     for path in json_files(&samples_dir().join("responses")) {
         assert_response_sample_deserializes(&path);
@@ -587,7 +595,6 @@ async fn policy_management_error_codes_use_stable_http_statuses() {
         (ErrorCode::UnsupportedEndpoint, StatusCode::NOT_IMPLEMENTED),
         (ErrorCode::MalformedDraft, StatusCode::BAD_REQUEST),
         (ErrorCode::InvalidPolicy, StatusCode::UNPROCESSABLE_ENTITY),
-        (ErrorCode::WarningConfirmationRequired, StatusCode::CONFLICT),
         (ErrorCode::Unauthenticated, StatusCode::UNAUTHORIZED),
         (ErrorCode::AdministratorRequired, StatusCode::FORBIDDEN),
         (ErrorCode::UnsafePolicyPath, StatusCode::CONFLICT),
@@ -745,7 +752,7 @@ async fn policy_management_routes_accept_exact_limit_and_reject_one_byte_over() 
         (
             "PUT",
             "/v1/policy",
-            r#"{"RequestKind":"PolicyReplacementRequest","RequestVersion":"1.0","ExpectedStoreToken":"store:active:7","Operation":"Update","ConflictHandling":"Reject","WarningsAcknowledged":true,"Draft":{"Padding":""#,
+            r#"{"RequestKind":"PolicyReplacementRequest","RequestVersion":"1.0","ExpectedStoreToken":"store:active:7","Operation":"Update","ConflictHandling":"Reject","Draft":{"Padding":""#,
             r#""},"ValidationReceipt":"receipt:sha256:test"}"#,
         ),
     ];

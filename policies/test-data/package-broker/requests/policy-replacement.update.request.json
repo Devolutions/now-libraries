@@ -4,7 +4,6 @@
   "ExpectedStoreToken": "store:active:7",
   "Operation": "Update",
   "ConflictHandling": "Reject",
-  "WarningsAcknowledged": true,
   "Draft": {
     "PolicyFormatVersion": "1.0.0",
     "Metadata": { "Id": "contoso.package-policy", "Publisher": "Contoso IT" },

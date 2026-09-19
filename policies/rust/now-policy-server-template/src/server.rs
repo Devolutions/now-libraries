@@ -406,10 +406,7 @@ fn error_status(code: ErrorCode) -> StatusCode {
         ErrorCode::Unauthorized | ErrorCode::Unauthenticated => StatusCode::UNAUTHORIZED,
         ErrorCode::Forbidden | ErrorCode::AdministratorRequired => StatusCode::FORBIDDEN,
         ErrorCode::NotFound => StatusCode::NOT_FOUND,
-        ErrorCode::Conflict
-        | ErrorCode::WarningConfirmationRequired
-        | ErrorCode::UnsafePolicyPath
-        | ErrorCode::StalePolicyStoreToken => StatusCode::CONFLICT,
+        ErrorCode::Conflict | ErrorCode::UnsafePolicyPath | ErrorCode::StalePolicyStoreToken => StatusCode::CONFLICT,
         ErrorCode::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
         ErrorCode::UnsupportedMediaType => StatusCode::UNSUPPORTED_MEDIA_TYPE,
         ErrorCode::ValidationFailed

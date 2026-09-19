@@ -4,7 +4,6 @@
   "ExpectedStoreToken": "store:invalid:4",
   "Operation": "Repair",
   "ConflictHandling": "Reject",
-  "WarningsAcknowledged": false,
   "Draft": {
     "PolicyFormatVersion": "1.0.0",
     "Metadata": { "Id": "contoso.package-policy", "Publisher": "Contoso IT" },

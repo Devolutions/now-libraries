@@ -150,7 +150,6 @@ public enum ErrorCode
     UnsupportedEndpoint,
     MalformedDraft,
     InvalidPolicy,
-    WarningConfirmationRequired,
     Unauthenticated,
     AdministratorRequired,
     UnsafePolicyPath,

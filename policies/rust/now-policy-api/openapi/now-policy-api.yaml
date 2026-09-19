@@ -602,7 +602,6 @@ components:
       - UnsupportedEndpoint
       - MalformedDraft
       - InvalidPolicy
-      - WarningConfirmationRequired
       - Unauthenticated
       - AdministratorRequired
       - UnsafePolicyPath
@@ -1419,9 +1418,6 @@ components:
           $ref: '#/components/schemas/ApiVersion'
         ValidationReceipt:
           $ref: '#/components/schemas/PolicyValidationReceipt'
-        WarningsAcknowledged:
-          description: Explicit acknowledgement of every warning bound into the validation receipt.
-          type: boolean
       additionalProperties: false
       required:
       - RequestKind
@@ -1429,7 +1425,6 @@ components:
       - ExpectedStoreToken
       - Operation
       - ConflictHandling
-      - WarningsAcknowledged
       - Draft
       - ValidationReceipt
     PolicyReplacementRequestKind:
