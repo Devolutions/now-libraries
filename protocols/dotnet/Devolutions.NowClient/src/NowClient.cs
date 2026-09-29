@@ -269,6 +269,8 @@ namespace Devolutions.NowClient
                 ThrowCapabilitiesError("Run execution style");
             }
 
+            ThrowIfElevationUnsupported(execParams);
+
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
             var command = new CommandExecRun(message);
@@ -288,6 +290,8 @@ namespace Devolutions.NowClient
             {
                 ThrowCapabilitiesError("Process execution style");
             }
+
+            ThrowIfElevationUnsupported(execParams);
 
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
@@ -312,6 +316,8 @@ namespace Devolutions.NowClient
                 ThrowCapabilitiesError("Shell execution style");
             }
 
+            ThrowIfElevationUnsupported(execParams);
+
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
             var execSession = execParams.ToExecSession(sessionId, _commandWriter);
@@ -334,6 +340,8 @@ namespace Devolutions.NowClient
             {
                 ThrowCapabilitiesError("Batch execution style");
             }
+
+            ThrowIfElevationUnsupported(execParams);
 
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
@@ -358,6 +366,8 @@ namespace Devolutions.NowClient
                 ThrowCapabilitiesError("Windows PowerShell execution style");
             }
 
+            ThrowIfElevationUnsupported(execParams);
+
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
             var execSession = execParams.ToExecSession(sessionId, _commandWriter);
@@ -380,6 +390,8 @@ namespace Devolutions.NowClient
             {
                 ThrowCapabilitiesError("Pwsh execution style");
             }
+
+            ThrowIfElevationUnsupported(execParams);
 
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
@@ -598,6 +610,24 @@ namespace Devolutions.NowClient
                 }
 
                 await RdmSync();
+            }
+        }
+
+        /// <summary>
+        /// Refuse an elevated request unless the negotiated capset advertises a way to satisfy it.
+        /// A server older than NOW-PROTO 1.7 does not know the ELEVATED flag and would run the
+        /// command without elevation, which the caller has no way to detect.
+        /// </summary>
+        private void ThrowIfElevationUnsupported(AExecParams execParams)
+        {
+            if (!execParams.IsElevated)
+            {
+                return;
+            }
+
+            if (!Capabilities.ExecCapset.HasFlag(NowCapabilityExec.ElevateShell))
+            {
+                ThrowCapabilitiesError("Elevated execution");
             }
         }
 
