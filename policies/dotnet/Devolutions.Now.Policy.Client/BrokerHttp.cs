@@ -109,6 +109,10 @@ internal static class BrokerHttp
             {
                 throw new BrokerConnectionClosedException(requestSent: true, ex);
             }
+            catch (IOException ex)
+            {
+                throw Failure(incompleteResponseKind, $"The package broker closed the connection before sending a complete response for {path}.", path, innerException: ex);
+            }
 
             if (read == 0)
             {
@@ -189,7 +193,16 @@ internal static class BrokerHttp
         var bodyRead = alreadyRead;
         while (bodyRead < bodyLength)
         {
-            var read = await stream.ReadAsync(body.AsMemory(bodyRead), cancellationToken).ConfigureAwait(false);
+            int read;
+            try
+            {
+                read = await stream.ReadAsync(body.AsMemory(bodyRead), cancellationToken).ConfigureAwait(false);
+            }
+            catch (IOException ex)
+            {
+                throw Failure(incompleteResponseKind, $"The package broker closed the connection before sending the complete response body for {path}.", path, innerException: ex);
+            }
+
             if (read == 0)
             {
                 throw Failure(incompleteResponseKind, $"The package broker closed the connection before sending the complete response body for {path}.", path);
@@ -200,8 +213,18 @@ internal static class BrokerHttp
 
         // Requests send Connection: close, so the response ends with the connection. Probe one byte past
         // Content-Length so that excess data is rejected regardless of how the reads were chunked.
-        var trailing = new byte[1];
-        if (await stream.ReadAsync(trailing, cancellationToken).ConfigureAwait(false) != 0)
+        int trailingRead;
+        try
+        {
+            trailingRead = await stream.ReadAsync(new byte[1], cancellationToken).ConfigureAwait(false);
+        }
+        catch (IOException)
+        {
+            // The complete response was received; an abrupt close afterwards still ends the exchange.
+            trailingRead = 0;
+        }
+
+        if (trailingRead != 0)
         {
             throw Failure(BrokerClientErrorKind.InvalidResponse, $"The package broker returned more response data than declared for {path}.", path, statusCode);
         }
@@ -239,6 +262,11 @@ internal static class BrokerHttp
         return value.Length > 0;
     }
 
-    private static BrokerClientException Failure(BrokerClientErrorKind kind, string message, string path, int? statusCode = null) =>
-        new(kind, message, path, statusCode);
+    private static BrokerClientException Failure(
+        BrokerClientErrorKind kind,
+        string message,
+        string path,
+        int? statusCode = null,
+        Exception? innerException = null) =>
+        new(kind, message, path, statusCode, innerException: innerException);
 }

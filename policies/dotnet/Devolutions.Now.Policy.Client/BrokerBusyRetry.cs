@@ -52,7 +52,12 @@ internal static class BrokerBusyRetry
     /// <summary>Exponential backoff for connections closed without a response: 100 ms, 200 ms, 400 ms, capped.</summary>
     internal static TimeSpan GetDisconnectRetryDelay(int attempt, TimeSpan maxDelay)
     {
-        var delay = InitialDisconnectRetryDelay * Math.Pow(2, Math.Min(attempt, 16));
+        var delay = InitialDisconnectRetryDelay;
+        for (var i = 0; i < attempt && delay < maxDelay; i++)
+        {
+            delay += delay;
+        }
+
         return delay > maxDelay ? maxDelay : delay;
     }
 

@@ -189,6 +189,31 @@ public class BrokerTransportUnitTests
         Assert.Contains("closed the connection", ex.Message);
     }
 
+    [Theory]
+    [InlineData("HTTP/1.1 200 OK\r\nCont")]
+    [InlineData("HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\n{}")]
+    public async Task Broken_pipe_after_the_response_started_uses_the_configured_error_kind(string raw)
+    {
+        var stream = new ChunkedStream(Encoding.ASCII.GetBytes(raw)) { FailAtEnd = true };
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(
+            () => BrokerHttp.ReadResponse(stream, Path, 1024, 1024, BrokerClientErrorKind.BrokerUnavailable, default));
+
+        Assert.Equal(BrokerClientErrorKind.BrokerUnavailable, ex.Kind);
+        Assert.Null(ex.StatusCode);
+        Assert.IsType<IOException>(ex.InnerException);
+    }
+
+    [Fact]
+    public async Task Broken_pipe_after_the_complete_response_ends_the_exchange()
+    {
+        var stream = new ChunkedStream(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}")) { FailAtEnd = true };
+
+        var response = await BrokerHttp.ReadResponse(stream, Path, 1024, 1024, BrokerClientErrorKind.InvalidResponse, default);
+
+        Assert.Equal("{}", response.Body);
+    }
+
     [Fact]
     public async Task Connection_closed_before_any_response_byte_is_reported_as_closed_after_the_request()
     {
@@ -246,6 +271,15 @@ public class BrokerTransportUnitTests
     public void Disconnect_retry_backoff_is_exponential_and_capped(int attempt, int expectedMs)
     {
         Assert.Equal(TimeSpan.FromMilliseconds(expectedMs), BrokerBusyRetry.GetDisconnectRetryDelay(attempt, TimeSpan.FromSeconds(5)));
+    }
+
+    [Fact]
+    public void Disconnect_retry_backoff_keeps_growing_up_to_a_large_cap()
+    {
+        var maxDelay = TimeSpan.FromMilliseconds(int.MaxValue);
+
+        Assert.Equal(TimeSpan.FromMilliseconds(100 * Math.Pow(2, 20)), BrokerBusyRetry.GetDisconnectRetryDelay(20, maxDelay));
+        Assert.Equal(maxDelay, BrokerBusyRetry.GetDisconnectRetryDelay(int.MaxValue, maxDelay));
     }
 
     [Theory]
@@ -496,6 +530,9 @@ public class BrokerTransportUnitTests
     {
         private readonly Queue<byte[]> _chunks = new(chunks);
 
+        /// <summary>Throw an <see cref="IOException"/>, like a broken pipe, once all chunks are read.</summary>
+        public bool FailAtEnd { get; init; }
+
         public int ReadCount { get; private set; }
 
         public override bool CanRead => true;
@@ -515,7 +552,7 @@ public class BrokerTransportUnitTests
             ReadCount++;
             if (!_chunks.TryPeek(out var chunk))
             {
-                return 0;
+                return FailAtEnd ? throw new IOException("Pipe is broken.") : 0;
             }
 
             var count = Math.Min(chunk.Length, buffer.Length);
