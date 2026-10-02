@@ -12,4 +12,7 @@ public enum BrokerClientErrorKind
     PolicyDenied,
     UnsupportedCapability,
     RequestTooLarge,
+
+    /// <summary>The named pipe server could not be verified as the package broker; no request data was sent.</summary>
+    ServerVerificationFailed,
 }
