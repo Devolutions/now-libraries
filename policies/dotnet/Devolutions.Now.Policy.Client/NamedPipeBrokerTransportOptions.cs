@@ -70,7 +70,8 @@ public sealed record NamedPipeBrokerTransportOptions
     /// <remarks>
     /// The server process reported by the kernel for the connected pipe must be the running process of one of
     /// <see cref="ServerServiceNames"/>, and that service must be configured to run as LocalSystem. This works for
-    /// standard users. When the caller can also open the server process token (elevated callers), its user must be
+    /// standard users. When the caller can also open the server process (elevated callers), its token must be readable
+    /// and its user must be
     /// LocalSystem. When <see cref="ServerServiceNames"/> is empty, only the token check applies, and it must succeed,
     /// which requires an elevated caller. When the caller can open the server process, the handle is held until the
     /// exchange completes. Verification is only supported on Windows; on other platforms it fails closed.

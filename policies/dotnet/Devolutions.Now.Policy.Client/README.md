@@ -76,7 +76,7 @@ By default, on Windows, the transport:
 - rejects responses whose headers exceed `MaxResponseHeaderBytes` (default 64 KiB) or whose `Content-Length` exceeds `MaxResponseBodyBytes` (default 64 MiB), before allocating the body buffer.
 
 Server verification works for standard users because it relies on service control manager queries.
-When the caller is allowed to open the server process (typically elevated callers), the transport also requires the process token user to be LocalSystem and holds the process handle until the exchange completes.
+When the caller is allowed to open the server process (typically elevated callers), the transport also requires the process token to be readable with the user LocalSystem, and holds the process handle until the exchange completes.
 A failed verification throws `BrokerClientException` with `Kind == BrokerClientErrorKind.ServerVerificationFailed`.
 Verification is only supported on Windows; set `VerifyServer = false` to reach a development or test broker.
 

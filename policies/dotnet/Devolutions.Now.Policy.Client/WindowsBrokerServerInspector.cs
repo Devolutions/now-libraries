@@ -43,6 +43,8 @@ internal sealed class WindowsBrokerServerInspector(SafeProcessHandle? serverProc
 
     public string? TryGetServerProcessUserSid()
     {
+        // Without a process handle (callers not allowed to open the process), the token cannot be checked. Once the
+        // process is open, any failure to read its token fails verification.
         if (serverProcess is null)
         {
             return null;
@@ -52,11 +54,6 @@ internal sealed class WindowsBrokerServerInspector(SafeProcessHandle? serverProc
         {
             var error = Marshal.GetLastPInvokeError();
             token.Dispose();
-            if (error == NativeMethods.ERROR_ACCESS_DENIED)
-            {
-                return null;
-            }
-
             throw new Win32Exception(error);
         }
 
