@@ -96,13 +96,13 @@ internal static class BrokerHttp
         for (var i = 1; i < lines.Length; i++)
         {
             var separator = lines[i].IndexOf(':');
-            if (separator <= 0)
+            if (separator <= 0 || !IsToken(lines[i].AsSpan(0, separator)))
             {
                 throw Failure(BrokerClientErrorKind.InvalidResponse, $"The package broker returned a malformed response header for {path}.", path, statusCode);
             }
 
-            var name = lines[i][..separator].Trim();
-            var value = lines[i][(separator + 1)..].Trim();
+            var name = lines[i][..separator];
+            var value = lines[i][(separator + 1)..].Trim(' ', '\t');
 
             if (name.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
             {
@@ -175,12 +175,26 @@ internal static class BrokerHttp
             || parts[0] != "HTTP/1.1"
             || parts[1].Length != 3
             || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var statusCode)
-            || statusCode < 100)
+            || statusCode is < 100 or > 599)
         {
             throw Failure(BrokerClientErrorKind.InvalidResponse, $"The package broker returned an invalid HTTP status line for {path}.", path);
         }
 
         return statusCode;
+    }
+
+    /// <summary>Whether <paramref name="value"/> is an HTTP token (RFC 9110 <c>tchar</c>), as required for field names.</summary>
+    private static bool IsToken(ReadOnlySpan<char> value)
+    {
+        foreach (var c in value)
+        {
+            if (!char.IsAsciiLetterOrDigit(c) && !"!#$%&'*+-.^_`|~".Contains(c))
+            {
+                return false;
+            }
+        }
+
+        return value.Length > 0;
     }
 
     private static BrokerClientException Failure(BrokerClientErrorKind kind, string message, string path, int? statusCode = null) =>

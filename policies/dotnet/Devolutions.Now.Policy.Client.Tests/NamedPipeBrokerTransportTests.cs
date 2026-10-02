@@ -450,7 +450,18 @@ public class NamedPipeBrokerTransportTests
             for (var index = 0; index < connections; index++)
             {
                 using var current = next;
-                await current.WaitForConnectionAsync(_cts.Token);
+                try
+                {
+                    await current.WaitForConnectionAsync(_cts.Token);
+                }
+                catch (IOException)
+                {
+                    // The client connected and already closed the pipe without sending anything.
+                    next = index + 1 < connections ? CreateInstance(security) : null!;
+                    requests.Add("");
+                    continue;
+                }
+
                 next = index + 1 < connections ? CreateInstance(security) : null!;
 
                 var request = await ReadRequest(current);

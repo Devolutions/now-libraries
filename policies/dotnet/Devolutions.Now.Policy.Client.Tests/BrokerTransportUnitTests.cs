@@ -151,6 +151,8 @@ public class BrokerTransportUnitTests
     [InlineData("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Length: 2\r\n\r\n{}", "Transfer-Encoding")]
     [InlineData("HTTP/1.1 200 OK\r\nContent-Length: 1\r\n\r\n{}", "more response data")]
     [InlineData("HTTP/1.1 200 OK\r\nbroken header\r\nContent-Length: 2\r\n\r\n{}", "malformed response header")]
+    [InlineData("HTTP/1.1 200 OK\r\nContent-Length : 2\r\n\r\n{}", "malformed response header")]
+    [InlineData("HTTP/1.1 200 OK\r\n Content-Length: 2\r\n\r\n{}", "malformed response header")]
     public async Task Malformed_framing_is_rejected_with_the_status_code(string raw, string message)
     {
         var ex = await Assert.ThrowsAsync<BrokerClientException>(() => Read(raw));
@@ -190,6 +192,8 @@ public class BrokerTransportUnitTests
 
     [Theory]
     [InlineData("HTTP/1.1 2000 OK\r\nContent-Length: 0\r\n\r\n")]
+    [InlineData("HTTP/1.1 600 Nope\r\nContent-Length: 0\r\n\r\n")]
+    [InlineData("HTTP/1.1 099 Nope\r\nContent-Length: 0\r\n\r\n")]
     [InlineData("HTTP/1.1 +20 OK\r\nContent-Length: 0\r\n\r\n")]
     [InlineData("SSH-2.0 200 OK\r\nContent-Length: 0\r\n\r\n")]
     [InlineData("HTTP/1.x 200 OK\r\nContent-Length: 0\r\n\r\n")]
