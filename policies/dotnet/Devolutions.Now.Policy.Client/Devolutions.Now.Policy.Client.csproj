@@ -8,8 +8,13 @@
     <AssemblyName>Devolutions.Now.Policy.Client</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <IsAotCompatible>true</IsAotCompatible>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Devolutions.Now.Policy.Client.Tests" />
+  </ItemGroup>
 
   <PropertyGroup>
     <PackageId>Devolutions.Now.Policy.Client</PackageId>

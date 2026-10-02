@@ -30,7 +30,7 @@ public sealed class BrokerClient : IDisposable
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        _transport = options.Transport ?? new NamedPipeBrokerTransport(options.PipeName);
+        _transport = options.Transport ?? CreateDefaultTransport(options);
         _effectiveUser = string.IsNullOrWhiteSpace(options.EffectiveUser)
             ? ResolveEffectiveUser()
             : options.EffectiveUser;
@@ -688,8 +688,23 @@ public sealed class BrokerClient : IDisposable
         ClientVersion = _clientVersion,
     };
 
+    private NamedPipeBrokerTransport CreateDefaultTransport(BrokerClientOptions options)
+    {
+        var transportOptions = options.NamedPipeTransport ?? new NamedPipeBrokerTransportOptions();
+        if (string.IsNullOrWhiteSpace(transportOptions.PipeName))
+        {
+            transportOptions = transportOptions with { PipeName = options.PipeName };
+        }
+
+        return new NamedPipeBrokerTransport(transportOptions)
+        {
+            Trace = message => Trace?.Invoke(message),
+        };
+    }
+
     private static string ResolveClientExecutablePath()
     {
+        // Environment.ProcessPath is the image path of the current process, which the broker checks against.
         return Environment.ProcessPath
             ?? throw new InvalidOperationException("Unable to determine client executable path. Pass ClientExecutablePath explicitly.");
     }

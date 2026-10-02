@@ -58,6 +58,54 @@ The main surface is `BrokerClient`:
 
 Transport is abstracted behind `IBrokerTransport`, which exchanges HTTP-style `BrokerTransportRequest` and `BrokerTransportResponse` values. `NamedPipeBrokerTransport` is the default implementation and sends HTTP/1.1 over a Windows named pipe. Tests and future transports can inject their own transport through `BrokerClientOptions.Transport`.
 
+Named pipe transport
+--------------------
+
+`NamedPipeBrokerTransport` opens a new connection for each request and is configured through `NamedPipeBrokerTransportOptions`.
+`BrokerClient` uses it with `BrokerClientOptions.NamedPipeTransport` when no `Transport` is supplied.
+
+By default, on Windows, the transport:
+
+- opens the pipe with generic read and write-data access only (`PipeAccessRights.Read | Synchronize | WriteData`), which is a subset of what every broker version grants to standard users;
+- grants the server identification-level impersonation (`ImpersonationLevel`, default `TokenImpersonationLevel.Identification`);
+- verifies the pipe server before writing any request byte (`VerifyServer`, default `true`): the server process reported by the kernel must be the running process of a `ServerServiceNames` service (default `DevolutionsAgent`, then `devolutions-agent`), configured to run as LocalSystem;
+- writes the complete request header and body in a single write right after connecting;
+- retries `503 Service Unavailable` replies that carry `Retry-After`, over a new connection, up to `MaxBusyRetries` times (default 3) with the delay capped by `MaxBusyRetryDelay` (default 5 seconds);
+- retries, within the same `MaxBusyRetries` budget and with a backoff starting at 100 ms, connections the broker closes without sending any response byte, but only when the request did not fully reach the broker or has no side effects (`GET`, `HEAD`, evaluation, status, and policy validation requests); other requests, such as executions and policy replacements, fail with `BrokerUnavailable`;
+- applies `ConnectTimeout` (default 5 seconds), during which a busy or temporarily missing pipe is retried, and `ResponseTimeout` (default 30 seconds);
+- rejects responses whose headers exceed `MaxResponseHeaderBytes` (default 64 KiB) or whose `Content-Length` exceeds `MaxResponseBodyBytes` (default 64 MiB), before allocating the body buffer.
+
+Server verification works for standard users because it relies on service control manager queries.
+When the caller is allowed to open the server process (typically elevated callers), the transport also requires the process token to be readable with the user LocalSystem, and holds the process handle until the exchange completes.
+A failed verification throws `BrokerClientException` with `Kind == BrokerClientErrorKind.ServerVerificationFailed`.
+Verification is only supported on Windows; set `VerifyServer = false` to reach a development or test broker.
+
+Responses must use strict HTTP/1.1 framing: an `HTTP/1.1` status line, a single valid `Content-Length`, no `Transfer-Encoding`, and no data past the declared body.
+Framing errors are reported as `InvalidResponse` with the response `StatusCode`.
+A connection closed after the response started but before it completed is reported with `IncompleteResponseErrorKind` (default `InvalidResponse`) and no `StatusCode`.
+A connection closed before any response byte is reported as `BrokerUnavailable` once retries are exhausted or not allowed.
+
+Callers that need additional server checks, such as signature or install location checks, can set `ServerAuthenticator`.
+It runs after the built-in verification and before any request byte is written, receives the connected pipe, the server process id and, when available, the held server process handle, and may return an `IDisposable` kept alive until the response is read.
+It is bounded by `ServerAuthenticatorTimeout` (default 4 seconds), because the broker closes connections that do not send a request header within 5 seconds.
+When the transport stops waiting, the pipe and the late authentication result are disposed once the authenticator completes.
+
+```csharp
+var client = new BrokerClient(new BrokerClientOptions
+{
+    RequestedElevation = Elevation.Standard,
+    NamedPipeTransport = new NamedPipeBrokerTransportOptions
+    {
+        MaxResponseBodyBytes = 1024 * 1024,
+        ServerAuthenticator = (context, cancellationToken) =>
+        {
+            // Inspect context.ServerProcessId and context.ServerProcess; throw to reject the server.
+            return ValueTask.FromResult<IDisposable?>(null);
+        },
+    },
+});
+```
+
 Client context
 --------------
 
@@ -77,7 +125,7 @@ The client fills the remaining context implicitly:
 - `Transport` is taken from the configured `IBrokerTransport`.
 - `EffectiveUser` defaults to the current user and can be overridden through `BrokerClientOptions.EffectiveUser`.
 - `ClientVersion` defaults to the `Devolutions.Now.Policy.Client` assembly version.
-- `ClientExecutablePath` defaults to the current process path and can be overridden through `BrokerClientOptions.ClientExecutablePath`.
+- `ClientExecutablePath` defaults to the current process image path (`Environment.ProcessPath`), which the broker checks against the calling process, and can be overridden through `BrokerClientOptions.ClientExecutablePath`.
 
 The public client methods accept client-facing wrapper types instead of raw wire DTOs:
 
@@ -111,7 +159,7 @@ Error handling and diagnostics
 
 Response-oriented methods return successful DTOs or throw `BrokerClientException`. The exception includes:
 
-- `Kind`, a `BrokerClientErrorKind` such as `BrokerUnavailable`, `Timeout`, `BrokerError`, `InvalidResponse`, `InvalidRequest`, `UnsupportedCapability`, or `RequestTooLarge`.
+- `Kind`, a `BrokerClientErrorKind` such as `BrokerUnavailable`, `Timeout`, `BrokerError`, `InvalidResponse`, `InvalidRequest`, `UnsupportedCapability`, `RequestTooLarge`, or `ServerVerificationFailed`.
 - `Endpoint`, when the failing broker endpoint is known.
 - `StatusCode` and `BrokerError`, when the broker returned a structured `ErrorResponse`.
 
