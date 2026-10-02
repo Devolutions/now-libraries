@@ -265,7 +265,7 @@ public sealed class NamedPipeBrokerTransport : IBrokerTransport
             authenticationCts.Dispose();
             return result;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (authenticationToken.IsCancellationRequested)
         {
             transferOwnership();
             _ = authentication.ContinueWith(

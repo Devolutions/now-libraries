@@ -212,6 +212,21 @@ public class NamedPipeBrokerTransportTests
     }
 
     [Fact]
+    public async Task Server_authenticator_own_cancellation_is_a_rejection()
+    {
+        await using var server = TestPipeServer.Start(_ => OkResponse);
+        using var transport = CreateTransport(server.PipeName, options: new NamedPipeBrokerTransportOptions
+        {
+            ServerAuthenticator = (_, _) => ValueTask.FromCanceled<IDisposable?>(new CancellationToken(canceled: true)),
+        });
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => transport.Send(HealthRequest));
+
+        Assert.Equal(BrokerClientErrorKind.ServerVerificationFailed, ex.Kind);
+        Assert.Equal([""], await server.Completed);
+    }
+
+    [Fact]
     public async Task Connect_timeout_is_configurable()
     {
         using var transport = CreateTransport(

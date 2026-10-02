@@ -79,7 +79,7 @@ When the caller is allowed to open the server process (typically elevated caller
 A failed verification throws `BrokerClientException` with `Kind == BrokerClientErrorKind.ServerVerificationFailed`.
 Verification is only supported on Windows; set `VerifyServer = false` to reach a development or test broker.
 
-Responses must use strict HTTP/1.1 framing: a single valid `Content-Length`, no `Transfer-Encoding`, and no data past the declared body.
+Responses must use strict HTTP/1.1 framing: an `HTTP/1.1` status line, a single valid `Content-Length`, no `Transfer-Encoding`, and no data past the declared body.
 Framing errors are reported as `InvalidResponse` with the response `StatusCode`.
 A connection closed before the complete response is reported with `IncompleteResponseErrorKind` (default `InvalidResponse`) and no `StatusCode`.
 

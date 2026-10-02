@@ -119,6 +119,14 @@ public class BrokerTransportUnitTests
         Assert.Null(response.RetryAfter);
     }
 
+    [Fact]
+    public async Task Response_with_an_empty_reason_phrase_is_accepted()
+    {
+        var response = await Read("HTTP/1.1 299 \r\nContent-Length: 0\r\n\r\n");
+
+        Assert.Equal(299, response.StatusCode);
+    }
+
     [Theory]
     [InlineData("HTTP/1.1 200 OK\r\n\r\n{}", "omitted Content-Length")]
     [InlineData("HTTP/1.1 200 OK\r\nContent-Length: 2\r\nContent-Length: 2\r\n\r\n{}", "invalid Content-Length")]
@@ -171,6 +179,8 @@ public class BrokerTransportUnitTests
     [InlineData("SSH-2.0 200 OK\r\nContent-Length: 0\r\n\r\n")]
     [InlineData("HTTP/1.x 200 OK\r\nContent-Length: 0\r\n\r\n")]
     [InlineData("HTTP/1.1garbage 200 OK\r\nContent-Length: 0\r\n\r\n")]
+    [InlineData("HTTP/1.0 200 OK\r\nContent-Length: 0\r\n\r\n")]
+    [InlineData("HTTP/1.1 200\r\nContent-Length: 0\r\n\r\n")]
     [InlineData("garbage\r\n\r\n")]
     public async Task Invalid_status_lines_are_rejected(string raw)
     {

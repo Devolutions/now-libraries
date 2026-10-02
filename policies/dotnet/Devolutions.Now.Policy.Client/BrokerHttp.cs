@@ -168,9 +168,10 @@ internal static class BrokerHttp
 
     private static int ParseStatusLine(string statusLine, string path)
     {
+        // The broker always answers with "HTTP/1.1 <code> <reason>"; the reason phrase may be empty.
         var parts = statusLine.Split(' ', 3);
-        if (parts.Length < 2
-            || parts[0] is not ("HTTP/1.1" or "HTTP/1.0")
+        if (parts.Length != 3
+            || parts[0] != "HTTP/1.1"
             || parts[1].Length != 3
             || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var statusCode)
             || statusCode < 100)
