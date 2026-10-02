@@ -95,16 +95,27 @@ public sealed record NamedPipeBrokerTransportOptions
 
     /// <summary>
     /// Number of additional attempts, each over a new connection, after the broker replies
-    /// <c>503 Service Unavailable</c> with a <c>Retry-After</c> header. Set to zero to disable retries.
+    /// <c>503 Service Unavailable</c> with a <c>Retry-After</c> header, or closes the connection without sending any
+    /// response byte. A closed connection is retried only when the request did not fully reach the broker, or when the
+    /// request has no side effects (<c>GET</c>, <c>HEAD</c>, evaluation, status and policy validation requests).
+    /// Set to zero to disable retries.
     /// </summary>
+    /// <remarks>
+    /// Connection attempts while the pipe is busy or temporarily missing are already retried until
+    /// <see cref="ConnectTimeout"/> elapses; a connect timeout is not retried.
+    /// </remarks>
     public int MaxBusyRetries { get; init; } = DefaultMaxBusyRetries;
 
-    /// <summary>Upper bound of the delay honored from a <c>Retry-After</c> header.</summary>
+    /// <summary>
+    /// Upper bound of the delay honored from a <c>Retry-After</c> header, and of the exponential backoff
+    /// (starting at 100 ms) used after the broker closes a connection without responding.
+    /// </summary>
     public TimeSpan MaxBusyRetryDelay { get; init; } = DefaultMaxBusyRetryDelay;
 
     /// <summary>
-    /// Error kind reported when the broker closes the connection before sending a complete response.
-    /// Defaults to <see cref="BrokerClientErrorKind.InvalidResponse"/>.
+    /// Error kind reported when the broker closes the connection after starting, but before completing, its response.
+    /// Defaults to <see cref="BrokerClientErrorKind.InvalidResponse"/>. A connection closed before any response byte
+    /// is reported as <see cref="BrokerClientErrorKind.BrokerUnavailable"/> once retries are exhausted.
     /// </summary>
     public BrokerClientErrorKind IncompleteResponseErrorKind { get; init; } = BrokerClientErrorKind.InvalidResponse;
 

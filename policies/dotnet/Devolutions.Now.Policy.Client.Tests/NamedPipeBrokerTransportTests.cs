@@ -82,6 +82,127 @@ public class NamedPipeBrokerTransportTests
     }
 
     [Fact]
+    public async Task Connections_closed_without_a_response_are_retried_for_safe_requests()
+    {
+        await using var server = TestPipeServer.Start(
+            index => index switch
+            {
+                0 => TestPipeServer.DropConnection,
+                1 => TestPipeServer.CloseWithoutResponse,
+                _ => OkResponse,
+            },
+            connections: 3);
+        var delays = new List<TimeSpan>();
+        using var transport = CreateTransport(server.PipeName, delays);
+
+        var response = await transport.Send(HealthRequest);
+
+        Assert.Equal(200, response.StatusCode);
+        Assert.Equal([TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(200)], delays);
+        Assert.Equal(3, (await server.Completed).Count);
+    }
+
+    [Theory]
+    [InlineData("POST", "/v1/package-operations/evaluate")]
+    [InlineData("POST", "/v1/package-operations/get-status")]
+    [InlineData("POST", "/v1/policy/validate")]
+    public async Task Side_effect_free_posts_are_resent_after_the_broker_closes_without_responding(string method, string path)
+    {
+        await using var server = TestPipeServer.Start(index => index == 0 ? TestPipeServer.CloseWithoutResponse : OkResponse, connections: 2);
+        using var transport = CreateTransport(server.PipeName);
+
+        var response = await transport.Send(new BrokerTransportRequest { Method = method, Path = path, Body = "{}" });
+
+        Assert.Equal(200, response.StatusCode);
+        var requests = await server.Completed;
+        Assert.Equal(2, requests.Count);
+        Assert.All(requests, request => Assert.EndsWith("\r\n\r\n{}", request));
+    }
+
+    [Theory]
+    [InlineData("POST", "/v1/package-operations/execute")]
+    [InlineData("POST", "/v1/package-operations/cancel")]
+    [InlineData("PUT", "/v1/policy")]
+    public async Task Requests_with_side_effects_are_not_resent_once_delivered(string method, string path)
+    {
+        await using var server = TestPipeServer.Start(_ => TestPipeServer.CloseWithoutResponse);
+        var delays = new List<TimeSpan>();
+        using var transport = CreateTransport(server.PipeName, delays);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(
+            () => transport.Send(new BrokerTransportRequest { Method = method, Path = path, Body = "{}" }));
+
+        Assert.Equal(BrokerClientErrorKind.BrokerUnavailable, ex.Kind);
+        Assert.Null(ex.StatusCode);
+        Assert.Equal(path, ex.Endpoint);
+        Assert.Empty(delays);
+        Assert.Single(await server.Completed);
+    }
+
+    [Fact]
+    public async Task Requests_with_side_effects_are_resent_when_the_broker_closed_before_reading_them()
+    {
+        // The body is larger than the pipe buffer, so the write cannot complete once the broker drops the connection.
+        var body = "{\"padding\":\"" + new string('a', 4 * 1024 * 1024) + "\"}";
+        await using var server = TestPipeServer.Start(index => index == 0 ? TestPipeServer.DropConnection : OkResponse, connections: 2);
+        var delays = new List<TimeSpan>();
+        using var transport = CreateTransport(server.PipeName, delays);
+
+        var response = await transport.Send(new BrokerTransportRequest { Method = "POST", Path = "/v1/package-operations/execute", Body = body });
+
+        Assert.Equal(200, response.StatusCode);
+        Assert.Single(delays);
+        var requests = await server.Completed;
+        Assert.Equal(TestPipeServer.DropConnection, requests[0]);
+        Assert.EndsWith(body, requests[1]);
+    }
+
+    [Fact]
+    public async Task Connections_closed_without_a_response_are_retried_a_bounded_number_of_times()
+    {
+        await using var server = TestPipeServer.Start(_ => TestPipeServer.CloseWithoutResponse, connections: 3);
+        var delays = new List<TimeSpan>();
+        using var transport = CreateTransport(server.PipeName, delays, new NamedPipeBrokerTransportOptions { MaxBusyRetries = 2 });
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => transport.Send(HealthRequest));
+
+        Assert.Equal(BrokerClientErrorKind.BrokerUnavailable, ex.Kind);
+        Assert.Contains("without responding", ex.Message);
+        Assert.Equal([TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(200)], delays);
+        Assert.Equal(3, (await server.Completed).Count);
+    }
+
+    [Fact]
+    public async Task Busy_replies_and_closed_connections_share_the_retry_budget()
+    {
+        await using var server = TestPipeServer.Start(
+            index => index == 0 ? BusyResponse : TestPipeServer.CloseWithoutResponse,
+            connections: 2);
+        var delays = new List<TimeSpan>();
+        using var transport = CreateTransport(server.PipeName, delays, new NamedPipeBrokerTransportOptions { MaxBusyRetries = 1 });
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => transport.Send(HealthRequest));
+
+        Assert.Equal(BrokerClientErrorKind.BrokerUnavailable, ex.Kind);
+        Assert.Equal([TimeSpan.FromSeconds(1)], delays);
+        Assert.Equal(2, (await server.Completed).Count);
+    }
+
+    [Fact]
+    public async Task Partial_responses_are_not_retried()
+    {
+        await using var server = TestPipeServer.Start(_ => "HTTP/1.1 200 OK\r\nContent-Le");
+        var delays = new List<TimeSpan>();
+        using var transport = CreateTransport(server.PipeName, delays);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => transport.Send(HealthRequest));
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, ex.Kind);
+        Assert.Empty(delays);
+        Assert.Single(await server.Completed);
+    }
+
+    [Fact]
     public async Task Default_server_verification_rejects_a_server_that_is_not_the_agent_service()
     {
         await using var server = TestPipeServer.Start(_ => OkResponse);
@@ -388,6 +509,12 @@ public class NamedPipeBrokerTransportTests
     /// <summary>Minimal broker stand-in: serves scripted responses to a fixed number of connections.</summary>
     private sealed class TestPipeServer : IAsyncDisposable
     {
+        /// <summary>Response script value: close the connection right after accepting it, without reading.</summary>
+        public const string DropConnection = "<drop>";
+
+        /// <summary>Response script value: read the request, then close the connection without responding.</summary>
+        public const string CloseWithoutResponse = "<close>";
+
         private readonly CancellationTokenSource _cts = new();
         private int _receivedBytes;
 
@@ -464,6 +591,14 @@ public class NamedPipeBrokerTransportTests
 
                 next = index + 1 < connections ? CreateInstance(security) : null!;
 
+                var action = respond(index);
+                if (action == DropConnection)
+                {
+                    // Close right after accepting, without reading the request, like an overloaded broker.
+                    requests.Add(DropConnection);
+                    continue;
+                }
+
                 var request = await ReadRequest(current);
                 if (request.Length > 0)
                 {
@@ -472,18 +607,18 @@ public class NamedPipeBrokerTransportTests
 
                 requests.Add(request);
 
-                var response = request.Length > 0 ? respond(index) : null;
-                if (response is null)
+                if (request.Length == 0 || action == CloseWithoutResponse)
                 {
-                    if (request.Length > 0)
-                    {
-                        await Task.Delay(Timeout.Infinite, _cts.Token).ContinueWith(_ => { }, TaskScheduler.Default);
-                    }
-
                     continue;
                 }
 
-                await current.WriteAsync(Encoding.UTF8.GetBytes(response), _cts.Token);
+                if (action is null)
+                {
+                    await Task.Delay(Timeout.Infinite, _cts.Token).ContinueWith(_ => { }, TaskScheduler.Default);
+                    continue;
+                }
+
+                await current.WriteAsync(Encoding.UTF8.GetBytes(action), _cts.Token);
                 await current.FlushAsync(_cts.Token);
             }
 
@@ -515,12 +650,17 @@ public class NamedPipeBrokerTransportTests
                 received.Write(buffer, 0, read);
                 Interlocked.Add(ref _receivedBytes, read);
 
-                var text = Encoding.UTF8.GetString(received.ToArray());
-                var headerEnd = text.IndexOf("\r\n\r\n", StringComparison.Ordinal);
-                if (expected is null && headerEnd >= 0)
+                if (expected is null)
                 {
-                    var lengthLine = text[..headerEnd].Split("\r\n").Single(line => line.StartsWith("Content-Length:", StringComparison.Ordinal));
-                    expected = headerEnd + 4 + int.Parse(lengthLine["Content-Length:".Length..].Trim());
+                    var bytes = received.GetBuffer().AsSpan(0, (int)received.Length);
+                    var headerEnd = bytes.IndexOf("\r\n\r\n"u8);
+                    if (headerEnd >= 0)
+                    {
+                        var lengthLine = Encoding.ASCII.GetString(bytes[..headerEnd])
+                            .Split("\r\n")
+                            .Single(line => line.StartsWith("Content-Length:", StringComparison.Ordinal));
+                        expected = headerEnd + 4 + int.Parse(lengthLine["Content-Length:".Length..].Trim());
+                    }
                 }
             }
 

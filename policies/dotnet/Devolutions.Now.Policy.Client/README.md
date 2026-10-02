@@ -71,7 +71,8 @@ By default, on Windows, the transport:
 - verifies the pipe server before writing any request byte (`VerifyServer`, default `true`): the server process reported by the kernel must be the running process of a `ServerServiceNames` service (default `DevolutionsAgent`, then `devolutions-agent`), configured to run as LocalSystem;
 - writes the complete request header and body in a single write right after connecting;
 - retries `503 Service Unavailable` replies that carry `Retry-After`, over a new connection, up to `MaxBusyRetries` times (default 3) with the delay capped by `MaxBusyRetryDelay` (default 5 seconds);
-- applies `ConnectTimeout` (default 5 seconds) and `ResponseTimeout` (default 30 seconds);
+- retries, within the same `MaxBusyRetries` budget and with a backoff starting at 100 ms, connections the broker closes without sending any response byte, but only when the request did not fully reach the broker or has no side effects (`GET`, `HEAD`, evaluation, status, and policy validation requests); other requests, such as executions and policy replacements, fail with `BrokerUnavailable`;
+- applies `ConnectTimeout` (default 5 seconds), during which a busy or temporarily missing pipe is retried, and `ResponseTimeout` (default 30 seconds);
 - rejects responses whose headers exceed `MaxResponseHeaderBytes` (default 64 KiB) or whose `Content-Length` exceeds `MaxResponseBodyBytes` (default 64 MiB), before allocating the body buffer.
 
 Server verification works for standard users because it relies on service control manager queries.
@@ -81,7 +82,8 @@ Verification is only supported on Windows; set `VerifyServer = false` to reach a
 
 Responses must use strict HTTP/1.1 framing: an `HTTP/1.1` status line, a single valid `Content-Length`, no `Transfer-Encoding`, and no data past the declared body.
 Framing errors are reported as `InvalidResponse` with the response `StatusCode`.
-A connection closed before the complete response is reported with `IncompleteResponseErrorKind` (default `InvalidResponse`) and no `StatusCode`.
+A connection closed after the response started but before it completed is reported with `IncompleteResponseErrorKind` (default `InvalidResponse`) and no `StatusCode`.
+A connection closed before any response byte is reported as `BrokerUnavailable` once retries are exhausted or not allowed.
 
 Callers that need additional server checks, such as signature or install location checks, can set `ServerAuthenticator`.
 It runs after the built-in verification and before any request byte is written, receives the connected pipe, the server process id and, when available, the held server process handle, and may return an `IDisposable` kept alive until the response is read.

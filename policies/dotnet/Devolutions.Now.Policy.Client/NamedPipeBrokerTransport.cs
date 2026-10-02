@@ -63,7 +63,29 @@ public sealed class NamedPipeBrokerTransport : IBrokerTransport
 
         for (var attempt = 0; ; attempt++)
         {
-            var response = await SendOnce(request, cancellationToken).ConfigureAwait(false);
+            BrokerHttpResponse response;
+            try
+            {
+                response = await SendOnce(request, cancellationToken).ConfigureAwait(false);
+            }
+            catch (BrokerConnectionClosedException ex)
+            {
+                // An overloaded broker may close a connection right after accepting it. Resend only when the broker
+                // cannot have processed the request, or when processing it again has no side effects.
+                if (attempt < _options.MaxBusyRetries && (!ex.RequestSent || BrokerBusyRetry.IsSafeToResend(request)))
+                {
+                    var retryDelay = BrokerBusyRetry.GetDisconnectRetryDelay(attempt, _options.MaxBusyRetryDelay);
+                    Trace?.Invoke($"Package broker closed the connection without responding; retrying {request.Path} in {retryDelay.TotalMilliseconds:0} ms.");
+                    await _delay(retryDelay, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                throw new BrokerClientException(
+                    BrokerClientErrorKind.BrokerUnavailable,
+                    $"The package broker closed the connection without responding to {request.Path}.",
+                    request.Path,
+                    innerException: ex.InnerException);
+            }
 
             if (attempt < _options.MaxBusyRetries
                 && BrokerBusyRetry.GetRetryDelay(response, _options.MaxBusyRetryDelay, DateTimeOffset.UtcNow) is { } delay)
@@ -204,6 +226,11 @@ public sealed class NamedPipeBrokerTransport : IBrokerTransport
         {
             serverProcessId = WindowsBrokerServerInspector.GetServerProcessId(pipe.SafePipeHandle);
             serverProcess = WindowsBrokerServerInspector.TryOpenServerProcess(serverProcessId);
+        }
+        catch (Win32Exception ex) when (WindowsBrokerServerInspector.IsPipeDisconnected(ex.NativeErrorCode))
+        {
+            // The broker closed the connection right after accepting it; nothing was sent yet.
+            throw new BrokerConnectionClosedException(requestSent: false, ex);
         }
         catch (Win32Exception ex)
         {

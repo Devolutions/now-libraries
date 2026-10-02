@@ -139,6 +139,10 @@ internal sealed class WindowsBrokerServerInspector(SafeProcessHandle? serverProc
         return unchecked((int)processId);
     }
 
+    /// <summary>Whether <paramref name="error"/> reports a pipe whose server end was closed.</summary>
+    internal static bool IsPipeDisconnected(int error) =>
+        error is NativeMethods.ERROR_BROKEN_PIPE or NativeMethods.ERROR_NO_DATA or NativeMethods.ERROR_PIPE_NOT_CONNECTED;
+
     /// <summary>
     /// Open a handle to <paramref name="processId"/> that keeps the id from being reused while held, or return
     /// <c>null</c> when the caller is not allowed to open the process (non-elevated callers and LocalSystem services).
@@ -187,7 +191,10 @@ internal static unsafe partial class NativeMethods
 {
     internal const int ERROR_ACCESS_DENIED = 5;
     internal const int ERROR_INVALID_HANDLE = 6;
+    internal const int ERROR_BROKEN_PIPE = 109;
     internal const int ERROR_INSUFFICIENT_BUFFER = 122;
+    internal const int ERROR_NO_DATA = 232;
+    internal const int ERROR_PIPE_NOT_CONNECTED = 233;
     internal const int ERROR_SERVICE_DOES_NOT_EXIST = 1060;
 
     internal const uint SC_MANAGER_CONNECT = 0x0001;

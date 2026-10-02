@@ -6,6 +6,16 @@ namespace Devolutions.Now.Policy.Client;
 /// <summary>Response read by <see cref="BrokerHttp"/>, with the headers needed by the transport.</summary>
 internal sealed record BrokerHttpResponse(int StatusCode, string Body, string? RetryAfter);
 
+/// <summary>The broker closed the connection without sending any response byte.</summary>
+/// <param name="requestSent">
+/// Whether the complete request may have reached the broker. When <c>false</c>, the broker cannot have processed it.
+/// </param>
+internal sealed class BrokerConnectionClosedException(bool requestSent, Exception? innerException = null)
+    : Exception("The package broker closed the connection without responding.", innerException)
+{
+    public bool RequestSent { get; } = requestSent;
+}
+
 /// <summary>Strict HTTP/1.1 framing for the single request/response exchange of a broker pipe connection.</summary>
 internal static class BrokerHttp
 {
@@ -46,13 +56,31 @@ internal static class BrokerHttp
     }
 
     /// <summary>Write the complete request, header and body, in a single write.</summary>
+    /// <exception cref="BrokerConnectionClosedException">The broker closed the connection during the write.</exception>
     internal static async Task WriteRequest(Stream stream, BrokerTransportRequest request, CancellationToken cancellationToken)
     {
         var bytes = EncodeRequest(request);
-        await stream.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
-        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await stream.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
+        }
+        catch (IOException ex)
+        {
+            // A failed write means the broker did not read the complete request, so it cannot have processed it.
+            throw new BrokerConnectionClosedException(requestSent: false, ex);
+        }
+
+        try
+        {
+            await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (IOException ex)
+        {
+            throw new BrokerConnectionClosedException(requestSent: true, ex);
+        }
     }
 
+    /// <exception cref="BrokerConnectionClosedException">The broker closed the connection before sending any response byte.</exception>
     internal static async Task<BrokerHttpResponse> ReadResponse(
         Stream stream,
         string path,
@@ -72,9 +100,23 @@ internal static class BrokerHttp
                 throw Failure(BrokerClientErrorKind.InvalidResponse, $"The package broker returned response headers that are too large for {path}.", path);
             }
 
-            var read = await stream.ReadAsync(headerBuffer.AsMemory(totalRead), cancellationToken).ConfigureAwait(false);
+            int read;
+            try
+            {
+                read = await stream.ReadAsync(headerBuffer.AsMemory(totalRead), cancellationToken).ConfigureAwait(false);
+            }
+            catch (IOException ex) when (totalRead == 0)
+            {
+                throw new BrokerConnectionClosedException(requestSent: true, ex);
+            }
+
             if (read == 0)
             {
+                if (totalRead == 0)
+                {
+                    throw new BrokerConnectionClosedException(requestSent: true);
+                }
+
                 throw Failure(incompleteResponseKind, $"The package broker closed the connection before sending a complete response for {path}.", path);
             }
 

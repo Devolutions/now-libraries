@@ -178,7 +178,6 @@ public class BrokerTransportUnitTests
 
     [Theory]
     [InlineData("HTTP/1.1 200 OK\r\nCont")]
-    [InlineData("")]
     [InlineData("HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\n{}")]
     public async Task Incomplete_responses_use_the_configured_error_kind(string raw)
     {
@@ -188,6 +187,65 @@ public class BrokerTransportUnitTests
         Assert.Equal(BrokerClientErrorKind.BrokerUnavailable, ex.Kind);
         Assert.Null(ex.StatusCode);
         Assert.Contains("closed the connection", ex.Message);
+    }
+
+    [Fact]
+    public async Task Connection_closed_before_any_response_byte_is_reported_as_closed_after_the_request()
+    {
+        var ex = await Assert.ThrowsAsync<BrokerConnectionClosedException>(() => Read(""));
+
+        Assert.True(ex.RequestSent);
+    }
+
+    [Fact]
+    public async Task Read_failure_before_any_response_byte_is_reported_as_closed_after_the_request()
+    {
+        var ex = await Assert.ThrowsAsync<BrokerConnectionClosedException>(
+            () => BrokerHttp.ReadResponse(new FailingStream(), Path, 1024, 1024, BrokerClientErrorKind.InvalidResponse, default));
+
+        Assert.True(ex.RequestSent);
+        Assert.IsType<IOException>(ex.InnerException);
+    }
+
+    [Fact]
+    public async Task Write_failure_is_reported_as_closed_before_the_request_was_sent()
+    {
+        var ex = await Assert.ThrowsAsync<BrokerConnectionClosedException>(
+            () => BrokerHttp.WriteRequest(new FailingStream(), new BrokerTransportRequest { Method = "POST", Path = "/v1/package-operations/execute" }, default));
+
+        Assert.False(ex.RequestSent);
+        Assert.IsType<IOException>(ex.InnerException);
+    }
+
+    [Theory]
+    [InlineData("GET", "/v1/health", true)]
+    [InlineData("get", "/v1/policy", true)]
+    [InlineData("HEAD", "/v1/capabilities", true)]
+    [InlineData("POST", "/v1/package-operations/evaluate", true)]
+    [InlineData("POST", "/v1/package-operations/get-status", true)]
+    [InlineData("POST", "/v1/policy/validate", true)]
+    [InlineData("POST", "/v1/policy/validate?x=1", true)]
+    [InlineData("POST", "/v1/package-operations/execute", false)]
+    [InlineData("POST", "/v1/package-operations/cancel", false)]
+    [InlineData("POST", "/v1/package-operations/evaluate/extra", false)]
+    [InlineData("PUT", "/v1/policy", false)]
+    [InlineData("PUT", "/v1/policy/validate", false)]
+    [InlineData("DELETE", "/v1/health", false)]
+    public void Only_side_effect_free_requests_are_safe_to_resend(string method, string path, bool expected)
+    {
+        Assert.Equal(expected, BrokerBusyRetry.IsSafeToResend(new BrokerTransportRequest { Method = method, Path = path }));
+    }
+
+    [Theory]
+    [InlineData(0, 100)]
+    [InlineData(1, 200)]
+    [InlineData(2, 400)]
+    [InlineData(5, 3200)]
+    [InlineData(6, 5000)]
+    [InlineData(100, 5000)]
+    public void Disconnect_retry_backoff_is_exponential_and_capped(int attempt, int expectedMs)
+    {
+        Assert.Equal(TimeSpan.FromMilliseconds(expectedMs), BrokerBusyRetry.GetDisconnectRetryDelay(attempt, TimeSpan.FromSeconds(5)));
     }
 
     [Theory]
@@ -399,6 +457,38 @@ public class BrokerTransportUnitTests
         public BrokerServiceInfo? QueryService(string serviceName) => TryGetValue(serviceName, out var info) ? info : null;
 
         public string? TryGetServerProcessUserSid() => UserSid;
+    }
+
+    /// <summary>Stream whose reads and writes fail like a pipe closed by the server.</summary>
+    private sealed class FailingStream : Stream
+    {
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => true;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new IOException("Pipe is broken.");
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new IOException("Pipe is broken.");
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+            ValueTask.FromException<int>(new IOException("Pipe is broken."));
+
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default) =>
+            ValueTask.FromException(new IOException("Pipe is broken."));
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
     }
 
     /// <summary>Read-only stream returning one chunk per read.</summary>

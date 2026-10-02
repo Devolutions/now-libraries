@@ -45,4 +45,36 @@ internal static class BrokerBusyRetry
 
         return delay > maxDelay ? maxDelay : delay;
     }
+
+    /// <summary>Initial delay before retrying a connection the broker closed without responding.</summary>
+    internal static readonly TimeSpan InitialDisconnectRetryDelay = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>Exponential backoff for connections closed without a response: 100 ms, 200 ms, 400 ms, capped.</summary>
+    internal static TimeSpan GetDisconnectRetryDelay(int attempt, TimeSpan maxDelay)
+    {
+        var delay = InitialDisconnectRetryDelay * Math.Pow(2, Math.Min(attempt, 16));
+        return delay > maxDelay ? maxDelay : delay;
+    }
+
+    /// <summary>
+    /// Whether a request may be sent again after the broker closed the connection without responding, once the
+    /// request may have reached it. Only requests without side effects qualify.
+    /// </summary>
+    internal static bool IsSafeToResend(BrokerTransportRequest request)
+    {
+        if (request.Method.Equals("GET", StringComparison.OrdinalIgnoreCase)
+            || request.Method.Equals("HEAD", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (!request.Method.Equals("POST", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var queryStart = request.Path.IndexOf('?');
+        var path = queryStart < 0 ? request.Path : request.Path[..queryStart];
+        return path is "/v1/package-operations/evaluate" or "/v1/package-operations/get-status" or "/v1/policy/validate";
+    }
 }
