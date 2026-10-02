@@ -52,6 +52,9 @@ public class BrokerTransportUnitTests
     public static TheoryData<NamedPipeBrokerTransportOptions> InvalidOptions => new()
     {
         new NamedPipeBrokerTransportOptions { ConnectTimeout = TimeSpan.Zero },
+        new NamedPipeBrokerTransportOptions { ConnectTimeout = TimeSpan.MaxValue },
+        new NamedPipeBrokerTransportOptions { ResponseTimeout = TimeSpan.FromDays(30) },
+        new NamedPipeBrokerTransportOptions { MaxBusyRetryDelay = TimeSpan.MaxValue },
         new NamedPipeBrokerTransportOptions { ResponseTimeout = TimeSpan.FromSeconds(-1) },
         new NamedPipeBrokerTransportOptions { ServerAuthenticatorTimeout = TimeSpan.Zero },
         new NamedPipeBrokerTransportOptions { MaxResponseBodyBytes = -1 },
@@ -72,6 +75,17 @@ public class BrokerTransportUnitTests
     }
 
     [Fact]
+    public void Infinite_timeouts_are_accepted()
+    {
+        using var transport = new NamedPipeBrokerTransport(new NamedPipeBrokerTransportOptions
+        {
+            ConnectTimeout = Timeout.InfiniteTimeSpan,
+            ResponseTimeout = Timeout.InfiniteTimeSpan,
+            ServerAuthenticatorTimeout = TimeSpan.FromMilliseconds(int.MaxValue),
+        });
+    }
+
+    [Fact]
     public void Request_is_encoded_as_one_buffer_with_framing_headers_owned_by_the_transport()
     {
         var bytes = BrokerHttp.EncodeRequest(new BrokerTransportRequest
@@ -85,6 +99,7 @@ public class BrokerTransportUnitTests
                 ["Host"] = "other",
                 ["Connection"] = "keep-alive",
                 ["Content-Length"] = "999",
+                ["Transfer-Encoding"] = "chunked",
             },
         });
 

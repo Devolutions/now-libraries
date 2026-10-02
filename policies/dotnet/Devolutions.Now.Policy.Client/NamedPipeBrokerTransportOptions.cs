@@ -119,6 +119,7 @@ public sealed record NamedPipeBrokerTransportOptions
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxResponseHeaderBytes, 16, nameof(MaxResponseHeaderBytes));
         ArgumentOutOfRangeException.ThrowIfNegative(MaxBusyRetries, nameof(MaxBusyRetries));
         ArgumentOutOfRangeException.ThrowIfLessThan(MaxBusyRetryDelay, TimeSpan.Zero, nameof(MaxBusyRetryDelay));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxBusyRetryDelay, MaxTimerDelay, nameof(MaxBusyRetryDelay));
         ArgumentNullException.ThrowIfNull(ServerServiceNames, nameof(ServerServiceNames));
 
         if (!Enum.IsDefined(ImpersonationLevel))
@@ -142,9 +143,17 @@ public sealed record NamedPipeBrokerTransportOptions
 
     private static void ThrowIfNotPositive(TimeSpan value, string name)
     {
-        if (value <= TimeSpan.Zero && value != Timeout.InfiniteTimeSpan)
+        if (value == Timeout.InfiniteTimeSpan)
         {
-            throw new ArgumentOutOfRangeException(name, value, "The timeout must be positive or infinite.");
+            return;
+        }
+
+        if (value <= TimeSpan.Zero || value > MaxTimerDelay)
+        {
+            throw new ArgumentOutOfRangeException(name, value, "The timeout must be positive and supported by timers, or infinite.");
         }
     }
+
+    /// <summary>Largest delay accepted by <see cref="CancellationTokenSource.CancelAfter(TimeSpan)"/> and <see cref="Task.Delay(TimeSpan)"/>.</summary>
+    private static readonly TimeSpan MaxTimerDelay = TimeSpan.FromMilliseconds(int.MaxValue);
 }

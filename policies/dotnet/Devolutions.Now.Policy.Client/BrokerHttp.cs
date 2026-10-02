@@ -22,7 +22,8 @@ internal static class BrokerHttp
         {
             if (name.Equals("Host", StringComparison.OrdinalIgnoreCase)
                 || name.Equals("Connection", StringComparison.OrdinalIgnoreCase)
-                || name.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
+                || name.Equals("Content-Length", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
