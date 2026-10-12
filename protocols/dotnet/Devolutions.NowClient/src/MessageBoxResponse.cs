@@ -31,20 +31,22 @@ namespace Devolutions.NowClient
                 return _response.GetResponseOrThrow();
             }
 
-            await _responseReceivedEvent.WaitAsync();
+            await _responseReceivedEvent.WaitAsync(_cancellationToken).ConfigureAwait(false);
 
             return _response?.GetResponseOrThrow()
                    ?? throw new NowClientException("No message box response has been received.");
         }
 
-        internal MessageBoxResponse(uint requestId)
+        internal MessageBoxResponse(uint requestId, CancellationToken cancellationToken)
         {
             RequestId = requestId;
+            _cancellationToken = cancellationToken;
         }
 
         public uint RequestId { get; }
 
         private NowMsgSessionMessageBoxRsp? _response;
+        private readonly CancellationToken _cancellationToken;
 
         // SemaphoreSlim is explicitly supports async operation via WaitAsync and don't
         // require semaphore.Release() to be called in the same thread as semaphore.Wait()

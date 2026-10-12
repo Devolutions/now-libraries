@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Threading.Channels;
 
+using Devolutions.NowClient.Execution;
 using Devolutions.NowClient.Worker;
 using Devolutions.NowProto.Messages;
 
@@ -48,7 +49,7 @@ namespace Devolutions.NowClient
             }
 
             _cancelResponse = msg;
-            _cancelReceived.Release();
+            _cancelReceived.TrySetResult(true);
         }
 
         void IExecSessionHandler.HandleResult(NowMsgExecResult msg)
@@ -57,7 +58,7 @@ namespace Devolutions.NowClient
             _responseReceivedEvent.Release();
             if (_cancelPending)
             {
-                _cancelReceived.Release();
+                _cancelReceived.TrySetResult(true);
             }
         }
 
@@ -66,7 +67,9 @@ namespace Devolutions.NowClient
             ChannelWriter<IClientCommand> commandWriter,
             StdoutHandler? onStdout,
             StderrHandler? onStderr,
-            StartedHandler? onStarted
+            StartedHandler? onStarted,
+            DedicatedExecution? execution,
+            CancellationToken cancellationToken
         )
         {
             SessionId = sessionId;
@@ -74,6 +77,8 @@ namespace Devolutions.NowClient
             _onStderr = onStderr;
             _onStarted = onStarted;
             _commandWriter = commandWriter;
+            _execution = execution;
+            _cancellationToken = cancellationToken;
         }
 
         /// <summary>
@@ -83,11 +88,13 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task Abort(uint exitCode)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfExited();
 
             await _commandWriter.WriteAsync(new CommandExecAbort(SessionId, exitCode));
             _aborted = true;
-            _cancelReceived.Release();
+            _cancelReceived.TrySetResult(true);
             _responseReceivedEvent.Release();
         }
 
@@ -98,6 +105,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task Cancel()
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfExited();
 
             if (_cancelResponse != null)
@@ -112,7 +121,7 @@ namespace Devolutions.NowClient
                 await _commandWriter.WriteAsync(new CommandExecCancel(SessionId));
             }
 
-            await _cancelReceived.WaitAsync();
+            await ProtocolTasks.WaitAsync(_cancelReceived.Task, _execution, _cancellationToken);
 
             if (_cancelResponse == null)
             {
@@ -128,6 +137,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task SendStdin(ArraySegment<byte> data, bool last)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfExited();
 
             if (_lastStdinSent)
@@ -156,7 +167,7 @@ namespace Devolutions.NowClient
                 return _result.GetExitCodeOrThrow();
             }
 
-            await _responseReceivedEvent.WaitAsync();
+            await _responseReceivedEvent.WaitAsync(_cancellationToken).ConfigureAwait(false);
 
             return _aborted
                 ? throw new NowSessionException(SessionId, NowSessionException.NowSessionExceptionKind.Terminated)
@@ -183,7 +194,8 @@ namespace Devolutions.NowClient
         private NowMsgExecCancelRsp? _cancelResponse;
         private NowMsgExecResult? _result;
 
-        private readonly SemaphoreSlim _cancelReceived = new(0, 1);
+        private readonly TaskCompletionSource<bool> _cancelReceived =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly SemaphoreSlim _responseReceivedEvent = new(0, 1);
 
         private readonly StdoutHandler? _onStdout;
@@ -191,5 +203,7 @@ namespace Devolutions.NowClient
         private readonly StartedHandler? _onStarted;
 
         private readonly ChannelWriter<IClientCommand> _commandWriter;
+        private readonly DedicatedExecution? _execution;
+        private readonly CancellationToken _cancellationToken;
     }
 }

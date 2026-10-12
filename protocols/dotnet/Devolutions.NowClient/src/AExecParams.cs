@@ -1,5 +1,6 @@
 ﻿using System.Threading.Channels;
 
+using Devolutions.NowClient.Execution;
 using Devolutions.NowClient.Worker;
 
 namespace Devolutions.NowClient
@@ -42,14 +43,18 @@ namespace Devolutions.NowClient
             }
         }
 
-        internal ExecSession ToExecSession(uint sessionId, ChannelWriter<IClientCommand> commandWriter)
+        internal ExecSession ToExecSession(
+            uint sessionId, ChannelWriter<IClientCommand> commandWriter,
+            DedicatedExecution? execution, CancellationToken cancellationToken)
         {
             return new ExecSession(
                 sessionId,
                 commandWriter,
                 _stdoutHandler,
                 _stderrHandler,
-                _startedHandler
+                _startedHandler,
+                execution,
+                cancellationToken
             );
         }
 

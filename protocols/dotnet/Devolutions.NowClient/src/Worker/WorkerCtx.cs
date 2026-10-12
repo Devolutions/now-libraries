@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Threading.Channels;
 
+using Devolutions.NowClient.Execution;
 using Devolutions.NowProto;
 using Devolutions.NowProto.Exceptions;
 using Devolutions.NowProto.Messages;
@@ -21,31 +22,60 @@ namespace Devolutions.NowClient.Worker
             finally
             {
                 // Cleanup any pending handlers before exiting
-                ctx.CleanupPendingHandlers();
-
-                // Dispose the channel transport
-                ctx.NowChannel.Dispose();
+                try
+                {
+                    ctx.CleanupPendingHandlers();
+                }
+                finally
+                {
+                    ctx.NowChannel.Dispose();
+                }
             }
         }
 
         private static async Task RunImpl(WorkerCtx ctx)
         {
+            using var heartbeatStop = CancellationTokenSource.CreateLinkedTokenSource(ctx.CancellationToken);
+            try
+            {
+                await RunLoop(ctx, heartbeatStop.Token);
+            }
+            finally
+            {
+                heartbeatStop.Cancel();
+            }
+        }
+
+        private static async Task<IClientCommand> ReadCommand(WorkerCtx ctx)
+        {
+            // Capture the protocol context before racing a channel's asynchronous completion.
+            return await ctx.Commands.ReadAsync(ctx.CancellationToken);
+        }
+
+        private static async Task RunLoop(WorkerCtx ctx, CancellationToken heartbeatToken)
+        {
             Task<IClientCommand>? clientReadTask = null;
             Task<NowMessage.NowMessageView>? serverReadTask = null;
             Task? heartbeatCheckTask = null;
+            bool preferServer = true;
 
             var tasks = new List<Task>();
 
             // Main async IO loop. (akin to tokio's `select!`)
             while (!ctx.ExitRequested)
             {
+                // Even an always-ready transport/command queue must let deadlines and stop
+                // requests run on the dedicated pump.
+                if (ctx.Execution != null)
+                    await Task.Yield();
+                ctx.CancellationToken.ThrowIfCancellationRequested();
                 tasks.Clear();
 
                 // Check if task was completed on the previous loop iteration.
                 // and re-add it to the list of tasks to be awaited.
                 if (clientReadTask == null)
                 {
-                    clientReadTask = ctx.Commands.ReadAsync().AsTask();
+                    clientReadTask = ReadCommand(ctx);
                 }
 
                 if (serverReadTask == null)
@@ -56,18 +86,36 @@ namespace Devolutions.NowClient.Worker
                 // Skip task of heartbeat interval was not negotiated.
                 if (heartbeatCheckTask == null && ctx.HeartbeatInterval != null)
                 {
-                    heartbeatCheckTask = Task.Delay(ctx.HeartbeatInterval.Value * 2);
-                    tasks.Add(heartbeatCheckTask);
+                    heartbeatCheckTask = ctx.Execution != null
+                        ? ctx.Execution.Delay(ctx.HeartbeatInterval.Value * 2, heartbeatToken)
+                        : Task.Delay(ctx.HeartbeatInterval.Value * 2, heartbeatToken);
                 }
 
-                tasks.Add(clientReadTask);
-                tasks.Add(serverReadTask);
+                // Give a received heartbeat one turn before checking expiry, but do not let
+                // continuously ready I/O starve the timer (or either direction of I/O).
+                var checkHeartbeatFirst = heartbeatCheckTask?.IsCompleted == true
+                    && (!serverReadTask.IsCompleted || !preferServer);
+                if (checkHeartbeatFirst)
+                    tasks.Add(heartbeatCheckTask!);
+                if (preferServer)
+                {
+                    tasks.Add(serverReadTask);
+                    tasks.Add(clientReadTask);
+                }
+                else
+                {
+                    tasks.Add(clientReadTask);
+                    tasks.Add(serverReadTask);
+                }
+                if (heartbeatCheckTask != null && !checkHeartbeatFirst)
+                    tasks.Add(heartbeatCheckTask);
 
                 var completedTask = await Task.WhenAny(tasks);
 
                 if (completedTask == clientReadTask)
                 {
                     var command = await clientReadTask;
+                    preferServer = true;
                     clientReadTask = null;
                     // See concrete commands implementations in
                     // Devolutions.NowClient.Worker namespace.
@@ -76,6 +124,7 @@ namespace Devolutions.NowClient.Worker
                 else if (completedTask == serverReadTask)
                 {
                     var message = await serverReadTask;
+                    preferServer = false;
                     serverReadTask = null;
 
                     switch (message.MessageClass)
@@ -106,7 +155,7 @@ namespace Devolutions.NowClient.Worker
                     var heartbeatLeeway = TimeSpan.FromSeconds(5);
 
                     heartbeatCheckTask = null;
-                    if (!((DateTime.Now - ctx.LastHeartbeat) > (ctx.HeartbeatInterval + heartbeatLeeway)))
+                    if (!(Stopwatch.GetElapsedTime(ctx.LastHeartbeat) > (ctx.HeartbeatInterval + heartbeatLeeway)))
                     {
                         continue;
                     }
@@ -126,7 +175,7 @@ namespace Devolutions.NowClient.Worker
             switch (kind)
             {
                 case ChannelMessageKind.Heartbeat:
-                    ctx.LastHeartbeat = DateTime.Now;
+                    ctx.LastHeartbeat = Stopwatch.GetTimestamp();
                     break;
                 case ChannelMessageKind.Close:
                     var decoded = message.Deserialize<NowMsgChannelClose>();
@@ -290,10 +339,13 @@ namespace Devolutions.NowClient.Worker
         // -- IO --
         public required NowChannelTransport NowChannel;
         public required ChannelReader<IClientCommand> Commands;
+        public required ChannelWriter<IClientCommand> CommandWriter;
+        public DedicatedExecution? Execution;
+        public CancellationToken CancellationToken;
 
         // -- State --
         public required TimeSpan? HeartbeatInterval;
-        public required DateTime LastHeartbeat;
+        public required long LastHeartbeat;
         public required NowMsgChannelCapset Capabilities;
         public bool ExitRequested = false;
 
