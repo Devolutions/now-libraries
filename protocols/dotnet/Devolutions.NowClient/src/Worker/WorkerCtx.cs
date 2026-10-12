@@ -358,19 +358,21 @@ namespace Devolutions.NowClient.Worker
         // -- RDM State --
         public RdmAppNotifyHandler? RdmAppNotifyHandler;
         public RdmSessionNotifyHandler? RdmSessionNotifyHandler;
-        public RdmCapabilitiesResponseHandler? RdmCapabilitiesResponseHandler;
+
+        // Capability responses carry no request id, so they are matched to requests in send order. A request that
+        // timed out stays queued and consumes its own late response instead of completing the next exchange.
+        private readonly Queue<RdmCapabilitiesResponseHandler> _rdmCapabilitiesHandlers = new();
 
         public void RegisterRdmCapabilitiesHandler(RdmCapabilitiesResponseHandler handler)
         {
-            RdmCapabilitiesResponseHandler = handler;
+            _rdmCapabilitiesHandlers.Enqueue(handler);
         }
 
         private void HandleRdmCapabilitiesResponse(NowMsgRdmCapabilities response)
         {
-            if (RdmCapabilitiesResponseHandler != null)
+            if (_rdmCapabilitiesHandlers.TryDequeue(out var handler))
             {
-                RdmCapabilitiesResponseHandler.SetResponse(response);
-                RdmCapabilitiesResponseHandler = null;
+                handler.SetResponse(response);
             }
         }
 
@@ -385,10 +387,9 @@ namespace Devolutions.NowClient.Worker
         /// </summary>
         public void CleanupPendingHandlers()
         {
-            if (RdmCapabilitiesResponseHandler != null)
+            while (_rdmCapabilitiesHandlers.TryDequeue(out var handler))
             {
-                RdmCapabilitiesResponseHandler.SetException(new OperationCanceledException("Worker terminated"));
-                RdmCapabilitiesResponseHandler = null;
+                handler.SetException(new OperationCanceledException("Worker terminated"));
             }
         }
     }

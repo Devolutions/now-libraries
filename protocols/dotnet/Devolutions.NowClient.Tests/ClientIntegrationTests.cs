@@ -365,6 +365,47 @@ public sealed class ClientIntegrationTests
             Assert.False(client.Completion.IsCompleted);
             TestDriver.Success(client.SessionLock());
             peer.Wire.Receive<NowMsgSessionLock>();
+
+            // Responses carry no request id: the late answer to the timed-out request must be matched to that request,
+            // not complete the retry, whose own answer would otherwise be dropped.
+            var retry = client.RdmSync();
+            peer.Wire.Receive<NowMsgRdmCapabilities>();
+            peer.Wire.Send(RdmCapabilities("1.0.0.0"));
+            TestDriver.Success(client.SessionLock());
+            peer.Wire.Receive<NowMsgSessionLock>();
+            Assert.False(retry.IsCompleted);
+            peer.Wire.Send(RdmCapabilities("2.0.0.0"));
+            TestDriver.Success(retry);
+            Assert.Equal("2.0.0.0", TestDriver.Success(client.GetRdmVersion())?.Version);
+        }, timeoutSeconds: 40);
+    }
+
+    [Fact]
+    public void ConcurrentPoolRdmSyncRequestsAreMatchedToResponsesInOrder()
+    {
+        TestDriver.Run(() =>
+        {
+            using var peer = new ClientPeer();
+            var client = peer.Connect(dedicated: false);
+            var first = client.RdmSync();
+            peer.Wire.Receive<NowMsgRdmCapabilities>();
+            var second = client.RdmSync();
+            peer.Wire.Receive<NowMsgRdmCapabilities>();
+
+            peer.Wire.Send(RdmCapabilities("1.0.0.0"));
+            TestDriver.Success(first);
+            TestDriver.Success(client.SessionLock());
+            peer.Wire.Receive<NowMsgSessionLock>();
+            Assert.False(second.IsCompleted);
+
+            peer.Wire.Send(RdmCapabilities("2.0.0.0"));
+            TestDriver.Success(second);
+            Assert.Equal("2.0.0.0", TestDriver.Success(client.GetRdmVersion())?.Version);
+            TestDriver.Success(client.StopAsync());
+            peer.AssertStopped();
         });
     }
+
+    private static NowMsgRdmCapabilities RdmCapabilities(string version) =>
+        new NowMsgRdmCapabilities.Builder(1672531200, version).WithAppAvailable().Build();
 }

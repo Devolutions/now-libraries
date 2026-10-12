@@ -690,7 +690,7 @@ namespace Devolutions.NowClient
             {
                 await _execution.Enter();
                 ThrowIfWorkerTerminated();
-                // The response has no request id: concurrent exchanges must share one handler.
+                // Concurrent exchanges share one request; the worker matches any late response to it in send order.
                 var pending = _rdmSyncTask ??= RdmSyncCore();
                 try
                 {
