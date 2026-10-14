@@ -160,7 +160,8 @@ namespace Devolutions.NowClient.Execution
 
             // Only the owner assigns/disposes Registration. A concurrent cancellation
             // only removes the deadline and wakes the pump, so disposal never waits on
-            // a callback which is itself waiting for the owner.
+            // a callback which is itself waiting for the owner. Expiry cannot race this
+            // assignment: Delay runs on the pump thread, which is the only thread that fires timers.
             timer.Registration = cancellationToken.UnsafeRegister(static state =>
             {
                 DelayRegistration timer = (DelayRegistration)state!;

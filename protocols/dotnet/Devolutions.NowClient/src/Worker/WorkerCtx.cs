@@ -119,7 +119,19 @@ namespace Devolutions.NowClient.Worker
                     clientReadTask = null;
                     // See concrete commands implementations in
                     // Devolutions.NowClient.Worker namespace.
-                    await command.Execute(ctx);
+                    var execute = command.Execute(ctx);
+                    if (heartbeatCheckTask != null && !execute.IsCompleted)
+                    {
+                        // A hung write would otherwise hide a dead peer until the lifetime is cancelled.
+                        if (await Task.WhenAny(execute, heartbeatCheckTask) == heartbeatCheckTask
+                            && IsHeartbeatOverdue(ctx))
+                        {
+                            ObserveFault(execute);
+                            throw new NowClientException("The peer stopped sending heartbeats while a write was pending.");
+                        }
+                    }
+
+                    await execute;
                 }
                 else if (completedTask == serverReadTask)
                 {
@@ -152,10 +164,8 @@ namespace Devolutions.NowClient.Worker
                 }
                 else if (completedTask == heartbeatCheckTask)
                 {
-                    var heartbeatLeeway = TimeSpan.FromSeconds(5);
-
                     heartbeatCheckTask = null;
-                    if (!(Stopwatch.GetElapsedTime(ctx.LastHeartbeat) > (ctx.HeartbeatInterval + heartbeatLeeway)))
+                    if (!IsHeartbeatOverdue(ctx))
                     {
                         continue;
                     }
@@ -166,6 +176,21 @@ namespace Devolutions.NowClient.Worker
                     ctx.ExitRequested = true;
                 }
             }
+        }
+
+        private static bool IsHeartbeatOverdue(WorkerCtx ctx)
+        {
+            var heartbeatLeeway = TimeSpan.FromSeconds(5);
+            return Stopwatch.GetElapsedTime(ctx.LastHeartbeat) > ctx.HeartbeatInterval + heartbeatLeeway;
+        }
+
+        private static void ObserveFault(Task task)
+        {
+            _ = task.ContinueWith(
+                static completed => _ = completed.Exception,
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
         }
 
         private static void HandleChannelMessage(NowMessage.NowMessageView message, WorkerCtx ctx)

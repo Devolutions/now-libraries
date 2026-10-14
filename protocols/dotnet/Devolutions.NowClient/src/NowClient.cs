@@ -237,6 +237,11 @@ namespace Devolutions.NowClient
             {
                 throw new NowClientException("The server negotiated a zero heartbeat interval.");
             }
+            // The decoder accepts any uint; beyond the protocol's 24 h ceiling the doubled watchdog delay is invalid.
+            if (capabilities.HeartbeatInterval > TimeSpan.FromHours(24))
+            {
+                throw new NowClientException("The server negotiated a heartbeat interval above 24 hours.");
+            }
             return capabilities;
         }
 
@@ -690,7 +695,8 @@ namespace Devolutions.NowClient
             {
                 await _execution.Enter();
                 ThrowIfWorkerTerminated();
-                // Concurrent exchanges share one request; the worker matches any late response to it in send order.
+                // Pool mode sends one exchange per caller; here concurrent callers share one exchange, which the
+                // worker's send-order matching makes equivalent with fewer round-trips.
                 var pending = _rdmSyncTask ??= RdmSyncCore();
                 try
                 {
