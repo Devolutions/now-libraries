@@ -1,7 +1,90 @@
+using System.Runtime.CompilerServices;
+
 namespace Devolutions.NowClient.Tests;
 
 public sealed class BorrowedExecutionTests
 {
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CancelledNegotiationObservesTheAbandonedWriteFailure(bool borrowed)
+    {
+        TestDriver.Run(() =>
+        {
+            var failure = new IOException("abandoned negotiation write");
+            var unobserved = 0;
+            void OnUnobserved(object? sender, UnobservedTaskExceptionEventArgs args)
+            {
+                if (ReferenceEquals(args.Exception.GetBaseException(), failure))
+                {
+                    Interlocked.Increment(ref unobserved);
+                    args.SetObserved();
+                }
+            }
+
+            TaskScheduler.UnobservedTaskException += OnUnobserved;
+            try
+            {
+                var write = CancelNegotiation(failure, borrowed);
+                for (var iteration = 0; iteration < 5; iteration++)
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
+                Assert.False(write.IsAlive, "The completed transport write should be collectible.");
+                Assert.Equal(0, Volatile.Read(ref unobserved));
+            }
+            finally
+            {
+                TaskScheduler.UnobservedTaskException -= OnUnobserved;
+            }
+        });
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference CancelNegotiation(Exception failure, bool borrowed)
+    {
+        var execution = borrowed ? new NowClientExecution() : null;
+        using var stop = new CancellationTokenSource();
+        using var transport = new AbandonedWriteTransport(failure);
+        var worker = execution == null ? null : TestDriver.Success(execution.Run(() => Task.FromResult(Thread.CurrentThread)));
+        try
+        {
+            var connection = Client.Connect(transport, new NowClientOptions { Execution = execution }, stop.Token);
+            Assert.True(transport.Writing.Wait(TestDriver.Deadline));
+            stop.Cancel();
+            Assert.IsAssignableFrom<OperationCanceledException>(TestDriver.Failure(connection));
+        }
+        finally
+        {
+            stop.Cancel();
+            if (execution != null)
+            {
+                TestDriver.Success(execution.DisposeAsync().AsTask());
+                TestDriver.ThreadExited(worker!);
+            }
+        }
+        return new WeakReference(transport.WriteTask);
+    }
+
+    private sealed class AbandonedWriteTransport(Exception failure) : INowTransport
+    {
+        private readonly TaskCompletionSource _write = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public ManualResetEventSlim Writing { get; } = new();
+        public Task WriteTask => _write.Task;
+        public Task Write(byte[] data)
+        {
+            Writing.Set();
+            return _write.Task;
+        }
+        public Task<byte[]> Read(CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("Negotiation must still be writing.");
+        public void Dispose()
+        {
+            _write.TrySetException(failure);
+        }
+    }
+
     [Theory]
     [InlineData("stop")]
     [InlineData("cancel")]

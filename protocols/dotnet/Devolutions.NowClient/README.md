@@ -45,6 +45,8 @@ the dedicated pump. A local stop or lifetime cancellation is successful
 completion; protocol or transport failures fault the task. `StopAsync()` requests
 a local stop, interrupts pending transport waits and returns `Completion`.
 `DisposeAsync()` does the same. Neither synchronously joins the protocol thread.
+Faults from transport waits abandoned during cancellation are observed even when
+the caller has already received the cancellation result.
 `ForceTerminate()` retains its existing graceful, queued close behavior; use
 `StopAsync()` if a blocked write or unresponsive peer must not delay shutdown.
 

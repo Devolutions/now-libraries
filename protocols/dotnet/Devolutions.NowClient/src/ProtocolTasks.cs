@@ -4,9 +4,7 @@ namespace Devolutions.NowClient
 {
     internal static class ProtocolTasks
     {
-        // Task.WhenAny/WaitAsync can schedule their internal completion actions on the pool
-        // for a RunContinuationsAsynchronously source. Capture first so the race is completed
-        // on the protocol context, not by the transport's task scheduler.
+        // Capturing avoids pool-dispatched WhenAny/WaitAsync completion actions on asynchronous transport tasks.
         private static async Task<T> Capture<T>(Task<T> task) => await task;
 
         private static async Task<bool> Capture(Task task)
@@ -33,7 +31,15 @@ namespace Devolutions.NowClient
         {
             if (execution == null)
             {
-                return await task.WaitAsync(timeout, cancellationToken);
+                try
+                {
+                    return await task.WaitAsync(timeout, cancellationToken);
+                }
+                catch
+                {
+                    ObserveFault(task);
+                    throw;
+                }
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -56,10 +62,25 @@ namespace Devolutions.NowClient
                 await delay;
                 throw new TimeoutException();
             }
+            catch
+            {
+                ObserveFault(captured);
+                throw;
+            }
             finally
             {
                 deadline.Cancel();
             }
+        }
+
+        // A wait abandoned by timeout or cancellation leaves the transport task to fault later, typically on disposal.
+        private static void ObserveFault(Task task)
+        {
+            _ = task.ContinueWith(
+                static completed => _ = completed.Exception,
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
         }
     }
 }
