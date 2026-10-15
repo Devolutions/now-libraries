@@ -157,6 +157,7 @@ namespace Devolutions.NowClient
             var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var lifetime = new ClientLifetime(owner.Context, cancellationToken);
             var channel = new NowChannelTransport(transport, owner.Context, lifetime.Token);
+            owner.Attach(lifetime);
             try
             {
                 _ = owner.Run(async () =>
@@ -179,13 +180,16 @@ namespace Devolutions.NowClient
                             finally
                             {
                                 lifetime.Dispose();
+                                owner.Detach(lifetime);
                             }
                         }
                         completion.TrySetResult();
                     }
-                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested && !ready.Task.IsCompleted)
+                    // StopAsync or execution disposal cancels the lifetime without the caller's token. The filter runs
+                    // before the inner finally, so it still sees the token as it was when the exception was raised.
+                    catch (OperationCanceledException) when (lifetime.Token.IsCancellationRequested && !ready.Task.IsCompleted)
                     {
-                        ready.TrySetCanceled(cancellationToken);
+                        ready.TrySetCanceled(cancellationToken.IsCancellationRequested ? cancellationToken : lifetime.Token);
                         completion.TrySetResult();
                     }
                     catch (Exception exception)
@@ -206,6 +210,7 @@ namespace Devolutions.NowClient
                 finally
                 {
                     lifetime.Dispose();
+                    owner.Detach(lifetime);
                 }
                 throw;
             }

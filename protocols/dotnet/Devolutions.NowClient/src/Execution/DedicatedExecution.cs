@@ -28,6 +28,7 @@ namespace Devolutions.NowClient.Execution
         private bool _started;
         private bool _stopping;
         private bool _closed;
+        private bool _delaysCanceled;
         private ulong _nextTimerSequence;
 
         public DedicatedExecution()
@@ -155,6 +156,12 @@ namespace Devolutions.NowClient.Execution
             lock (_gate)
             {
                 ThrowIfClosed();
+                if (_delaysCanceled)
+                {
+                    timer.Completion.TrySetCanceled(cancellationToken);
+                    return timer.Completion.Task;
+                }
+
                 _timers.Add(timer);
             }
 
@@ -233,6 +240,28 @@ namespace Devolutions.NowClient.Execution
                     _canceledTimers.Enqueue(timer);
                     Monitor.Pulse(_gate);
                 }
+            }
+        }
+
+        // The pump owns timer registration cleanup and continuation dispatch.
+        public void CancelPendingDelays()
+        {
+            lock (_gate)
+            {
+                // Admitted operations may reach Delay after the disposal sweep.
+                _delaysCanceled = true;
+                if (_timers.Count == 0)
+                {
+                    return;
+                }
+
+                foreach (DelayRegistration timer in _timers)
+                {
+                    _canceledTimers.Enqueue(timer);
+                }
+
+                _timers.Clear();
+                Monitor.Pulse(_gate);
             }
         }
 

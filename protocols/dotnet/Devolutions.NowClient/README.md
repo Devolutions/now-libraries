@@ -83,6 +83,7 @@ var attached = execution.Run(async () =>
     await client.RdmSync();
     return client;
 });
+// ... use the client; leaving the scope stops it and waits for its worker to drain.
 ```
 
 The application can poll `attached` from its lifecycle actor without blocking it.
@@ -92,9 +93,12 @@ application code, and do not use `ConfigureAwait(false)` or `Task.Run` there.
 An awaited external task still needs a completion producer independent of the pool.
 
 `Execution` and `UseDedicatedThread` are mutually exclusive. A borrowed client
-does not shut down the shared thread when it terminates. Stop/cancel each client
-and await its `Completion` **before** disposing the execution. Execution disposal
-rejects new `Run` operations and waits for already-admitted operations (including
-each client's worker) to finish; it does not forcibly cancel arbitrary application
-tasks. `execution.Completion` signals pump shutdown. Never await execution disposal
+does not shut down the shared thread when it terminates. Execution disposal
+rejects new `Run` operations, requests a stop on every client still attached,
+cancels pending delays (even if not yet dispatched), and then waits for
+already-admitted operations (including each client's worker) to finish. It does
+not interrupt operations awaiting unrelated external tasks: complete or cancel
+those tasks yourself, or disposal can wait indefinitely. To control the order of
+shutdown, stop clients and await their `Completion` first.
+`execution.Completion` signals pump shutdown. Never await execution disposal
 from an operation whose completion that disposal is waiting for.

@@ -228,6 +228,7 @@ public sealed class ExecutionTests
                 TestDriver.Success(execution.Run(() => Task.CompletedTask));
                 var disposal = execution.DisposeAsync().AsTask();
                 var repeatedDisposal = ((IAsyncDisposable)execution).DisposeAsync().AsTask();
+                Assert.Same(disposal, repeatedDisposal);
                 Assert.False(disposal.IsCompleted);
                 Assert.False(repeatedDisposal.IsCompleted);
                 Assert.False(execution.Completion.IsCompleted);
@@ -243,22 +244,59 @@ public sealed class ExecutionTests
                 Assert.Throws<ObjectDisposedException>(() => { _ = execution.Run(() => Task.FromResult(true)); });
                 Assert.Throws<ObjectDisposedException>(() => { _ = execution.Delay(TimeSpan.Zero); });
                 Assert.False(invoked);
-                release.SetResult(73);
-                Assert.Equal(73, TestDriver.Success(admitted));
+                // Disposal cancels the pending delay itself; the operation awaiting an external task still gates it.
+                Assert.IsAssignableFrom<OperationCanceledException>(TestDriver.Failure(delay));
                 Assert.False(disposal.IsCompleted);
                 Assert.False(repeatedDisposal.IsCompleted);
-                Assert.False(delay.IsCompleted);
-                delayStop.Cancel();
-                Assert.IsAssignableFrom<OperationCanceledException>(TestDriver.Failure(delay));
+                release.SetResult(73);
+                Assert.Equal(73, TestDriver.Success(admitted));
                 TestDriver.Success(disposal);
                 TestDriver.Success(repeatedDisposal);
                 TestDriver.Success(execution.Completion);
                 TestDriver.ThreadExited(worker!);
+                Assert.False(delayStop.IsCancellationRequested);
                 Assert.Throws<ObjectDisposedException>(() => { _ = execution.Run(() => Task.CompletedTask); });
             }
             finally
             {
                 release.TrySetResult(73);
+                delayStop.Cancel();
+                TestDriver.Success(execution.DisposeAsync().AsTask());
+            }
+        });
+    }
+
+    [Fact]
+    public void DisposalCancelsDelaysAdmittedBeforeTheyReachThePump()
+    {
+        TestDriver.Run(() =>
+        {
+            var execution = new NowClientExecution();
+            using var entered = new ManualResetEventSlim();
+            using var release = new ManualResetEventSlim();
+            using var delayStop = new CancellationTokenSource();
+            try
+            {
+                // Hold dispatch so the delay is admitted without registering its timer.
+                var held = execution.Run(() =>
+                {
+                    entered.Set();
+                    Assert.True(release.Wait(TestDriver.Deadline));
+                    return Task.CompletedTask;
+                });
+                Assert.True(entered.Wait(TestDriver.Deadline));
+                var delay = execution.Delay(Timeout.InfiniteTimeSpan, delayStop.Token);
+                var disposal = execution.DisposeAsync().AsTask();
+                release.Set();
+
+                TestDriver.Success(held);
+                Assert.IsAssignableFrom<OperationCanceledException>(TestDriver.Failure(delay));
+                TestDriver.Success(disposal);
+                Assert.False(delayStop.IsCancellationRequested);
+            }
+            finally
+            {
+                release.Set();
                 delayStop.Cancel();
                 TestDriver.Success(execution.DisposeAsync().AsTask());
             }

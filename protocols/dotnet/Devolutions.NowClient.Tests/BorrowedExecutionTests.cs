@@ -85,6 +85,120 @@ public sealed class BorrowedExecutionTests
         }
     }
 
+    // The README sample: a client created inside Run and never stopped must not hang `await using`.
+    [Fact]
+    public void DisposalStopsAttachedClientsAndCancelsPendingDelays()
+    {
+        TestDriver.Run(() =>
+        {
+            var execution = new NowClientExecution();
+            using var peer = new ClientPeer();
+            using var untouched = new CancellationTokenSource();
+            var attached = execution.Run(async () =>
+            {
+                var client = await Client.Connect(peer.Wire, new NowClientOptions { Execution = execution }, untouched.Token);
+                await client.RdmSync();
+                return client;
+            });
+            peer.Wire.Receive<NowMsgChannelCapset>();
+            peer.Wire.SendFragmented(ClientPeer.Capabilities());
+            peer.Wire.Receive<NowMsgRdmCapabilities>();
+            peer.Wire.Send(ClientPeer.RdmCapabilities());
+            var client = TestDriver.Success(attached);
+            var worker = peer.Wire.AssertDedicatedThread();
+            var infinite = execution.Delay(Timeout.InfiniteTimeSpan);
+            var bounded = execution.Delay(TimeSpan.FromMinutes(5));
+            TestDriver.Success(execution.Run(() => Task.CompletedTask));
+            Assert.False(infinite.IsCompleted);
+            Assert.False(client.Completion.IsCompleted);
+
+            var disposal = execution.DisposeAsync().AsTask();
+
+            TestDriver.Success(client.Completion);
+            Assert.IsAssignableFrom<OperationCanceledException>(TestDriver.Failure(infinite));
+            Assert.IsAssignableFrom<OperationCanceledException>(TestDriver.Failure(bounded));
+            TestDriver.Success(disposal);
+            TestDriver.Success(execution.Completion);
+            TestDriver.ThreadExited(worker);
+            Assert.False(untouched.IsCancellationRequested);
+            Assert.True(peer.Wire.IsDisposed);
+            Assert.Equal(1, peer.Wire.DisposeCalls);
+        });
+    }
+
+    [Fact]
+    public void DisposalOnPumpStopsClientBeforeCancelingItsProtocolDelays()
+    {
+        TestDriver.Run(() =>
+        {
+            var execution = new NowClientExecution();
+            using var peer = new ClientPeer();
+            try
+            {
+                var client = peer.Connect(execution: execution);
+                var disposal = TestDriver.Success(
+                    execution.Run(() => Task.FromResult(execution.DisposeAsync().AsTask())));
+
+                TestDriver.Success(client.Completion);
+                TestDriver.Success(disposal);
+                peer.AssertStopped();
+                TestDriver.ThreadExited(peer.Wire.AssertDedicatedThread());
+            }
+            finally
+            {
+                peer.Cancel();
+                TestDriver.Success(execution.DisposeAsync().AsTask());
+            }
+        });
+    }
+
+    [Fact]
+    public void DisposalDuringNegotiationCancelsTheConnectRatherThanFaultingIt()
+    {
+        TestDriver.Run(() =>
+        {
+            var execution = new NowClientExecution();
+            using var peer = new ClientPeer();
+            var connection = peer.BeginConnect(execution: execution);
+            peer.Wire.NextWrite().Decode<NowMsgChannelCapset>();
+
+            var disposal = execution.DisposeAsync().AsTask();
+
+            TestDriver.Completed(connection);
+            Assert.True(connection.IsCanceled, $"A local stop is a cancellation, not a failure: {connection.Exception?.GetBaseException()}");
+            TestDriver.Success(disposal);
+            Assert.True(peer.Wire.IsDisposed);
+        });
+    }
+
+    [Fact]
+    public void ConnectAfterDisposalBeganIsRejectedAndDisposesTheTransport()
+    {
+        TestDriver.Run(() =>
+        {
+            var execution = new NowClientExecution();
+            using var peer = new ClientPeer();
+            var hold = execution.Delay(Timeout.InfiniteTimeSpan);
+            TestDriver.Success(execution.Run(() => Task.CompletedTask));
+            var disposal = execution.DisposeAsync().AsTask();
+            Assert.IsAssignableFrom<OperationCanceledException>(TestDriver.Failure(hold));
+
+            Exception? rejected = null;
+            try
+            {
+                _ = Client.Connect(peer.Wire, new NowClientOptions { Execution = execution }, CancellationToken.None);
+            }
+            catch (Exception exception)
+            {
+                rejected = exception;
+            }
+
+            Assert.IsType<ObjectDisposedException>(rejected);
+            Assert.True(peer.Wire.IsDisposed);
+            TestDriver.Success(disposal);
+        });
+    }
+
     [Theory]
     [InlineData("stop")]
     [InlineData("cancel")]
@@ -152,6 +266,7 @@ public sealed class BorrowedExecutionTests
     [InlineData("read")]
     [InlineData("cancel")]
     [InlineData("timeout")]
+    [InlineData("foreign-cancel")]
     public void ExecutorCanBeReusedAfterFailedClientNegotiation(string failure)
     {
         TestDriver.Run(() =>
@@ -166,8 +281,11 @@ public sealed class BorrowedExecutionTests
                         timeout: failure == "timeout" ? TimeSpan.FromMilliseconds(200) : null);
                     var offer = failedPeer.Wire.NextWrite();
                     offer.Decode<NowMsgChannelCapset>();
-                    var fault = new IOException($"negotiation {failure}");
-                    if (failure == "write")
+                    // A transport's own OCE is a failure, not a local stop: the lifetime token was never cancelled.
+                    Exception fault = failure == "foreign-cancel"
+                        ? new OperationCanceledException("transport gave up")
+                        : new IOException($"negotiation {failure}");
+                    if (failure is "write" or "foreign-cancel")
                         offer.Fail(fault);
                     else if (failure == "cancel")
                         failedPeer.Cancel();
@@ -182,9 +300,12 @@ public sealed class BorrowedExecutionTests
                     if (failure == "timeout")
                         Assert.IsType<TimeoutException>(error);
                     else if (failure == "cancel")
-                        Assert.IsAssignableFrom<OperationCanceledException>(error);
+                        Assert.True(connection.IsCanceled);
                     else
+                    {
+                        Assert.True(connection.IsFaulted);
                         Assert.Same(fault, error);
+                    }
                     Assert.True(failedPeer.Wire.IsDisposed);
                     Assert.Equal(1, failedPeer.Wire.DisposeCalls);
                     Assert.True(failedPeer.Wire.AllOperationsCompleted);

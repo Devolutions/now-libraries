@@ -8,13 +8,15 @@ namespace Devolutions.NowClient
     /// <remarks>
     /// Operations and their captured continuations share this thread and must not block it.
     /// Avoid escaping the context with ConfigureAwait(false) or Task.Run when thread affinity
-    /// is required. Clients borrowing this execution do not own it: stop or cancel those
-    /// clients and any other outstanding operations before awaiting disposal.
+    /// is required. Disposal stops every client still attached to this execution and cancels
+    /// its pending delays, then waits for admitted operations to finish. Unrelated external
+    /// tasks must be completed or canceled by their callers.
     /// </remarks>
     public sealed class NowClientExecution : IAsyncDisposable
     {
         private readonly object _gate = new();
         private readonly DedicatedExecution _pump = new();
+        private readonly HashSet<ClientLifetime> _clients = new();
         // The private root captures the pump; completing it must not require the thread pool.
         private readonly TaskCompletionSource _stop = new();
         private int _activeOperations;
@@ -86,8 +88,8 @@ namespace Devolutions.NowClient
         /// May be called from any thread.
         /// </summary>
         /// <remarks>
-        /// A delay admitted before disposal keeps the thread alive until it expires or is
-        /// canceled. Disposal does not cancel it, including an infinite delay.
+        /// Disposal cancels pending delays, including those admitted but not yet dispatched.
+        /// The returned task may be canceled while the supplied token remains uncanceled.
         /// </remarks>
         /// <exception cref="ObjectDisposedException">Disposal has already begun.</exception>
         public Task Delay(TimeSpan delay, CancellationToken cancellationToken = default)
@@ -96,22 +98,41 @@ namespace Devolutions.NowClient
         }
 
         /// <summary>
-        /// Rejects new operations and asynchronously waits for admitted operations and thread cleanup.
+        /// Rejects new operations, stops every attached client, cancels pending delays and
+        /// asynchronously waits for admitted operations and thread cleanup.
         /// </summary>
         /// <remarks>
-        /// Does not cancel clients, delays or arbitrary external tasks awaited by operations.
-        /// Stop or cancel them before awaiting this method. Calling this method from an operation
-        /// is supported, but do not await its completion within that operation: disposal must wait
-        /// for the operation itself to return. Repeated calls observe the same completion.
+        /// Stopping a client is a request: its worker still drains on this thread, so the
+        /// returned task completes only once those workers have finished. An operation awaiting
+        /// an external task that is neither a client nor a delay is not interrupted. Calling
+        /// this method from an operation is supported, but do not await its completion within
+        /// that operation: disposal must wait for the operation itself to return. Repeated
+        /// calls observe the same completion.
         /// </remarks>
         public ValueTask DisposeAsync()
         {
             bool stop;
+            ClientLifetime[] clients;
             lock (_gate)
             {
+                if (_disposing)
+                {
+                    return new ValueTask(_pump.Completion);
+                }
+
                 _disposing = true;
+                clients = _clients.ToArray();
+                _clients.Clear();
                 stop = _activeOperations == 0;
             }
+
+            foreach (ClientLifetime client in clients)
+            {
+                client.RequestStop();
+            }
+
+            // Client tokens must be canceled before protocol waits can observe canceled timers.
+            _pump.TryPost(_pump.CancelPendingDelays);
 
             if (stop)
             {
@@ -119,6 +140,23 @@ namespace Devolutions.NowClient
             }
 
             return new ValueTask(_pump.Completion);
+        }
+
+        // Register before admission so disposal cannot miss a worker admitted concurrently.
+        internal void Attach(ClientLifetime client)
+        {
+            lock (_gate)
+            {
+                _clients.Add(client);
+            }
+        }
+
+        internal void Detach(ClientLifetime client)
+        {
+            lock (_gate)
+            {
+                _clients.Remove(client);
+            }
         }
 
         private async Task ExecuteAsync<T>(Func<Task<T>> operation, TaskCompletionSource<T> completion)
