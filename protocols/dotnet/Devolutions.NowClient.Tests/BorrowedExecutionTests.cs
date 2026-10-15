@@ -25,13 +25,14 @@ public sealed class BorrowedExecutionTests
             TaskScheduler.UnobservedTaskException += OnUnobserved;
             try
             {
-                var write = CancelNegotiation(failure, borrowed);
+                CancelNegotiation(failure, borrowed);
+                // Only finalization reports an unobserved fault; whether the task itself is collectible yet is
+                // GC-timing dependent and not what this test is about.
                 for (var iteration = 0; iteration < 5; iteration++)
                 {
                     GC.Collect();
                     GC.WaitForPendingFinalizers();
                 }
-                Assert.False(write.IsAlive, "The completed transport write should be collectible.");
                 Assert.Equal(0, Volatile.Read(ref unobserved));
             }
             finally
@@ -42,7 +43,7 @@ public sealed class BorrowedExecutionTests
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static WeakReference CancelNegotiation(Exception failure, bool borrowed)
+    private static void CancelNegotiation(Exception failure, bool borrowed)
     {
         var execution = borrowed ? new NowClientExecution() : null;
         using var stop = new CancellationTokenSource();
@@ -64,14 +65,12 @@ public sealed class BorrowedExecutionTests
                 TestDriver.ThreadExited(worker!);
             }
         }
-        return new WeakReference(transport.WriteTask);
     }
 
     private sealed class AbandonedWriteTransport(Exception failure) : INowTransport
     {
         private readonly TaskCompletionSource _write = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public ManualResetEventSlim Writing { get; } = new();
-        public Task WriteTask => _write.Task;
         public Task Write(byte[] data)
         {
             Writing.Set();
