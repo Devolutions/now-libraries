@@ -377,8 +377,11 @@ namespace Devolutions.NowClient.Worker
         public RdmAppNotifyHandler? RdmAppNotifyHandler;
         public RdmSessionNotifyHandler? RdmSessionNotifyHandler;
 
-        // Capability responses carry no request id, so they are matched to requests in send order. A request that
-        // timed out stays queued and consumes its own late response instead of completing the next exchange.
+        // Capability responses carry no request id, so they are matched to requests in send order; the Agent answers
+        // each one inline, in order. A request that timed out stays queued and consumes its own late response
+        // instead of completing the next exchange. The flip side is that a request the peer never answers (its
+        // error path sends nothing, or it dropped the message under overload) shifts every later response by one;
+        // the client cannot tell late from lost, so only a reconnect recovers.
         private readonly Queue<RdmCapabilitiesResponseHandler> _rdmCapabilitiesHandlers = new();
 
         public void RegisterRdmCapabilitiesHandler(RdmCapabilitiesResponseHandler handler)

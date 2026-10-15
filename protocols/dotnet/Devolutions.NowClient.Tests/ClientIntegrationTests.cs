@@ -407,4 +407,31 @@ public sealed class ClientIntegrationTests
 
     private static NowMsgRdmCapabilities RdmCapabilities(string version) =>
         new NowMsgRdmCapabilities.Builder(1672531200, version).WithAppAvailable().Build();
+
+    [Fact]
+    public void DirectRdmSyncRejectsAPeerWithoutRdmSupportBeforeQueueingARequest()
+    {
+        TestDriver.Run(() =>
+        {
+            using var peer = new ClientPeer();
+            var connection = peer.BeginConnect();
+            peer.Wire.Receive<NowMsgChannelCapset>();
+            // The builder pins the current version, so the peer's 1.2 is patched into the wire frame (header is 8 bytes).
+            var capset = WireTransport.Encode(ClientPeer.Capabilities());
+            BitConverter.TryWriteBytes(capset.AsSpan(8), (ushort)1);
+            BitConverter.TryWriteBytes(capset.AsSpan(10), (ushort)2);
+            peer.Wire.NextRead().Complete(capset);
+            var client = peer.FinishConnect(connection);
+            Assert.Equal(new NowProtoVersion(1, 2), client.Capabilities.Version);
+
+            Assert.IsType<NowClientException>(TestDriver.Failure(client.RdmSync()));
+            Assert.IsType<NowClientException>(TestDriver.Failure(client.IsRdmAppAvailable()));
+
+            // Nothing went on the wire, so a later supported command is not stuck behind an unanswerable request.
+            TestDriver.Success(client.SessionLock());
+            peer.Wire.Receive<NowMsgSessionLock>();
+            TestDriver.Success(client.StopAsync());
+            peer.AssertStopped();
+        });
+    }
 }

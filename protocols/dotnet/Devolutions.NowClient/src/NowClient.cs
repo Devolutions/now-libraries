@@ -726,6 +726,9 @@ namespace Devolutions.NowClient
         private async Task RdmSyncCore()
         {
             ThrowIfWorkerTerminated();
+            // A peer that predates RDM support never answers; with send-order matching that would shift every later
+            // response, so the request must not be queued at all.
+            ThrowIfRdmUnsupported();
 
             var clientTimestamp = DateTimeOffset.UtcNow;
             var message = new NowMsgRdmCapabilities.Builder(
@@ -889,15 +892,18 @@ namespace Devolutions.NowClient
         {
             if (!_rdmCapabilitiesSent)
             {
-                // Check if server version supports RDM functionality
-                if (Capabilities.Version < MIN_RDM_ENABLED_VERSION)
-                {
-                    throw new NowClientException(
-                        $"RDM functionality requires NOW-proto server version {MIN_RDM_ENABLED_VERSION.Major}.{MIN_RDM_ENABLED_VERSION.Minor} or higher. " +
-                        $"Current server version is {Capabilities.Version.Major}.{Capabilities.Version.Minor}.");
-                }
-
+                ThrowIfRdmUnsupported();
                 await RdmSync();
+            }
+        }
+
+        private void ThrowIfRdmUnsupported()
+        {
+            if (Capabilities.Version < MIN_RDM_ENABLED_VERSION)
+            {
+                throw new NowClientException(
+                    $"RDM functionality requires NOW-proto server version {MIN_RDM_ENABLED_VERSION.Major}.{MIN_RDM_ENABLED_VERSION.Minor} or higher. " +
+                    $"Current server version is {Capabilities.Version.Major}.{Capabilities.Version.Minor}.");
             }
         }
 
