@@ -9,8 +9,7 @@ public sealed class ClientIntegrationTests
     public void OptionsPreserveDefaultDispatchAndTenSecondConnectTimeout()
     {
         var options = new NowClientOptions();
-        Assert.False(options.UseDedicatedThread);
-        Assert.Null(options.Execution);
+        Assert.Same(NowClientScheduling.ThreadPool, options.Scheduling);
         Assert.Equal(TimeSpan.FromSeconds(10), options.ConnectTimeout);
     }
 

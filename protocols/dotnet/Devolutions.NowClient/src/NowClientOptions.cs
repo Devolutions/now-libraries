@@ -6,17 +6,9 @@ namespace Devolutions.NowClient
     public sealed class NowClientOptions
     {
         /// <summary>
-        /// Own a dedicated protocol thread, including negotiation, async continuations and timers.
-        /// Transport operations and callbacks must not block this thread or require the thread pool
-        /// to produce their completions. Consumer continuations retain their usual scheduling.
+        /// Where protocol work runs. Consumer continuations retain their usual scheduling regardless.
         /// </summary>
-        public bool UseDedicatedThread { get; init; }
-
-        /// <summary>
-        /// Borrows a caller-owned execution context for the entire connection. Do not also
-        /// set UseDedicatedThread. Stop the client before disposing its borrowed execution.
-        /// </summary>
-        public NowClientExecution? Execution { get; init; }
+        public NowClientScheduling Scheduling { get; init; } = NowClientScheduling.ThreadPool;
 
         /// <summary>
         /// Maximum time for the initial capability exchange, including the initial write.

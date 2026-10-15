@@ -16,8 +16,9 @@ internal sealed class ClientPeer : IDisposable
         _dedicated = dedicated && execution == null;
         _connection = Client.Connect(Wire, new NowClientOptions
         {
-            UseDedicatedThread = _dedicated,
-            Execution = execution,
+            Scheduling = execution != null
+                ? NowClientScheduling.SharedThread(execution)
+                : _dedicated ? NowClientScheduling.DedicatedThread : NowClientScheduling.ThreadPool,
             ConnectTimeout = timeout ?? TimeSpan.FromSeconds(10),
         }, _lifetime.Token);
         return _connection;

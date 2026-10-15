@@ -50,7 +50,7 @@ public sealed class BorrowedExecutionTests
         var worker = execution == null ? null : TestDriver.Success(execution.Run(() => Task.FromResult(Thread.CurrentThread)));
         try
         {
-            var connection = Client.Connect(transport, new NowClientOptions { Execution = execution }, stop.Token);
+            var connection = Client.Connect(transport, new NowClientOptions { Scheduling = execution != null ? NowClientScheduling.SharedThread(execution) : NowClientScheduling.ThreadPool }, stop.Token);
             Assert.True(transport.Writing.Wait(TestDriver.Deadline));
             stop.Cancel();
             Assert.IsAssignableFrom<OperationCanceledException>(TestDriver.Failure(connection));
@@ -96,7 +96,7 @@ public sealed class BorrowedExecutionTests
             using var untouched = new CancellationTokenSource();
             var attached = execution.Run(async () =>
             {
-                var client = await Client.Connect(peer.Wire, new NowClientOptions { Execution = execution }, untouched.Token);
+                var client = await Client.Connect(peer.Wire, new NowClientOptions { Scheduling = NowClientScheduling.SharedThread(execution) }, untouched.Token);
                 await client.RdmSync();
                 return client;
             });
@@ -186,7 +186,7 @@ public sealed class BorrowedExecutionTests
             Exception? rejected = null;
             try
             {
-                _ = Client.Connect(peer.Wire, new NowClientOptions { Execution = execution }, CancellationToken.None);
+                _ = Client.Connect(peer.Wire, new NowClientOptions { Scheduling = NowClientScheduling.SharedThread(execution) }, CancellationToken.None);
             }
             catch (Exception exception)
             {
@@ -335,31 +335,19 @@ public sealed class BorrowedExecutionTests
     }
 
     [Fact]
-    public void BorrowedExecutionAndOwnedThreadOptionsAreMutuallyExclusive()
+    public void SchedulingRejectsAMissingExecutionBeforeTouchingTheTransport()
     {
         TestDriver.Run(() =>
         {
-            var execution = new NowClientExecution();
             using var wire = new WireTransport();
-            try
+            Assert.Throws<ArgumentNullException>(() => NowClientScheduling.SharedThread(null!));
+            var error = Assert.Throws<ArgumentNullException>(() =>
             {
-                var error = Assert.Throws<ArgumentException>(() =>
-                {
-                    _ = Client.Connect(wire, new NowClientOptions
-                    {
-                        Execution = execution,
-                        UseDedicatedThread = true,
-                    });
-                });
-                Assert.Equal("options", error.ParamName);
-                Assert.Empty(wire.Calls);
-                Assert.False(wire.IsDisposed);
-                TestDriver.Success(execution.Run(() => Task.CompletedTask));
-            }
-            finally
-            {
-                TestDriver.Success(execution.DisposeAsync().AsTask());
-            }
+                _ = Client.Connect(wire, new NowClientOptions { Scheduling = null! });
+            });
+            Assert.Equal("options", error.ParamName);
+            Assert.Empty(wire.Calls);
+            Assert.False(wire.IsDisposed);
         });
     }
 
@@ -375,7 +363,7 @@ public sealed class BorrowedExecutionTests
             {
                 Assert.Throws<ObjectDisposedException>(() =>
                 {
-                    _ = Client.Connect(wire, new NowClientOptions { Execution = execution });
+                    _ = Client.Connect(wire, new NowClientOptions { Scheduling = NowClientScheduling.SharedThread(execution) });
                 });
                 Assert.Empty(wire.Calls);
                 Assert.True(wire.IsDisposed);

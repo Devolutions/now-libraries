@@ -25,7 +25,7 @@ protocol recovery to remain responsive during thread-pool starvation can opt in:
 ```csharp
 await using var client = await NowClient.Connect(
     transport,
-    new NowClientOptions { UseDedicatedThread = true },
+    new NowClientOptions { Scheduling = NowClientScheduling.DedicatedThread },
     connectionLifetimeToken);
 
 await client.RdmStart();
@@ -77,7 +77,7 @@ var attached = execution.Run(async () =>
 {
     var client = await NowClient.Connect(
         transport,
-        new NowClientOptions { Execution = execution },
+        new NowClientOptions { Scheduling = NowClientScheduling.SharedThread(execution) },
         connectionLifetimeToken);
     await client.SetRdmAppNotifyHandler(OnNotify);
     await client.RdmSync();
@@ -92,8 +92,8 @@ monotonic deadline queue. Use that delay rather than `Task.Delay` in critical
 application code, and do not use `ConfigureAwait(false)` or `Task.Run` there.
 An awaited external task still needs a completion producer independent of the pool.
 
-`Execution` and `UseDedicatedThread` are mutually exclusive. A borrowed client
-does not shut down the shared thread when it terminates. Execution disposal
+A borrowed client does not shut down the shared thread when it terminates.
+Execution disposal
 rejects new `Run` operations, requests a stop on every client still attached,
 cancels pending delays (even if not yet dispatched), and then waits for
 already-admitted operations (including each client's worker) to finish. It does

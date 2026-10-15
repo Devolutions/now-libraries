@@ -25,7 +25,7 @@ namespace Devolutions.NowClient
         }
 
         /// <summary>
-        /// Connects using the selected execution mode. The client owns the transport, including
+        /// Connects using the selected scheduling. The client owns the transport, including
         /// on negotiation failure. Cancellation applies to the entire connection lifetime.
         /// </summary>
         public static Task<NowClient> Connect(
@@ -35,19 +35,19 @@ namespace Devolutions.NowClient
         {
             ArgumentNullException.ThrowIfNull(transportImpl);
             ArgumentNullException.ThrowIfNull(options);
-            if (options.UseDedicatedThread && options.Execution != null)
-            {
-                throw new ArgumentException("Choose either an owned thread or a supplied execution context.", nameof(options));
-            }
+            // Scheduling is init-only and has no public constructor, but an object initializer can still set it to null.
+            if (options.Scheduling is null)
+                throw new ArgumentNullException(nameof(options), "NowClientOptions.Scheduling must not be null.");
             if (options.ConnectTimeout <= TimeSpan.Zero || options.ConnectTimeout.TotalMilliseconds > uint.MaxValue - 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(options), "ConnectTimeout must be a positive finite timeout.");
             }
 
-            if (options.Execution != null)
-                return ConnectBorrowed(transportImpl, options.ConnectTimeout, options.Execution, cancellationToken);
+            var scheduling = options.Scheduling;
+            if (scheduling.Execution != null)
+                return ConnectBorrowed(transportImpl, options.ConnectTimeout, scheduling.Execution, cancellationToken);
 
-            return options.UseDedicatedThread
+            return scheduling.OwnsThread
                 ? ConnectDedicated(transportImpl, options.ConnectTimeout, cancellationToken)
                 : ConnectDefault(transportImpl, options.ConnectTimeout, cancellationToken);
         }
