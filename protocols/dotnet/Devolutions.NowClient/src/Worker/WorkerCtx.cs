@@ -54,8 +54,30 @@ namespace Devolutions.NowClient.Worker
 
         private static async Task RunLoop(WorkerCtx ctx, CancellationToken heartbeatToken)
         {
-            Task<IClientCommand>? clientReadTask = null;
-            Task<NowMessage.NowMessageView>? serverReadTask = null;
+            var reads = new PendingReads();
+            try
+            {
+                await RunSelectLoop(ctx, heartbeatToken, reads);
+            }
+            finally
+            {
+                // Whatever ended the loop, the losing reads are still pending; completing the command writer and
+                // disposing the transport then faults them with nobody awaiting.
+                if (reads.Client != null)
+                    ProtocolTasks.ObserveFault(reads.Client);
+                if (reads.Server != null)
+                    ProtocolTasks.ObserveFault(reads.Server);
+            }
+        }
+
+        private sealed class PendingReads
+        {
+            public Task<IClientCommand>? Client;
+            public Task<NowMessage.NowMessageView>? Server;
+        }
+
+        private static async Task RunSelectLoop(WorkerCtx ctx, CancellationToken heartbeatToken, PendingReads reads)
+        {
             Task? heartbeatCheckTask = null;
             bool preferServer = true;
 
@@ -73,15 +95,10 @@ namespace Devolutions.NowClient.Worker
 
                 // Check if task was completed on the previous loop iteration.
                 // and re-add it to the list of tasks to be awaited.
-                if (clientReadTask == null)
-                {
-                    clientReadTask = ReadCommand(ctx);
-                }
-
-                if (serverReadTask == null)
-                {
-                    serverReadTask = ctx.NowChannel.ReadMessageAny();
-                }
+                reads.Client ??= ReadCommand(ctx);
+                reads.Server ??= ctx.NowChannel.ReadMessageAny();
+                var clientReadTask = reads.Client;
+                var serverReadTask = reads.Server;
 
                 // Skip task of heartbeat interval was not negotiated.
                 if (heartbeatCheckTask == null && ctx.HeartbeatInterval != null)
@@ -116,28 +133,16 @@ namespace Devolutions.NowClient.Worker
                 {
                     var command = await clientReadTask;
                     preferServer = true;
-                    clientReadTask = null;
+                    reads.Client = null;
                     // See concrete commands implementations in
                     // Devolutions.NowClient.Worker namespace.
-                    var execute = command.Execute(ctx);
-                    if (heartbeatCheckTask != null && !execute.IsCompleted)
-                    {
-                        // A hung write would otherwise hide a dead peer until the lifetime is cancelled.
-                        if (await Task.WhenAny(execute, heartbeatCheckTask) == heartbeatCheckTask
-                            && IsHeartbeatOverdue(ctx))
-                        {
-                            ObserveFault(execute);
-                            throw new NowClientException("The peer stopped sending heartbeats while a write was pending.");
-                        }
-                    }
-
-                    await execute;
+                    await command.Execute(ctx);
                 }
                 else if (completedTask == serverReadTask)
                 {
                     var message = await serverReadTask;
                     preferServer = false;
-                    serverReadTask = null;
+                    reads.Server = null;
 
                     switch (message.MessageClass)
                     {
@@ -164,8 +169,10 @@ namespace Devolutions.NowClient.Worker
                 }
                 else if (completedTask == heartbeatCheckTask)
                 {
+                    var heartbeatLeeway = TimeSpan.FromSeconds(5);
+
                     heartbeatCheckTask = null;
-                    if (!IsHeartbeatOverdue(ctx))
+                    if (!(Stopwatch.GetElapsedTime(ctx.LastHeartbeat) > (ctx.HeartbeatInterval + heartbeatLeeway)))
                     {
                         continue;
                     }
@@ -176,21 +183,6 @@ namespace Devolutions.NowClient.Worker
                     ctx.ExitRequested = true;
                 }
             }
-        }
-
-        private static bool IsHeartbeatOverdue(WorkerCtx ctx)
-        {
-            var heartbeatLeeway = TimeSpan.FromSeconds(5);
-            return Stopwatch.GetElapsedTime(ctx.LastHeartbeat) > ctx.HeartbeatInterval + heartbeatLeeway;
-        }
-
-        private static void ObserveFault(Task task)
-        {
-            _ = task.ContinueWith(
-                static completed => _ = completed.Exception,
-                CancellationToken.None,
-                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
-                TaskScheduler.Default);
         }
 
         private static void HandleChannelMessage(NowMessage.NowMessageView message, WorkerCtx ctx)

@@ -13,9 +13,18 @@ namespace Devolutions.NowClient
             return true;
         }
 
-        public static Task WaitAsync(Task task, DedicatedExecution? execution, CancellationToken cancellationToken)
+        public static async Task WaitAsync(Task task, DedicatedExecution? execution, CancellationToken cancellationToken)
         {
-            return WaitAsync(Capture(task), Timeout.InfiniteTimeSpan, execution, cancellationToken);
+            try
+            {
+                await WaitAsync(Capture(task), Timeout.InfiniteTimeSpan, execution, cancellationToken);
+            }
+            catch
+            {
+                // The inner wait only sees the wrapper; the transport task underneath is the one that faults late.
+                ObserveFault(task);
+                throw;
+            }
         }
 
         public static Task<T> WaitAsync<T>(Task<T> task, DedicatedExecution? execution, CancellationToken cancellationToken)
@@ -29,53 +38,62 @@ namespace Devolutions.NowClient
             DedicatedExecution? execution,
             CancellationToken cancellationToken)
         {
-            if (execution == null)
+            try
             {
-                try
+                if (execution == null)
                 {
                     return await task.WaitAsync(timeout, cancellationToken);
                 }
+
+                cancellationToken.ThrowIfCancellationRequested();
+                if (task.IsCompleted)
+                {
+                    return await task;
+                }
+
+                using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                var captured = Capture(task);
+                var delay = execution.Delay(timeout, deadline.Token);
+                try
+                {
+                    var completed = await Task.WhenAny(captured, delay);
+                    if (completed == captured)
+                    {
+                        return await captured;
+                    }
+
+                    await delay;
+                    throw new TimeoutException();
+                }
                 catch
                 {
-                    ObserveFault(task);
+                    // The capture resumes on the pump; once the pump has closed it never runs, so observing it alone
+                    // would leave the transport's own fault unobserved.
+                    ObserveFault(captured);
                     throw;
                 }
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
-            if (task.IsCompleted)
-            {
-                return await task;
-            }
-
-            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            var captured = Capture(task);
-            var delay = execution.Delay(timeout, deadline.Token);
-            try
-            {
-                var completed = await Task.WhenAny(captured, delay);
-                if (completed == captured)
+                finally
                 {
-                    return await captured;
+                    deadline.Cancel();
                 }
-
-                await delay;
-                throw new TimeoutException();
             }
             catch
             {
-                ObserveFault(captured);
+                ObserveFault(task);
                 throw;
-            }
-            finally
-            {
-                deadline.Cancel();
             }
         }
 
-        // A wait abandoned by timeout or cancellation leaves the transport task to fault later, typically on disposal.
-        private static void ObserveFault(Task task)
+        // A wait abandoned by timeout, cancellation or shutdown leaves its task to fault later, typically on disposal.
+        // Observation may use the pool: nothing on the protocol path waits for it.
+        public static void ObserveFault(Task task)
         {
+            if (task.IsCompleted)
+            {
+                _ = task.Exception;
+                return;
+            }
+
             _ = task.ContinueWith(
                 static completed => _ = completed.Exception,
                 CancellationToken.None,

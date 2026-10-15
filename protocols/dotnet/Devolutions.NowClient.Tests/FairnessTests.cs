@@ -98,30 +98,6 @@ public sealed class FairnessTests
         }, timeoutSeconds: 45);
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void HeartbeatExpiryEndsTheConnectionWhileACommandWriteHangs(bool dedicated)
-    {
-        TestDriver.Run(() =>
-        {
-            using var peer = new ClientPeer();
-            var client = peer.Connect(dedicated: dedicated, heartbeat: TimeSpan.FromSeconds(5));
-            var elapsed = Stopwatch.StartNew();
-            TestDriver.Success(client.SessionLock());
-            var hungWrite = peer.Wire.NextWrite();
-            hungWrite.Decode<NowMsgSessionLock>();
-
-            // The peer never heartbeats and the write never completes; the watchdog must still fault the worker,
-            // and shutdown then disposes the transport, which releases the hung write.
-            Assert.IsType<NowClientException>(TestDriver.Failure(client.Completion, TimeSpan.FromSeconds(25)));
-            Assert.True(elapsed.Elapsed >= TimeSpan.FromSeconds(9),
-                "The negotiated 5s interval plus 5s leeway must not expire early.");
-            Assert.IsType<ObjectDisposedException>(TestDriver.Failure(hungWrite.Task));
-            peer.AssertStopped(successful: false);
-        }, timeoutSeconds: 45);
-    }
-
     private static void QueueLocks(Client client, int count)
     {
         var submissions = Enumerable.Range(0, count).Select(_ => client.SessionLock()).ToArray();
