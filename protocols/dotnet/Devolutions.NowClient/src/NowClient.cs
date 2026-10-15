@@ -228,7 +228,7 @@ namespace Devolutions.NowClient
         {
             // Support all capabilities by default on client side.
             var clientCapabilities = new NowMsgChannelCapset.Builder()
-                .HeartbeatInterval(TimeSpan.FromSeconds(60))
+                .HeartbeatInterval(RequestedHeartbeatInterval)
                 .SystemCapset(NowCapabilitySystem.All)
                 .SessionCapset(NowCapabilitySession.All)
                 .ExecCapset(NowCapabilityExec.All)
@@ -236,19 +236,24 @@ namespace Devolutions.NowClient
 
             await channel.WriteMessage(clientCapabilities);
 
-            // Wait for downgraded capabilities from server or throw timeout error.
-            var capabilities = await channel.ReadMessage<NowMsgChannelCapset>();
-            if (capabilities.HeartbeatInterval == TimeSpan.Zero)
-            {
-                throw new NowClientException("The server negotiated a zero heartbeat interval.");
-            }
-            // The decoder accepts any uint; beyond the protocol's 24 h ceiling the doubled watchdog delay is invalid.
-            if (capabilities.HeartbeatInterval > TimeSpan.FromHours(24))
-            {
-                throw new NowClientException("The server negotiated a heartbeat interval above 24 hours.");
-            }
-            return capabilities;
+            // The server replies with its own capset; deployed Agents echo their defaults rather than a downgrade.
+            return await channel.ReadMessage<NowMsgChannelCapset>();
         }
+
+        // The heartbeat the worker enforces: the smaller of what each side specified, as the Rust client negotiates.
+        // Zero means the peer disabled heartbeats (NOW-spec NOW_CHANNEL_SET_HEARTBEAT); absent means the peer did not
+        // say, so the client's own request stands. The server's capset is otherwise kept as received.
+        private static TimeSpan? EffectiveHeartbeatInterval(NowMsgChannelCapset serverCapabilities)
+        {
+            var peer = serverCapabilities.HeartbeatInterval;
+            if (peer == null)
+                return RequestedHeartbeatInterval;
+            if (peer == TimeSpan.Zero)
+                return null;
+            return peer < RequestedHeartbeatInterval ? peer : RequestedHeartbeatInterval;
+        }
+
+        private static readonly TimeSpan RequestedHeartbeatInterval = TimeSpan.FromSeconds(60);
 
         private static WorkerCtx CreateWorker(
             NowChannelTransport channel, NowMsgChannelCapset capabilities,
@@ -265,10 +270,10 @@ namespace Devolutions.NowClient
             {
                 NowChannel = channel,
                 Capabilities = capabilities,
-                LastHeartbeat = Stopwatch.GetTimestamp(),
+                LastReceived = Stopwatch.GetTimestamp(),
                 Commands = clientChannel.Reader,
                 CommandWriter = clientChannel.Writer,
-                HeartbeatInterval = capabilities.HeartbeatInterval,
+                HeartbeatInterval = EffectiveHeartbeatInterval(capabilities),
                 Execution = execution,
                 CancellationToken = cancellationToken,
             };

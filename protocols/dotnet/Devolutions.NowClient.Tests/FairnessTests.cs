@@ -52,23 +52,19 @@ public sealed class FairnessTests
         });
     }
 
+    // Any received message counts as liveness, so the only continuously ready I/O that must still let the
+    // expiry timer run is outbound: a peer that accepts writes but sends nothing is treated as gone.
     [Fact]
-    public void ContinuouslyReadyIoDoesNotStarveNegotiatedHeartbeatExpiry()
+    public void ContinuouslyReadyWritesDoNotStarveNegotiatedHeartbeatExpiry()
     {
         TestDriver.Run(() =>
         {
             using var peer = new ClientPeer();
             var client = peer.Connect(heartbeat: TimeSpan.FromSeconds(5));
             var elapsed = Stopwatch.StartNew();
-            long notifications = 0;
-            TestDriver.Success(client.SetRdmAppNotifyHandler((_, _, _) =>
-                Interlocked.Increment(ref notifications)));
             TestDriver.Success(client.SessionLock());
             var heldWrite = peer.Wire.NextWrite();
             heldWrite.Decode<NowMsgSessionLock>();
-            var read = peer.Wire.NextRead();
-            var frame = WireTransport.Encode(new NowMsgRdmAppNotify(
-                NowRdmAppState.Ready, NowRdmReason.NotSpecified, "not-a-heartbeat"));
             QueueLocks(client, 8);
 
             // Replenish exactly one command per synchronous write, keeping the
@@ -80,20 +76,41 @@ public sealed class FairnessTests
                 var replacement = client.SessionLock();
                 Assert.True(replacement.IsCompleted, "Replenishment must not suspend on the protocol thread.");
                 replacement.GetAwaiter().GetResult();
-            }, frame);
-            read.Complete(frame);
+            });
             heldWrite.Complete();
 
-            // Wait for completion before asserting notification progress: an
-            // unfair selector must fail the deadline, not only the first read.
             // Checks run every 10s; allow two checks and 5s scheduling slack.
             TestDriver.Completed(client.Completion, TimeSpan.FromSeconds(25));
             Assert.True(ready.IsActive, "Heartbeat expiry must win before the ready-I/O watchdog.");
             Assert.True(elapsed.Elapsed >= TimeSpan.FromSeconds(9),
                 "The negotiated 5s interval plus 5s leeway must not expire early.");
             Assert.True(ready.Writes > 100, "Commands must stay ready throughout the heartbeat wait.");
-            Assert.True(ready.Reads > 100, "The peer must continuously supply ready non-heartbeat frames.");
-            Assert.True(Interlocked.Read(ref notifications) > 100);
+            peer.AssertStopped();
+        }, timeoutSeconds: 45);
+    }
+
+    [Fact]
+    public void InboundTrafficWithoutHeartbeatsKeepsTheChannelAlive()
+    {
+        TestDriver.Run(() =>
+        {
+            using var peer = new ClientPeer();
+            var client = peer.Connect(heartbeat: TimeSpan.FromSeconds(5));
+            long notifications = 0;
+            TestDriver.Success(client.SetRdmAppNotifyHandler((_, _, _) => Interlocked.Increment(ref notifications)));
+            var frame = new NowMsgRdmAppNotify(NowRdmAppState.Ready, NowRdmReason.NotSpecified, "not-a-heartbeat");
+
+            // Well past interval + leeway, with a non-heartbeat message every 3 s and no heartbeat PDU at all.
+            var elapsed = Stopwatch.StartNew();
+            while (elapsed.Elapsed < TimeSpan.FromSeconds(16))
+            {
+                peer.Wire.Send(frame);
+                Thread.Sleep(3000);
+                Assert.False(client.Completion.IsCompleted, $"The channel expired after {elapsed.Elapsed} despite inbound traffic.");
+            }
+
+            Assert.True(Interlocked.Read(ref notifications) >= 5);
+            TestDriver.Success(client.StopAsync());
             peer.AssertStopped();
         }, timeoutSeconds: 45);
     }

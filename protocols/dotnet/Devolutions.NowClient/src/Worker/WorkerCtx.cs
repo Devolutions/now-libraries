@@ -143,6 +143,8 @@ namespace Devolutions.NowClient.Worker
                     var message = await serverReadTask;
                     preferServer = false;
                     reads.Server = null;
+                    // Deployed Agents only heartbeat after a full interval of silence, so any message is proof of life.
+                    ctx.LastReceived = Stopwatch.GetTimestamp();
 
                     switch (message.MessageClass)
                     {
@@ -172,7 +174,7 @@ namespace Devolutions.NowClient.Worker
                     var heartbeatLeeway = TimeSpan.FromSeconds(5);
 
                     heartbeatCheckTask = null;
-                    if (!(Stopwatch.GetElapsedTime(ctx.LastHeartbeat) > (ctx.HeartbeatInterval + heartbeatLeeway)))
+                    if (!(Stopwatch.GetElapsedTime(ctx.LastReceived) > (ctx.HeartbeatInterval + heartbeatLeeway)))
                     {
                         continue;
                     }
@@ -192,7 +194,6 @@ namespace Devolutions.NowClient.Worker
             switch (kind)
             {
                 case ChannelMessageKind.Heartbeat:
-                    ctx.LastHeartbeat = Stopwatch.GetTimestamp();
                     break;
                 case ChannelMessageKind.Close:
                     var decoded = message.Deserialize<NowMsgChannelClose>();
@@ -362,7 +363,7 @@ namespace Devolutions.NowClient.Worker
 
         // -- State --
         public required TimeSpan? HeartbeatInterval;
-        public required long LastHeartbeat;
+        public required long LastReceived;
         public required NowMsgChannelCapset Capabilities;
         public bool ExitRequested = false;
 

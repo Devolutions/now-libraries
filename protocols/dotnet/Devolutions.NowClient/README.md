@@ -17,6 +17,20 @@ This library provides a high level async client for the NOW protocol.
   threads simultaneously (only mpsc `Channel` and a few atomic
   variables are used)
 
+### Heartbeat
+
+The client requests a 60 s heartbeat interval and enforces the smaller of its own
+and the server's specified interval, as the Rust client does; a server that sends
+no interval therefore still gets the client's 60 s, and a server that sends zero
+disables the watchdog (NOW_CHANNEL_SET_HEARTBEAT). Any message received from the
+server counts as liveness, not only `NOW_CHANNEL_HEARTBEAT`: deployed Agents only
+emit a heartbeat after a full interval with no other traffic. The channel is
+considered dead when nothing has been received for the interval plus 5 s, checked
+every two intervals. A channel that only ever sends and never receives anything
+will therefore expire; a peer that drains writes but never answers is
+indistinguishable from a dead one. A write that never completes is not detected
+by the watchdog; use `StopAsync()` to abandon it.
+
 ### Dedicated protocol execution
 
 `Connect(transport)` continues to use a thread-pool worker. Applications that need
