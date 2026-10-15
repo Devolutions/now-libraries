@@ -281,7 +281,7 @@ public sealed class BorrowedExecutionTests
                         timeout: failure == "timeout" ? TimeSpan.FromMilliseconds(200) : null);
                     var offer = failedPeer.Wire.NextWrite();
                     offer.Decode<NowMsgChannelCapset>();
-                    // A transport's own OCE is a failure, not a local stop: the lifetime token was never cancelled.
+                    // A transport's own cancellation exception is a failure, not a local stop: the lifetime token was never cancelled.
                     Exception fault = failure == "foreign-cancel"
                         ? new OperationCanceledException("transport gave up")
                         : new IOException($"negotiation {failure}");
