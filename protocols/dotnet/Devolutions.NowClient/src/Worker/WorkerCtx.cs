@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Threading.Channels;
 
+using Devolutions.NowClient.Execution;
 using Devolutions.NowProto;
 using Devolutions.NowProto.Exceptions;
 using Devolutions.NowProto.Messages;
@@ -21,54 +22,118 @@ namespace Devolutions.NowClient.Worker
             finally
             {
                 // Cleanup any pending handlers before exiting
-                ctx.CleanupPendingHandlers();
-
-                // Dispose the channel transport
-                ctx.NowChannel.Dispose();
+                try
+                {
+                    ctx.CleanupPendingHandlers();
+                }
+                finally
+                {
+                    ctx.NowChannel.Dispose();
+                }
             }
         }
 
         private static async Task RunImpl(WorkerCtx ctx)
         {
-            Task<IClientCommand>? clientReadTask = null;
-            Task<NowMessage.NowMessageView>? serverReadTask = null;
+            using var heartbeatStop = CancellationTokenSource.CreateLinkedTokenSource(ctx.CancellationToken);
+            try
+            {
+                await RunLoop(ctx, heartbeatStop.Token);
+            }
+            finally
+            {
+                heartbeatStop.Cancel();
+            }
+        }
+
+        private static async Task<IClientCommand> ReadCommand(WorkerCtx ctx)
+        {
+            // Capture the protocol context before racing a channel's asynchronous completion.
+            return await ctx.Commands.ReadAsync(ctx.CancellationToken);
+        }
+
+        private static async Task RunLoop(WorkerCtx ctx, CancellationToken heartbeatToken)
+        {
+            var reads = new PendingReads();
+            try
+            {
+                await RunSelectLoop(ctx, heartbeatToken, reads);
+            }
+            finally
+            {
+                // Whatever ended the loop, the losing reads are still pending; completing the command writer and
+                // disposing the transport then faults them with nobody awaiting.
+                if (reads.Client != null)
+                    ProtocolTasks.ObserveFault(reads.Client);
+                if (reads.Server != null)
+                    ProtocolTasks.ObserveFault(reads.Server);
+            }
+        }
+
+        private sealed class PendingReads
+        {
+            public Task<IClientCommand>? Client;
+            public Task<NowMessage.NowMessageView>? Server;
+        }
+
+        private static async Task RunSelectLoop(WorkerCtx ctx, CancellationToken heartbeatToken, PendingReads reads)
+        {
             Task? heartbeatCheckTask = null;
+            bool preferServer = true;
 
             var tasks = new List<Task>();
 
             // Main async IO loop. (akin to tokio's `select!`)
             while (!ctx.ExitRequested)
             {
+                // Even an always-ready transport/command queue must let deadlines and stop
+                // requests run on the dedicated pump.
+                if (ctx.Execution != null)
+                    await Task.Yield();
+                ctx.CancellationToken.ThrowIfCancellationRequested();
                 tasks.Clear();
 
                 // Check if task was completed on the previous loop iteration.
                 // and re-add it to the list of tasks to be awaited.
-                if (clientReadTask == null)
-                {
-                    clientReadTask = ctx.Commands.ReadAsync().AsTask();
-                }
-
-                if (serverReadTask == null)
-                {
-                    serverReadTask = ctx.NowChannel.ReadMessageAny();
-                }
+                reads.Client ??= ReadCommand(ctx);
+                reads.Server ??= ctx.NowChannel.ReadMessageAny();
+                var clientReadTask = reads.Client;
+                var serverReadTask = reads.Server;
 
                 // Skip task of heartbeat interval was not negotiated.
                 if (heartbeatCheckTask == null && ctx.HeartbeatInterval != null)
                 {
-                    heartbeatCheckTask = Task.Delay(ctx.HeartbeatInterval.Value * 2);
-                    tasks.Add(heartbeatCheckTask);
+                    heartbeatCheckTask = ctx.Execution != null
+                        ? ctx.Execution.Delay(ctx.HeartbeatInterval.Value * 2, heartbeatToken)
+                        : Task.Delay(ctx.HeartbeatInterval.Value * 2, heartbeatToken);
                 }
 
-                tasks.Add(clientReadTask);
-                tasks.Add(serverReadTask);
+                // Give a received heartbeat one turn before checking expiry, but do not let
+                // continuously ready I/O starve the timer (or either direction of I/O).
+                var checkHeartbeatFirst = heartbeatCheckTask?.IsCompleted == true
+                    && (!serverReadTask.IsCompleted || !preferServer);
+                if (checkHeartbeatFirst)
+                    tasks.Add(heartbeatCheckTask!);
+                if (preferServer)
+                {
+                    tasks.Add(serverReadTask);
+                    tasks.Add(clientReadTask);
+                }
+                else
+                {
+                    tasks.Add(clientReadTask);
+                    tasks.Add(serverReadTask);
+                }
+                if (heartbeatCheckTask != null && !checkHeartbeatFirst)
+                    tasks.Add(heartbeatCheckTask);
 
                 var completedTask = await Task.WhenAny(tasks);
 
                 if (completedTask == clientReadTask)
                 {
                     var command = await clientReadTask;
-                    clientReadTask = null;
+                    preferServer = true;
+                    reads.Client = null;
                     // See concrete commands implementations in
                     // Devolutions.NowClient.Worker namespace.
                     await command.Execute(ctx);
@@ -76,7 +141,10 @@ namespace Devolutions.NowClient.Worker
                 else if (completedTask == serverReadTask)
                 {
                     var message = await serverReadTask;
-                    serverReadTask = null;
+                    preferServer = false;
+                    reads.Server = null;
+                    // Deployed Agents only heartbeat after a full interval of silence, so any message is proof of life.
+                    ctx.LastReceived = Stopwatch.GetTimestamp();
 
                     switch (message.MessageClass)
                     {
@@ -106,7 +174,7 @@ namespace Devolutions.NowClient.Worker
                     var heartbeatLeeway = TimeSpan.FromSeconds(5);
 
                     heartbeatCheckTask = null;
-                    if (!((DateTime.Now - ctx.LastHeartbeat) > (ctx.HeartbeatInterval + heartbeatLeeway)))
+                    if (!(Stopwatch.GetElapsedTime(ctx.LastReceived) > (ctx.HeartbeatInterval + heartbeatLeeway)))
                     {
                         continue;
                     }
@@ -126,7 +194,6 @@ namespace Devolutions.NowClient.Worker
             switch (kind)
             {
                 case ChannelMessageKind.Heartbeat:
-                    ctx.LastHeartbeat = DateTime.Now;
                     break;
                 case ChannelMessageKind.Close:
                     var decoded = message.Deserialize<NowMsgChannelClose>();
@@ -290,10 +357,13 @@ namespace Devolutions.NowClient.Worker
         // -- IO --
         public required NowChannelTransport NowChannel;
         public required ChannelReader<IClientCommand> Commands;
+        public required ChannelWriter<IClientCommand> CommandWriter;
+        public DedicatedExecution? Execution;
+        public CancellationToken CancellationToken;
 
         // -- State --
         public required TimeSpan? HeartbeatInterval;
-        public required DateTime LastHeartbeat;
+        public required long LastReceived;
         public required NowMsgChannelCapset Capabilities;
         public bool ExitRequested = false;
 
@@ -306,19 +376,24 @@ namespace Devolutions.NowClient.Worker
         // -- RDM State --
         public RdmAppNotifyHandler? RdmAppNotifyHandler;
         public RdmSessionNotifyHandler? RdmSessionNotifyHandler;
-        public RdmCapabilitiesResponseHandler? RdmCapabilitiesResponseHandler;
+
+        // Capability responses carry no request id, so they are matched to requests in send order; the Agent answers
+        // each one inline, in order. A request that timed out stays queued and consumes its own late response
+        // instead of completing the next exchange. The flip side is that a request the peer never answers (its
+        // error path sends nothing, or it dropped the message under overload) shifts every later response by one;
+        // the client cannot tell late from lost, so only a reconnect recovers.
+        private readonly Queue<RdmCapabilitiesResponseHandler> _rdmCapabilitiesHandlers = new();
 
         public void RegisterRdmCapabilitiesHandler(RdmCapabilitiesResponseHandler handler)
         {
-            RdmCapabilitiesResponseHandler = handler;
+            _rdmCapabilitiesHandlers.Enqueue(handler);
         }
 
         private void HandleRdmCapabilitiesResponse(NowMsgRdmCapabilities response)
         {
-            if (RdmCapabilitiesResponseHandler != null)
+            if (_rdmCapabilitiesHandlers.TryDequeue(out var handler))
             {
-                RdmCapabilitiesResponseHandler.SetResponse(response);
-                RdmCapabilitiesResponseHandler = null;
+                handler.SetResponse(response);
             }
         }
 
@@ -333,10 +408,9 @@ namespace Devolutions.NowClient.Worker
         /// </summary>
         public void CleanupPendingHandlers()
         {
-            if (RdmCapabilitiesResponseHandler != null)
+            while (_rdmCapabilitiesHandlers.TryDequeue(out var handler))
             {
-                RdmCapabilitiesResponseHandler.SetException(new OperationCanceledException("Worker terminated"));
-                RdmCapabilitiesResponseHandler = null;
+                handler.SetException(new OperationCanceledException("Worker terminated"));
             }
         }
     }

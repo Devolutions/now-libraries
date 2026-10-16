@@ -1,3 +1,4 @@
+using Devolutions.NowClient.Execution;
 using Devolutions.NowProto.Messages;
 
 namespace Devolutions.NowClient.Worker
@@ -7,55 +8,28 @@ namespace Devolutions.NowClient.Worker
     /// </summary>
     internal class RdmCapabilitiesResponseHandler : IDisposable
     {
-        private readonly SemaphoreSlim _responseReceived = new(0, 1);
-        private NowMsgRdmCapabilities? _response;
-        private Exception? _exception;
-        private volatile bool _isCompleted;
-        private bool _disposed;
+        private readonly TaskCompletionSource<NowMsgRdmCapabilities> _response =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         public void SetResponse(NowMsgRdmCapabilities response)
         {
-            if (_disposed || _isCompleted)
-                return;
-
-            _response = response;
-            _isCompleted = true;
-            _responseReceived.Release();
+            _response.TrySetResult(response);
         }
 
         public void SetException(Exception exception)
         {
-            if (_disposed || _isCompleted)
-                return;
-
-            _exception = exception;
-            _isCompleted = true;
-            _responseReceived.Release();
+            _response.TrySetException(exception);
         }
 
-        public async Task<NowMsgRdmCapabilities> WaitForResponseAsync(TimeSpan timeout)
+        public Task<NowMsgRdmCapabilities> WaitForResponseAsync(
+            TimeSpan timeout, DedicatedExecution? execution, CancellationToken cancellationToken)
         {
-            if (_disposed)
-                throw new ObjectDisposedException(nameof(RdmCapabilitiesResponseHandler));
-
-            if (!await _responseReceived.WaitAsync(timeout))
-            {
-                throw new TimeoutException("RDM capabilities response timeout");
-            }
-
-            if (_exception != null)
-                throw _exception;
-
-            return _response ?? throw new InvalidOperationException("Response was not set");
+            return ProtocolTasks.WaitAsync(_response.Task, timeout, execution, cancellationToken);
         }
 
         public void Dispose()
         {
-            if (!_disposed)
-            {
-                _responseReceived?.Dispose();
-                _disposed = true;
-            }
+            _response.TrySetCanceled();
         }
     }
 }

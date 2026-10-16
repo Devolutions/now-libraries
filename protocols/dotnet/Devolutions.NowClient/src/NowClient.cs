@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Threading.Channels;
 
+using Devolutions.NowClient.Execution;
 using Devolutions.NowClient.Worker;
 using Devolutions.NowProto;
 using Devolutions.NowProto.Capabilities;
@@ -11,34 +12,223 @@ namespace Devolutions.NowClient
     /// <summary>
     /// NOW-proto remote execution channel client.
     /// </summary>
-    public class NowClient
+    public class NowClient : IAsyncDisposable
     {
         /// <summary>
         /// Performs connection and negotiation sequence to NOW-proto server
         /// over the provided transport (e.g. DVC-based channel) and returns
         /// a client object ready to accept commands.
         /// </summary>
-        public static async Task<NowClient> Connect(INowTransport transportImpl)
+        public static Task<NowClient> Connect(INowTransport transportImpl)
         {
-            var channel = new NowChannelTransport(transportImpl);
+            return Connect(transportImpl, new NowClientOptions());
+        }
 
+        /// <summary>
+        /// Connects using the selected scheduling. The client owns the transport, including
+        /// on negotiation failure. Cancellation applies to the entire connection lifetime.
+        /// </summary>
+        public static Task<NowClient> Connect(
+            INowTransport transportImpl,
+            NowClientOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(transportImpl);
+            ArgumentNullException.ThrowIfNull(options);
+            // Scheduling is init-only and has no public constructor, but an object initializer can still set it to null.
+            if (options.Scheduling is null)
+                throw new ArgumentNullException(nameof(options), "NowClientOptions.Scheduling must not be null.");
+            if (options.ConnectTimeout <= TimeSpan.Zero || options.ConnectTimeout.TotalMilliseconds > uint.MaxValue - 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(options), "ConnectTimeout must be a positive finite timeout.");
+            }
+
+            var scheduling = options.Scheduling;
+            if (scheduling.Execution != null)
+                return ConnectBorrowed(transportImpl, options.ConnectTimeout, scheduling.Execution, cancellationToken);
+
+            return scheduling.OwnsThread
+                ? ConnectDedicated(transportImpl, options.ConnectTimeout, cancellationToken)
+                : ConnectDefault(transportImpl, options.ConnectTimeout, cancellationToken);
+        }
+
+        private static async Task<NowClient> ConnectDefault(
+            INowTransport transport, TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            var lifetime = new ClientLifetime(null, cancellationToken);
+            var channel = new NowChannelTransport(transport, null, lifetime.Token);
             try
             {
-                return await ConnectImpl(channel);
+                var capabilities = await Negotiate(channel, timeout, null, lifetime.Token);
+                var ctx = CreateWorker(channel, capabilities, null, lifetime.Token);
+                var workerTask = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await RunWorker(ctx);
+                    }
+                    finally
+                    {
+                        lifetime.Dispose();
+                    }
+                });
+                return new NowClient(capabilities, workerTask, ctx.CommandWriter, null, lifetime);
             }
             catch
             {
-                // Dispose channel if connection fails before transferring to WorkerCtx
-                channel.Dispose();
+                try
+                {
+                    channel.Dispose();
+                }
+                finally
+                {
+                    lifetime.Dispose();
+                }
                 throw;
             }
         }
 
-        private static async Task<NowClient> ConnectImpl(NowChannelTransport channel)
+        private static Task<NowClient> ConnectDedicated(
+            INowTransport transport, TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            var execution = new DedicatedExecution();
+            var lifetime = new ClientLifetime(execution, cancellationToken);
+            var channel = new NowChannelTransport(transport, execution, lifetime.Token);
+            var ready = new TaskCompletionSource<NowClient>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Func<Task> run = async () =>
+            {
+                try
+                {
+                    try
+                    {
+                        var capabilities = await Negotiate(channel, timeout, execution, lifetime.Token);
+                        var ctx = CreateWorker(channel, capabilities, execution, lifetime.Token);
+                        var client = new NowClient(capabilities, execution.Completion, ctx.CommandWriter, execution, lifetime);
+                        ready.SetResult(client);
+                        await RunWorker(ctx);
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            channel.Dispose();
+                        }
+                        finally
+                        {
+                            lifetime.Dispose();
+                        }
+                    }
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested && !ready.Task.IsCompleted)
+                {
+                    ready.TrySetCanceled(cancellationToken);
+                }
+                catch (Exception exception)
+                {
+                    if (!ready.TrySetException(exception))
+                    {
+                        throw;
+                    }
+                }
+            };
+            try
+            {
+                execution.Start(run);
+            }
+            catch
+            {
+                try
+                {
+                    channel.Dispose();
+                }
+                finally
+                {
+                    lifetime.Dispose();
+                }
+                throw;
+            }
+            return ready.Task;
+        }
+
+        private static Task<NowClient> ConnectBorrowed(
+            INowTransport transport, TimeSpan timeout, NowClientExecution owner, CancellationToken cancellationToken)
+        {
+            var ready = new TaskCompletionSource<NowClient>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var lifetime = new ClientLifetime(owner.Context, cancellationToken);
+            var channel = new NowChannelTransport(transport, owner.Context, lifetime.Token);
+            owner.Attach(lifetime);
+            try
+            {
+                _ = owner.Run(async () =>
+                {
+                    try
+                    {
+                        try
+                        {
+                            var capabilities = await Negotiate(channel, timeout, owner.Context, lifetime.Token);
+                            var ctx = CreateWorker(channel, capabilities, owner.Context, lifetime.Token);
+                            ready.SetResult(new NowClient(capabilities, completion.Task, ctx.CommandWriter, owner.Context, lifetime));
+                            await RunWorker(ctx);
+                        }
+                        finally
+                        {
+                            try
+                            {
+                                channel.Dispose();
+                            }
+                            finally
+                            {
+                                lifetime.Dispose();
+                                owner.Detach(lifetime);
+                            }
+                        }
+                        completion.TrySetResult();
+                    }
+                    // StopAsync or execution disposal cancels the lifetime without the caller's token. The filter runs
+                    // before the inner finally, so it still sees the token as it was when the exception was raised.
+                    catch (OperationCanceledException) when (lifetime.Token.IsCancellationRequested && !ready.Task.IsCompleted)
+                    {
+                        ready.TrySetCanceled(cancellationToken.IsCancellationRequested ? cancellationToken : lifetime.Token);
+                        completion.TrySetResult();
+                    }
+                    catch (Exception exception)
+                    {
+                        if (ready.TrySetException(exception))
+                            completion.TrySetResult();
+                        else
+                            completion.TrySetException(exception);
+                    }
+                });
+            }
+            catch
+            {
+                try
+                {
+                    channel.Dispose();
+                }
+                finally
+                {
+                    lifetime.Dispose();
+                    owner.Detach(lifetime);
+                }
+                throw;
+            }
+            return ready.Task;
+        }
+
+        private static Task<NowMsgChannelCapset> Negotiate(
+            NowChannelTransport channel, TimeSpan timeout, DedicatedExecution? execution, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ProtocolTasks.WaitAsync(NegotiateImpl(channel), timeout, execution, cancellationToken);
+        }
+
+        private static async Task<NowMsgChannelCapset> NegotiateImpl(NowChannelTransport channel)
         {
             // Support all capabilities by default on client side.
             var clientCapabilities = new NowMsgChannelCapset.Builder()
-                .HeartbeatInterval(TimeSpan.FromSeconds(60))
+                .HeartbeatInterval(RequestedHeartbeatInterval)
                 .SystemCapset(NowCapabilitySystem.All)
                 .SessionCapset(NowCapabilitySession.All)
                 .ExecCapset(NowCapabilityExec.All)
@@ -46,10 +236,29 @@ namespace Devolutions.NowClient
 
             await channel.WriteMessage(clientCapabilities);
 
-            // Wait for downgraded capabilities from server or throw timeout error.
-            var capabilities = await channel.ReadMessage<NowMsgChannelCapset>()
-                .WaitAsync(TimeSpan.FromSeconds(TimeoutConnectSeconds));
+            // The server replies with its own capset; deployed Agents echo their defaults rather than a downgrade.
+            return await channel.ReadMessage<NowMsgChannelCapset>();
+        }
 
+        // The heartbeat the worker enforces: the smaller of what each side specified, as the Rust client negotiates.
+        // Zero means the peer disabled heartbeats (NOW-spec NOW_CHANNEL_SET_HEARTBEAT); absent means the peer did not
+        // say, so the client's own request stands. The server's capset is otherwise kept as received.
+        private static TimeSpan? EffectiveHeartbeatInterval(NowMsgChannelCapset serverCapabilities)
+        {
+            var peer = serverCapabilities.HeartbeatInterval;
+            if (peer == null)
+                return RequestedHeartbeatInterval;
+            if (peer == TimeSpan.Zero)
+                return null;
+            return peer < RequestedHeartbeatInterval ? peer : RequestedHeartbeatInterval;
+        }
+
+        private static readonly TimeSpan RequestedHeartbeatInterval = TimeSpan.FromSeconds(60);
+
+        private static WorkerCtx CreateWorker(
+            NowChannelTransport channel, NowMsgChannelCapset capabilities,
+            DedicatedExecution? execution, CancellationToken cancellationToken)
+        {
             // Negotiation successful
             Debug.WriteLine($"NOW channel negotiation complete");
 
@@ -57,31 +266,33 @@ namespace Devolutions.NowClient
             // Reverse communication (e.g) worker -> client is done through passed handler objects.
             var clientChannel = Channel.CreateBounded<IClientCommand>(IoChannelCapacity);
 
-            var ctx = new WorkerCtx
+            return new WorkerCtx
             {
                 NowChannel = channel,
                 Capabilities = capabilities,
-                LastHeartbeat = DateTime.Now,
+                LastReceived = Stopwatch.GetTimestamp(),
                 Commands = clientChannel.Reader,
-                HeartbeatInterval = capabilities.HeartbeatInterval,
+                CommandWriter = clientChannel.Writer,
+                HeartbeatInterval = EffectiveHeartbeatInterval(capabilities),
+                Execution = execution,
+                CancellationToken = cancellationToken,
             };
+        }
 
-            var workerTask = Task.Run(() =>
+        private static async Task RunWorker(WorkerCtx ctx)
+        {
+            try
             {
-                try
-                {
-                    return WorkerCtx.Run(ctx);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine($"NowClient worker exception: {e}");
-                    throw;
-                }
-            });
-
-            var client = new NowClient(capabilities, workerTask, clientChannel.Writer);
-
-            return client;
+                await WorkerCtx.Run(ctx);
+            }
+            catch (OperationCanceledException) when (ctx.CancellationToken.IsCancellationRequested)
+            {
+                // Lifetime cancellation is a normal local stop, not a protocol failure.
+            }
+            finally
+            {
+                ctx.CommandWriter.TryComplete();
+            }
         }
 
         /// <summary>
@@ -89,6 +300,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task SystemShutdown(SystemShutdownParams shutdownParams)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.SystemCapset.HasFlag(NowCapabilitySystem.Shutdown))
@@ -104,6 +317,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task SessionLock()
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.SessionCapset.HasFlag(NowCapabilitySession.Lock))
@@ -119,6 +334,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task SessionLogoff()
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.SessionCapset.HasFlag(NowCapabilitySession.Logoff))
@@ -136,6 +353,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task<MessageBoxResponse> SessionMessageBox(MessageBoxParams msgBoxParams)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.SessionCapset.HasFlag(NowCapabilitySession.Msgbox))
@@ -145,7 +364,7 @@ namespace Devolutions.NowClient
 
             var requestId = _nextMessageBoxId++;
             var message = msgBoxParams.ToNowMessage(requestId, true);
-            var handler = new MessageBoxResponse(requestId);
+            var handler = new MessageBoxResponse(requestId, _lifetime.Token);
             var command = new CommandSessionMsgBox(message, handler);
 
             await _commandWriter.WriteAsync(command);
@@ -159,6 +378,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task SessionMessageBoxNoResponse(MessageBoxParams msgBoxParams)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.SessionCapset.HasFlag(NowCapabilitySession.Msgbox))
@@ -175,6 +396,8 @@ namespace Devolutions.NowClient
 
         private async Task SessionSetKbdLayoutImpl(NowMsgSessionSetKbdLayout message)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.SessionCapset.HasFlag(NowCapabilitySession.SetKbdLayout))
@@ -189,25 +412,25 @@ namespace Devolutions.NowClient
         /// <summary>
         /// Set the next keyboard layout for the active foreground window.
         /// </summary>
-        public async Task SessionSetKbdLayoutNext()
+        public Task SessionSetKbdLayoutNext()
         {
-            await SessionSetKbdLayoutImpl(NowMsgSessionSetKbdLayout.Next());
+            return SessionSetKbdLayoutImpl(NowMsgSessionSetKbdLayout.Next());
         }
 
         /// <summary>
         /// Set the previous keyboard layout for the active foreground window.
         /// </summary>
-        public async Task SessionSetKbdLayoutPrev()
+        public Task SessionSetKbdLayoutPrev()
         {
-            await SessionSetKbdLayoutImpl(NowMsgSessionSetKbdLayout.Prev());
+            return SessionSetKbdLayoutImpl(NowMsgSessionSetKbdLayout.Prev());
         }
 
         /// <summary>
         /// Set a specific keyboard layout for the active foreground window.
         /// </summary>
-        public async Task SessionSetKbdLayoutSpecific(string layout)
+        public Task SessionSetKbdLayoutSpecific(string layout)
         {
-            await SessionSetKbdLayoutImpl(NowMsgSessionSetKbdLayout.Specific(layout));
+            return SessionSetKbdLayoutImpl(NowMsgSessionSetKbdLayout.Specific(layout));
         }
 
         /// <summary>
@@ -215,6 +438,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task SetWindowRecEventHandler(IWindowRecEventHandler? handler)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             await _commandWriter.WriteAsync(new CommandSetWindowRecEventHandler(handler));
@@ -227,6 +452,8 @@ namespace Devolutions.NowClient
         /// <param name="trackTitleChange">Enable window title change tracking.</param>
         public async Task SessionWindowRecStart(uint pollInterval, bool trackTitleChange = false)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.SessionCapset.HasFlag(NowCapabilitySession.WindowRecording))
@@ -244,6 +471,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task SessionWindowRecStop()
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.SessionCapset.HasFlag(NowCapabilitySession.WindowRecording))
@@ -262,6 +491,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task ExecRun(ExecRunParams execParams)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.ExecCapset.HasFlag(NowCapabilityExec.Run))
@@ -282,6 +513,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task<ExecSession> ExecProcess(ExecProcessParams execParams)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.ExecCapset.HasFlag(NowCapabilityExec.Process))
@@ -291,7 +524,7 @@ namespace Devolutions.NowClient
 
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
-            var execSession = execParams.ToExecSession(sessionId, _commandWriter);
+            var execSession = execParams.ToExecSession(sessionId, _commandWriter, _execution, _lifetime.Token);
             var command = new CommandExecProcess(message, execSession);
 
             await _commandWriter.WriteAsync(command);
@@ -305,6 +538,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task<ExecSession> ExecShell(ExecShellParams execParams)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.ExecCapset.HasFlag(NowCapabilityExec.Shell))
@@ -314,7 +549,7 @@ namespace Devolutions.NowClient
 
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
-            var execSession = execParams.ToExecSession(sessionId, _commandWriter);
+            var execSession = execParams.ToExecSession(sessionId, _commandWriter, _execution, _lifetime.Token);
             var command = new CommandExecShell(message, execSession);
 
             await _commandWriter.WriteAsync(command);
@@ -328,6 +563,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task<ExecSession> ExecBatch(ExecBatchParams execParams)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.ExecCapset.HasFlag(NowCapabilityExec.Batch))
@@ -337,7 +574,7 @@ namespace Devolutions.NowClient
 
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
-            var execSession = execParams.ToExecSession(sessionId, _commandWriter);
+            var execSession = execParams.ToExecSession(sessionId, _commandWriter, _execution, _lifetime.Token);
             var command = new CommandExecBatch(message, execSession);
 
             await _commandWriter.WriteAsync(command);
@@ -351,6 +588,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task<ExecSession> ExecWinPs(ExecWinPsParams execParams)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.ExecCapset.HasFlag(NowCapabilityExec.WinPs))
@@ -360,7 +599,7 @@ namespace Devolutions.NowClient
 
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
-            var execSession = execParams.ToExecSession(sessionId, _commandWriter);
+            var execSession = execParams.ToExecSession(sessionId, _commandWriter, _execution, _lifetime.Token);
             var command = new CommandExecWinPs(message, execSession);
 
             await _commandWriter.WriteAsync(command);
@@ -374,6 +613,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task<ExecSession> ExecPwsh(ExecPwshParams execParams)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             if (!Capabilities.ExecCapset.HasFlag(NowCapabilityExec.Pwsh))
@@ -383,7 +624,7 @@ namespace Devolutions.NowClient
 
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
-            var execSession = execParams.ToExecSession(sessionId, _commandWriter);
+            var execSession = execParams.ToExecSession(sessionId, _commandWriter, _execution, _lifetime.Token);
             var command = new CommandExecPwsh(message, execSession);
 
             await _commandWriter.WriteAsync(command);
@@ -396,16 +637,33 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task ForceTerminate()
         {
+            if (_execution != null)
+                await _execution.Enter();
             await _commandWriter.WriteAsync(new CommandChannelClose());
         }
+
+        /// <summary>
+        /// Requests a local stop without waiting for a peer close response or a blocked write.
+        /// Completes after protocol and transport cleanup. Does not synchronously join the worker.
+        /// </summary>
+        public Task StopAsync()
+        {
+            _lifetime.RequestStop();
+            return Completion;
+        }
+
+        /// <summary>
+        /// Stops the connection and releases its transport and owned execution resources.
+        /// </summary>
+        public ValueTask DisposeAsync() => new(StopAsync());
 
         /// <summary>
         /// Gracefully terminate and close the NOW-proto communication channel.
         /// </summary>
         [Obsolete("Use ForceTerminate instead.")]
-        public async Task ForceTermiate()
+        public Task ForceTermiate()
         {
-            await ForceTerminate();
+            return ForceTerminate();
         }
 
         // RDM Methods
@@ -415,6 +673,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task SetRdmAppNotifyHandler(RdmAppNotifyHandler? handler)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             await _commandWriter.WriteAsync(new CommandSetRdmAppNotifyHandler(handler));
@@ -425,6 +685,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task SetRdmSessionNotifyHandler(RdmSessionNotifyHandler? handler)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
 
             await _commandWriter.WriteAsync(new CommandSetRdmSessionNotifyHandler(handler));
@@ -439,7 +701,34 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task RdmSync()
         {
+            if (_execution != null)
+            {
+                await _execution.Enter();
+                ThrowIfWorkerTerminated();
+                // Pool mode sends one exchange per caller; here concurrent callers share one exchange, which the
+                // worker's send-order matching makes equivalent with fewer round-trips.
+                var pending = _rdmSyncTask ??= RdmSyncCore();
+                try
+                {
+                    await pending;
+                }
+                finally
+                {
+                    if (_rdmSyncTask == pending)
+                        _rdmSyncTask = null;
+                }
+                return;
+            }
+
+            await RdmSyncCore();
+        }
+
+        private async Task RdmSyncCore()
+        {
             ThrowIfWorkerTerminated();
+            // A peer that predates RDM support never answers; with send-order matching that would shift every later
+            // response, so the request must not be queued at all.
+            ThrowIfRdmUnsupported();
 
             var clientTimestamp = DateTimeOffset.UtcNow;
             var message = new NowMsgRdmCapabilities.Builder(
@@ -452,7 +741,7 @@ namespace Devolutions.NowClient
 
             await _commandWriter.WriteAsync(command);
 
-            var response = await responseHandler.WaitForResponseAsync(TimeSpan.FromSeconds(10));
+            var response = await responseHandler.WaitForResponseAsync(TimeSpan.FromSeconds(10), _execution, _lifetime.Token);
 
             _rdmCapabilities = new RdmCapabilityInfo(
                 response.IsAppAvailable,
@@ -470,6 +759,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task<bool> IsRdmAppAvailable()
         {
+            if (_execution != null)
+                await _execution.Enter();
             await EnsureRdmCapabilitiesSent();
 
             return _rdmCapabilities?.IsAppAvailable ?? false;
@@ -481,6 +772,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task<RdmVersion?> GetRdmVersion()
         {
+            if (_execution != null)
+                await _execution.Enter();
             await EnsureRdmCapabilitiesSent();
 
             if (_rdmCapabilities == null || !_rdmCapabilities.IsAppAvailable)
@@ -496,6 +789,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task RdmStart(RdmStartParams? startParams = null)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
             await EnsureRdmCapabilitiesSent();
 
@@ -524,6 +819,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task RdmAction(NowRdmAppAction action, string actionData = "")
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
             await EnsureRdmCapabilitiesSent();
 
@@ -539,6 +836,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task RdmSessionStart(RdmSessionStartParams sessionParams)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
             await EnsureRdmCapabilitiesSent();
 
@@ -558,6 +857,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task RdmSessionFocus(Guid sessionId)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
             await EnsureRdmCapabilitiesSent();
 
@@ -573,6 +874,8 @@ namespace Devolutions.NowClient
         /// </summary>
         public async Task RdmSessionClose(Guid sessionId)
         {
+            if (_execution != null)
+                await _execution.Enter();
             ThrowIfWorkerTerminated();
             await EnsureRdmCapabilitiesSent();
 
@@ -589,15 +892,18 @@ namespace Devolutions.NowClient
         {
             if (!_rdmCapabilitiesSent)
             {
-                // Check if server version supports RDM functionality
-                if (Capabilities.Version < MIN_RDM_ENABLED_VERSION)
-                {
-                    throw new NowClientException(
-                        $"RDM functionality requires NOW-proto server version {MIN_RDM_ENABLED_VERSION.Major}.{MIN_RDM_ENABLED_VERSION.Minor} or higher. " +
-                        $"Current server version is {Capabilities.Version.Major}.{Capabilities.Version.Minor}.");
-                }
-
+                ThrowIfRdmUnsupported();
                 await RdmSync();
+            }
+        }
+
+        private void ThrowIfRdmUnsupported()
+        {
+            if (Capabilities.Version < MIN_RDM_ENABLED_VERSION)
+            {
+                throw new NowClientException(
+                    $"RDM functionality requires NOW-proto server version {MIN_RDM_ENABLED_VERSION.Major}.{MIN_RDM_ENABLED_VERSION.Minor} or higher. " +
+                    $"Current server version is {Capabilities.Version.Major}.{Capabilities.Version.Minor}.");
             }
         }
 
@@ -617,15 +923,18 @@ namespace Devolutions.NowClient
         private NowClient(
             NowMsgChannelCapset capabilities,
             Task workerTask,
-            ChannelWriter<IClientCommand> commandWriter
+            ChannelWriter<IClientCommand> commandWriter,
+            DedicatedExecution? execution,
+            ClientLifetime lifetime
         )
         {
             this.Capabilities = capabilities;
             this._runnerTask = workerTask;
             this._commandWriter = commandWriter;
+            this._execution = execution;
+            this._lifetime = lifetime;
         }
 
-        private const int TimeoutConnectSeconds = 10;
         private const int IoChannelCapacity = 1024;
 
         /// <summary>
@@ -639,6 +948,12 @@ namespace Devolutions.NowClient
         /// </summary>
         public bool IsTerminated => _runnerTask.IsCompleted;
 
+        /// <summary>
+        /// Completes after worker, transport and owned execution cleanup. Protocol failures
+        /// fault this task; local stop and lifetime cancellation complete it successfully.
+        /// </summary>
+        public Task Completion => _runnerTask;
+
         public NowMsgChannelCapset Capabilities { get; }
 
         private uint _nextMessageBoxId = 0;
@@ -646,5 +961,8 @@ namespace Devolutions.NowClient
 
         private readonly Task _runnerTask;
         private readonly ChannelWriter<IClientCommand> _commandWriter;
+        private readonly DedicatedExecution? _execution;
+        private readonly ClientLifetime _lifetime;
+        private Task? _rdmSyncTask;
     }
 }
