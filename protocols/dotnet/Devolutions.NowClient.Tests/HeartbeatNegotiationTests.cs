@@ -4,7 +4,7 @@ namespace Devolutions.NowClient.Tests;
 
 public sealed class HeartbeatNegotiationTests
 {
-    // Deployed Agents answer with a default capset carrying no interval; the client must still enforce its own.
+    // Deployed Agents answer with a default capset carrying no interval; by default that means no watchdog.
     // Zero and oversized values arrive from peers whose builders are less strict than ours, so they are decoded.
     [Theory]
     [InlineData(null)]
@@ -40,6 +40,61 @@ public sealed class HeartbeatNegotiationTests
         }, timeoutSeconds: 45);
     }
 
+    // The Agent fixed periodic heartbeats and interval advertisement together, so "no interval" identifies an Agent
+    // whose heartbeat is an inactivity timer; enforcing the client's request against it would drop busy channels.
+    [Fact]
+    public void AbsentPeerIntervalDisablesTheWatchdogByDefault()
+    {
+        TestDriver.Run(() =>
+        {
+            using var peer = new ClientPeer();
+            var client = ConnectWithPeerInterval(peer, null, requestedHeartbeat: TimeSpan.FromSeconds(5));
+            Thread.Sleep(TimeSpan.FromSeconds(12));
+            Assert.False(client.Completion.IsCompleted, "An absent peer interval must not arm the client's own watchdog.");
+            TestDriver.Success(client.StopAsync());
+            peer.AssertStopped();
+        }, timeoutSeconds: 45);
+    }
+
+    [Fact]
+    public void AbsentPeerIntervalEnforcesTheRequestOnlyWhenOptedIn()
+    {
+        TestDriver.Run(() =>
+        {
+            using var peer = new ClientPeer();
+            var elapsed = Stopwatch.StartNew();
+            var client = ConnectWithPeerInterval(peer, null, requestedHeartbeat: TimeSpan.FromSeconds(5),
+                policy: NowClientHeartbeatPolicy.EnforceRequested);
+            TestDriver.Success(client.Completion, TimeSpan.FromSeconds(25));
+            Assert.True(elapsed.Elapsed >= TimeSpan.FromSeconds(9));
+            peer.AssertStopped();
+        }, timeoutSeconds: 45);
+    }
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(24 * 60 * 60 + 1)]
+    public void RequestedIntervalOutsideTheProtocolRangeIsRejectedBeforeAnyIo(int seconds)
+    {
+        TestDriver.Run(() =>
+        {
+            using var wire = new WireTransport();
+            Exception? rejected = null;
+            try
+            {
+                _ = Client.Connect(wire, new NowClientOptions { RequestedHeartbeatInterval = TimeSpan.FromSeconds(seconds) });
+            }
+            catch (Exception exception)
+            {
+                rejected = exception;
+            }
+
+            Assert.IsType<ArgumentOutOfRangeException>(rejected);
+            Assert.Empty(wire.Calls);
+            Assert.False(wire.IsDisposed);
+        });
+    }
+
     [Fact]
     public void ZeroPeerIntervalDisablesTheWatchdog()
     {
@@ -54,9 +109,10 @@ public sealed class HeartbeatNegotiationTests
         }, timeoutSeconds: 45);
     }
 
-    private static Client ConnectWithPeerInterval(ClientPeer peer, uint? peerSeconds)
+    private static Client ConnectWithPeerInterval(ClientPeer peer, uint? peerSeconds, TimeSpan? requestedHeartbeat = null,
+        NowClientHeartbeatPolicy policy = NowClientHeartbeatPolicy.FollowPeer)
     {
-        var connection = peer.BeginConnect();
+        var connection = peer.BeginConnect(requestedHeartbeat: requestedHeartbeat, unspecifiedPeerHeartbeat: policy);
         peer.Wire.Receive<NowMsgChannelCapset>();
         peer.Wire.NextRead().Complete(WireTransport.Encode(PeerCapset(peerSeconds)));
         return peer.FinishConnect(connection);

@@ -11,7 +11,8 @@ internal sealed class ClientPeer : IDisposable
     public Client Client => _client ?? throw new InvalidOperationException("Connect first.");
 
     public Task<Client> BeginConnect(bool dedicated = true, TimeSpan? timeout = null,
-        NowClientExecution? execution = null)
+        NowClientExecution? execution = null, TimeSpan? requestedHeartbeat = null,
+        NowClientHeartbeatPolicy unspecifiedPeerHeartbeat = NowClientHeartbeatPolicy.FollowPeer)
     {
         _dedicated = dedicated && execution == null;
         _connection = Client.Connect(Wire, new NowClientOptions
@@ -20,6 +21,8 @@ internal sealed class ClientPeer : IDisposable
                 ? NowClientScheduling.SharedThread(execution)
                 : _dedicated ? NowClientScheduling.DedicatedThread : NowClientScheduling.ThreadPool,
             ConnectTimeout = timeout ?? TimeSpan.FromSeconds(10),
+            RequestedHeartbeatInterval = requestedHeartbeat ?? TimeSpan.FromSeconds(60),
+            UnspecifiedPeerHeartbeat = unspecifiedPeerHeartbeat,
         }, _lifetime.Token);
         return _connection;
     }

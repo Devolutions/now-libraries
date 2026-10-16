@@ -19,18 +19,22 @@ This library provides a high level async client for the NOW protocol.
 
 ### Heartbeat
 
-The client requests a 60 s heartbeat interval and enforces the smaller of its own
-and the server's specified interval, as the Rust client does; a server that sends
-no interval therefore still gets the client's 60 s, and a server that sends zero
-disables the watchdog (NOW_CHANNEL_SET_HEARTBEAT). Any message received from the
-server counts as liveness, not only `NOW_CHANNEL_HEARTBEAT`: deployed Agents only
-emit a heartbeat after a full interval with no other traffic. The channel is
-considered dead when nothing has been received for the interval plus 5 s, checked
-every two intervals. A channel that only ever sends and never receives anything
-will therefore expire; a peer that drains writes but never answers is
-indistinguishable from a dead one. A write that never completes is not detected
-by the watchdog; use `StopAsync()` to abandon it.
+The client requests a 60 s heartbeat interval (`NowClientOptions.RequestedHeartbeatInterval`)
+and enforces the smaller of its own and the server's advertised interval, as the Rust
+client does. A server that sends zero disables the watchdog (NOW_CHANNEL_SET_HEARTBEAT).
+A server that sends no interval at all gets no watchdog by default
+(`UnspecifiedPeerHeartbeat = FollowPeer`): Devolutions Agents that heartbeat periodically
+advertise their interval, while older Agents only heartbeat after a full interval of
+silence and say nothing, so enforcing the client's request against them would drop busy
+connections. `EnforceRequested` opts into the client's interval for servers known to
+heartbeat periodically without advertising it.
 
+Any message received from the server counts as liveness, not only
+`NOW_CHANNEL_HEARTBEAT`. The channel is considered dead when nothing has been received
+for the interval plus 5 s, checked every two intervals. A channel that only ever sends
+and never receives will therefore expire against a server that advertises an interval
+but heartbeats only when idle. A write that never completes is not detected by the
+watchdog; use `StopAsync()` to abandon it.
 ### Dedicated protocol execution
 
 `Connect(transport)` continues to use a thread-pool worker. Applications that need
