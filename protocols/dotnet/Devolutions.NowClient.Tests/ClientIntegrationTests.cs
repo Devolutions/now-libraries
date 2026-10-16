@@ -11,6 +11,8 @@ public sealed class ClientIntegrationTests
         var options = new NowClientOptions();
         Assert.Same(NowClientScheduling.ThreadPool, options.Scheduling);
         Assert.Equal(TimeSpan.FromSeconds(10), options.ConnectTimeout);
+        Assert.Equal(TimeSpan.FromSeconds(60), options.RequestedHeartbeatInterval);
+        Assert.Equal(NowClientHeartbeatPolicy.FollowPeer, options.UnspecifiedPeerHeartbeat);
     }
 
     [Fact]

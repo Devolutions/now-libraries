@@ -42,25 +42,30 @@ namespace Devolutions.NowClient
             {
                 throw new ArgumentOutOfRangeException(nameof(options), "ConnectTimeout must be a positive finite timeout.");
             }
+            // Same bounds the capset builder enforces; checked here so a bad option fails before any transport I/O.
+            if (options.RequestedHeartbeatInterval < TimeSpan.FromSeconds(5) || options.RequestedHeartbeatInterval > TimeSpan.FromHours(24))
+            {
+                throw new ArgumentOutOfRangeException(nameof(options), "RequestedHeartbeatInterval must be between 5 seconds and 24 hours.");
+            }
 
             var scheduling = options.Scheduling;
             if (scheduling.Execution != null)
-                return ConnectBorrowed(transportImpl, options.ConnectTimeout, scheduling.Execution, cancellationToken);
+                return ConnectBorrowed(transportImpl, options, scheduling.Execution, cancellationToken);
 
             return scheduling.OwnsThread
-                ? ConnectDedicated(transportImpl, options.ConnectTimeout, cancellationToken)
-                : ConnectDefault(transportImpl, options.ConnectTimeout, cancellationToken);
+                ? ConnectDedicated(transportImpl, options, cancellationToken)
+                : ConnectDefault(transportImpl, options, cancellationToken);
         }
 
         private static async Task<NowClient> ConnectDefault(
-            INowTransport transport, TimeSpan timeout, CancellationToken cancellationToken)
+            INowTransport transport, NowClientOptions options, CancellationToken cancellationToken)
         {
             var lifetime = new ClientLifetime(null, cancellationToken);
             var channel = new NowChannelTransport(transport, null, lifetime.Token);
             try
             {
-                var capabilities = await Negotiate(channel, timeout, null, lifetime.Token);
-                var ctx = CreateWorker(channel, capabilities, null, lifetime.Token);
+                var capabilities = await Negotiate(channel, options, null, lifetime.Token);
+                var ctx = CreateWorker(channel, capabilities, options, null, lifetime.Token);
                 var workerTask = Task.Run(async () =>
                 {
                     try
@@ -89,7 +94,7 @@ namespace Devolutions.NowClient
         }
 
         private static Task<NowClient> ConnectDedicated(
-            INowTransport transport, TimeSpan timeout, CancellationToken cancellationToken)
+            INowTransport transport, NowClientOptions options, CancellationToken cancellationToken)
         {
             var execution = new DedicatedExecution();
             var lifetime = new ClientLifetime(execution, cancellationToken);
@@ -101,8 +106,8 @@ namespace Devolutions.NowClient
                 {
                     try
                     {
-                        var capabilities = await Negotiate(channel, timeout, execution, lifetime.Token);
-                        var ctx = CreateWorker(channel, capabilities, execution, lifetime.Token);
+                        var capabilities = await Negotiate(channel, options, execution, lifetime.Token);
+                        var ctx = CreateWorker(channel, capabilities, options, execution, lifetime.Token);
                         var client = new NowClient(capabilities, execution.Completion, ctx.CommandWriter, execution, lifetime);
                         ready.SetResult(client);
                         await RunWorker(ctx);
@@ -151,7 +156,7 @@ namespace Devolutions.NowClient
         }
 
         private static Task<NowClient> ConnectBorrowed(
-            INowTransport transport, TimeSpan timeout, NowClientExecution owner, CancellationToken cancellationToken)
+            INowTransport transport, NowClientOptions options, NowClientExecution owner, CancellationToken cancellationToken)
         {
             var ready = new TaskCompletionSource<NowClient>(TaskCreationOptions.RunContinuationsAsynchronously);
             var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -166,8 +171,8 @@ namespace Devolutions.NowClient
                     {
                         try
                         {
-                            var capabilities = await Negotiate(channel, timeout, owner.Context, lifetime.Token);
-                            var ctx = CreateWorker(channel, capabilities, owner.Context, lifetime.Token);
+                            var capabilities = await Negotiate(channel, options, owner.Context, lifetime.Token);
+                            var ctx = CreateWorker(channel, capabilities, options, owner.Context, lifetime.Token);
                             ready.SetResult(new NowClient(capabilities, completion.Task, ctx.CommandWriter, owner.Context, lifetime));
                             await RunWorker(ctx);
                         }
@@ -218,17 +223,17 @@ namespace Devolutions.NowClient
         }
 
         private static Task<NowMsgChannelCapset> Negotiate(
-            NowChannelTransport channel, TimeSpan timeout, DedicatedExecution? execution, CancellationToken cancellationToken)
+            NowChannelTransport channel, NowClientOptions options, DedicatedExecution? execution, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return ProtocolTasks.WaitAsync(NegotiateImpl(channel), timeout, execution, cancellationToken);
+            return ProtocolTasks.WaitAsync(NegotiateImpl(channel, options.RequestedHeartbeatInterval), options.ConnectTimeout, execution, cancellationToken);
         }
 
-        private static async Task<NowMsgChannelCapset> NegotiateImpl(NowChannelTransport channel)
+        private static async Task<NowMsgChannelCapset> NegotiateImpl(NowChannelTransport channel, TimeSpan requestedHeartbeat)
         {
             // Support all capabilities by default on client side.
             var clientCapabilities = new NowMsgChannelCapset.Builder()
-                .HeartbeatInterval(RequestedHeartbeatInterval)
+                .HeartbeatInterval(requestedHeartbeat)
                 .SystemCapset(NowCapabilitySystem.All)
                 .SessionCapset(NowCapabilitySession.All)
                 .ExecCapset(NowCapabilityExec.All)
@@ -241,22 +246,21 @@ namespace Devolutions.NowClient
         }
 
         // The heartbeat the worker enforces: the smaller of what each side specified, as the Rust client negotiates.
-        // Zero means the peer disabled heartbeats (NOW-spec NOW_CHANNEL_SET_HEARTBEAT); absent means the peer did not
-        // say, so the client's own request stands. The server's capset is otherwise kept as received.
-        private static TimeSpan? EffectiveHeartbeatInterval(NowMsgChannelCapset serverCapabilities)
+        // Zero means the peer disabled heartbeats (NOW-spec NOW_CHANNEL_SET_HEARTBEAT). An absent interval is the
+        // caller's call: Agents that heartbeat periodically advertise one, Agents that do not say nothing.
+        private static TimeSpan? EffectiveHeartbeatInterval(NowMsgChannelCapset serverCapabilities, NowClientOptions options)
         {
+            var requested = options.RequestedHeartbeatInterval;
             var peer = serverCapabilities.HeartbeatInterval;
             if (peer == null)
-                return RequestedHeartbeatInterval;
+                return options.UnspecifiedPeerHeartbeat == NowClientHeartbeatPolicy.EnforceRequested ? requested : null;
             if (peer == TimeSpan.Zero)
                 return null;
-            return peer < RequestedHeartbeatInterval ? peer : RequestedHeartbeatInterval;
+            return peer < requested ? peer : requested;
         }
 
-        private static readonly TimeSpan RequestedHeartbeatInterval = TimeSpan.FromSeconds(60);
-
         private static WorkerCtx CreateWorker(
-            NowChannelTransport channel, NowMsgChannelCapset capabilities,
+            NowChannelTransport channel, NowMsgChannelCapset capabilities, NowClientOptions options,
             DedicatedExecution? execution, CancellationToken cancellationToken)
         {
             // Negotiation successful
@@ -273,7 +277,7 @@ namespace Devolutions.NowClient
                 LastReceived = Stopwatch.GetTimestamp(),
                 Commands = clientChannel.Reader,
                 CommandWriter = clientChannel.Writer,
-                HeartbeatInterval = EffectiveHeartbeatInterval(capabilities),
+                HeartbeatInterval = EffectiveHeartbeatInterval(capabilities, options),
                 Execution = execution,
                 CancellationToken = cancellationToken,
             };
