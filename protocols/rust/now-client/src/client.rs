@@ -1455,4 +1455,113 @@ mod tests {
             Err(error) => panic!("test peer task failed: {error}"),
         }
     }
+
+    #[tokio::test]
+    async fn elevated_request_is_refused_without_the_capability() {
+        let (client_stream, mut peer_stream) = tokio::io::duplex(1024);
+        let (release_sender, release_receiver) = tokio::sync::oneshot::channel();
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(
+                &mut peer_stream,
+                capset(
+                    NowExecCapsetFlags::STYLE_RUN
+                        | NowExecCapsetFlags::STYLE_PROCESS
+                        | NowExecCapsetFlags::IO_REDIRECTION,
+                ),
+            )
+            .await;
+            // Hold the stream open so an unexpected write would surface as a readable frame.
+            let _ = release_receiver.await;
+            let mut probe = [0; 1];
+            match tokio::time::timeout(Duration::from_millis(100), peer_stream.read(&mut probe)).await {
+                Ok(Ok(0)) | Err(_) => {}
+                Ok(Ok(_)) => panic!("refused elevated request must not reach the peer"),
+                Ok(Err(error)) => panic!("test peer read failed: {error}"),
+            }
+        });
+
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        assert!(!handle.capabilities().supports_elevation());
+        match handle.process(ProcessRequest::new("process.exe").with_elevated()).await {
+            Err(NowClientError::UnsupportedCapability("elevated execution")) => {}
+            Err(error) => panic!("unexpected error: {error}"),
+            Ok(_) => panic!("elevated request must be refused without the capability"),
+        }
+        match handle.run(RunRequest::new("run.exe").with_elevated()).await {
+            Err(NowClientError::UnsupportedCapability("elevated execution")) => {}
+            Err(error) => panic!("unexpected error: {error}"),
+            Ok(_) => panic!("elevated Run must be refused without the capability"),
+        }
+        let _ = release_sender.send(());
+        drop(handle);
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn elevated_request_omits_io_redirection_and_tracks_the_result() {
+        let (client_stream, mut peer_stream) = tokio::io::duplex(4096);
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(
+                &mut peer_stream,
+                capset(
+                    NowExecCapsetFlags::STYLE_PROCESS
+                        | NowExecCapsetFlags::IO_REDIRECTION
+                        | NowExecCapsetFlags::ELEVATION,
+                ),
+            )
+            .await;
+
+            let session_id = match read_message(&mut peer_stream).await {
+                NowMessage::Exec(NowExecMessage::Process(message)) => {
+                    assert!(message.is_elevated());
+                    assert!(!message.is_with_io_redirection());
+                    assert!(!message.is_detached());
+                    message.session_id()
+                }
+                message => panic!("expected elevated Process request, got {message:?}"),
+            };
+            write_message(&mut peer_stream, NowExecStartedMsg::new(session_id)).await;
+            write_message(&mut peer_stream, NowExecResultMsg::new_success(session_id, 42)).await;
+        });
+
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        assert!(handle.capabilities().supports_elevation());
+        match handle
+            .process(
+                ProcessRequest::new("process.exe")
+                    .with_elevated()
+                    .with_timeout(Duration::from_secs(1)),
+            )
+            .await
+        {
+            Err(NowClientError::InvalidRequest(_)) => {}
+            Err(error) => panic!("unexpected error: {error}"),
+            Ok(_) => panic!("elevated request must reject a timeout it cannot enforce"),
+        }
+        let mut execution = match handle.process(ProcessRequest::new("process.exe").with_elevated()).await {
+            Ok(execution) => execution,
+            Err(error) => panic!("elevated Process request must start: {error}"),
+        };
+        assert_eq!(execution.next_event().await, Some(ExecutionEvent::Started));
+        match execution.wait().await {
+            Ok(ExecutionStatus::Completed { exit_code: 42 }) => {}
+            Ok(status) => panic!("unexpected terminal status: {status:?}"),
+            Err(error) => panic!("elevated Process must complete: {error}"),
+        }
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
 }
