@@ -231,6 +231,8 @@ For successful operation this field value is operation specific.
         | NOW_CODE_INTERNAL<br>0x0006 | Internal error. |
         | NOW_CODE_NOT_IMPLEMENTED<br>0x0007 | Operation is not implemented on current platform. |
         | NOW_CODE_PROTOCOL_VERSION<br>0x0008 | Incompatible protocol versions. |
+        | NOW_CODE_ELEVATION_DENIED<br>0x0009 | Elevation was requested and refused: the interactive user declined consent, the consent prompt expired, or policy denies elevation for the account. See [Elevated Execution](#elevated-execution). |
+        | NOW_CODE_ELEVATION_UNAVAILABLE<br>0x000A | Elevation was requested and is not possible for this request: the account has no elevated token, or the server cannot elevate the requested execution style. See [Elevated Execution](#elevated-execution). |
 
     - `NOW_STATUS_ERROR_KIND_WINAPI`: code contains standard WinAPI error.
     - `NOW_STATUS_ERROR_KIND_UNIX`: code contains standard UNIX error code.

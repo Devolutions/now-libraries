@@ -50,5 +50,19 @@
         /// NOW-PROTO: NOW_CODE_PROTOCOL_VERSION
         /// </summary>
         ProtocolVersion = 0x0008,
+        /// <summary>
+        /// Elevation was requested and refused: the interactive user declined consent, the consent
+        /// prompt expired, or policy denies elevation for the account.
+        ///
+        /// NOW-PROTO: NOW_CODE_ELEVATION_DENIED
+        /// </summary>
+        ElevationDenied = 0x0009,
+        /// <summary>
+        /// Elevation was requested and is not possible for this request: the account has no
+        /// elevated token, or the server cannot elevate the requested execution style.
+        ///
+        /// NOW-PROTO: NOW_CODE_ELEVATION_UNAVAILABLE
+        /// </summary>
+        ElevationUnavailable = 0x000A,
     }
 }

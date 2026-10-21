@@ -116,6 +116,55 @@ fn roundtrip_exec_result_error() {
 }
 
 #[test]
+fn roundtrip_exec_result_elevation_denied() {
+    let msg =
+        NowExecResultMsg::new_error(0x12345678, NowStatusError::new_proto(NowProtoError::ElevationDenied)).unwrap();
+
+    let decoded = now_msg_roundtrip(
+        msg,
+        expect![
+            "[12, 00, 00, 00, 13, 04, 00, 00, 78, 56, 34, 12, 00, 00, 00, 00, 01, 00, 01, 00, 09, 00, 00, 00, 00, 00]"
+        ],
+    );
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::Result(msg)) => msg,
+        _ => panic!("Expected NowExecResultMsg"),
+    };
+
+    assert_eq!(
+        actual.to_result().unwrap_err().kind(),
+        NowStatusErrorKind::Now(NowProtoError::ElevationDenied)
+    );
+}
+
+#[test]
+fn roundtrip_exec_result_elevation_unavailable() {
+    let msg = NowExecResultMsg::new_error(
+        0x12345678,
+        NowStatusError::new_proto(NowProtoError::ElevationUnavailable),
+    )
+    .unwrap();
+
+    let decoded = now_msg_roundtrip(
+        msg,
+        expect![
+            "[12, 00, 00, 00, 13, 04, 00, 00, 78, 56, 34, 12, 00, 00, 00, 00, 01, 00, 01, 00, 0A, 00, 00, 00, 00, 00]"
+        ],
+    );
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::Result(msg)) => msg,
+        _ => panic!("Expected NowExecResultMsg"),
+    };
+
+    assert_eq!(
+        actual.to_result().unwrap_err().kind(),
+        NowStatusErrorKind::Now(NowProtoError::ElevationUnavailable)
+    );
+}
+
+#[test]
 fn roundtrip_exec_data() {
     let msg = NowExecDataMsg::new(0x12345678, NowExecDataStreamKind::Stdout, true, &[0x01, 0x02, 0x03]).unwrap();
 

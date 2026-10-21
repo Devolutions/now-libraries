@@ -46,6 +46,8 @@ impl RawNowProtoError {
     const INTERNAL: Self = Self(0x0006);
     const NOT_IMPLEMENTED: Self = Self(0x0007);
     const PROTOCOL_VERSION: Self = Self(0x0008);
+    const ELEVATION_DENIED: Self = Self(0x0009);
+    const ELEVATION_UNAVAILABLE: Self = Self(0x000A);
 }
 
 /// `code` field value of `NOW_STATUS` message if `kind` is `NOW_STATUS_ERROR_KIND_NOW`.
@@ -83,6 +85,16 @@ pub enum NowProtoError {
     ///
     /// NOW-PROTO: NOW_CODE_PROTOCOL_VERSION
     ProtocolVersion,
+    /// Elevation was requested and refused: the interactive user declined consent, the consent
+    /// prompt expired, or policy denies elevation for the account.
+    ///
+    /// NOW-PROTO: NOW_CODE_ELEVATION_DENIED
+    ElevationDenied,
+    /// Elevation was requested and is not possible for this request: the account has no elevated
+    /// token, or the server cannot elevate the requested execution style.
+    ///
+    /// NOW-PROTO: NOW_CODE_ELEVATION_UNAVAILABLE
+    ElevationUnavailable,
     /// Other error code.
     Other(u32),
 }
@@ -98,6 +110,8 @@ impl From<RawNowProtoError> for NowProtoError {
             RawNowProtoError::INTERNAL => NowProtoError::Internal,
             RawNowProtoError::NOT_IMPLEMENTED => NowProtoError::NotImplemented,
             RawNowProtoError::PROTOCOL_VERSION => NowProtoError::ProtocolVersion,
+            RawNowProtoError::ELEVATION_DENIED => NowProtoError::ElevationDenied,
+            RawNowProtoError::ELEVATION_UNAVAILABLE => NowProtoError::ElevationUnavailable,
             RawNowProtoError(code) => NowProtoError::Other(code),
         }
     }
@@ -114,6 +128,8 @@ impl From<NowProtoError> for RawNowProtoError {
             NowProtoError::Internal => RawNowProtoError::INTERNAL,
             NowProtoError::NotImplemented => RawNowProtoError::NOT_IMPLEMENTED,
             NowProtoError::ProtocolVersion => RawNowProtoError::PROTOCOL_VERSION,
+            NowProtoError::ElevationDenied => RawNowProtoError::ELEVATION_DENIED,
+            NowProtoError::ElevationUnavailable => RawNowProtoError::ELEVATION_UNAVAILABLE,
             NowProtoError::Other(code) => RawNowProtoError(code),
         }
     }
@@ -130,6 +146,8 @@ impl fmt::Display for NowProtoError {
             NowProtoError::Internal => write!(f, "internal error"),
             NowProtoError::NotImplemented => write!(f, "operation is not implemented"),
             NowProtoError::ProtocolVersion => write!(f, "incompatible protocol versions"),
+            NowProtoError::ElevationDenied => write!(f, "elevation was denied"),
+            NowProtoError::ElevationUnavailable => write!(f, "elevation is unavailable"),
             NowProtoError::Other(code) => write!(f, "unknown error code {}", code),
         }
     }
