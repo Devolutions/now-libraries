@@ -65,14 +65,17 @@ namespace Devolutions.NowClient
         }
 
         /// <summary>
-        /// Execute with elevated privileges. Requires the host to advertise an elevation
-        /// capability; under shell-based elevation the session has no IO redirection.
+        /// Execute with elevated privileges. Requires the host to advertise the elevation
+        /// capability. The host may prompt the interactive user for consent, and the session has
+        /// no IO redirection: output stays on the host.
         /// </summary>
         public ExecBatchParams Elevated(bool enable = true)
         {
             IsElevated = enable;
             return this;
         }
+
+        internal bool IsNoExit => _noExit;
 
         internal NowMsgExecBatch ToNowMessage(uint sessionId)
         {

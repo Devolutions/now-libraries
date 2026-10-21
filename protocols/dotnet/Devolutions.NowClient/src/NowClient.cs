@@ -583,6 +583,7 @@ namespace Devolutions.NowClient
             }
 
             ThrowIfElevationUnsupported(execParams);
+            ThrowIfBatchNoExitUnsupported(execParams);
 
             var sessionId = _nextExecSessionId++;
             var message = execParams.ToNowMessage(sessionId);
@@ -924,7 +925,7 @@ namespace Devolutions.NowClient
         }
 
         /// <summary>
-        /// Refuse an elevated request unless the negotiated capset advertises a way to satisfy it.
+        /// Refuse an elevated request unless the negotiated capset advertises elevation.
         /// A server older than NOW-PROTO 1.7 does not know the ELEVATED flag and would run the
         /// command without elevation, which the caller has no way to detect.
         /// </summary>
@@ -935,9 +936,28 @@ namespace Devolutions.NowClient
                 return;
             }
 
-            if (!Capabilities.ExecCapset.HasFlag(NowCapabilityExec.ElevateShell))
+            if (!Capabilities.ExecCapset.HasFlag(NowCapabilityExec.Elevation))
             {
                 ThrowCapabilitiesError("Elevated execution");
+            }
+        }
+
+        /// <summary>
+        /// Refuse a batch NO_EXIT request to a server older than NOW-PROTO 1.7, which does not
+        /// know the flag and would run `cmd /C`, closing the window the caller asked to keep.
+        /// </summary>
+        private void ThrowIfBatchNoExitUnsupported(ExecBatchParams execParams)
+        {
+            if (!execParams.IsNoExit)
+            {
+                return;
+            }
+
+            if (Capabilities.Version < MIN_BATCH_NO_EXIT_VERSION)
+            {
+                throw new NowClientException(
+                    $"Batch NoExit requires NOW-proto server version {MIN_BATCH_NO_EXIT_VERSION.Major}.{MIN_BATCH_NO_EXIT_VERSION.Minor} or higher. " +
+                    $"Current server version is {Capabilities.Version.Major}.{Capabilities.Version.Minor}.");
             }
         }
 
@@ -976,6 +996,7 @@ namespace Devolutions.NowClient
         /// RDM features were introduced in version 1.3, so servers with version 1.2 and below are not supported.
         /// </summary>
         private static readonly NowProtoVersion MIN_RDM_ENABLED_VERSION = new(1, 3);
+        private static readonly NowProtoVersion MIN_BATCH_NO_EXIT_VERSION = new(1, 7);
 
         /// <summary>
         /// Check if the NOW-proto channel has been terminated.

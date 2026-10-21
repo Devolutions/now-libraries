@@ -93,12 +93,11 @@ bitflags! {
         ///
         /// NOW-PROTO: NOW_CAP_EXEC_UNICODE_CONSOLE
         const UNICODE_CONSOLE = 0x0040;
-        /// Set if host can elevate an exec session using the platform shell. Elevation may prompt
-        /// the interactive user for consent, and IO redirection is unavailable for elevated
-        /// sessions.
+        /// Set if host can run elevated exec sessions. Elevation may prompt the interactive user
+        /// for consent, and stdio is not redirected for elevated sessions.
         ///
-        /// NOW-PROTO: NOW_CAP_EXEC_ELEVATE_SHELL
-        const ELEVATE_SHELL = 0x0080;
+        /// NOW-PROTO: NOW_CAP_EXEC_ELEVATION
+        const ELEVATION = 0x0080;
     }
 }
 
