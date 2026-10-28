@@ -429,13 +429,22 @@ Unless a manager's reading below states otherwise:
 - the reading accepts no custom parameters;
 - the reading accepts no installer arguments;
 - the broker can pin a version;
+- an Install or Update whose `Package.Version` starts with `-`, or contains a character other than ASCII letters, digits, `.`, `-`, `+`, `_` and those the reading adds, is unreadable;
 - the scope is `Scope`, and `User` when it is absent;
 - the architecture is `Package.Architecture`, and unknown when it is absent.
 
 A reading below that names the only source name of its manager compares `Source.Name` with it ignoring ASCII case.
+A plain source name starts with an ASCII letter or digit and contains only ASCII letters, digits, `.`, `-`, `_` and spaces.
+The batch characters are `"`, `%`, `!`, `^`, `&`, `|`, `<` and `>`, which the broker cannot pass to a manager that it runs through a batch file.
 
 <a id="manager-winget"></a>
 #### Winget
+
+The broker builds no WinGet command, so a request is unreadable, when:
+
+- its `Package.Id` starts with `-`, which WinGet could read as an option;
+- its `Package.Id`, `OptIns.CustomInstallLocation.Path` or a custom parameter contains a batch character;
+- its `Source.Name` is not a plain source name.
 
 The reading accepts custom parameters and installer arguments.
 The broker passes `OptIns.InstallerArguments.Arguments` as the value of `--custom` when its `Mode` is `Append`, and of `--override` when its `Mode` is `Replace`.
@@ -466,10 +475,10 @@ The scope is unknown when neither `Scope` nor `--scope` sets it.
 
 The broker builds no Scoop command, so a request is unreadable, when:
 
-- its `Elevation` is `Elevated`;
+- its `Elevation` is `Elevated`, as it is for every request whose `Scope` is `Machine` ([CONTRACT.wire.md §package-request](CONTRACT.wire.md#package-request));
 - it has `OptIns.Interactive`, `OptIns.CustomInstallLocation`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
 - it is an Uninstall with `OptIns.SkipHashCheck`;
-- it is an Update or an Uninstall with `Package.Architecture`;
+- it is an Update or an Uninstall with `Package.Architecture`, or an Install whose `Package.Architecture` is `Neutral`;
 - its `Package.Id` contains `[` or `]`, or starts with `-`.
 
 The reading accepts custom parameters.
@@ -494,8 +503,18 @@ The broker cannot pin a version through Scoop.
 #### Vcpkg
 
 The source name is a triplet.
-An identifier names its text before its first `[` or `:`, so `port[features]:triplet` names `port`, and no identifier selects the version.
-The architecture is `Package.Architecture`; when it is absent, it is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise.
+A port spec is a port, optionally followed by `[`, a `,`-separated list of one or more features and `]`, optionally followed by `:` and a triplet.
+A port and each feature are one or more ASCII lowercase letters, digits and `-`, not starting with `-`, and a triplet is one or more ASCII letters, digits, `-`, `_` and `.`.
+The broker builds no Vcpkg command, so a request is unreadable, when:
+
+- its `Elevation` is `Elevated`;
+- it has `OptIns.Interactive`, `OptIns.SkipHashCheck`, `OptIns.CustomInstallLocation`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
+- it has `Package.Architecture`;
+- its `Source.Name` is not a triplet;
+- its `Package.Id` is not a port spec, or has a triplet that differs from `Source.Name` in any character.
+
+An identifier names its port, so `port[features]:triplet` names `port`, and no identifier selects the version.
+The architecture is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise.
 The broker cannot pin a version through Vcpkg.
 
 <a id="manager-npm"></a>
@@ -505,22 +524,40 @@ The only source name is `npm`, and a request with another source name is unreada
 Package names keep their case in canonical form.
 A registry name is `name` or `@scope/name`, where `scope` and `name` are one or more ASCII letters, digits, `-`, `.`, `_` and `~` and do not start with `-`, `.` or `_`; a registry name is at most 214 bytes and does not end with `.tgz`, `.tar` or `.tar.gz` ignoring ASCII case.
 An identifier that is a registry name names itself.
-An alias `alias:target`, split at its first `:`, names `alias` and `target` when both are registry names, and `alias:target@version`, where that `@` is the last `@` after the `:` and is not the first character after it, also selects the version.
-Any other identifier, such as `name@version` or a Git, URL or path specifier, has an unknown package identity and an unknown source, because it may fetch from outside the named source.
-Such an identifier selects the version when it contains `#`, or when a part of it between `:` characters contains `@` after that part's first character.
+An alias `alias:target`, split at its first `:`, names `alias` and `target` when both are registry names, and so does `alias:target@suffix`, where that `@` is the last `@` after the `:` and is not the first character after it; the broker drops the suffix, so it selects no version.
+The broker builds no Npm command, so a request is unreadable, when:
+
+- its `Elevation` is `Elevated`;
+- it has `OptIns.Interactive`, `OptIns.SkipHashCheck`, `OptIns.CustomInstallLocation`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
+- its `Package.Architecture` is `X86`, `X64` or `Arm64`;
+- its `Package.Id` is neither a registry name nor an alias, so that no identifier fetches from outside the named source, or it contains `%`;
+- it is an Uninstall whose `Package.Version` contains U+0000, U+000A or U+000D.
+
+A `Package.Version` may also contain `~` and `*`.
 The architecture is `Neutral` when `Package.Architecture` is absent.
 
 <a id="manager-bun"></a>
 #### Bun
 
-The reading is that of [§manager-npm](#manager-npm), except for identifiers and sources.
-An identifier that is a registry name names itself, keeping its case in canonical form, and any other identifier has an unknown package identity and an unknown source and selects the version as under [§manager-npm](#manager-npm).
+The reading is that of [§manager-npm](#manager-npm), except for identifiers, sources and versions.
+An identifier that is a registry name names itself, keeping its case in canonical form, and any other identifier makes the request unreadable.
 The only source name is `Bun`, and a request with another source name is unreadable.
+A `Package.Version` that is not a version as [Semantic Versioning 2.0.0][semver] defines it makes the request unreadable, whatever its operation.
 
 <a id="manager-cargo"></a>
 #### Cargo
 
 The only source name is `crates.io`, and a request with another source name is unreadable.
+The broker builds no Cargo command, so a request is unreadable, when:
+
+- its `Elevation` is `Elevated`;
+- it has `OptIns.Interactive`, `OptIns.SkipHashCheck`, `OptIns.NoUpgrade`, `OptIns.UninstallPrevious`, `OptIns.PrePostCommands` or `OptIns.KillBeforeOperation`;
+- its `Package.Architecture` is `X86`, `X64` or `Arm64`;
+- its `Package.Id` is longer than 64 bytes, starts with `-`, or contains a character other than ASCII letters, digits, `-` and `_`;
+- its `OptIns.CustomInstallLocation.Path` contains a batch character;
+- it is an Uninstall with `Package.Version`.
+
+A `Package.Version` may also contain `=`, `~` and `*`.
 The canonical form maps ASCII letters to lowercase and `_` to `-`.
 The architecture is `Neutral` when `Package.Architecture` is absent.
 
@@ -528,23 +565,53 @@ The architecture is `Neutral` when `Package.Architecture` is absent.
 #### Pip
 
 The only source name is `pip`, and a request with another source name is unreadable.
+The broker builds no Pip command, so a request is unreadable, when:
+
+- its `Elevation` is `Elevated`;
+- it has `OptIns.Interactive`, `OptIns.SkipHashCheck`, `OptIns.CustomInstallLocation`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
+- its `Package.Architecture` is `X86`, `X64` or `Arm64`;
+- its `Package.Id` does not start and end with an ASCII letter or digit, or contains a character other than ASCII letters, digits, `.`, `_` and `-`;
+- its `Package.Version` contains a character other than ASCII letters, digits, `.`, `!`, `+`, `-` and `_`;
+- it is an Uninstall with `Package.Version`.
+
+That version rule replaces the default one of [§managers](#managers), so a Pip version may start with `-`.
+
 The canonical form maps ASCII letters to lowercase and each run of `-`, `_` and `.` to one `-`, as [PEP 503][pep503] normalizes names.
 The architecture is `Neutral` when `Package.Architecture` is absent, and the scope of an Uninstall is unknown.
 
 <a id="manager-dotnet"></a>
 #### Dotnet
 
+The only source name of an Install or Update is `nuget.org`, and an Install or Update with another source name is unreadable.
+The broker builds no Dotnet command, so a request is unreadable, when:
+
+- its `Scope` is `Machine`;
+- it has `OptIns.Interactive`, `OptIns.SkipHashCheck`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
+- it is an Uninstall with `Package.Architecture`;
+- its `Package.Id` starts with `-`, which `dotnet` could read as an option.
+
+A `Package.Version` may also contain `[`, `]`, `(`, `)`, `,` and `*`.
 A requested architecture of `Neutral` makes the architecture unknown.
 
 <a id="manager-chocolatey"></a>
 #### Chocolatey
+
+The broker builds no Chocolatey command, so a request is unreadable, when:
+
+- its `Scope` is `User`;
+- its `Package.Architecture` is `Arm64` or `Neutral`, or it is an Uninstall with `Package.Architecture`;
+- it has `OptIns.CustomInstallLocation`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
+- it is an Uninstall with `OptIns.SkipHashCheck`;
+- its `Package.Id` is longer than 100 bytes, starts with `-` or `.`, contains a character other than ASCII letters, digits, `.`, `-` and `_`, ends with `.config` or `.nupkg` ignoring ASCII case, or is `all` ignoring ASCII case;
+- it is an Install or Update whose `Source.Name` is not a plain source name.
 
 The scope is `Machine` when `Scope` is absent, and a requested architecture of `X64` makes the architecture unknown.
 
 <a id="manager-powershell"></a>
 #### PowerShell and PowerShell7
 
-A source name that does not start with an ASCII letter or digit, or contains a character other than ASCII letters, digits, `.`, `-`, `_` and space, makes the request unreadable, because PowerShell reads other characters as wildcards or matches them by its own rules.
+A source name that is not a plain source name, or a `Package.Id` that contains `[` or `]`, makes the request unreadable, because PowerShell reads other characters as wildcards or matches them by its own rules.
+Under `PowerShell7`, a `Package.Version` may also contain `[`, `]`, `(`, `)`, `,`, `*` and spaces.
 The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
 <a id="install-location"></a>
