@@ -63,6 +63,9 @@ const GRANT_ALL: &str = r#"[{"Id":"all","Decision":"Allow","Select":{},"Grants":
 #[case::winget_id_starting_with_dash(request("Uninstall", "Winget", "winget", "-Contoso"))]
 #[case::dotnet_id_starting_with_dash(install("Dotnet", "nuget.org", "-dotnet-ef", "8.0.0"))]
 #[case::winget_location_with_percent(with_location(winget_install(), "C:\\Apps\\%x"))]
+#[case::winget_custom_parameter_with_ampersand(with_parameters(winget_install(), &["/a&b"]))]
+#[case::winget_custom_parameter_with_quote(with_parameters(winget_install(), &["/a\"b"]))]
+#[case::winget_custom_parameter_with_caret(with_parameters(winget_install(), &["/a^b"]))]
 #[case::winget_installer_arguments_with_pipe(with(winget_install(), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/a|b"))))]
 #[case::winget_installer_arguments_with_pipe_on_uninstall(with(request("Uninstall", "Winget", "winget", "Contoso.Tool"), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/a|b"))))]
 #[case::winget_source_name_with_wide_space(request("Install", "Winget", "my\u{3000}source", "Contoso.Tool"))]
@@ -191,6 +194,13 @@ fn unreadable_requests_through_managers(#[case] subject: Request) {
 #[case::npm_channel_like_version(install("Npm", "npm", "react", "1.0.0-next.1"))]
 #[case::powershell_source_with_space_dot_dash_underscore(install("PowerShell", "My Repo_1.2-x", "Pester", "5.0"))]
 #[case::scoop_bucket_without_version(request("Install", "Scoop", "extras", "git"))]
+#[case::scoop_manifest_url(request(
+    "Install",
+    "Scoop",
+    "https://example.test/git.json",
+    "https://example.test/git.json"
+))]
+#[case::vcpkg_without_version(request("Install", "Vcpkg", "x64-windows", "zlib"))]
 #[case::scoop_custom_parameters(with_parameters(request("Install", "Scoop", "main", "git"), &["--verbose"]))]
 #[case::chocolatey_uninstall_with_any_source(elevated(request("Uninstall", "Chocolatey", "any source!", "git")))]
 #[case::bun_semantic_version(install("Bun", "Bun", "react", "18.2.0-rc.1+build.5"))]
@@ -200,16 +210,36 @@ fn readable_requests_through_managers(#[case] subject: Request) {
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §manager-scoop
+#[case::elevated(elevated(request("Install", "Scoop", "main", "git")))]
+#[case::interactive(with(request("Install", "Scoop", "main", "git"), |r| r.opt_ins.interactive = true))]
 #[case::install_location(with_location(request("Install", "Scoop", "main", "git"), "C:\\Apps"))]
+#[case::no_upgrade(with(request("Install", "Scoop", "main", "git"), |r| r.opt_ins.no_upgrade = true))]
+#[case::uninstall_previous(with(request("Install", "Scoop", "main", "git"), |r| r.opt_ins.uninstall_previous = true))]
+#[case::uninstall_with_skip_hash_check(with(request("Uninstall", "Scoop", "main", "git"), |r| r.opt_ins.skip_hash_check = true))]
+#[case::update_with_architecture(with(request("Update", "Scoop", "main", "git"), |r| r.package.architecture = Some(Architecture::X64)))]
+#[case::install_with_neutral_architecture(with(request("Install", "Scoop", "main", "git"), |r| r.package.architecture = Some(Architecture::Neutral)))]
+#[case::id_with_bracket(request("Install", "Scoop", "main", "git[1]"))]
+#[case::id_starting_with_dash(request("Install", "Scoop", "main", "-git"))]
 #[case::id_ending_with_dot(request("Install", "Scoop", "main", "git."))]
 #[case::bucket_with_json_id(request("Install", "Scoop", "main", "git.json"))]
+#[case::manifest_url_with_other_id(request("Install", "Scoop", "https://example.test/git.json", "git"))]
 #[case::manifest_url_in_another_case(request(
     "Install",
     "Scoop",
     "https://example.test/git.json",
     "HTTPS://example.test/git.json"
 ))]
+#[case::global_parameter(with_parameters(request("Install", "Scoop", "main", "git"), &["--global"]))]
+#[case::arch_parameter_in_upper_case(with_parameters(request("Install", "Scoop", "main", "git"), &["--ARCH=x"]))]
+#[case::short_cluster_with_global(with_parameters(request("Install", "Scoop", "main", "git"), &["-G"]))]
+#[case::short_cluster_with_architecture(with_parameters(request("Install", "Scoop", "main", "git"), &["-qa"]))]
+#[case::skip_hash_check_long(with_parameters(request("Install", "Scoop", "main", "git"), &["--skip-hash-check"]))]
+#[case::skip_hash_check_short(with_parameters(request("Install", "Scoop", "main", "git"), &["-s"]))]
+#[case::skip_hash_check_in_cluster(with_parameters(request("Install", "Scoop", "main", "git"), &["-ks"]))]
+#[case::end_of_options(with_parameters(request("Install", "Scoop", "main", "git"), &["--"]))]
 // oracle: contract policies/CONTRACT.policy.md §manager-scoop
+#[case::lone_dash(with_parameters(request("Install", "Scoop", "main", "git"), &["-"]))]
+#[case::skip_hash_check_after_equals_in_cluster(with_parameters(request("Install", "Scoop", "main", "git"), &["-q=s"]))]
 #[case::parameter_that_is_not_an_option(with_parameters(request("Install", "Scoop", "main", "git"), &["value"]))]
 #[case::parameter_with_space(with_parameters(request("Install", "Scoop", "main", "git"), &["--x=a b"]))]
 fn unreadable_requests_through_scoop(#[case] subject: Request) {
@@ -228,9 +258,13 @@ fn readable_requests_through_scoop(#[case] custom_parameters: &[&str]) {
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §managers
+#[case::vcpkg_elevated(elevated(request("Install", "Vcpkg", "x64-windows", "zlib")))]
+#[case::vcpkg_interactive(with(request("Install", "Vcpkg", "x64-windows", "zlib"), |r| r.opt_ins.interactive = true))]
 #[case::vcpkg_architecture(with(request("Install", "Vcpkg", "x64-windows", "zlib"), |r| r.package.architecture = Some(Architecture::X64)))]
 #[case::vcpkg_source_that_is_not_a_triplet(request("Install", "Vcpkg", "x64 windows", "zlib"))]
+#[case::vcpkg_id_with_other_triplet(request("Install", "Vcpkg", "x64-windows", "zlib:x86-windows"))]
 #[case::vcpkg_id_with_triplet_in_other_case(request("Install", "Vcpkg", "x64-windows", "zlib:X64-windows"))]
+#[case::vcpkg_id_with_upper_case_port(request("Install", "Vcpkg", "x64-windows", "Zlib"))]
 #[case::npm_elevated(elevated(install("Npm", "npm", "react", "1.0.0")))]
 #[case::npm_skip_hash_check(with(install("Npm", "npm", "react", "1.0.0"), |r| r.opt_ins.skip_hash_check = true))]
 #[case::npm_install_location(with_location(install("Npm", "npm", "react", "1.0.0"), "C:\\Apps"))]
@@ -292,12 +326,24 @@ fn winget_opt_ins_are_used_when_present(#[case] change: fn(&mut Request), #[case
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §manager-winget
+#[case::long_option_with_value(&["--location", "C:\\Apps"])]
+#[case::short_option_with_value(&["-l", "C:\\Apps"])]
 #[case::long_option_ignoring_ascii_case_with_equals(&["--LOCATION=C:\\Apps"])]
 #[case::short_option_sharing_its_element(&["-il", "C:\\Apps"])]
+#[case::interactive_long(&["--interactive"])]
+#[case::interactive_long_ignoring_ascii_case(&["--INTERACTIVE"])]
+#[case::interactive_short(&["-i"])]
+#[case::interactive_in_short_cluster(&["-ei"])]
 #[case::long_option_name_ends_at_equals(&["--interactive=false"])]
+#[case::override_with_value(&["--override", "/quiet"])]
+#[case::override_without_value(&["--override"])]
 #[case::custom_with_equals(&["--custom=/quiet"])]
+#[case::ignore_security_hash(&["--ignore-security-hash"])]
 #[case::force(&["/quiet", "--force"])]
+#[case::no_upgrade(&["--no-upgrade"])]
 #[case::uninstall_previous(&["--uninstall-previous"])]
+#[case::source(&["--source", "msstore"])]
+#[case::short_source(&["-s", "msstore"])]
 #[case::manifest(&["--manifest=app.yaml"])]
 #[case::short_manifest(&["-m", "app.yaml"])]
 fn winget_custom_parameters_asking_for_another_opt_in_or_source_are_unreadable(#[case] custom_parameters: &[&str]) {
@@ -408,11 +454,20 @@ fn install_location_check_reads_only_the_install_location() {
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §missing-version
+#[case::winget_install_without_version(request("Install", "Winget", "winget", "Contoso.Tool"), Check::MissingVersion)]
+#[case::winget_update_without_version(request("Update", "Winget", "winget", "Contoso.Tool"), Check::MissingVersion)]
+#[case::winget_uninstall_without_version(request("Uninstall", "Winget", "winget", "Contoso.Tool"), Check::AllowRules)]
+#[case::winget_version_that_is_not_a_version(install("Winget", "winget", "Contoso.Tool", "latest"), Check::AllowRules)]
+#[case::winget_identifier_selects_no_version(
+    install("Winget", "winget", "Contoso.Tool@1.2.3", "1.2.3"),
+    Check::AllowRules
+)]
 #[case::dotnet_identifier_selects_the_version(
     install("Dotnet", "nuget.org", "dotnet-ef@8.0.0", "8.0.0"),
     Check::MissingVersion
 )]
 #[case::leading_at_selects_no_version(install("Winget", "winget", "@Contoso", "1.2.3"), Check::AllowRules)]
+#[case::version_option(with_parameters(winget_install(), &["--version", "1.2.3"]), Check::MissingVersion)]
 #[case::short_version_option_without_value(with_parameters(winget_install(), &["-v"]), Check::MissingVersion)]
 #[case::version_option_takes_an_option_as_its_value(
     with_parameters(winget_install(), &["--version", "--interactive"]),
@@ -446,6 +501,8 @@ fn install_location_check_reads_only_the_install_location() {
 #[case::dotnet_four_components(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0.1"), Check::AllowRules)]
 #[case::chocolatey_two_components(elevated(install("Chocolatey", "chocolatey", "git", "2.4")), Check::AllowRules)]
 #[case::pip_two_components(install("Pip", "pip", "requests", "2.31"), Check::AllowRules)]
+#[case::scoop_install_without_version(request("Install", "Scoop", "main", "git"), Check::AllowRules)]
+#[case::vcpkg_update_without_version(request("Update", "Vcpkg", "x64-windows", "zlib"), Check::AllowRules)]
 fn missing_versions(#[case] subject: Request, #[case] expected: Check) {
     assert_eq!(check_of(GRANT_ALL, &subject), expected);
 }
@@ -494,9 +551,14 @@ fn unknown_scopes(#[case] subject: Request) {
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §reading
+#[case::machine_option_without_elevation(with_parameters(winget_install(), &["--scope", "machine"]))]
 #[case::machine_option_with_user_scope(with_parameters(with(winget_install(), |r| r.scope = Some(Scope::User)), &["--scope=machine"]))]
+#[case::scope_option_without_value(with_parameters(winget_install(), &["--scope"]))]
+#[case::scope_option_with_other_value(with_parameters(winget_install(), &["--scope", "global"]))]
+#[case::scope_option_twice(with_parameters(winget_install(), &["--scope", "user", "--scope", "user"]))]
 #[case::scope_option_and_field(with_parameters(with(winget_install(), |r| r.scope = Some(Scope::User)), &["--scope", "user"]))]
 #[case::chocolatey_default_machine(install("Chocolatey", "chocolatey", "git", "2.4"))]
+#[case::chocolatey_uninstall_default_machine(request("Uninstall", "Chocolatey", "chocolatey", "git"))]
 fn scope_that_may_be_machine_without_elevation_is_unreadable(#[case] subject: Request) {
     assert_eq!(check_of(GRANT_ALL, &subject), Check::UnreadableRequest);
 }
