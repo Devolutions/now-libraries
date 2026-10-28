@@ -146,8 +146,13 @@ fn selection(non_trivial: bool) -> impl Strategy<Value = GenSelection> {
                     architectures,
                     elevation,
                 };
-                // A version condition needs operations that exclude Uninstall.
-                if selection.version.is_some() {
+                // A version condition and a named source need operations that exclude Uninstall.
+                let names_a_source = selection
+                    .sources
+                    .iter()
+                    .flatten()
+                    .any(|selector| selector.source.is_some());
+                if selection.version.is_some() || names_a_source {
                     let mut operations: Vec<&'static str> = selection
                         .operations
                         .take()

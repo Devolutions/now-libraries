@@ -99,7 +99,7 @@ fn trusted_sources_govern_installs(#[case] trusted_sources: &str, #[case] check:
 #[test]
 fn untrusted_source_is_denied_whatever_the_rules_say() {
     // oracle: contract policies/CONTRACT.policy.md §trusted-sources
-    let rules = r#"[{"Id":"winget","Decision":"Allow","Select":{"Sources":[{"Manager":"Winget","Source":"winget"}]}}]"#;
+    let rules = r#"[{"Id":"winget","Decision":"Allow","Select":{"Operations":["Install","Update"],"Sources":[{"Manager":"Winget","Source":"winget"}]}}]"#;
     let mut request = winget_install();
     request.operation = Operation::Update;
     assert_eq!(
@@ -111,7 +111,7 @@ fn untrusted_source_is_denied_whatever_the_rules_say() {
 #[test]
 fn trusted_sources_do_not_govern_uninstalls() {
     // oracle: contract policies/CONTRACT.policy.md §trusted-sources
-    let rules = r#"[{"Id":"msstore","Decision":"Allow","Select":{"Operations":["Uninstall"],"Sources":[{"Manager":"Winget","Source":"msstore"}]}}]"#;
+    let rules = r#"[{"Id":"msstore","Decision":"Allow","Select":{"Operations":["Uninstall"],"Sources":[{"Manager":"Winget","AnySource":true}]}}]"#;
     let request = request("Uninstall", "Winget", "msstore", "9NBLGGH4NNS1");
     assert_eq!(
         summary(&evaluate(&document("[]", rules), &request)),
@@ -206,10 +206,13 @@ fn deny_rule_with_forbids_denies_only_requests_using_them(
 #[case::operation_in_list(r#"{"Operations":["Update","Install"]}"#, "AllowRules")]
 #[case::operation_not_in_list(r#"{"Operations":["Uninstall"]}"#, "DefaultDeny")]
 #[case::source_in_list(
-    r#"{"Sources":[{"Manager":"Chocolatey","AnySource":true},{"Manager":"Winget","Source":"winget"}]}"#,
+    r#"{"Operations":["Install"],"Sources":[{"Manager":"Chocolatey","AnySource":true},{"Manager":"Winget","Source":"winget"}]}"#,
     "AllowRules"
 )]
-#[case::source_of_other_manager(r#"{"Sources":[{"Manager":"Chocolatey","Source":"winget"}]}"#, "DefaultDeny")]
+#[case::source_of_other_manager(
+    r#"{"Operations":["Install"],"Sources":[{"Manager":"Chocolatey","Source":"winget"}]}"#,
+    "DefaultDeny"
+)]
 #[case::package_pattern(r#"{"Packages":["Other","Contoso.*"]}"#, "AllowRules")]
 #[case::package_pattern_not_matching(r#"{"Packages":["Contoso"]}"#, "DefaultDeny")]
 #[case::package_pattern_with_inner_star(r#"{"Packages":["C*o*.T*l"]}"#, "AllowRules")]
@@ -277,13 +280,20 @@ fn unknown_properties_resolve_toward_denial(#[case] rules: &str, #[case] check: 
 }
 
 #[rstest]
-// oracle: contract policies/CONTRACT.policy.md §package-identity
-#[case::winget_lowercases_ascii(
+// oracle: contract policies/CONTRACT.policy.md §manager-winget
+#[case::winget_keeps_case_so_a_case_difference_is_unknown(
     install("Winget", "winget", "Contoso.Tool", "1.0"),
     "CONTOSO.*",
+    "DefaultDeny",
+    "DenyRule"
+)]
+#[case::winget_keeps_case(
+    install("Winget", "winget", "Contoso.Tool", "1.0"),
+    "Contoso.*",
     "AllowRules",
     "DenyRule"
 )]
+// oracle: contract policies/CONTRACT.policy.md §package-identity
 #[case::npm_keeps_case(install("Npm", "npm", "React", "18.2.0"), "React", "AllowRules", "DenyRule")]
 #[case::npm_case_difference_is_unknown(install("Npm", "npm", "react", "18.2.0"), "React", "DefaultDeny", "DenyRule")]
 // oracle: contract policies/CONTRACT.policy.md §manager-bun

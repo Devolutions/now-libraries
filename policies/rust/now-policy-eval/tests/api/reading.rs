@@ -237,6 +237,9 @@ fn readable_requests_through_managers(#[case] subject: Request) {
 #[case::skip_hash_check_short(with_parameters(request("Install", "Scoop", "main", "git"), &["-s"]))]
 #[case::skip_hash_check_in_cluster(with_parameters(request("Install", "Scoop", "main", "git"), &["-ks"]))]
 #[case::end_of_options(with_parameters(request("Install", "Scoop", "main", "git"), &["--"]))]
+// oracle: contract policies/CONTRACT.policy.md §manager-scoop
+#[case::lone_dash(with_parameters(request("Install", "Scoop", "main", "git"), &["-"]))]
+#[case::skip_hash_check_after_equals_in_cluster(with_parameters(request("Install", "Scoop", "main", "git"), &["-q=s"]))]
 #[case::parameter_that_is_not_an_option(with_parameters(request("Install", "Scoop", "main", "git"), &["value"]))]
 #[case::parameter_with_space(with_parameters(request("Install", "Scoop", "main", "git"), &["--x=a b"]))]
 fn unreadable_requests_through_scoop(#[case] subject: Request) {
@@ -246,9 +249,7 @@ fn unreadable_requests_through_scoop(#[case] subject: Request) {
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §manager-scoop
 #[case::similar_long_option(&["--globalx"])]
-#[case::lone_dash(&["-"])]
 #[case::short_option(&["-q"])]
-#[case::short_option_with_value_not_naming_a_cluster_character(&["-q=s"])]
 #[case::double_dash_is_not_a_cluster(&["--s"])]
 fn readable_requests_through_scoop(#[case] custom_parameters: &[&str]) {
     let subject = with_parameters(request("Install", "Scoop", "main", "git"), custom_parameters);
@@ -457,8 +458,12 @@ fn install_location_check_reads_only_the_install_location() {
 #[case::winget_update_without_version(request("Update", "Winget", "winget", "Contoso.Tool"), Check::MissingVersion)]
 #[case::winget_uninstall_without_version(request("Uninstall", "Winget", "winget", "Contoso.Tool"), Check::AllowRules)]
 #[case::winget_version_that_is_not_a_version(install("Winget", "winget", "Contoso.Tool", "latest"), Check::AllowRules)]
-#[case::identifier_selects_the_version(
+#[case::winget_identifier_selects_no_version(
     install("Winget", "winget", "Contoso.Tool@1.2.3", "1.2.3"),
+    Check::AllowRules
+)]
+#[case::dotnet_identifier_selects_the_version(
+    install("Dotnet", "nuget.org", "dotnet-ef@8.0.0", "8.0.0"),
     Check::MissingVersion
 )]
 #[case::leading_at_selects_no_version(install("Winget", "winget", "@Contoso", "1.2.3"), Check::AllowRules)]
@@ -611,46 +616,21 @@ fn elevation_is_read_from_the_member(#[case] change: fn(&mut Request), #[case] e
 }
 
 #[rstest]
-// oracle: contract policies/CONTRACT.policy.md §manager-dotnet
-// oracle: contract policies/CONTRACT.policy.md §manager-chocolatey
+// oracle: contract policies/CONTRACT.policy.md §managers
 // oracle: contract policies/CONTRACT.policy.md §source-selector
-#[case::dotnet_install(
-    install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"),
-    Check::AllowRules,
-    Check::AllowRules
-)]
-#[case::dotnet_uninstall(
-    request("Uninstall", "Dotnet", "nuget.org", "dotnet-ef"),
-    Check::DefaultDeny,
-    Check::AllowRules
-)]
-#[case::chocolatey_install(
-    elevated(install("Chocolatey", "chocolatey", "git", "2.4")),
-    Check::AllowRules,
-    Check::AllowRules
-)]
-#[case::chocolatey_uninstall(
-    elevated(request("Uninstall", "Chocolatey", "chocolatey", "git")),
-    Check::DefaultDeny,
-    Check::AllowRules
-)]
-fn source_of_an_uninstall_through_dotnet_or_chocolatey_is_unknown(
-    #[case] subject: Request,
-    #[case] named: Check,
-    #[case] any: Check,
-) {
+#[case::dotnet("Dotnet", request("Uninstall", "Dotnet", "nuget.org", "dotnet-ef"))]
+#[case::chocolatey("Chocolatey", elevated(request("Uninstall", "Chocolatey", "chocolatey", "git")))]
+#[case::winget("Winget", request("Uninstall", "Winget", "winget", "Contoso.Tool"))]
+#[case::scoop("Scoop", request("Uninstall", "Scoop", "main", "git"))]
+#[case::vcpkg("Vcpkg", request("Uninstall", "Vcpkg", "x64-windows", "zlib"))]
+#[case::npm("Npm", request("Uninstall", "Npm", "npm", "react"))]
+fn any_source_selector_matches_the_unknown_source_of_an_uninstall(#[case] manager: &str, #[case] subject: Request) {
     assert_eq!(
-        (
-            check_selecting(
-                r#""Sources":[{"Manager":"Dotnet","Source":"nuget.org"},{"Manager":"Chocolatey","Source":"chocolatey"}]"#,
-                &subject
-            ),
-            check_selecting(
-                r#""Sources":[{"Manager":"Dotnet","AnySource":true},{"Manager":"Chocolatey","AnySource":true}]"#,
-                &subject
-            ),
+        check_selecting(
+            &format!(r#""Sources":[{{"Manager":"{manager}","AnySource":true}}]"#),
+            &subject
         ),
-        (named, any)
+        Check::AllowRules
     );
 }
 
