@@ -200,7 +200,7 @@ impl Parser<'_> {
 
     /// Parses a number and keeps its spelling.
     ///
-    /// INVARIANT: a spelling has no leading zero except in `0` itself, so a spelling with more digits is a larger number.
+    /// INVARIANT: the integer part of a spelling has no leading zero unless it is `0`.
     fn parse_number(&mut self) -> Result<Value, Malformed> {
         let start = self.pos;
 
