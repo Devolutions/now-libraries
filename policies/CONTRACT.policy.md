@@ -77,7 +77,7 @@ Every grant is an object, even one with no fields, and so is every forbid.
 <a id="def-elevation"></a>
 ### Elevation
 
-Elevation says whether the broker runs a request with administrator rights ([§request-properties](#request-properties)).
+Elevation is whether a request asks the broker to run it with administrator rights ([§request-properties](#request-properties)).
 Elevation is a property a selection can test, not an opt-in, and neither of its values needs a grant.
 
 <a id="def-unknown"></a>
@@ -309,8 +309,8 @@ No custom parameter makes a request use an opt-in; one that would ask for anothe
 | `CustomInstallLocation` | the request sets where the package is installed                                          |
 | `CustomParameters`      | the manager receives custom parameters ([§reading](#reading))                            |
 | `InstallerArguments`    | the installer itself receives arguments                                                  |
-| `PrePostCommands`       | the broker runs the `Pre` command before the manager process and the `Post` command after it |
-| `KillBeforeOperation`   | the broker stops the processes that `Processes` names before the operation               |
+| `PrePostCommands`       | the broker runs the `Pre` or `Post` command around the manager process ([CONTRACT.wire.md §operations](CONTRACT.wire.md#operations)) |
+| `KillBeforeOperation`   | the broker stops the processes of `Processes` before the manager process and any `Pre` command ([CONTRACT.wire.md §operations](CONTRACT.wire.md#operations)) |
 | `UninstallPrevious`     | the manager uninstalls the installed version before installing another                   |
 | `NoUpgrade`             | the manager does not upgrade a package that is already installed                         |
 
@@ -362,16 +362,16 @@ The evaluator's input is a well-formed package request ([CONTRACT.wire.md §pack
 
 Each property is the value that the manager's reading ([§managers](#managers)) assigns to the request, which is the value the manager acts on when the broker runs the command, so a change to how the broker builds commands is a change to this contract.
 A value the client sends that the command does not carry has no effect on any property.
-An `OptIns` key makes the request use its opt-in even when the command does not carry the key, so a decision depends only on the policy and the request, never on what a broker version does with the key.
+An `OptIns` key makes the request use its opt-in even when the command does not carry what the key asks for, so a decision depends only on the policy and the request, never on what a broker version does with the key.
 A request is unreadable when:
 
 - the broker builds no command for its manager ([§managers](#managers));
 - it carries custom parameters through a manager whose reading accepts none;
-- it has `OptIns.InstallerArguments` through a manager other than `Winget` ([§manager-winget](#manager-winget));
-- a custom parameter would ask for an opt-in other than `CustomParameters`, as its manager's reading states, so that every opt-in the request uses is a key of its `OptIns`;
-- its scope is `Machine` while its `Scope` is not `Machine`, and its `Elevation` is `NonElevated`, because it would install machine-wide without saying so;
+- it has `OptIns.InstallerArguments` through a manager whose reading accepts none;
+- a custom parameter would ask for an opt-in other than `CustomParameters`, as its manager's reading states, so that every opt-in the command asks for is a key of its `OptIns`;
+- its scope property is `Machine`, its `Scope` member is absent or `User`, and its `Elevation` is `NonElevated`, because it would act machine-wide without saying so in `Scope`;
 - it carries a version through a manager that cannot pin one ([§missing-version](#missing-version));
-- a custom parameter, `Package.Id` or `Source.Name` contains U+0000, U+000A or U+000D, which the broker cannot pass to a manager;
+- a custom parameter, `OptIns.InstallerArguments.Arguments`, `Package.Id` or `Source.Name` contains U+0000, U+000A or U+000D, which the broker cannot pass to a manager;
 - `Source.Name` starts or ends with a code point that has the `White_Space` property in `PropList.txt` of [Unicode 16.0.0][unicode16-ucd], or contains a code point that has the `Default_Ignorable_Code_Point` property in `DerivedCoreProperties.txt` of [Unicode 16.0.0][unicode16-ucd], because such a name looks like another;
 - its manager's reading states another case.
 
@@ -427,6 +427,7 @@ The broker builds commands only for `Winget`, `PowerShell`, `PowerShell7`, `Bun`
 Unless a manager's reading below states otherwise:
 
 - the reading accepts no custom parameters;
+- the reading accepts no installer arguments;
 - the broker can pin a version;
 - the scope is `Scope`, and `User` when it is absent;
 - the architecture is `Package.Architecture`, and unknown when it is absent.
@@ -537,7 +538,7 @@ The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 <a id="install-location"></a>
 ### Install location check
 
-A request that uses `CustomInstallLocation` passes the install location check when its install location, `OptIns.CustomInstallLocation.Path`, is a plain local path.
+A request fails the install location check when it uses `CustomInstallLocation` and its install location, `OptIns.CustomInstallLocation.Path`, is not a plain local path; no other request fails it.
 A plain local path is an ASCII letter followed by `:` and a separator, then any sequence of separators and segments, where a separator is `\` or `/` and a segment is a maximal run of other characters.
 A segment is not `.` or `..`, does not start with a space (U+0020), does not end with `.` or a space, and contains no control character (Unicode general category Cc, U+0000 to U+001F and U+007F to U+009F), and none of `: * ? " < > |`.
 The normalized location has an uppercase drive letter and uses `\` as its only separator, with repeated separators collapsed and a trailing separator dropped unless it follows the drive's `:`, so the normalized drive root is `C:\`; grant and forbid patterns match it.
