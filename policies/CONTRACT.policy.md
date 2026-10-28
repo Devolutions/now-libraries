@@ -261,11 +261,11 @@ The values of operations, scopes, architectures and elevations are those of [§r
 | `Architectures` | a non-empty list of architectures                                           | architecture is in the list         |
 | `Elevation`     | one elevation                                                               | elevation is that elevation         |
 
-`Packages` tests package names whatever the manager, so a rule meant for one manager's package should also name that manager in `Sources`, with `AnySource` when the rule is to apply to that manager's uninstalls; under `Vcpkg`, `Packages` is unknown for every uninstall ([§manager-vcpkg](#manager-vcpkg)).
+`Packages` tests package names whatever the manager, so a rule meant for one manager's package should also name that manager in `Sources`, with `AnySource` when the rule is to apply to that manager's uninstalls; under `Vcpkg`, `Packages` is unknown for every Update and Uninstall ([§manager-vcpkg](#manager-vcpkg)).
 A selection with a `Sources` entry that has the key `Source`, whatever its value and other keys, in `Select` or in an `Except` entry, also has `Operations` without `Uninstall`, because the source of an uninstall is unknown ([§managers](#managers)).
 Such a selection without `Operations` is `MissingKey` at `Operations`, and one whose `Operations` is a list containing `Uninstall` is `ConflictingKeys` at `Sources`.
 So a selection with a `Sources` entry that has the key `Source`, even beside an `AnySource` selector, selects installs and updates only, and a rule says so by listing its operations rather than letting the unknown source of an uninstall silently decide whether the rule applies.
-When this rule and that of [§version-condition](#version-condition) both require `Operations` of a selection that lacks it, the selection has one error, `MissingKey` at `Operations`; when both find `Uninstall` in `Operations`, it has two errors, `ConflictingKeys` at `Version` and `ConflictingKeys` at `Sources`.
+When this rule and that of [§version-condition](#version-condition) both require `Operations` of a selection that lacks it, the selection has one defect, `MissingKey` at `Operations`; when both find `Uninstall` in `Operations`, it has two defects, `ConflictingKeys` at `Version` and `ConflictingKeys` at `Sources`, and a reader reports one or both ([§errors](#errors)).
 
 <a id="version-condition"></a>
 ### Version condition
@@ -281,7 +281,7 @@ A `Minimum` or `Maximum` that is not a version is `InvalidValue`, and a `Minimum
 A version satisfies the condition when it is not lower than `Minimum`, is not higher than `Maximum`, and, when `Prerelease` is present, is not a pre-release; an absent bound places no constraint.
 Without `Prerelease`, a pre-release satisfies the condition like any other version.
 The condition is unknown when the request's version is unknown or is not a version.
-A selection with `Version`, in `Select` or in an `Except` entry, also has `Operations` without `Uninstall`, because an uninstall carries no version a policy can check: the manager removes whichever version is installed.
+A selection with the key `Version`, whatever its value, in `Select` or in an `Except` entry, also has `Operations` without `Uninstall`, because an uninstall carries no version a policy can check: the manager removes whichever version is installed.
 Such a selection without `Operations` is `MissingKey` at `Operations`, and one whose `Operations` is a list containing `Uninstall` is `ConflictingKeys` at `Version`.
 So no version condition applies to an uninstall, and a rule that tests the version says so by listing its operations rather than silently never matching uninstalls.
 `Prerelease` is checked against the version the command installs.
@@ -368,8 +368,8 @@ The evaluator's input is a well-formed package request ([CONTRACT.wire.md §pack
 ### Reading a request
 
 Each property is the value that the manager's reading ([§managers](#managers)) assigns to the request, which is the value the manager acts on when the broker runs the command, so a change to how the broker builds commands is a change to this contract.
-A manager's reading may leave a property other than the scope unknown even though the command fixes it, which only resolves that property toward denial ([§applicability](#applicability)).
-A reading never leaves unknown a scope the command fixes, because an unknown scope can keep readable a request that a `Machine` scope with `NonElevated` makes unreadable.
+A manager's reading may leave unknown a property the command fixes, except a `Machine` scope that the command fixes without a custom parameter, and doing so only resolves that property toward denial ([§applicability](#applicability)).
+Without a custom parameter, a reading never leaves unknown a scope the command fixes as `Machine`, because such an unknown scope keeps a `NonElevated` request readable although the command acts machine-wide.
 A value the client sends that the command does not carry has no effect on any property.
 An `OptIns` key makes the request use its opt-in even when the command does not carry what the key asks for, so a decision depends only on the policy and the request, never on what a broker version does with the key.
 A request is unreadable when:
