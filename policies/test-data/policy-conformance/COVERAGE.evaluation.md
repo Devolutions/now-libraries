@@ -94,7 +94,7 @@ File `eval-grants.json`.
 - Covering and a grant's own `Except`: `eval-grants-pattern-covers`, `eval-grants-except-uncovers`, `eval-grants-except-not-other-rule`, `eval-grants-except-not-other-grant`.
 - `CustomParameters` per element, option values included: `eval-grants-each-element-needs-cover`, `eval-grants-each-element-covered`, `eval-grants-pattern-not-across-elements`, `eval-grants-option-value-own-element`, `eval-grants-option-value-covered`.
 - `CustomInstallLocation` patterns and values normalized: `eval-grants-location-pattern-normalized`, `eval-grants-location-value-normalized`, `eval-grants-location-star-crosses-separators`, `eval-grants-location-not-covered`, `eval-grants-location-except`, `eval-grants-location-except-control`.
-- Location patterns without a drive, normalized all the same: `eval-grants-location-pattern-without-drive`, `eval-grants-location-pattern-without-drive-not-covered`, `eval-grants-location-pattern-repeated-separators`, `eval-grants-location-pattern-trailing-separator`.
+- Location patterns without a drive, normalized all the same: `eval-grants-location-pattern-without-drive`, `eval-grants-location-pattern-without-drive-not-covered`, `eval-grants-location-pattern-repeated-separators`, `eval-grants-location-pattern-trailing-separator`, each with its `-not-covered` control that differs only in the location.
 - A forbid's own `Except`: `eval-forbid-except-uncovers`, `eval-forbid-except-other-covered`.
 
 ### §opt-ins
