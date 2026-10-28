@@ -12,7 +12,8 @@ mod unicode_tables;
 mod values;
 mod version;
 
-// Dev-dependencies serve the integration tests only.
+// `--all-targets` builds a library test target despite `test = false`,
+// where the dev-dependencies, which serve the integration tests only, would otherwise be unused.
 #[cfg(test)]
 use {proptest as _, rstest as _, serde_json as _};
 
