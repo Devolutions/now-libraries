@@ -1,0 +1,3609 @@
+{
+  "policy": {
+    "PolicyFormatVersion": "2.0.0",
+    "Metadata": {
+      "Id": "conformance-reading",
+      "Publisher": "Policy conformance suite",
+      "Revision": 1,
+      "PublishedAt": "2026-01-01T00:00:00Z"
+    },
+    "TrustedSources": [
+      {
+        "Manager": "Winget",
+        "AnySource": true
+      },
+      {
+        "Manager": "PowerShell",
+        "AnySource": true
+      },
+      {
+        "Manager": "PowerShell7",
+        "AnySource": true
+      },
+      {
+        "Manager": "Apt",
+        "AnySource": true
+      },
+      {
+        "Manager": "Bun",
+        "AnySource": true
+      },
+      {
+        "Manager": "Cargo",
+        "AnySource": true
+      },
+      {
+        "Manager": "Chocolatey",
+        "AnySource": true
+      },
+      {
+        "Manager": "Dnf",
+        "AnySource": true
+      },
+      {
+        "Manager": "Dotnet",
+        "AnySource": true
+      },
+      {
+        "Manager": "Flatpak",
+        "AnySource": true
+      },
+      {
+        "Manager": "Homebrew",
+        "AnySource": true
+      },
+      {
+        "Manager": "Npm",
+        "AnySource": true
+      },
+      {
+        "Manager": "Pacman",
+        "AnySource": true
+      },
+      {
+        "Manager": "Pip",
+        "AnySource": true
+      },
+      {
+        "Manager": "Scoop",
+        "AnySource": true
+      },
+      {
+        "Manager": "Snap",
+        "AnySource": true
+      },
+      {
+        "Manager": "Vcpkg",
+        "AnySource": true
+      }
+    ],
+    "Rules": [
+      {
+        "Id": "allow-all",
+        "Decision": "Allow",
+        "Select": {}
+      }
+    ]
+  },
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "read-elevation-standard-no-scope",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-nonelevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "NonElevated"
+            }
+          },
+          {
+            "Id": "allow-elevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-nonelevated"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-elevation-standard-user-scope",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-nonelevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "NonElevated"
+            }
+          },
+          {
+            "Id": "allow-elevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "Scope": "User"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-nonelevated"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-elevation-standard-machine-scope",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-nonelevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "NonElevated"
+            }
+          },
+          {
+            "Id": "allow-elevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "Scope": "Machine"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-elevated"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-elevation-elevated-no-scope",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-nonelevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "NonElevated"
+            }
+          },
+          {
+            "Id": "allow-elevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Elevated"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-elevated"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-elevation-elevated-user-scope",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-nonelevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "NonElevated"
+            }
+          },
+          {
+            "Id": "allow-elevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "Scope": "User"
+        },
+        "Client": {
+          "RequestedElevation": "Elevated"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-elevated"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-elevation-reads-scope-field-not-property",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "Chocolatey's scope is Machine when Options.Scope is absent (§manager-chocolatey), but elevation reads the Options.Scope part, which is absent. Control: read-chocolatey-scope-default-machine.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-nonelevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "NonElevated"
+            }
+          },
+          {
+            "Id": "allow-elevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {
+          "Name": "chocolatey"
+        },
+        "Package": {
+          "Id": "git",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-nonelevated"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-elevation-ignores-scope-parameter",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "--scope sets the scope property, not the Options.Scope part elevation reads. Control: read-winget-scope-machine.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-nonelevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "NonElevated"
+            }
+          },
+          {
+            "Id": "allow-elevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "CustomParameters": [
+            "--scope",
+            "machine"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-nonelevated"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-elevation-known-when-scope-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "The scope is set twice and unknown (§reading), but Options.Scope is Machine, and elevation is never unknown.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-nonelevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "NonElevated"
+            }
+          },
+          {
+            "Id": "allow-elevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "Scope": "Machine",
+          "CustomParameters": [
+            "--scope",
+            "user"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-elevated"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-elevation-pip-uninstall-machine",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "The scope of a Pip uninstall is unknown (§manager-pip); elevation is not.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-nonelevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "NonElevated"
+            }
+          },
+          {
+            "Id": "allow-elevated",
+            "Decision": "Allow",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Pip",
+        "Source": {
+          "Name": "pip"
+        },
+        "Package": {
+          "Id": "requests"
+        },
+        "Options": {
+          "Scope": "Machine"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-elevated"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-elevation-deny-elevated",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-elevated",
+            "Decision": "Deny",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "Scope": "Machine"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-elevated"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-elevation-deny-elevated-not-applicable",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "Control for read-elevation-deny-elevated.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-elevated",
+            "Decision": "Deny",
+            "Select": {
+              "Elevation": "Elevated"
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "Scope": "User"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-operation-update-selected",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-update",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Update"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-update"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-operation-install-not-selected",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-update",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Update"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scope-default-user",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Default reading: Options.Scope, and User when it is absent. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-user",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "User"
+              ]
+            }
+          },
+          {
+            "Id": "allow-machine",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "Machine"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-user"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scope-default-machine-field",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-user",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "User"
+              ]
+            }
+          },
+          {
+            "Id": "allow-machine",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "Machine"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "Scope": "Machine"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-machine"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scope-default-user-field",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-user",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "User"
+              ]
+            }
+          },
+          {
+            "Id": "allow-machine",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "Machine"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "Scope": "User"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-user"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-architecture-default-absent-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Default reading: Package.Architecture, unknown when absent. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-architecture-default-x86",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3",
+          "Architecture": "X86"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-x86"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-architecture-default-x64",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3",
+          "Architecture": "X64"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-x64"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-architecture-default-arm64",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3",
+          "Architecture": "Arm64"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-arm64"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-architecture-default-neutral",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3",
+          "Architecture": "Neutral"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-neutral"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scope-unknown-matches-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "Winget's scope is unknown when neither Options.Scope nor --scope sets it (§manager-winget); an unknown property matches a Deny rule's selection. Control: read-scope-known-user-not-denied.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-machine",
+            "Decision": "Deny",
+            "Select": {
+              "Scopes": [
+                "Machine"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-machine"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scope-known-user-not-denied",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The same Deny rule against a known User scope.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-machine",
+            "Decision": "Deny",
+            "Select": {
+              "Scopes": [
+                "Machine"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-architecture-unknown-matches-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Winget's architecture is unknown when Package.Architecture is absent. Control: read-architecture-known-x86-not-denied.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-x64",
+            "Decision": "Deny",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-x64"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-architecture-known-x86-not-denied",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-x64",
+            "Decision": "Deny",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3",
+          "Architecture": "X86"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}
