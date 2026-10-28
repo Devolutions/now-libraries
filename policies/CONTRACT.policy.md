@@ -200,7 +200,9 @@ The list governs installs and updates only, because uninstalls download nothing;
 The source of an Install or Update request is trusted when a selector in the list matches it ([§source-selector](#source-selector)); a selector that is unknown for the request does not trust it.
 An Install or Update request whose source is not trusted is denied whatever the rules say ([§precedence](#precedence)).
 A manager with no selector in the list therefore cannot install or update anything.
-A rule may name a source the list does not trust, which governs uninstalls of packages from that source; for installs and updates, a rule only narrows which trusted sources it applies to.
+A rule may name a source the list does not trust, which governs uninstalls of packages from that source when its manager's reading knows the source of an Uninstall.
+When the reading leaves that source unknown, a `Source` selector of that manager is unknown for every uninstall through it ([§source-selector](#source-selector)), so a Deny rule whose `Select` names one of the manager's sources can apply to every such uninstall, and an Allow rule whose `Select` does applies to none ([§applicability](#applicability)).
+For installs and updates, a rule only narrows which trusted sources it applies to.
 
 <a id="source-selector"></a>
 ### Source selector
@@ -394,7 +396,7 @@ This table is the only list of the values of request properties.
 | Operation    | `Install`, `Update`, `Uninstall`       | `Operation`; never unknown                                                  |
 | Manager      | an identifier from [§managers](#managers) | `Manager`; never unknown                                                 |
 | Source       | a source name                          | `Source.Name`, unless the manager's reading makes it unknown                |
-| Package names | one or more package ids               | [§package-identity](#package-identity)                                      |
+| Package names | one or more package ids               | [§package-identity](#package-identity), unless the manager's reading makes it unknown |
 | Version      | a version string                       | [§missing-version](#missing-version)                                        |
 | Scope        | `User`, `Machine`                      | the manager's reading                                                       |
 | Architecture | `X86`, `X64`, `Arm64`, `Neutral`       | the manager's reading                                                       |
@@ -411,6 +413,7 @@ For each package name, the `Packages` patterns match when one matches it in cano
 `Packages` matches when the patterns match every package name, does not match when, for every package name, the patterns do not match it, and is unknown otherwise, so a name they would match only ignoring case makes it unknown.
 `Packages` is unknown when the manager's reading makes the package identity unknown.
 So an Allow rule's selection matches only when it covers every package the identifier names, and a Deny rule's selection matches when it covers any of them, whatever their case.
+When the package identity is unknown, an Allow rule whose `Select` has `Packages` is not applicable, and `Packages` never keeps a Deny rule from being applicable ([§applicability](#applicability)).
 
 <a id="version-scheme"></a>
 ### Version scheme
@@ -448,7 +451,8 @@ The broker builds no WinGet command, so a request is unreadable, when:
 - its `Package.Id`, `OptIns.CustomInstallLocation.Path` or a custom parameter contains a batch character;
 - its `Source.Name` is not a plain source name.
 
-An identifier names itself and selects no version, because the broker passes it whole as the value of `--id`, with `--exact`.
+An identifier names itself, keeping its case in canonical form, and selects no version, because the broker passes it whole as the value of `--id`, with `--exact`, under which WinGet compares ids with their exact characters.
+So [§package-identity](#package-identity) compares the name with its exact characters, and a pattern that matches it only when case is ignored makes `Packages` unknown for it.
 The reading accepts custom parameters and installer arguments.
 On an Install or Update, the broker passes `--custom` when the `Mode` of `OptIns.InstallerArguments` is `Append`, or `--override` when it is `Replace`, then its `Arguments`, as two elements before the custom parameters, so that no custom parameter takes them as its value or moves them after a `--`.
 On an Uninstall the broker passes neither, and the request still uses `InstallerArguments` ([§reading](#reading)).
@@ -487,34 +491,36 @@ The broker builds no Scoop command, so a request is unreadable, when:
 - it has `OptIns.Interactive`, `OptIns.CustomInstallLocation`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
 - it is an Uninstall with `OptIns.SkipHashCheck`;
 - it is an Update or an Uninstall with `Package.Architecture`, or an Install whose `Package.Architecture` is `Neutral`;
-- its `Package.Id` contains `[` or `]`, or starts with `-`.
+- its `Package.Id` contains `[` or `]`, or starts with `-`;
+- a custom parameter is exactly `--`.
 
 The reading accepts custom parameters.
 A short cluster is an element whose first character is `-` and whose second character exists and is not `-`.
 An option name ends at the element's first `=` and matches ignoring ASCII case, so `--ARCH=64bit` is `--arch` and `-S` is a short cluster containing `s`.
 A custom parameter makes the request unreadable when:
 
-- it is exactly `--` or `--%`, because Scoop then reads a later element as another app;
+- it is exactly `--%`, which ends Scoop's options, so Scoop would read a later element as another app;
 - it does not start with `-`, so an option takes a value only after `=` in its own element;
 - it contains a code point that has the `White_Space` property in `PropList.txt` of [Unicode 16.0.0][unicode16-ucd];
 - it names the option `--global`, `--all` or `--arch`;
 - it starts with `-` but not `--`, and its text after that `-`, including any text after `=`, contains `g` or `a` ignoring ASCII case;
+- it is a short cluster that contains a code point above U+007F anywhere, including after `=`, because Scoop compares each character of a cluster with an option ignoring case;
 - it names the option `--skip-hash-check`, or is a short cluster whose option names before its first `=` include `s`, because it would ask for `SkipHashCheck`.
 
 So `--globalx`, `-`, `-q` and `-q=s` make no request unreadable, while `-qa`, `-G`, `-q=abcg` and `--ARCH=x` do.
 
 A Scoop source is a bucket, named by the bucket's name, or a manifest URL or local path.
 A source name or identifier is a manifest URL or local path when it contains `...`, `:\` or `\\`, or when, after its leading `/` characters are removed, it starts with `http://`, `https://`, `ftp://` or `ftps://` ignoring ASCII case.
-A manifest URL or local path, a *manifest source*, is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
+On an Install, a manifest URL or local path, a *manifest source*, is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
 An Install whose `Source.Name` or `Package.Id` is a manifest URL or local path is readable only when `Package.Id` equals `Source.Name` with exact characters and starts with `http://` or `https://` ignoring ASCII case, because only then does the command fetch exactly the URL that `Source.Name` names: the broker passes `Package.Id` alone whenever `Source.Name` starts with `http://` or `https://` ignoring ASCII case, or contains `...` or `:\`, and otherwise passes the one argument `<Source.Name>/<Package.Id>`, which Scoop may read as another URL, look up in every bucket, or resolve as a relative path.
-A request whose `Package.Id` is a manifest URL or local path and contains `@` is unreadable, because Scoop splits the text after `@` off the URL as a version, fetches the shorter URL and generates that version from its manifest.
+A request whose `Package.Id` is a manifest URL or local path and contains `@` is unreadable, because Scoop may split the text after an `@` off the URL as a version, so that `https://example.test/app.json@1.2` reads as the URL `https://example.test/app.json` with the version `1.2`.
 An Update or Uninstall whose `Source.Name` or `Package.Id` is a manifest URL or local path is unreadable, because Scoop acts on an installed app it derives from the URL, and the request does not name that app.
 The `Package.Id` of a readable Install through a manifest source names itself, keeping its case in canonical form, and selects no version, so the `name@version` reading of [§package-identity](#package-identity) does not apply to it, as Scoop fetches the URL as given.
 So [§package-identity](#package-identity) compares such a name with its exact characters, and a pattern that matches it only when case is ignored makes `Packages` unknown for it, while a bucket's app names keep the lowercase canonical form.
 A `Source` selector matches a manifest source when the two are equal with exact characters, is unknown for it when they are equal only ignoring case ([§text-comparison](#text-comparison)), and does not match it otherwise, so a Deny rule that names the URL in another case still applies and an Allow rule fails closed.
 Any other source name is a bucket name, and a request through it is unreadable unless the bucket name and `Package.Id` are each one or more ASCII letters, digits, `-`, `_` and `.`, and `Package.Id` does not end with `.json` ignoring ASCII case, so that `<bucket>/<id>` names exactly one app in that bucket: no version after `@`, no path inside the bucket and no local manifest file.
 A request whose `Source.Name` or `Package.Id` ends with `.` is unreadable, because Windows drops trailing `.` from a path segment, so a bucket or app name would reach the same directory as the name without it, and `.` or `..` would name a directory outside the bucket.
-The source of an Update or Uninstall is unknown, because Scoop acts on the installed app's own record whatever bucket the request names, so a `Source` selector is unknown for it and an `AnySource` selector matches it ([§source-selector](#source-selector)); the rules above on `Source.Name` and `Package.Id` still decide whether it is readable.
+The source of an Update or Uninstall is unknown ([§source-selector](#source-selector)), because Scoop acts on the installed app's own record whatever bucket the request names; the rules above on `Source.Name` and `Package.Id` still decide whether it is readable.
 The broker cannot pin a version through Scoop.
 
 <a id="manager-vcpkg"></a>
@@ -532,7 +538,7 @@ The broker builds no Vcpkg command, so a request is unreadable, when:
 - its `Package.Id` is not a port spec, or has a triplet that differs from `Source.Name` in any character.
 
 An Install's identifier names its port, so `port[features]:triplet` names `port`, and no identifier selects the version.
-The package identity of an Update or Uninstall is unknown, so `Packages` is unknown for it ([§package-identity](#package-identity)), because the broker runs `upgrade --no-dry-run`, which also rebuilds the ports that depend on the named one, and `remove --recurse`, which also removes them, and the request names none of those ports.
+The package identity of an Update or Uninstall is unknown, so `Packages` is unknown for it ([§package-identity](#package-identity)), because the broker runs `upgrade --no-dry-run`, which also rebuilds the ports that depend on the named one, and `remove --recurse`, which also removes them, so the command changes installed ports the request does not name.
 The architecture is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise.
 The broker cannot pin a version through Vcpkg.
 
@@ -602,7 +608,7 @@ The architecture is `Neutral` when `Package.Architecture` is absent, and the sco
 #### Dotnet
 
 The only source name of an Install or Update is `nuget.org`, and an Install or Update with another source name is unreadable.
-The source of an Uninstall is unknown, because the broker does not pass it, so a `Source` selector is unknown for it and an `AnySource` selector matches it ([§source-selector](#source-selector)).
+The source of an Uninstall is unknown ([§source-selector](#source-selector)), because the broker does not pass it.
 The broker builds no Dotnet command, so a request is unreadable, when:
 
 - its `Scope` is `Machine`;
@@ -624,7 +630,7 @@ The broker builds no Chocolatey command, so a request is unreadable, when:
 - its `Package.Id` is longer than 100 bytes, starts with `-` or `.`, contains a character other than ASCII letters, digits, `.`, `-` and `_`, ends with `.config` or `.nupkg` ignoring ASCII case, or is `all` ignoring ASCII case;
 - it is an Install or Update whose `Source.Name` is not a plain source name.
 
-The source of an Uninstall is unknown, because the broker does not pass it, so a `Source` selector is unknown for it and an `AnySource` selector matches it ([§source-selector](#source-selector)).
+The source of an Uninstall is unknown ([§source-selector](#source-selector)), because the broker does not pass it.
 The scope is `Machine` when `Scope` is absent, and a requested architecture of `X64` makes the architecture unknown.
 
 <a id="manager-powershell"></a>
@@ -632,7 +638,7 @@ The scope is `Machine` when `Scope` is absent, and a requested architecture of `
 
 A source name that is not a plain source name, or a `Package.Id` that contains `[` or `]`, makes the request unreadable, because PowerShell reads other characters as wildcards or matches them by its own rules.
 An identifier names itself and selects no version, because the broker passes it whole as the value of `-Name`.
-The source of an Update or Uninstall is unknown, because the command acts on the installed module's own repository whatever source the request names, so a `Source` selector is unknown for it and an `AnySource` selector matches it ([§source-selector](#source-selector)).
+The source of an Update or Uninstall is unknown ([§source-selector](#source-selector)), because the installed module the command updates or removes may have come from another repository than the one the request names.
 Under `PowerShell7`, a `Package.Version` may also contain `[`, `]`, `(`, `)`, `,`, `*` and spaces.
 The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
@@ -650,11 +656,12 @@ A network path, a device path or a relative path would give an elevated installe
 ### Missing version
 
 The version is `Package.Version` when it is concrete, and unknown otherwise.
-A version is concrete when it is present, neither a custom parameter nor the identifier ([§package-identity](#package-identity)) selects the version, and the manager reads it as exactly that version.
-`Cargo` and `Dotnet` read a version as a range unless it is a version ([§version-scheme](#version-scheme)) with at least three release components, and `PowerShell7` reads one as a range unless it is a version, because its `-Version` accepts NuGet version ranges.
-`Npm` and `Bun` read a version as a range or a dist-tag unless it is a version as [Semantic Versioning 2.0.0][semver] defines it, so `1.2.3.4` and `V1.2.3` are not concrete under `Npm`.
-A `Pip` version is concrete only when it is one or more release components of ASCII digits separated by `.`, because Pip reads any other spelling by its own rules, under which `2.0.0-1` is a post-release above `2.0.0`, while [§version-scheme](#version-scheme) orders it below.
-A manager whose reading cannot pin a version has an unknown version.
+A version is concrete when it is present, neither a custom parameter nor the identifier ([§package-identity](#package-identity)) selects the version, and no rule below makes it not concrete.
+Under `Cargo` and `Dotnet`, a version is not concrete unless it is a version ([§version-scheme](#version-scheme)) with at least three release components, because they read any other as a range.
+Under `PowerShell7`, a version is not concrete unless it is a version ([§version-scheme](#version-scheme)), because its `-Version` accepts NuGet version ranges.
+Under `Npm`, a version is not concrete unless it is a version as [Semantic Versioning 2.0.0][semver] defines it, because npm reads other spellings by its own rules, such as `1.2.3.4` and `V1.2.3` as dist-tags; [§manager-bun](#manager-bun) refuses any other Bun version.
+Under `Pip`, a version is not concrete unless it is one or more release components of ASCII digits separated by `.`, because Pip reads other spellings by its own rules, under which `2.0.0-1` is a post-release above `2.0.0`, while [§version-scheme](#version-scheme) orders it below.
+Under a manager whose reading cannot pin a version, no version is concrete.
 An Install or Update request through a manager that can pin a version is missing its version when its version is not concrete, and is denied whatever the policy says, so that rule matching always has the version.
 An Uninstall request is never missing its version, because no version condition applies to it ([§version-condition](#version-condition)).
 
