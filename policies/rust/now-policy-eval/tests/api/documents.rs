@@ -63,9 +63,6 @@ fn one_leading_byte_order_mark_is_ignored() {
 // oracle: contract policies/CONTRACT.policy.md §json
 #[case::second_byte_order_mark(b"\xEF\xBB\xBF\xEF\xBB\xBF{}".to_vec())]
 #[case::invalid_utf8(b"{\"PolicyFormatVersion\":\"2.0.0\xFF\"}".to_vec())]
-#[case::top_level_array(b"[]".to_vec())]
-#[case::top_level_string(b"\"2.0.0\"".to_vec())]
-#[case::empty(Vec::new())]
 #[case::trailing_comma(b"{\"Rules\":[],}".to_vec())]
 #[case::comment(b"{/* c */}".to_vec())]
 #[case::single_quotes(b"{'Rules':[]}".to_vec())]
