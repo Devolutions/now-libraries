@@ -573,7 +573,7 @@ A network path, a device path or a relative path would give an elevated installe
 
 The version is `Package.Version` when it is concrete, and unknown otherwise.
 A version is concrete when it is present, neither a custom parameter nor the identifier ([§package-identity](#package-identity)) selects the version, and the manager does not resolve it as a range.
-`Npm`, `Bun`, `Cargo` and `Dotnet` resolve a version as a range unless it is a version ([§version-scheme](#version-scheme)) with at least three release components, and `PowerShell7` needs a version.
+`Npm`, `Bun`, `Cargo` and `Dotnet` resolve a version as a range unless it is a version ([§version-scheme](#version-scheme)) with at least three release components, and `PowerShell7` resolves one as a range unless it is a version, because its `-Version` accepts NuGet version ranges.
 The broker cannot pin a version through `Scoop` or `Vcpkg`; a request carrying `Package.Version` through them is unreadable, and their version is unknown.
 An Install or Update request through any other manager is missing its version when its version is not concrete, and is denied whatever the policy says, so that rule matching always has the version.
 An Uninstall request is never missing its version, because no version condition applies to it ([§version-condition](#version-condition)).
