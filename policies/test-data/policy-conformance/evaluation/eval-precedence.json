@@ -20,12 +20,12 @@
     {
       "name": "eval-precedence-unreadable-request-holds",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading).",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading).",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "winget", "Url": "https://example.test"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Client": {"RequestedElevation": "Standard"}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
@@ -158,13 +158,13 @@
     {
       "name": "eval-precedence-unreadable-request-over-validity-window",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading); ValidityWindow: the time is after ValidUntil. The higher check produces the decision.",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); ValidityWindow: the time is after ValidUntil. The higher check produces the decision.",
       "time": "2027-06-01T00:00:00Z",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "winget", "Url": "https://example.test"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Client": {"RequestedElevation": "Standard"}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
@@ -172,12 +172,12 @@
     {
       "name": "eval-precedence-unreadable-request-over-install-location",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading); InstallLocation: the relative location 'Apps' fails the install location check. The higher check produces the decision.",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); InstallLocation: the relative location 'Apps' fails the install location check. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "winget", "Url": "https://example.test"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Options": {"CustomInstallLocation": "Apps"},
         "Client": {"RequestedElevation": "Standard"}
       },
@@ -186,12 +186,12 @@
     {
       "name": "eval-precedence-unreadable-request-over-missing-version",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading); MissingVersion: the install has no Package.Version. The higher check produces the decision.",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); MissingVersion: the install has no Package.Version. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "winget", "Url": "https://example.test"},
-        "Package": {"Id": "Contoso.Tool"},
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Client": {"RequestedElevation": "Standard"}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
@@ -199,12 +199,12 @@
     {
       "name": "eval-precedence-unreadable-request-over-untrusted-source",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading); UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision.",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "msstore", "Url": "https://example.test"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Client": {"RequestedElevation": "Standard"}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
@@ -212,12 +212,12 @@
     {
       "name": "eval-precedence-unreadable-request-over-deny-rule",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading); DenyRule: deny-blocked applies to the package. The higher check produces the decision.",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); DenyRule: deny-blocked applies to the package. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "winget", "Url": "https://example.test"},
-        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Client": {"RequestedElevation": "Standard"}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
@@ -225,12 +225,12 @@
     {
       "name": "eval-precedence-unreadable-request-over-ungranted-opt-in",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading); UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision.",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "winget", "Url": "https://example.test"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Options": {"SkipHashCheck": true},
         "Client": {"RequestedElevation": "Standard"}
       },
@@ -239,12 +239,12 @@
     {
       "name": "eval-precedence-unreadable-request-over-default-deny",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading); DefaultDeny: no Allow rule selects the Fabrikam package. The higher check produces the decision.",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); DefaultDeny: no Allow rule selects the Fabrikam package. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "winget", "Url": "https://example.test"},
-        "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Client": {"RequestedElevation": "Standard"}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
@@ -540,13 +540,13 @@
     {
       "name": "eval-precedence-all-checks-hold",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading); ValidityWindow: the time is after ValidUntil; InstallLocation: the relative location 'Apps' fails the install location check; MissingVersion: the install has no Package.Version; UntrustedSource: the source 'msstore' is not trusted; DenyRule: deny-blocked applies to the package; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted.",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); ValidityWindow: the time is after ValidUntil; InstallLocation: the relative location 'Apps' fails the install location check; MissingVersion: the install has no Package.Version; UntrustedSource: the source 'msstore' is not trusted; DenyRule: deny-blocked applies to the package; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted.",
       "time": "2027-06-01T00:00:00Z",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "msstore", "Url": "https://example.test"},
-        "Package": {"Id": "Contoso.Blocked"},
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Blocked", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Options": {"CustomInstallLocation": "Apps", "SkipHashCheck": true},
         "Client": {"RequestedElevation": "Standard"}
       },

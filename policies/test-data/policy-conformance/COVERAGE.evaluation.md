@@ -2,7 +2,7 @@
 
 Cases in `evaluation/eval-*.json` that check how a valid policy decides a request, by section of `policies/CONTRACT.policy.md`.
 Requests go through `Winget` unless a case needs another manager's reading to make a property unknown or a version a pre-release.
-`Interactive`, `SkipHashCheck`, `CustomInstallLocation`, `UninstallPrevious` and `NoUpgrade` appear only in `Winget` requests, `NoUpgrade` only with `Install` and `UninstallPrevious` only with `Update`.
+Outside `eval-carriage.json`, `Interactive`, `SkipHashCheck`, `CustomInstallLocation`, `UninstallPrevious` and `NoUpgrade` appear only in `Winget` requests; `eval-carriage.json` checks them under every manager and operation ([Opt-in carriage](#opt-in-carriage)).
 
 ## Cases by section
 
@@ -41,6 +41,7 @@ File `eval-validity-window.json`.
 
 File `eval-trusted-sources.json`.
 
+- Trusted Update, the control of `eval-untrusted-update`: `eval-trusted-update`.
 - Not trusted: `eval-untrusted-other-source`, `eval-untrusted-update`, `eval-untrusted-empty-list`, `eval-untrusted-install-from-source-only-rule-names`, `eval-untrusted-named-source-unknown-source`.
 - Uninstalls ignore the list: `eval-trusted-uninstall-ignores-empty-list`, `eval-trusted-uninstall-from-source-only-rule-names`.
 - Precedence and audit mode: `eval-precedence-untrusted-source-holds`, `eval-audit-untrusted-source`.
@@ -49,6 +50,7 @@ File `eval-trusted-sources.json`.
 
 - `AnySource`: `eval-trusted-any-source`, `eval-trusted-any-source-unknown-source`, `eval-selection-sources-any-source`.
 - `Source`, known and unknown: `eval-trusted-named-source`, `eval-trusted-named-source-known-npm-source`, `eval-untrusted-named-source-unknown-source`, `eval-applicability-list-unknown-entry`.
+- `Source` compares ignoring case as §text-comparison defines, under `Winget` too: `eval-text-source-name-case-ignored`, `eval-text-source-name-dotless-i`, `eval-text-source-name-dotted-capital-i`.
 - Another manager: `eval-untrusted-other-manager-any-source`, `eval-untrusted-other-manager-same-source-name`, `eval-selection-sources-other-manager`, `eval-applicability-other-manager-selector-unknown-source`.
 
 ### §rules
@@ -80,6 +82,7 @@ File `eval-version-condition.json`.
 
 - Bounds, inclusive: `eval-version-minimum-inclusive`, `eval-version-below-minimum`, `eval-version-maximum-inclusive`, `eval-version-above-maximum`, `eval-version-between-bounds`.
 - Comparison as §version-scheme fixes it: `eval-version-components-numeric-below`, `eval-version-components-numeric-above`, `eval-version-trailing-zero-equal`, `eval-version-extra-component-above`, `eval-version-build-metadata-ignored`, `eval-version-prerelease-below-release`.
+- A `Winget` pre-release compares below its release although it is not a pre-release: `eval-version-winget-prerelease-below-minimum`, control `eval-version-minimum-inclusive`.
 - `Prerelease: Exclude`: `eval-version-prerelease-exclude-prerelease`, `eval-version-prerelease-exclude-release`, `eval-version-prerelease-without-exclude`, `eval-version-prerelease-exclude-winget`, `eval-version-prerelease-flag-ignored`, `eval-version-prerelease-flag-absent-prerelease`.
 - Unknown version and a value that is not a version: `eval-version-unknown-allow-not-applicable`, `eval-version-unknown-allow-without-version`, `eval-version-unknown-deny-applicable`, `eval-version-not-a-version-allow`, `eval-version-not-a-version-deny`.
 - Deny rules and `Except`: `eval-version-deny-condition-holds`, `eval-version-deny-condition-fails`, `eval-version-except-excludes-old-install`, `eval-version-except-leaves-uninstall`.
@@ -91,6 +94,7 @@ File `eval-grants.json`.
 - Covering and a grant's own `Except`: `eval-grants-pattern-covers`, `eval-grants-except-uncovers`, `eval-grants-except-not-other-rule`, `eval-grants-except-not-other-grant`.
 - `CustomParameters` per element, option values included: `eval-grants-each-element-needs-cover`, `eval-grants-each-element-covered`, `eval-grants-pattern-not-across-elements`, `eval-grants-option-value-own-element`, `eval-grants-option-value-covered`.
 - `CustomInstallLocation` patterns and values normalized: `eval-grants-location-pattern-normalized`, `eval-grants-location-value-normalized`, `eval-grants-location-star-crosses-separators`, `eval-grants-location-not-covered`, `eval-grants-location-except`, `eval-grants-location-except-control`.
+- Location patterns without a drive, normalized all the same: `eval-grants-location-pattern-without-drive`, `eval-grants-location-pattern-without-drive-not-covered`, `eval-grants-location-pattern-repeated-separators`, `eval-grants-location-pattern-trailing-separator`.
 - A forbid's own `Except`: `eval-forbid-except-uncovers`, `eval-forbid-except-other-covered`.
 
 ### §opt-ins
@@ -155,20 +159,24 @@ File `eval-decision.json`, plus the outcome, check and `audited` value of every 
 - §evaluation: a decision depends only on the policy, the request and the evaluation time; the case format gives the runner nothing else to pass.
 - §text-comparison: implementations use the Unicode 16.0.0 table rather than their platform's casing; the cases sample the code points where common platform functions differ from it.
 - §audit-mode: the rationale sentences (trying out a new list or rule set) state no checkable rule beyond the per-check column.
+- §evaluation: the broker "accepts every valid document, refuses every invalid document whose `PolicyFormatVersion` is `"2.0.0"` and reports its errors, and runs no request while it holds no accepted policy", and "An allowed request whose command the broker cannot build runs nothing".
+  These bind the broker, which the cases do not run.
+
+## Checked by property tests
+
+These properties quantify over every valid policy, request and evaluation time, so each implementation checks them with property tests over generated policies and requests rather than with cases here.
+
+- §monotonicity: adding an Allow rule keeps every `Allow` outcome, and adding a Deny rule keeps every `Deny` outcome.
+- §order-independence: reordering any list of a policy changes no decision except the order in which it names rules.
+
+## Met by the suite as a whole
+
+- §agreement: both implementations passing this suite, whose cases fix the full decision and the full error list, is the evidence that they agree.
 
 ## Gaps and unchecked boundaries
 
-- §version-scheme against §version-condition, under `Winget`: no version is a pre-release, but "a version with a pre-release is lower than the same release without one" is not limited by manager.
-  One reading compares `1.2.3-beta` below `1.2.3` under `Winget`; the other ignores the pre-release part there.
-  No case puts a `Winget` pre-release version on a bound.
-- §grants: a `CustomInstallLocation` pattern "is normalized as an install location is", but a pattern that does not start with a drive, such as `*` or `*\Tool`, has no normalized form in §install-location.
-  One reading normalizes only the separators it contains; the other leaves such a pattern unnormalized or matching nothing.
-  Every location pattern here starts with a drive letter.
-- §source-selector: "the manager's source comparison" is not defined for `Winget`.
-  The cases read it as §text-comparison, which says source names compare ignoring case; the other reading is the ASCII-only comparison that §managers gives managers with one source name.
-  `eval-text-source-name-dotless-i` and `eval-text-source-name-dotted-capital-i` depend on the first reading.
 - §precedence: `UngrantedOptIn` and `DefaultDeny` never hold together, since one needs an applicable Allow rule and the other none, and `AllowRules` holds only when no other check does; those pairs have no case.
-- §opt-ins: whether an `Options` field counts as its opt-in under a manager whose command does not carry it is pending, so `Interactive`, `SkipHashCheck`, `CustomInstallLocation`, `UninstallPrevious` and `NoUpgrade` appear only in `Winget` requests, `NoUpgrade` only with `Install` and `UninstallPrevious` only with `Update`.
+- §opt-ins: an `Options` field carries its opt-in under every manager and operation; `eval-carriage.json` checks that ([Opt-in carriage](#opt-in-carriage)), and the other files keep those fields to `Winget` requests.
 - §text-comparison: the Unicode cases sample code points that separate the simple uppercase mapping from lowercasing, case folding, full mappings, normalization and UTF-16 code-unit casing; other code points are not enumerated.
 - §patterns: matching cost for patterns with many `*` is not specified and not checked.
 - §selection `Packages` and §package-identity canonical forms, §reading, §managers, §install-location and §missing-version are other parts of the suite; cases here use them only to reach an evaluation clause, and say which reading they rely on in `note`.
@@ -189,7 +197,7 @@ Each request is readable and passes every check above `DenyRule`; its `note` say
 
 ### §opt-in-evaluation
 
-- The granted neighbours: `eval-carriage-<manager>-<operation>-<opt-in>-granted`, 150 cases, and the 12 `Winget` `-granted` cases above.
+- The granted neighbours: `eval-carriage-<manager>-<operation>-<opt-in>-granted`, 150 cases, and the 4 `Winget` `-granted` cases above.
 - Several opt-ins all granted: `eval-carriage-combined-all-granted`.
 
 ### §rules
@@ -207,7 +215,5 @@ Each request is readable and passes every check above `DenyRule`; its `note` say
 
 ### Gaps
 
-- §missing-version says `PowerShell7` "needs a version" without saying what follows when it has none.
-  One reading makes a `PowerShell7` request without a version unreadable, `Uninstall` included; the other only repeats that an Install or Update without a concrete version is missing its version.
-  Every `PowerShell7` request here carries a concrete version, `Uninstall` included, so no case depends on the reading.
+- Every `PowerShell7` request here carries a version that §missing-version makes concrete; how `PowerShell7` reads a range or no version is checked by the `read-missing-version-powershell7-*` cases of the request reading part.
 - The install location check is exercised with one form of non-plain path, a `..` segment, under each manager; the other forms are left to the install location cases of the request reading part.

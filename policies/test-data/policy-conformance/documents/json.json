@@ -197,126 +197,126 @@
     },
     {
       "name": "doc-json-trailing-comma-object-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
-      "note": "doc-minimal-valid with a trailing comma after the last member (§json). Control: doc-minimal-valid.",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with a trailing comma after the last member (§json). Control: doc-minimal-valid. Grammar: RFC 8259 §4.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], }",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-trailing-comma-array-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
-      "note": "doc-minimal-valid with a trailing comma after the last array element (§json). Control: doc-minimal-valid.",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with a trailing comma after the last array element (§json). Control: doc-minimal-valid. Grammar: RFC 8259 §5.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [{\"Id\": \"r1\", \"Decision\": \"Allow\", \"Select\": {}},]}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-line-comment-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
-      "note": "doc-minimal-valid with a // comment (§json). Control: doc-minimal-valid.",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with a // comment (§json). Control: doc-minimal-valid. Grammar: RFC 8259 §2.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []\n// comment\n}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-block-comment-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
-      "note": "doc-minimal-valid with a /* */ comment (§json). Control: doc-minimal-valid.",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with a /* */ comment (§json). Control: doc-minimal-valid. Grammar: RFC 8259 §2.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], /* c */ \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-single-quoted-string-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
-      "note": "doc-minimal-valid with a single-quoted string. Control: doc-minimal-valid.",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with a single-quoted string. Control: doc-minimal-valid. Grammar: RFC 8259 §7.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": 'x', \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-unquoted-key-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
-      "note": "doc-minimal-valid with an unquoted key. Control: doc-minimal-valid.",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with an unquoted key. Control: doc-minimal-valid. Grammar: RFC 8259 §4.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", Publisher: \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-leading-zero-number-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
       "note": "doc-minimal-valid with a number with a leading zero, which RFC 8259 §6 excludes. Control: doc-minimal-valid.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 01, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-plus-sign-number-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
       "note": "doc-minimal-valid with a number with a leading +, which RFC 8259 §6 excludes. Control: doc-minimal-valid.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": +1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-nan-literal-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
-      "note": "doc-minimal-valid with the literal NaN. Control: doc-minimal-valid.",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with the literal NaN. Control: doc-minimal-valid. Grammar: RFC 8259 §6.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": NaN, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-uppercase-literal-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
       "note": "doc-minimal-valid with the literal True, where RFC 8259 §3 has only lowercase true. Control: doc-minimal-valid.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Enforcement\": {\"AuditMode\": True}, \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-trailing-value-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
-      "note": "doc-minimal-valid with a second value after the document. Control: doc-minimal-valid.",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with a second value after the document. Control: doc-minimal-valid. Grammar: RFC 8259 §2.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []} {}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-unterminated-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
-      "note": "doc-minimal-valid with a missing closing brace. Control: doc-minimal-valid.",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with a missing closing brace. Control: doc-minimal-valid. Grammar: RFC 8259 §4.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-raw-control-character-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
       "note": "doc-minimal-valid with an unescaped U+0001 inside a string, which RFC 8259 §7 requires to be escaped. Control: doc-minimal-valid.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\u0001\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-raw-tab-in-string-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
       "note": "doc-minimal-valid with an unescaped tab inside a string, which RFC 8259 §7 requires to be escaped. Control: doc-minimal-valid.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\ty\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-invalid-escape-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
       "note": "doc-minimal-valid with the escape \\x, which RFC 8259 §7 does not define. Control: doc-minimal-valid.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"\\x41\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-short-unicode-escape-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
-      "note": "doc-minimal-valid with a \\u escape with two hex digits instead of four. Control: doc-minimal-valid.",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with a \\u escape with two hex digits instead of four. Control: doc-minimal-valid. Grammar: RFC 8259 §7.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"\\u41\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-nbsp-whitespace-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
       "note": "doc-minimal-valid with U+00A0 between tokens, which is not one of the four RFC 8259 §2 whitespace characters. Control: doc-minimal-valid.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
     },
     {
       "name": "doc-json-form-feed-whitespace-malformed",
-      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
       "note": "doc-minimal-valid with U+000C between tokens, which is not one of the four RFC 8259 §2 whitespace characters. Control: doc-minimal-valid.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\":\f[]}",
       "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}

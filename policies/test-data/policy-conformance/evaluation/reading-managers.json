@@ -6847,6 +6847,248 @@
         "optIns": [],
         "audited": false
       }
+    },
+    {
+      "name": "read-winget-url-readable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Winget takes the source from Source.Name alone, so Source.Url has no effect. Control: read-request-plain.",
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget", "Url": "https://example.test"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-winget-url-empty-readable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "An empty Source.Url has no effect under Winget either. Control: read-request-plain.",
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget", "Url": ""}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-winget-url-not-source",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The only trusted Winget source is named 'https://example.test'; the request's source is its Source.Name 'winget', not its Source.Url, so it is not trusted (§trusted-sources). Control: read-winget-url-source-from-name.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "https://example.test"}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget", "Url": "https://example.test"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-winget-url-source-from-name",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The only trusted Winget source is 'winget', the request's Source.Name; its Source.Url has no effect.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "winget"}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget", "Url": "https://example.test"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-scoop-url-readable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Scoop takes the source from Source.Name alone, so Source.Url has no effect. Control: read-scoop-plain.",
+      "request": {"Operation": "Install", "Manager": "Scoop", "Source": {"Name": "main", "Url": "https://example.test/git.json"}, "Package": {"Id": "git"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-scoop-url-not-source",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The only trusted Scoop source is the manifest URL 'https://example.test/git.json'; the request's source is its Source.Name 'main', not its Source.Url, so it is not trusted (§trusted-sources). Control: read-scoop-url-source-from-name.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Scoop", "Source": "https://example.test/git.json"}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
+      "request": {"Operation": "Install", "Manager": "Scoop", "Source": {"Name": "main", "Url": "https://example.test/git.json"}, "Package": {"Id": "git"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-scoop-url-source-from-name",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The only trusted Scoop source is 'main', the request's Source.Name; its Source.Url has no effect.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Scoop", "Source": "main"}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
+      "request": {"Operation": "Install", "Manager": "Scoop", "Source": {"Name": "main", "Url": "https://example.test/git.json"}, "Package": {"Id": "git"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-cargo-url-index",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
+      "note": "Cargo accepts a Source.Url that equals https://index.crates.io once trailing '/' are removed. Control: read-cargo-plain.",
+      "request": {"Operation": "Install", "Manager": "Cargo", "Source": {"Name": "crates.io", "Url": "https://index.crates.io"}, "Package": {"Id": "serde", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-cargo-url-trailing-slashes",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
+      "note": "Trailing '/' characters are removed before comparing. Control: read-cargo-url-index; contrast read-dotnet-url-trailing-slash.",
+      "request": {"Operation": "Install", "Manager": "Cargo", "Source": {"Name": "crates.io", "Url": "https://index.crates.io//"}, "Package": {"Id": "serde", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-cargo-url-any-case",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
+      "note": "The comparison ignores ASCII case. Control: read-cargo-url-index.",
+      "request": {"Operation": "Install", "Manager": "Cargo", "Source": {"Name": "crates.io", "Url": "HTTPS://Index.Crates.IO/"}, "Package": {"Id": "serde", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-cargo-url-other-host",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
+      "note": "'https://crates.io' is not https://index.crates.io. Control: read-cargo-url-index.",
+      "request": {"Operation": "Install", "Manager": "Cargo", "Source": {"Name": "crates.io", "Url": "https://crates.io"}, "Package": {"Id": "serde", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-cargo-url-sparse-prefix",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
+      "note": "'sparse+https://index.crates.io/', Cargo's own spelling of the sparse index, is not https://index.crates.io after removing trailing '/'. Control: read-cargo-url-trailing-slashes.",
+      "request": {"Operation": "Install", "Manager": "Cargo", "Source": {"Name": "crates.io", "Url": "sparse+https://index.crates.io/"}, "Package": {"Id": "serde", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-cargo-url-path",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
+      "note": "A path after the host is not removed. Control: read-cargo-url-index.",
+      "request": {"Operation": "Install", "Manager": "Cargo", "Source": {"Name": "crates.io", "Url": "https://index.crates.io/config.json"}, "Package": {"Id": "serde", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-cargo-url-empty",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
+      "note": "An empty URL is carried and does not equal https://index.crates.io; Cargo has no exception for an empty URL. Control: read-cargo-url-index; contrast read-dotnet-url-empty.",
+      "request": {"Operation": "Install", "Manager": "Cargo", "Source": {"Name": "crates.io", "Url": ""}, "Package": {"Id": "serde", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-nuget",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "Dotnet accepts https://api.nuget.org/v3/index.json on an Install. Control: read-dotnet-plain.",
+      "request": {"Operation": "Install", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": "https://api.nuget.org/v3/index.json"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-any-case",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "The comparison ignores ASCII case. Control: read-dotnet-url-nuget.",
+      "request": {"Operation": "Install", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": "HTTPS://API.NuGet.org/V3/Index.JSON"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-trailing-slash",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "Unlike Bun and Cargo, Dotnet removes no trailing '/', so the URL is not equal. Control: read-dotnet-url-nuget; contrast read-cargo-url-trailing-slashes.",
+      "request": {"Operation": "Install", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": "https://api.nuget.org/v3/index.json/"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-other",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "The NuGet v2 feed is not https://api.nuget.org/v3/index.json. Control: read-dotnet-url-nuget.",
+      "request": {"Operation": "Install", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": "https://www.nuget.org/api/v2"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-surrounding-space",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "A leading space makes the URL unequal, and it is not made only of White_Space. Control: read-dotnet-url-nuget.",
+      "request": {"Operation": "Install", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": " https://api.nuget.org/v3/index.json"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-empty",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "An empty URL is accepted on an Install. Control: read-dotnet-plain; contrast read-cargo-url-empty.",
+      "request": {"Operation": "Install", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": ""}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-white-space-only",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "U+0020, U+0009 and U+3000 all have White_Space, so the URL consists only of White_Space. White_Space per PropList.txt of Unicode 16.0.0: line 12 '0009..000D    ; White_Space # Cc   [5] <control-0009>..<control-000D>', line 13 '0020          ; White_Space # Zs       SPACE', line 22 '3000          ; White_Space # Zs       IDEOGRAPHIC SPACE'; U+200B is in none of the White_Space lines 12 to 22. Control: read-dotnet-url-empty.",
+      "request": {"Operation": "Install", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": " \t\u3000"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-zero-width-space",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "U+200B ZERO WIDTH SPACE lacks White_Space, so a URL of it alone is neither empty nor White_Space only. White_Space per PropList.txt of Unicode 16.0.0: line 12 '0009..000D    ; White_Space # Cc   [5] <control-0009>..<control-000D>', line 13 '0020          ; White_Space # Zs       SPACE', line 22 '3000          ; White_Space # Zs       IDEOGRAPHIC SPACE'; U+200B is in none of the White_Space lines 12 to 22. Control: read-dotnet-url-white-space-only.",
+      "request": {"Operation": "Install", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": "\u200b"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-update-nuget",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "The rule covers Update as well as Install. Control for read-dotnet-url-update-other.",
+      "request": {"Operation": "Update", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": "https://api.nuget.org/v3/index.json"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-update-other",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "Control: read-dotnet-url-update-nuget.",
+      "request": {"Operation": "Update", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": "https://example.test"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-uninstall-other",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "Source.Url has no effect on a Dotnet Uninstall, whatever it is. Contrast: read-dotnet-url-update-other.",
+      "request": {"Operation": "Uninstall", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": "https://example.test"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-uninstall-zero-width-space",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "Source.Url has no effect on a Dotnet Uninstall. Contrast: read-dotnet-url-zero-width-space.",
+      "request": {"Operation": "Uninstall", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": "\u200b"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-powershell-url-unreadable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "PowerShell's reading accepts no Source.Url, not even its gallery's own URL. Control: read-powershell-plain.",
+      "request": {"Operation": "Install", "Manager": "PowerShell", "Source": {"Name": "PSGallery", "Url": "https://www.powershellgallery.com/api/v2"}, "Package": {"Id": "PSReadLine", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-powershell7-url-unreadable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "PowerShell7's reading accepts no Source.Url. Control: read-powershell7-plain.",
+      "request": {"Operation": "Install", "Manager": "PowerShell7", "Source": {"Name": "PSGallery", "Url": "https://www.powershellgallery.com/api/v2"}, "Package": {"Id": "PSReadLine", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-chocolatey-url-unreadable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Chocolatey's reading accepts no Source.Url. Control: read-chocolatey-plain.",
+      "request": {"Operation": "Install", "Manager": "Chocolatey", "Source": {"Name": "chocolatey", "Url": "https://community.chocolatey.org/api/v2/"}, "Package": {"Id": "git", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-pip-url-unreadable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Pip's reading accepts no Source.Url. Control: read-pip-plain.",
+      "request": {"Operation": "Install", "Manager": "Pip", "Source": {"Name": "pip", "Url": "https://pypi.org/simple"}, "Package": {"Id": "requests", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-vcpkg-url-unreadable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Vcpkg's reading accepts no Source.Url. Control: read-vcpkg-plain.",
+      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows", "Url": "https://github.com/microsoft/vcpkg"}, "Package": {"Id": "zlib"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-npm-url-cargo-index-unreadable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Npm's reading accepts no Source.Url, including one another manager accepts. Control: read-npm-plain.",
+      "request": {"Operation": "Install", "Manager": "Npm", "Source": {"Name": "npm", "Url": "https://index.crates.io"}, "Package": {"Id": "left-pad", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-nuget-under-chocolatey",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The URL Dotnet accepts makes a Chocolatey request unreadable. Control: read-dotnet-url-nuget.",
+      "request": {"Operation": "Install", "Manager": "Chocolatey", "Source": {"Name": "chocolatey", "Url": "https://api.nuget.org/v3/index.json"}, "Package": {"Id": "git", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-chocolatey-url-uninstall-unreadable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Only Dotnet ignores Source.Url on an Uninstall; Chocolatey refuses it on every operation. Contrast: read-dotnet-url-uninstall-other.",
+      "request": {"Operation": "Uninstall", "Manager": "Chocolatey", "Source": {"Name": "chocolatey", "Url": "https://example.test"}, "Package": {"Id": "git"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     }
   ]
 }

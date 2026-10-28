@@ -336,18 +336,18 @@
       }
     },
     {
-      "name": "read-request-source-url-winget",
+      "name": "read-request-source-url-chocolatey",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Only Bun accepts Source.Url (§manager-bun). Control: read-request-plain.",
+      "note": "Chocolatey's reading accepts no Source.Url (§managers), so carrying one makes the request unreadable. Control: read-chocolatey-plain; contrast read-winget-url-readable.",
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Chocolatey",
         "Source": {
-          "Name": "winget",
+          "Name": "chocolatey",
           "Url": "https://example.test"
         },
         "Package": {
-          "Id": "Contoso.Tool",
+          "Id": "git",
           "Version": "1.2.3"
         },
         "Client": {
@@ -363,18 +363,18 @@
       }
     },
     {
-      "name": "read-request-source-url-empty-winget",
+      "name": "read-request-source-url-empty-chocolatey",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "An empty Source.Url is still carried.",
+      "note": "An empty Source.Url is still carried, and Chocolatey's reading accepts none (§managers). Control: read-chocolatey-plain; contrast read-dotnet-url-empty, which Dotnet accepts.",
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Chocolatey",
         "Source": {
-          "Name": "winget",
+          "Name": "chocolatey",
           "Url": ""
         },
         "Package": {
-          "Id": "Contoso.Tool",
+          "Id": "git",
           "Version": "1.2.3"
         },
         "Client": {
@@ -392,7 +392,7 @@
     {
       "name": "read-request-source-url-npm",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "The URL that Bun accepts makes an Npm request unreadable. Control: read-bun-url-registry.",
+      "note": "Npm's reading accepts no Source.Url (§managers), not even the URL that Bun accepts. Control: read-bun-url-registry.",
       "request": {
         "Operation": "Install",
         "Manager": "Npm",

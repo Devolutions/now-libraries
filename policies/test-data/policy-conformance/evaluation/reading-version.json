@@ -6860,6 +6860,549 @@
         "optIns": [],
         "audited": false
       }
+    },
+    {
+      "name": "read-version-winget-pre-release-below-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta' against bound '1.0.0': lower. Comparisons use the pre-release under every manager (§version-scheme), Winget included. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum (§version-condition). Control: read-version-winget-pre-release-equal.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0.0-beta"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-winget-release-above-pre-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0' against bound '1.0.0-beta': higher. Comparisons use the pre-release under every manager (§version-scheme), Winget included. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum (§version-condition). Control: read-version-winget-pre-release-equal.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0.0"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-winget-pre-release-order",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-alpha' against bound '1.0.0-beta': lower by Semantic Versioning 2.0.0 section 11 precedence (ASCII order of alphanumeric identifiers). Comparisons use the pre-release under every manager (§version-scheme), Winget included. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum (§version-condition). Control: read-version-winget-pre-release-equal.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0.0-alpha"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-winget-pre-release-equal",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta' against bound '1.0.0-beta': equal. Comparisons use the pre-release under every manager (§version-scheme), Winget included. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0.0-beta"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
     }
   ]
 }

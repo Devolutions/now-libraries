@@ -461,7 +461,7 @@
     {
       "name": "read-input-source-url-2048-bytes",
       "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Bun is the only manager that accepts Source.Url (§manager-bun); the URL is https://www.npmjs.com followed by '/' up to 2048 bytes, which equals https://www.npmjs.com once trailing '/' are removed.",
+      "note": "Bun accepts this Source.Url (§manager-bun); the URL is https://www.npmjs.com followed by '/' up to 2048 bytes, which equals https://www.npmjs.com once trailing '/' are removed.",
       "request": {
         "Operation": "Install",
         "Manager": "Bun",

@@ -2,50 +2,50 @@
   "cases": [
     {
       "name": "doc-err-pointer-slash",
-      "oracle": "contract policies/CONTRACT.policy.md §errors; RFC 6901 §3",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
       "note": "An unknown top-level key 'a/b'; '/' is written '~1' (RFC 6901 §3). Control: doc-minimal-valid.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "a/b": 1},
       "expect": {"errors": [{"code": "UnknownKey", "pointer": "/a~1b"}]}
     },
     {
       "name": "doc-err-pointer-tilde",
-      "oracle": "contract policies/CONTRACT.policy.md §errors; RFC 6901 §3",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
       "note": "An unknown top-level key 'a~b'; '~' is written '~0' (RFC 6901 §3). Control: doc-minimal-valid.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "a~b": 1},
       "expect": {"errors": [{"code": "UnknownKey", "pointer": "/a~0b"}]}
     },
     {
       "name": "doc-err-pointer-tilde-one-literal",
-      "oracle": "contract policies/CONTRACT.policy.md §errors; RFC 6901 §3",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
       "note": "An unknown top-level key '~1'; the key is the two characters '~1'; '~' becomes '~0' and '1' stays, giving '~01', not '~1' (RFC 6901 §3). Control: doc-minimal-valid.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "~1": 1},
       "expect": {"errors": [{"code": "UnknownKey", "pointer": "/~01"}]}
     },
     {
       "name": "doc-err-pointer-empty-key",
-      "oracle": "contract policies/CONTRACT.policy.md §errors; RFC 6901 §3",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
       "note": "An unknown top-level key ''; the empty key is the empty reference token after '/' (RFC 6901 §3). Control: doc-minimal-valid.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "": 1},
       "expect": {"errors": [{"code": "UnknownKey", "pointer": "/"}]}
     },
     {
       "name": "doc-err-pointer-escaped-solidus-key",
-      "oracle": "contract policies/CONTRACT.policy.md §errors; RFC 6901 §3",
-      "note": "The key is written a\\/b, which decodes to a/b, and the pointer escapes the decoded key.",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "The key is written a\\/b, which decodes to a/b, and the pointer escapes the decoded key. The pointer escapes the key as RFC 6901 §3 defines.",
       "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"a\\/b\": 1}",
       "expect": {"errors": [{"code": "UnknownKey", "pointer": "/a~1b"}]}
     },
     {
       "name": "doc-err-pointer-nested-escapes",
-      "oracle": "contract policies/CONTRACT.policy.md §errors; RFC 6901 §3",
-      "note": "An unknown Metadata key x~y/z.",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "An unknown Metadata key x~y/z. The pointer escapes the key as RFC 6901 §3 defines.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "x~y/z": 1}, "TrustedSources": [], "Rules": []},
       "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Metadata/x~0y~1z"}]}
     },
     {
       "name": "doc-err-pointer-non-ascii-key",
-      "oracle": "contract policies/CONTRACT.policy.md §errors; RFC 6901 §3",
-      "note": "A pointer holds the key's characters unescaped except '~' and '/'.",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A pointer holds the key's characters unescaped except '~' and '/'. The pointer escapes the key as RFC 6901 §3 defines.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "é": 1}, "TrustedSources": [], "Rules": []},
       "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Metadata/é"}]}
     },
@@ -258,7 +258,7 @@
     {
       "name": "doc-err-grants-on-deny-and-empty-except",
       "oracle": "contract policies/CONTRACT.policy.md §errors",
-      "note": "Two defects in one rule.",
+      "note": "Two defects in one rule. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Except": [{}], "Grants": {"Interactive": {}}}]},
       "expect": {"someOf": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Grants"}, {"code": "InvalidValue", "pointer": "/Rules/0/Except/0"}]}
     },
