@@ -94,7 +94,11 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
     let identity = read_identity(manager, &request.package.id);
     let canonical_form = canonical_form(manager, manifest_source);
 
-    // The command of an Uninstall is not limited to packages from the source, and an Update acts on the source the package was installed from under these managers.
+    // No uninstall command is limited to packages installed from the source.
+    // An Update is read with an unknown source under PowerShell, PowerShell7, Scoop and Vcpkg, as each manager's reading states.
+    // UNTESTED: the source of an Uninstall is unknown.
+    // A valid policy names a source only in a selection without `Uninstall` and never consults `TrustedSources` for an uninstall, so no evaluation shows this value.
+    // Keep it unknown when changing this code: a known source would make a later rule that reaches uninstalls through a source fail open.
     let source_is_unknown = operation == Operation::Uninstall
         || (operation == Operation::Update
             && matches!(
