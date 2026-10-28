@@ -172,3 +172,42 @@ File `eval-decision.json`, plus the outcome, check and `audited` value of every 
 - §text-comparison: the Unicode cases sample code points that separate the simple uppercase mapping from lowercasing, case folding, full mappings, normalization and UTF-16 code-unit casing; other code points are not enumerated.
 - §patterns: matching cost for patterns with many `*` is not specified and not checked.
 - §selection `Packages` and §package-identity canonical forms, §reading, §managers, §install-location and §missing-version are other parts of the suite; cases here use them only to reach an evaluation clause, and say which reading they rely on in `note`.
+
+## Opt-in carriage
+
+File `eval-carriage.json`, which checks that an `Options` field carries its opt-in whatever the manager and operation.
+In the names below, `<manager>` is each manager the broker builds a command for other than `Winget`: `powershell`, `powershell7`, `bun`, `cargo`, `chocolatey`, `dotnet`, `npm`, `pip`, `scoop` and `vcpkg`.
+`<operation>` is `install`, `update` and `uninstall`, and `<opt-in>` is `interactive`, `skip-hash-check`, `custom-install-location`, `uninstall-previous` and `no-upgrade`.
+Each request is readable and passes every check above `DenyRule`; its `note` says why the version is not missing.
+
+### §reading and §opt-ins
+
+- Each field carries its opt-in under every manager and operation, not granted: `eval-carriage-<manager>-<operation>-<opt-in>-ungranted`, 150 cases, each against the plain control `eval-carriage-<manager>-<operation>-plain`.
+- The same, forbidden by a Deny rule: `eval-carriage-<manager>-<operation>-<opt-in>-forbidden`, 150 cases, each against its `-granted` neighbour.
+- Under `Winget`, the pairs the other cases leave out: `eval-carriage-winget-{install,uninstall}-uninstall-previous-{ungranted,granted,forbidden}`, `eval-carriage-winget-{update,uninstall}-no-upgrade-{ungranted,granted,forbidden}`, with the controls `eval-carriage-winget-{install,update,uninstall}-plain`.
+- `Options.PreRelease` set to `true` carries nothing and leaves the version alone: `eval-carriage-<manager>-install-prerelease-flag`, 10 cases; those of managers that can pin a version go through an Allow rule with `Prerelease: Exclude`.
+
+### §opt-in-evaluation
+
+- The granted neighbours: `eval-carriage-<manager>-<operation>-<opt-in>-granted`, 150 cases, and the 12 `Winget` `-granted` cases above.
+- Several opt-ins all granted: `eval-carriage-combined-all-granted`.
+
+### §rules
+
+- Plain controls: `eval-carriage-<manager>-<operation>-plain`, 30 cases, and `eval-carriage-winget-{install,update,uninstall}-plain`.
+
+### §install-location
+
+- `Options.CustomInstallLocation` with a `..` segment, under a manager whose reading has no install location: `eval-carriage-<manager>-<operation>-location-not-plain`, 30 cases.
+  A grant pattern covers the text, so only the check denies it; each case's control is `eval-carriage-<manager>-<operation>-custom-install-location-granted`.
+
+### §decision
+
+- Opt-ins named in the order of §opt-ins, not in the order the request writes them, for each check that names opt-ins: `eval-carriage-combined-ungranted-order`, `eval-carriage-combined-partly-granted-order`, `eval-carriage-combined-forbidden-order`, `eval-carriage-combined-default-deny-order`.
+
+### Gaps
+
+- §missing-version says `PowerShell7` "needs a version" without saying what follows when it has none.
+  One reading makes a `PowerShell7` request without a version unreadable, `Uninstall` included; the other only repeats that an Install or Update without a concrete version is missing its version.
+  Every `PowerShell7` request here carries a concrete version, `Uninstall` included, so no case depends on the reading.
+- The install location check is exercised with one form of non-plain path, a `..` segment, under each manager; the other forms are left to the install location cases of the request reading part.
