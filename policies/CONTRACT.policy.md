@@ -426,7 +426,7 @@ Unless the manager's reading states otherwise, an identifier `name@version`, whe
 A package name compares in its manager's canonical form, and a pattern's characters between `*` are put in that canonical form before matching.
 Unless the manager's reading states otherwise, the canonical form maps ASCII letters to lowercase.
 For each package name, the `Packages` patterns match when one matches it in canonical form, are unknown when none does but one would when case is ignored ([§text-comparison](#text-comparison)), and do not match otherwise.
-`Packages` matches when the patterns match every package name, does not match when they do not match each package name, so a name they would match ignoring case makes it unknown, and is unknown otherwise.
+`Packages` matches when the patterns match every package name, does not match when, for every package name, the patterns do not match it, and is unknown otherwise, so a name they would match only ignoring case makes it unknown.
 `Packages` is unknown when the manager's reading makes the package identity unknown.
 So an Allow rule's selection matches only when it covers every package the identifier names, and a Deny rule's selection matches when it covers any of them, whatever their case.
 
