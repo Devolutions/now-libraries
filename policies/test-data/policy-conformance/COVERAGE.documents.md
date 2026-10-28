@@ -15,6 +15,8 @@ Every expected value comes from the cited anchor or a published source named in 
 - Top-level value not an object: `doc-json-top-level-*`.
 - Not well-formed RFC 8259, including comments and trailing commas: `doc-json-empty-malformed`, `doc-json-whitespace-only-malformed` and the `doc-json-*-malformed` cases built from `doc-minimal-valid`.
 - Unpaired surrogates in values and keys: `doc-json-unpaired-surrogate-*`, with controls `doc-json-surrogate-pair-valid`, `doc-json-escaped-nul-valid` and `doc-json-escaped-noncharacter-valid`.
+- Surrogate pairs at the ends of both halves' ranges (U+10000, U+103FF, U+10FC00, U+10FFFF), escaped with uppercase hex digits: `doc-json-surrogate-pair-{first,low-dfff,high-dbff,last}-valid` in a value.
+  The same pairs decoded in a key, observed through the pointer of an unknown key, `doc-json-surrogate-pair-{first,low-dfff,high-dbff,last}-key-unknown`, and through a `DuplicateKey` with the same code point written in UTF-8, `doc-json-surrogate-pair-{first,low-dfff,high-dbff,last}-key-duplicate`.
 - Nesting depth 64 allowed and 65 malformed, for arrays, objects and both: `doc-json-depth-*`.
 - Number magnitude and precision never malformed: `doc-json-huge-exponent-not-malformed`, `doc-json-long-precision-not-malformed`, `doc-meta-revision-huge-exponent-invalid`.
 - Keys match after escapes are decoded, with exact characters: `doc-json-escaped-key-matches`, `doc-err-duplicate-key-escaped`, `doc-top-key-differing-in-case-unknown`, `doc-meta-key-differing-in-case-unknown`, `doc-grant-unknown-opt-in-lowercase`.
@@ -28,6 +30,8 @@ Every expected value comes from the cited anchor or a published source named in 
 - Every other string is `InvalidValue`: `doc-time-*-invalid`, each naming its control in `note`.
 - A non-string is `WrongType`: `doc-time-*-wrong-type`.
 - Comparison as instants at nanosecond precision: `doc-window-offsets-compare-as-instants-*`, `doc-window-nanosecond-later-invalid`, `doc-window-fraction-trailing-zeros-equal-valid`, `doc-window-year-boundary-offsets-valid`, `doc-window-year-0001-offset-order-invalid`.
+- Offsets with non-zero minutes, positive and negative, on either bound, including `-00:30`: `doc-window-offset-minutes-*`, in pairs of an `-equal-valid` case and a `-later-invalid` neighbour one nanosecond out.
+  In each pair, one case's result changes when an implementation drops an offset's minutes or adds them with the wrong sign, as in reading `-09:30` as `-08:30` or `-00:30` as `+00:30`.
 
 ### §document-keys
 
