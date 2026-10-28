@@ -210,7 +210,7 @@ A source selector names one manager and either one of its sources or all of them
 | Key         | Required                    | Value                                          |
 | ----------- | --------------------------- | ---------------------------------------------- |
 | `Manager`   | yes                         | a manager identifier ([§managers](#managers)) |
-| `Source`    | exactly one of the two keys | a non-empty source name                        |
+| `Source`    | exactly one of the two keys | a non-empty string, which names a source       |
 | `AnySource` | exactly one of the two keys | `true`                                         |
 
 A selector with both `Source` and `AnySource` is `ConflictingKeys` at `AnySource`, and one with neither is `MissingKey` at `Source`.
