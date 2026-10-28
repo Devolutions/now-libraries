@@ -303,6 +303,28 @@ fn unknown_properties_resolve_toward_denial(#[case] rules: &str, #[case] check: 
 )]
 #[case::npm_keeps_case(install("Npm", "npm", "React", "18.2.0"), "React", "AllowRules", "DenyRule")]
 #[case::npm_case_difference_is_unknown(install("Npm", "npm", "react", "18.2.0"), "React", "DefaultDeny", "DenyRule")]
+// oracle: contract policies/CONTRACT.policy.md §manager-bun
+#[case::bun_keeps_case(install("Bun", "Bun", "React", "18.2.0"), "React", "AllowRules", "DenyRule")]
+#[case::bun_case_difference_is_unknown(install("Bun", "Bun", "react", "18.2.0"), "React", "DefaultDeny", "DenyRule")]
+#[case::bun_scoped_name_keeps_case(
+    install("Bun", "Bun", "@Contoso/Ui", "1.0.0"),
+    "@Contoso/Ui",
+    "AllowRules",
+    "DenyRule"
+)]
+// oracle: contract policies/CONTRACT.policy.md §package-identity
+#[case::npm_alias_with_name_matched_only_ignoring_case(
+    install("Npm", "npm", "my-react:React", "18.2.0"),
+    "react",
+    "DefaultDeny",
+    "DenyRule"
+)]
+#[case::npm_alias_with_no_name_matched(
+    install("Npm", "npm", "my-react:React", "18.2.0"),
+    "vue",
+    "DefaultDeny",
+    "AllowRules"
+)]
 #[case::npm_alias_partly_covered(
     install("Npm", "npm", "my-react:react", "18.2.0"),
     "react",
@@ -441,6 +463,13 @@ fn custom_parameter_with_another_opt_in_needs_both_grants(
 #[case::drive_root_pattern("c:/", "C:\\", "AllowRules")]
 #[case::other_drive("C:\\Apps\\*", "D:\\Apps\\Tool", "UngrantedOptIn")]
 #[case::prefix_without_star("C:\\Apps", "C:\\Apps\\Tool", "UngrantedOptIn")]
+// oracle: contract policies/CONTRACT.policy.md §install-location
+#[case::repeated_trailing_separators_in_pattern("C:/Apps//", "C:\\Apps", "AllowRules")]
+#[case::trailing_separators_in_value_dropped("C:\\Apps", "C:/Apps//", "AllowRules")]
+#[case::trailing_separator_after_colon_kept_in_pattern("*:\\", "D:/", "AllowRules")]
+#[case::pattern_kept_with_separator_is_not_a_prefix("*:\\", "D:/Apps", "UngrantedOptIn")]
+#[case::drive_root_pattern_without_separator("C:", "C:\\", "UngrantedOptIn")]
+#[case::drive_root_keeps_its_separator("C:\\", "C:/", "AllowRules")]
 fn install_location_grants(#[case] pattern: &str, #[case] location: &str, #[case] check: &str) {
     let pattern = pattern.replace('\\', "\\\\");
     let rules = format!(
@@ -485,6 +514,30 @@ fn install_location_forbids(#[case] location: &str, #[case] check: &str) {
     let mut request = winget_install();
     request.options.custom_install_location = Some(location.to_owned());
     assert_eq!(check_of(rules, &request).as_str(), check);
+}
+
+#[rstest]
+// oracle: contract policies/CONTRACT.policy.md §grants
+// oracle: contract policies/CONTRACT.policy.md §install-location
+#[case::forbid_pattern_trailing_separator("C:\\Windows\\", "C:\\Windows\\Temp\\", "C:\\Windows", "DenyRule")]
+#[case::except_pattern_trailing_separator("C:\\Windows\\*", "C:\\Windows\\Temp\\", "C:\\Windows\\Temp", "AllowRules")]
+fn install_location_forbid_patterns_drop_a_trailing_separator(
+    #[case] forbid: &str,
+    #[case] except: &str,
+    #[case] location: &str,
+    #[case] check: &str,
+) {
+    let forbid = forbid.replace('\\', "\\\\");
+    let except = except.replace('\\', "\\\\");
+    let rules = format!(
+        r#"[
+        {{"Id":"a","Decision":"Allow","Select":{{}},"Grants":{{"CustomInstallLocation":{{"Patterns":["*"]}}}}}},
+        {{"Id":"d","Decision":"Deny","Select":{{}},"Forbids":{{"CustomInstallLocation":{{"Patterns":["{forbid}"],"Except":["{except}"]}}}}}}
+    ]"#
+    );
+    let mut request = winget_install();
+    request.options.custom_install_location = Some(location.to_owned());
+    assert_eq!(check_of(&rules, &request).as_str(), check);
 }
 
 #[test]

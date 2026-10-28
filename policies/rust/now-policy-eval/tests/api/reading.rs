@@ -385,6 +385,32 @@ fn location_set_by_the_field_and_an_option_fails_even_when_equal() {
 #[case::npm_pre_release(install("Npm", "npm", "react", "19.0.0-rc.1"), Check::AllowRules)]
 #[case::npm_alias_selects_the_version(install("Npm", "npm", "my-react:react@18.2.0", "18.2.0"), Check::MissingVersion)]
 #[case::bun_two_components(install("Bun", "Bun", "react", "18.2"), Check::MissingVersion)]
+// oracle: contract policies/CONTRACT.policy.md §missing-version
+#[case::powershell7_range(install("PowerShell7", "PSGallery", "Pester", "[5.0,6.0)"), Check::MissingVersion)]
+#[case::powershell7_wildcard(install("PowerShell7", "PSGallery", "Pester", "5.*"), Check::MissingVersion)]
+#[case::powershell7_open_range(install("PowerShell7", "PSGallery", "Pester", "[5.0,]"), Check::MissingVersion)]
+#[case::powershell7_version(install("PowerShell7", "PSGallery", "Pester", "5.3.3"), Check::AllowRules)]
+#[case::powershell7_two_components(install("PowerShell7", "PSGallery", "Pester", "5.3"), Check::AllowRules)]
+#[case::powershell7_pre_release(install("PowerShell7", "PSGallery", "Pester", "5.4.0-rc1"), Check::AllowRules)]
+#[case::powershell_range(install("PowerShell", "PSGallery", "Pester", "[5.0,6.0)"), Check::AllowRules)]
+// oracle: contract policies/CONTRACT.policy.md §manager-npm
+// oracle: contract policies/CONTRACT.policy.md §manager-bun
+#[case::npm_hash_selects_the_version(
+    install("Npm", "npm", "github:contoso/tool#v1.2.3", "1.2.3"),
+    Check::MissingVersion
+)]
+#[case::npm_at_after_first_character_selects_the_version(
+    install("Npm", "npm", "git+ssh:git@host/tool", "1.2.3"),
+    Check::MissingVersion
+)]
+#[case::bun_hash_selects_the_version(
+    install("Bun", "Bun", "github:contoso/tool#v1.2.3", "1.2.3"),
+    Check::MissingVersion
+)]
+#[case::npm_leading_at_of_each_part_selects_no_version(
+    install("Npm", "npm", "@scope:@scope/tool", "1.2.3"),
+    Check::AllowRules
+)]
 #[case::cargo_one_component(install("Cargo", "crates.io", "serde", "1"), Check::MissingVersion)]
 #[case::cargo_three_components(install("Cargo", "crates.io", "serde", "1.0.0"), Check::AllowRules)]
 #[case::dotnet_two_components(install("Dotnet", "nuget.org", "dotnet-ef", "8.0"), Check::MissingVersion)]
