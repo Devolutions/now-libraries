@@ -20,13 +20,13 @@
     {
       "name": "eval-precedence-unreadable-request-holds",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading).",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget).",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "winget"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
@@ -40,7 +40,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
     },
@@ -53,8 +53,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "Apps"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
     },
@@ -67,7 +67,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
     },
@@ -80,7 +80,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -93,7 +93,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -112,8 +112,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
       },
       "expect": {
         "outcome": "Deny",
@@ -132,7 +132,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -145,7 +145,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -158,94 +158,94 @@
     {
       "name": "eval-precedence-unreadable-request-over-validity-window",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); ValidityWindow: the time is after ValidUntil. The higher check produces the decision.",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); ValidityWindow: the time is after ValidUntil. The higher check produces the decision.",
       "time": "2027-06-01T00:00:00Z",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "winget"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "eval-precedence-unreadable-request-over-install-location",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); InstallLocation: the relative location 'Apps' fails the install location check. The higher check produces the decision.",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); InstallLocation: the relative location 'Apps' fails the install location check. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "winget"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Options": {"CustomInstallLocation": "Apps"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "eval-precedence-unreadable-request-over-missing-version",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); MissingVersion: the install has no Package.Version. The higher check produces the decision.",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); MissingVersion: the install has no Package.Version. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "winget"},
-        "Package": {"Id": "Contoso.Tool", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Contoso.Tool%"},
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "eval-precedence-unreadable-request-over-untrusted-source",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision.",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "eval-precedence-unreadable-request-over-deny-rule",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); DenyRule: deny-blocked applies to the package. The higher check produces the decision.",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); DenyRule: deny-blocked applies to the package. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "winget"},
-        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Contoso.%.Blocked", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "eval-precedence-unreadable-request-over-ungranted-opt-in",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision.",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "winget"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Options": {"SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "eval-precedence-unreadable-request-over-default-deny",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); DefaultDeny: no Allow rule selects the Fabrikam package. The higher check produces the decision.",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); DefaultDeny: no Allow rule selects the package. The higher check produces the decision.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "winget"},
-        "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Fabrikam.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
@@ -259,8 +259,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "Apps"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
     },
@@ -274,7 +274,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
     },
@@ -288,7 +288,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
     },
@@ -302,7 +302,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
     },
@@ -316,8 +316,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
       },
       "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
     },
@@ -331,7 +331,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
     },
@@ -344,8 +344,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool"},
-        "Options": {"CustomInstallLocation": "Apps"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
     },
@@ -358,8 +358,8 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "Apps"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
     },
@@ -372,8 +372,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "Apps"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
     },
@@ -386,8 +386,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "Apps", "SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}, "CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
     },
@@ -400,8 +400,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "Apps"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
     },
@@ -414,7 +414,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
     },
@@ -427,7 +427,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Blocked"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
     },
@@ -440,8 +440,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool"},
-        "Options": {"SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
       },
       "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
     },
@@ -454,7 +454,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Fabrikam.Tool"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
     },
@@ -467,7 +467,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -480,8 +480,8 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -494,7 +494,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -507,8 +507,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
-        "Options": {"SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
       },
       "expect": {
         "outcome": "Deny",
@@ -527,7 +527,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Fabrikam.Blocked", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -540,15 +540,15 @@
     {
       "name": "eval-precedence-all-checks-hold",
       "oracle": "contract policies/CONTRACT.policy.md §precedence",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); ValidityWindow: the time is after ValidUntil; InstallLocation: the relative location 'Apps' fails the install location check; MissingVersion: the install has no Package.Version; UntrustedSource: the source 'msstore' is not trusted; DenyRule: deny-blocked applies to the package; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted.",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); ValidityWindow: the time is after ValidUntil; InstallLocation: the relative location 'Apps' fails the install location check; MissingVersion: the install has no Package.Version; UntrustedSource: the source 'msstore' is not trusted; DenyRule: deny-blocked applies to the package; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted.",
       "time": "2027-06-01T00:00:00Z",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
-        "Package": {"Id": "Contoso.Blocked", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Options": {"CustomInstallLocation": "Apps", "SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Contoso.%.Blocked"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}, "CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     }

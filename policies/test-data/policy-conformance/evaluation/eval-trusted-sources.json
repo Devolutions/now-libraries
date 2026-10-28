@@ -21,7 +21,7 @@
         "Manager": "Winget",
         "Source": {"Name": "contoso-private"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -51,7 +51,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -81,7 +81,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -105,7 +105,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -129,7 +129,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -153,7 +153,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -177,7 +177,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -201,7 +201,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -237,7 +237,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -273,61 +273,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
-      },
-      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
-    },
-    {
-      "name": "eval-trusted-any-source-unknown-source",
-      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
-      "note": "Npm identifier 'github:contoso/tool' is not a registry name nor an alias of two registry names, so its source is unknown (§manager-npm). AnySource matches an unknown source.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Npm", "AnySource": true}],
-        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {"Name": "npm"},
-        "Package": {"Id": "github:contoso/tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [{"id": "allow-all"}],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "eval-untrusted-named-source-unknown-source",
-      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
-      "note": "Npm identifier 'github:contoso/tool' is not a registry name nor an alias of two registry names, so its source is unknown (§manager-npm). A Source selector is unknown for it, and an unknown selector does not trust. Control: eval-trusted-named-source-known-npm-source.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Npm", "Source": "npm"}],
-        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {"Name": "npm"},
-        "Package": {"Id": "github:contoso/tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -351,7 +297,7 @@
         "Manager": "Npm",
         "Source": {"Name": "npm"},
         "Package": {"Id": "left-pad", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -366,7 +312,7 @@
       "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
       "note": "Control for eval-untrusted-update: the same policy and Update, from the trusted source 'winget'.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "winget"}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
-      "request": {"Operation": "Update", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Update", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
     }
   ]

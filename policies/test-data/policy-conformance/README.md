@@ -61,34 +61,35 @@ An evaluation file may set `policy` and `time` at its top level, and a case may 
 
 ### Request
 
-A request is a JSON object that mirrors the parts of the contract's §request-input:
+A request is a package request as `policies/CONTRACT.wire.md` §package-request defines it, without `RequestId`:
 
 ```json
 {
   "Operation": "Install",
   "Manager": "Winget",
-  "Source": { "Name": "winget", "Url": "https://example.test" },
-  "Package": { "Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64", "Channel": "beta" },
-  "Options": {
-    "Scope": "Machine",
-    "Interactive": false,
-    "SkipHashCheck": false,
-    "PreRelease": false,
-    "UninstallPrevious": false,
-    "NoUpgrade": false,
-    "CustomInstallLocation": "C:\\Apps",
-    "CustomParameters": ["--override", "/quiet"],
-    "PreOperationCommand": "cmd /c echo",
-    "PostOperationCommand": "cmd /c echo",
-    "KillBeforeOperation": ["tool.exe"]
-  },
-  "Client": { "RequestedElevation": "Standard" }
+  "Source": { "Name": "winget" },
+  "Package": { "Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64" },
+  "Scope": "Machine",
+  "Elevation": "Elevated",
+  "OptIns": {
+    "Interactive": {},
+    "SkipHashCheck": {},
+    "CustomInstallLocation": { "Path": "C:\\Apps" },
+    "CustomParameters": { "Values": ["--locale", "en-US"] },
+    "InstallerArguments": { "Arguments": "/quiet", "Mode": "Append" },
+    "PrePostCommands": { "Pre": "cmd /c echo", "Post": "cmd /c echo" },
+    "KillBeforeOperation": { "Processes": ["tool.exe"] },
+    "UninstallPrevious": {},
+    "NoUpgrade": {}
+  }
 }
 ```
 
-`Operation`, `Manager`, `Source.Name`, `Package.Id` and `Client.RequestedElevation` are always present.
-An absent optional part is absent from the request; an absent boolean is `false` and an absent list is empty.
-Enumerated parts are strings, so a value outside the contract's set, such as `"Operation": "Repair"`, is written as it is and makes the request unreadable.
+A request uses an opt-in exactly when its key is present in `OptIns`; an absent optional member is absent from the request.
+
+Every request in the suite is well-formed under that section and its §opt-ins.
+A runner rejects a case whose request is not well-formed instead of evaluating it: a request with an unknown member, a missing required member, a value outside its domain, or `Scope` `Machine` with `Elevation` `NonElevated`.
+A well-formed request can still be unreadable under the policy contract's §reading, and its expected decision then says so.
 
 ### Decision
 

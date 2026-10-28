@@ -108,9 +108,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -138,9 +136,7 @@
           "Id": "tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -164,9 +160,7 @@
           "Id": "tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -190,9 +184,7 @@
           "Id": "tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -216,9 +208,7 @@
           "Id": "tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -242,9 +232,7 @@
           "Id": "tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -268,9 +256,7 @@
           "Id": "tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -283,10 +269,10 @@
     {
       "name": "read-request-built-manager",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "The same request through a manager the broker builds commands for.",
+      "note": "The same request through a manager the broker builds commands for; 'main' is a plain source name.",
       "request": {
         "Operation": "Install",
-        "Manager": "Chocolatey",
+        "Manager": "PowerShell",
         "Source": {
           "Name": "main"
         },
@@ -294,9 +280,7 @@
           "Id": "tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -323,90 +307,7 @@
         "Package": {
           "Id": "tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-request-source-url-chocolatey",
-      "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Chocolatey's reading accepts no Source.Url (§managers), so carrying one makes the request unreadable. Control: read-chocolatey-plain; contrast read-winget-url-readable.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Chocolatey",
-        "Source": {
-          "Name": "chocolatey",
-          "Url": "https://example.test"
-        },
-        "Package": {
-          "Id": "git",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-request-source-url-empty-chocolatey",
-      "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "An empty Source.Url is still carried, and Chocolatey's reading accepts none (§managers). Control: read-chocolatey-plain; contrast read-dotnet-url-empty, which Dotnet accepts.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Chocolatey",
-        "Source": {
-          "Name": "chocolatey",
-          "Url": ""
-        },
-        "Package": {
-          "Id": "git",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-request-source-url-npm",
-      "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Npm's reading accepts no Source.Url (§managers), not even the URL that Bun accepts. Control: read-bun-url-registry.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {
-          "Name": "npm",
-          "Url": "https://www.npmjs.com"
-        },
-        "Package": {
-          "Id": "left-pad",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -430,13 +331,13 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "a\u0000b"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "a\u0000b"
+            ]
+          }
         }
       },
       "expect": {
@@ -450,20 +351,17 @@
     {
       "name": "read-request-source-name-nul",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Control: read-request-source-name-tab.",
+      "note": "Control: read-request-source-name-tab. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\u0000get"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -487,13 +385,13 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "a\nb"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "a\nb"
+            ]
+          }
         }
       },
       "expect": {
@@ -507,20 +405,17 @@
     {
       "name": "read-request-source-name-line-feed",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Control: read-request-source-name-tab.",
+      "note": "Control: read-request-source-name-tab. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\nget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -544,13 +439,13 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "a\rb"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "a\rb"
+            ]
+          }
         }
       },
       "expect": {
@@ -564,20 +459,17 @@
     {
       "name": "read-request-source-name-carriage-return",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Control: read-request-source-name-tab.",
+      "note": "Control: read-request-source-name-tab. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\rget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -601,13 +493,13 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "a\tb"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "a\tb"
+            ]
+          }
         }
       },
       "expect": {
@@ -625,20 +517,17 @@
     {
       "name": "read-request-source-name-tab",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "U+0009 is White_Space (PropList.txt 16.0.0 line 12: '0009..000D ; White_Space') but only a leading or trailing White_Space code point makes the name unreadable, and it is not Default_Ignorable_Code_Point.",
+      "note": "U+0009 is White_Space (PropList.txt 16.0.0 line 12: '0009..000D ; White_Space') but only a leading or trailing White_Space code point makes the name unreadable, and it is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\tget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -655,20 +544,17 @@
     {
       "name": "read-request-source-name-leading-space",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "PropList.txt 16.0.0 line 13: '0020 ; White_Space'. Control: read-request-source-name-inner-space.",
+      "note": "PropList.txt 16.0.0 line 13: '0020 ; White_Space'. Control: read-request-source-name-inner-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": " winget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -681,20 +567,17 @@
     {
       "name": "read-request-source-name-inner-space",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point.",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win get"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -711,20 +594,17 @@
     {
       "name": "read-request-source-name-trailing-tab",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "PropList.txt 16.0.0 line 12: '0009..000D ; White_Space'. Control: read-request-source-name-inner-tab.",
+      "note": "PropList.txt 16.0.0 line 12: '0009..000D ; White_Space'. Control: read-request-source-name-inner-tab. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "winget\t"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -737,20 +617,17 @@
     {
       "name": "read-request-source-name-inner-tab",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point.",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\tget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -767,20 +644,17 @@
     {
       "name": "read-request-source-name-leading-no-break-space",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "PropList.txt 16.0.0 line 15: '00A0 ; White_Space'. Control: read-request-source-name-inner-no-break-space.",
+      "note": "PropList.txt 16.0.0 line 15: '00A0 ; White_Space'. Control: read-request-source-name-inner-no-break-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "\u00a0winget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -793,20 +667,17 @@
     {
       "name": "read-request-source-name-inner-no-break-space",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point.",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\u00a0get"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -823,20 +694,17 @@
     {
       "name": "read-request-source-name-trailing-hair-space",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "PropList.txt 16.0.0 line 17: '2000..200A ; White_Space'. Control: read-request-source-name-inner-hair-space.",
+      "note": "PropList.txt 16.0.0 line 17: '2000..200A ; White_Space'. Control: read-request-source-name-inner-hair-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "winget\u200a"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -849,20 +717,17 @@
     {
       "name": "read-request-source-name-inner-hair-space",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point.",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\u200aget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -879,20 +744,17 @@
     {
       "name": "read-request-source-name-leading-ideographic-space",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "PropList.txt 16.0.0 line 22: '3000 ; White_Space'. Control: read-request-source-name-inner-ideographic-space.",
+      "note": "PropList.txt 16.0.0 line 22: '3000 ; White_Space'. Control: read-request-source-name-inner-ideographic-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "\u3000winget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -905,20 +767,17 @@
     {
       "name": "read-request-source-name-inner-ideographic-space",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point.",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\u3000get"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -935,20 +794,17 @@
     {
       "name": "read-request-source-name-trailing-next-line",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "PropList.txt 16.0.0 line 14: '0085 ; White_Space'. Control: read-request-source-name-inner-next-line.",
+      "note": "PropList.txt 16.0.0 line 14: '0085 ; White_Space'. Control: read-request-source-name-inner-next-line. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "winget\u0085"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -961,20 +817,17 @@
     {
       "name": "read-request-source-name-inner-next-line",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point.",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\u0085get"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -991,20 +844,17 @@
     {
       "name": "read-request-source-name-ignorable-zero-width-space",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "DerivedCoreProperties.txt 16.0.0 line 10591: '200B..200F ; Default_Ignorable_Code_Point'. Control: read-request-source-name-inner-hair-space.",
+      "note": "DerivedCoreProperties.txt 16.0.0 line 10591: '200B..200F ; Default_Ignorable_Code_Point'. Control: read-request-source-name-inner-hair-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\u200bget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1017,20 +867,17 @@
     {
       "name": "read-request-source-name-ignorable-mongolian-vowel-separator",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "DerivedCoreProperties.txt 16.0.0 line 10589: '180E ; Default_Ignorable_Code_Point'; it is not White_Space in 16.0.0. Control: read-request-source-name-inner-hair-space.",
+      "note": "DerivedCoreProperties.txt 16.0.0 line 10589: '180E ; Default_Ignorable_Code_Point'; it is not White_Space in 16.0.0. Control: read-request-source-name-inner-hair-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "\u180ewinget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1043,20 +890,17 @@
     {
       "name": "read-request-source-name-ignorable-zero-width-no-break-space",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "DerivedCoreProperties.txt 16.0.0 line 10598: 'FEFF ; Default_Ignorable_Code_Point'. Control: read-request-source-name-inner-hair-space.",
+      "note": "DerivedCoreProperties.txt 16.0.0 line 10598: 'FEFF ; Default_Ignorable_Code_Point'. Control: read-request-source-name-inner-hair-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "winget\ufeff"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1069,20 +913,17 @@
     {
       "name": "read-request-source-name-ignorable-soft-hyphen",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "DerivedCoreProperties.txt 16.0.0 line 10583: '00AD ; Default_Ignorable_Code_Point'. Control: read-request-source-name-inner-hair-space.",
+      "note": "DerivedCoreProperties.txt 16.0.0 line 10583: '00AD ; Default_Ignorable_Code_Point'. Control: read-request-source-name-inner-hair-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
       "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
         "Source": {
           "Name": "win\u00adget"
         },
         "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
+          "Id": "Contoso.Tool"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1106,13 +947,13 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--interactive --force"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--interactive --force"
+            ]
+          }
         }
       },
       "expect": {
@@ -1141,14 +982,14 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--inter",
-            "active"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--inter",
+              "active"
+            ]
+          }
         }
       },
       "expect": {
@@ -1270,14 +1111,14 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--silent",
-            "x"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--silent",
+              "x"
+            ]
+          }
         }
       },
       "expect": {
@@ -1401,14 +1242,14 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--silent",
-            "x"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--silent",
+              "x"
+            ]
+          }
         }
       },
       "expect": {
@@ -1426,7 +1267,7 @@
     {
       "name": "read-request-option-value-is-custom-parameter",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "The option's value 'C:\\Apps' is a custom parameter too, and no CustomParameters pattern covers it. Control: read-request-option-value-covered.",
+      "note": "The option's value 'x64' is a custom parameter too, and no CustomParameters pattern covers it. Control: read-request-option-value-covered.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1513,12 +1354,7 @@
             "Grants": {
               "CustomParameters": {
                 "Patterns": [
-                  "--location"
-                ]
-              },
-              "CustomInstallLocation": {
-                "Patterns": [
-                  "*"
+                  "--architecture"
                 ]
               }
             }
@@ -1535,14 +1371,14 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--location",
-            "C:\\Apps"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--architecture",
+              "x64"
+            ]
+          }
         }
       },
       "expect": {
@@ -1562,6 +1398,7 @@
     {
       "name": "read-request-option-value-covered",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Both elements are covered.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1648,13 +1485,8 @@
             "Grants": {
               "CustomParameters": {
                 "Patterns": [
-                  "--location",
-                  "C:\\Apps"
-                ]
-              },
-              "CustomInstallLocation": {
-                "Patterns": [
-                  "*"
+                  "--architecture",
+                  "x64"
                 ]
               }
             }
@@ -1671,14 +1503,14 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--location",
-            "C:\\Apps"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--architecture",
+              "x64"
+            ]
+          }
         }
       },
       "expect": {
@@ -1696,7 +1528,7 @@
     {
       "name": "read-request-scope-from-field",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1818,12 +1650,8 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "Scope": "User"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Scope": "User",
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1843,7 +1671,7 @@
     {
       "name": "read-request-scope-from-parameter",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1965,14 +1793,14 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--scope",
-            "user"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--scope",
+              "user"
+            ]
+          }
         }
       },
       "expect": {
@@ -1993,7 +1821,7 @@
     {
       "name": "read-request-scope-field-and-parameter",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Set by a field and by a custom parameter, even to the same value: unknown. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "Set by a field and by a custom parameter, even to the same value: unknown. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Elevated, because a scope a custom parameter makes unknown is unreadable with NonElevated (§reading).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2115,15 +1943,15 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "Scope": "User",
-          "CustomParameters": [
-            "--scope",
-            "user"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Scope": "User",
+        "Elevation": "Elevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--scope",
+              "user"
+            ]
+          }
         }
       },
       "expect": {
@@ -2141,7 +1969,7 @@
     {
       "name": "read-request-scope-two-parameters-same",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Set by two custom parameters: unknown. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "Set by two custom parameters: unknown. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Elevated, because a scope a custom parameter makes unknown is unreadable with NonElevated (§reading).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2263,16 +2091,16 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--scope",
-            "user",
-            "--scope",
-            "user"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "Elevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--scope",
+              "user",
+              "--scope",
+              "user"
+            ]
+          }
         }
       },
       "expect": {
@@ -2290,7 +2118,7 @@
     {
       "name": "read-request-scope-two-parameters-different",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Elevated, because a scope a custom parameter makes unknown is unreadable with NonElevated (§reading).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2412,16 +2240,16 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--scope",
-            "user",
-            "--scope",
-            "machine"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "Elevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--scope",
+              "user",
+              "--scope",
+              "machine"
+            ]
+          }
         }
       },
       "expect": {
@@ -2439,7 +2267,7 @@
     {
       "name": "read-request-architecture-from-field",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2580,9 +2408,7 @@
           "Version": "1.2.3",
           "Architecture": "X64"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -2602,7 +2428,7 @@
     {
       "name": "read-request-architecture-from-parameter",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2742,14 +2568,14 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "-a",
-            "x64"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-a",
+              "x64"
+            ]
+          }
         }
       },
       "expect": {
@@ -2770,7 +2596,7 @@
     {
       "name": "read-request-architecture-field-and-parameter",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Set by a field and by a custom parameter: unknown. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "Set by a field and by a custom parameter: unknown. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2911,14 +2737,14 @@
           "Version": "1.2.3",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "-a",
-            "x64"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-a",
+              "x64"
+            ]
+          }
         }
       },
       "expect": {
@@ -2936,7 +2762,7 @@
     {
       "name": "read-request-architecture-two-parameters",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Set by two custom parameters: unknown. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "Set by two custom parameters: unknown. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -3076,16 +2902,16 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--architecture",
-            "x64",
-            "-a",
-            "x64"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--architecture",
+              "x64",
+              "-a",
+              "x64"
+            ]
+          }
         }
       },
       "expect": {
@@ -3094,6 +2920,190 @@
         "rules": [
           {
             "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-leading-hyphen-winget",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "A WinGet Package.Id that starts with '-' is unreadable, so that the manager never reads it as an option. Control: read-request-id-inner-hyphen-winget.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "-Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-inner-hyphen-winget",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "A '-' that is not the first character of Package.Id is allowed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso-Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-leading-hyphen-dotnet",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "A Dotnet Package.Id that starts with '-' is unreadable. Control: read-request-id-inner-hyphen-dotnet.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "-tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-leading-hyphen-dotnet-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The leading '-' rule applies whatever the operation. Control: read-request-id-inner-hyphen-dotnet.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "-tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-inner-hyphen-dotnet",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "A '-' that is not the first character of Package.Id is allowed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-leading-hyphen-powershell",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The leading '-' rule names only Winget and Dotnet, so a PowerShell Package.Id may start with '-'.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "-Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-empty-opt-ins",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "OptIns {} has no key, so the request uses no opt-in and is plain. Control: read-request-plain.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
           }
         ],
         "optIns": [],

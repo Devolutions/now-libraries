@@ -206,9 +206,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -344,9 +342,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.0.0.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -482,9 +478,7 @@
           "Id": "Contoso.Tool",
           "Version": "01.002.000"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -620,9 +614,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.10.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -755,9 +747,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.1.99"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -890,9 +880,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.0.1"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1025,9 +1013,7 @@
           "Id": "Contoso.Tool",
           "Version": "v1.2.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1163,9 +1149,7 @@
           "Id": "Contoso.Tool",
           "Version": "V1.2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1301,9 +1285,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.0+build.7"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1439,9 +1421,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.0+"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1577,9 +1557,7 @@
           "Id": "Contoso.Tool",
           "Version": "18446744073709551616.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1712,9 +1690,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.099999999999999999999"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1850,9 +1826,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.x"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1981,9 +1955,7 @@
           "Id": "Contoso.Tool",
           "Version": "1..2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2112,9 +2084,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2."
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2243,9 +2213,7 @@
           "Id": "Contoso.Tool",
           "Version": ".1.2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2374,9 +2342,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.0-"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2505,9 +2471,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.0-beta.01"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2636,9 +2600,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.0-beta..1"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2767,9 +2729,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.0+a+b"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2898,9 +2858,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2_0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -3029,9 +2987,7 @@
           "Id": "Contoso.Tool",
           "Version": "vv1.2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -3160,9 +3116,7 @@
           "Id": "Contoso.Tool",
           "Version": "v"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -3291,9 +3245,7 @@
           "Id": "Contoso.Tool",
           "Version": "latest"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -3415,9 +3367,7 @@
           "Id": "Contoso.Tool",
           "Version": "latest"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -3542,9 +3492,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -3677,9 +3625,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-alpha"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -3812,9 +3758,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-alpha.1"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -3947,9 +3891,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-beta"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -4082,9 +4024,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-1"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -4217,9 +4157,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-Beta.2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -4352,9 +4290,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-beta.2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -4490,9 +4426,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-beta.2+exp.sha.5114f85"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -4628,9 +4562,7 @@
           "Id": "left-pad",
           "Version": "v1.0.0-beta.2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -4766,9 +4698,7 @@
           "Id": "left-pad",
           "Version": "1.0.0.0-beta.2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -4904,9 +4834,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-beta.11"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -5039,9 +4967,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-beta.18446744073709551616"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -5174,9 +5100,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-beta.2.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -5309,9 +5233,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-beta.a"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -5444,9 +5366,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-rc.1"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -5579,9 +5499,7 @@
           "Id": "left-pad",
           "Version": "1.0.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -5714,9 +5632,7 @@
           "Id": "left-pad",
           "Version": "1.0.1-alpha"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -5849,9 +5765,7 @@
           "Id": "left-pad",
           "Version": "0.9.9"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -5984,9 +5898,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-alpha"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -6110,9 +6022,7 @@
           "Id": "left-pad",
           "Version": "1.0.0-beta.1"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -6228,9 +6138,7 @@
           "Id": "left-pad",
           "Version": "1.0.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -6351,9 +6259,7 @@
           "Id": "left-pad",
           "Version": "1.0.0+beta"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -6474,9 +6380,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.0.0-beta.1"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -6486,254 +6390,6 @@
             "id": "allow-stable"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-version-pre-release-flag-ignored-release",
-      "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "Options.PreRelease has no effect on any property; the installed version is not a pre-release.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-reading",
-          "Publisher": "Policy conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [
-          {
-            "Manager": "Winget",
-            "AnySource": true
-          },
-          {
-            "Manager": "PowerShell",
-            "AnySource": true
-          },
-          {
-            "Manager": "PowerShell7",
-            "AnySource": true
-          },
-          {
-            "Manager": "Apt",
-            "AnySource": true
-          },
-          {
-            "Manager": "Bun",
-            "AnySource": true
-          },
-          {
-            "Manager": "Cargo",
-            "AnySource": true
-          },
-          {
-            "Manager": "Chocolatey",
-            "AnySource": true
-          },
-          {
-            "Manager": "Dnf",
-            "AnySource": true
-          },
-          {
-            "Manager": "Dotnet",
-            "AnySource": true
-          },
-          {
-            "Manager": "Flatpak",
-            "AnySource": true
-          },
-          {
-            "Manager": "Homebrew",
-            "AnySource": true
-          },
-          {
-            "Manager": "Npm",
-            "AnySource": true
-          },
-          {
-            "Manager": "Pacman",
-            "AnySource": true
-          },
-          {
-            "Manager": "Pip",
-            "AnySource": true
-          },
-          {
-            "Manager": "Scoop",
-            "AnySource": true
-          },
-          {
-            "Manager": "Snap",
-            "AnySource": true
-          },
-          {
-            "Manager": "Vcpkg",
-            "AnySource": true
-          }
-        ],
-        "Rules": [
-          {
-            "Id": "allow-stable",
-            "Decision": "Allow",
-            "Select": {
-              "Operations": [
-                "Install"
-              ],
-              "Version": {
-                "Prerelease": "Exclude"
-              }
-            }
-          }
-        ]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {
-          "Name": "npm"
-        },
-        "Package": {
-          "Id": "left-pad",
-          "Version": "1.0.0"
-        },
-        "Options": {
-          "PreRelease": true
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-stable"
-          }
-        ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-version-pre-release-flag-ignored-pre-release",
-      "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "The installed version is a pre-release whatever Options.PreRelease says.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-reading",
-          "Publisher": "Policy conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [
-          {
-            "Manager": "Winget",
-            "AnySource": true
-          },
-          {
-            "Manager": "PowerShell",
-            "AnySource": true
-          },
-          {
-            "Manager": "PowerShell7",
-            "AnySource": true
-          },
-          {
-            "Manager": "Apt",
-            "AnySource": true
-          },
-          {
-            "Manager": "Bun",
-            "AnySource": true
-          },
-          {
-            "Manager": "Cargo",
-            "AnySource": true
-          },
-          {
-            "Manager": "Chocolatey",
-            "AnySource": true
-          },
-          {
-            "Manager": "Dnf",
-            "AnySource": true
-          },
-          {
-            "Manager": "Dotnet",
-            "AnySource": true
-          },
-          {
-            "Manager": "Flatpak",
-            "AnySource": true
-          },
-          {
-            "Manager": "Homebrew",
-            "AnySource": true
-          },
-          {
-            "Manager": "Npm",
-            "AnySource": true
-          },
-          {
-            "Manager": "Pacman",
-            "AnySource": true
-          },
-          {
-            "Manager": "Pip",
-            "AnySource": true
-          },
-          {
-            "Manager": "Scoop",
-            "AnySource": true
-          },
-          {
-            "Manager": "Snap",
-            "AnySource": true
-          },
-          {
-            "Manager": "Vcpkg",
-            "AnySource": true
-          }
-        ],
-        "Rules": [
-          {
-            "Id": "allow-stable",
-            "Decision": "Allow",
-            "Select": {
-              "Operations": [
-                "Install"
-              ],
-              "Version": {
-                "Prerelease": "Exclude"
-              }
-            }
-          }
-        ]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {
-          "Name": "npm"
-        },
-        "Package": {
-          "Id": "left-pad",
-          "Version": "1.0.0-beta.1"
-        },
-        "Options": {
-          "PreRelease": false
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "DefaultDeny",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -6845,9 +6501,7 @@
           "Id": "left-pad",
           "Version": "2.0.0-beta.1"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -6980,9 +6634,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.0.0-beta"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -7115,9 +6767,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.0.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -7250,9 +6900,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.0.0-alpha"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -7385,9 +7033,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.0.0-beta"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -7400,6 +7046,302 @@
             "id": "allow-at-most"
           }
         ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-leading-hyphen",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "An Install whose Package.Version starts with '-' is unreadable under the default rule. Control: read-version-characters-allowed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "-1.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-slash",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'/' is not a character the default rule allows in Package.Version. Control: read-version-characters-allowed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0/2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-update",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The default version character rule applies to an Update. Control: read-version-characters-allowed.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0/2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The default version character rule names Install and Update only.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0/2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-allowed",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "ASCII letters, digits, '.', '-', '+' and '_' are allowed; the version is concrete.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0_rc+x-y"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-tilde-winget",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'~' is a character only some readings add, not WinGet's. Control: read-version-characters-tilde-npm.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "~1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-tilde-npm",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Npm adds '~' to the version characters; '~1.2.3' is not a version, so Npm resolves it as a range and the version is missing.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "~1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-equals-cargo",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Cargo adds '='; '=1.2.3' is not a version, so Cargo resolves it as a range and the version is missing.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Cargo",
+        "Source": {
+          "Name": "crates.io"
+        },
+        "Package": {
+          "Id": "serde",
+          "Version": "=1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-equals-npm",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'=' is a Cargo addition, not Npm's. Control: read-version-characters-equals-cargo.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "=1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-range-dotnet",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Dotnet adds '[', ']', '(', ')' and ','; the range is not a version, so the version is missing.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef",
+          "Version": "[1.0.0,2.0.0)"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-range-powershell7",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "PowerShell7 adds '[', ']', ',' and spaces; the range is not a version, so PowerShell7 resolves it as a range and the version is missing.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "[1.0, 2.0]"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-range-powershell",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "PowerShell adds no version characters, so '[' makes the request unreadable. Control: read-version-characters-range-powershell7.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "[1.0]"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }

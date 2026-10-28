@@ -4,7 +4,7 @@
     {
       "name": "eval-applicability-allow-select-unknown",
       "oracle": "contract policies/CONTRACT.policy.md §applicability",
-      "note": "Winget's scope is unknown without Options.Scope or --scope (§manager-winget), so the selection is unknown.",
+      "note": "Winget's scope is unknown without Scope or --scope (§manager-winget), so the selection is unknown.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -21,7 +21,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -45,8 +45,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"Scope": "Machine"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Scope": "Machine",
+        "Elevation": "Elevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -79,7 +79,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -112,8 +112,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"Scope": "User"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Scope": "User",
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -142,7 +142,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -165,7 +165,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -195,7 +195,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -221,7 +221,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -253,7 +253,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -286,7 +286,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -323,7 +323,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -359,7 +359,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -389,8 +389,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
-        "Options": {"Scope": "Machine"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Scope": "Machine",
+        "Elevation": "Elevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -428,7 +428,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -465,7 +465,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -496,8 +496,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
-        "Options": {"Scope": "User"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Scope": "User",
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -510,65 +510,43 @@
     {
       "name": "eval-applicability-list-unknown-entry",
       "oracle": "contract policies/CONTRACT.policy.md §applicability",
-      "note": "Npm identifier 'github:contoso/tool' is not a registry name nor an alias of two registry names, so its source is unknown (§manager-npm). The only selector is unknown, so the Sources condition is unknown.",
+      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). The only selector is unknown, so the Sources condition is unknown and the Allow rule is not applicable.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Npm", "AnySource": true}],
-        "Rules": [
-          {
-            "Id": "allow-npm",
-            "Decision": "Allow",
-            "Select": {"Sources": [{"Manager": "Npm", "Source": "npm"}]}
-          }
-        ]
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}],
+        "Rules": [{"Id": "allow-dotnet", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Dotnet", "Source": "nuget.org"}]}}]
       },
       "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {"Name": "npm"},
-        "Package": {"Id": "github:contoso/tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {"Name": "nuget.org"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "eval-applicability-list-match-over-unknown",
       "oracle": "contract policies/CONTRACT.policy.md §applicability",
-      "note": "Npm identifier 'github:contoso/tool' is not a registry name nor an alias of two registry names, so its source is unknown (§manager-npm). One selector is unknown and AnySource matches, so the Sources condition matches.",
+      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). One selector is unknown and AnySource matches, so the Sources condition matches.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Npm", "AnySource": true}],
-        "Rules": [
-          {
-            "Id": "allow-npm",
-            "Decision": "Allow",
-            "Select": {"Sources": [{"Manager": "Npm", "Source": "npm"}, {"Manager": "Npm", "AnySource": true}]}
-          }
-        ]
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}],
+        "Rules": [{"Id": "allow-dotnet", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Dotnet", "Source": "nuget.org"}, {"Manager": "Dotnet", "AnySource": true}]}}]
       },
       "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {"Name": "npm"},
-        "Package": {"Id": "github:contoso/tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {"Name": "nuget.org"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
         "check": "AllowRules",
-        "rules": [{"id": "allow-npm"}],
+        "rules": [{"id": "allow-dotnet"}],
         "optIns": [],
         "audited": false
       }
@@ -576,58 +554,38 @@
     {
       "name": "eval-applicability-deny-list-unknown",
       "oracle": "contract policies/CONTRACT.policy.md §applicability",
-      "note": "Npm identifier 'github:contoso/tool' is not a registry name nor an alias of two registry names, so its source is unknown (§manager-npm). The Deny rule's Sources condition is unknown, so it applies.",
+      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). The Deny rule's Sources condition is unknown, so it applies.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Npm", "AnySource": true}],
-        "Rules": [
-          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
-          {"Id": "deny-npm", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Npm", "Source": "npm"}]}}
-        ]
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}, {"Id": "deny-dotnet", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Dotnet", "Source": "nuget.org"}]}}]
       },
       "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {"Name": "npm"},
-        "Package": {"Id": "github:contoso/tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {"Name": "nuget.org"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
       },
-      "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-npm"}], "optIns": [], "audited": false}
+      "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-dotnet"}], "optIns": [], "audited": false}
     },
     {
       "name": "eval-applicability-other-manager-selector-unknown-source",
       "oracle": "contract policies/CONTRACT.policy.md §source-selector",
-      "note": "Npm identifier 'github:contoso/tool' is not a registry name nor an alias of two registry names, so its source is unknown (§manager-npm). A Winget selector does not match an Npm request, even one whose source is unknown, so the Deny rule does not apply.",
+      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). A Winget selector does not match a Dotnet request, even one whose source is unknown, so the Deny rule does not apply.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Npm", "AnySource": true}],
-        "Rules": [
-          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
-          {
-            "Id": "deny-winget",
-            "Decision": "Deny",
-            "Select": {"Sources": [{"Manager": "Winget", "AnySource": true}]}
-          }
-        ]
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}, {"Id": "deny-winget", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Winget", "AnySource": true}]}}]
       },
       "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {"Name": "npm"},
-        "Package": {"Id": "github:contoso/tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {"Name": "nuget.org"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -657,7 +615,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -690,7 +648,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",

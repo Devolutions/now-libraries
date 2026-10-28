@@ -21,13 +21,13 @@
     {
       "name": "eval-audit-unreadable-request",
       "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading). Audit mode does not let this check through.",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget). Audit mode does not let this check through.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "winget"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
@@ -41,7 +41,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
     },
@@ -54,8 +54,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "Apps"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
     },
@@ -68,7 +68,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
     },
@@ -81,7 +81,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Allow", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": true}
     },
@@ -94,7 +94,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -113,8 +113,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
       },
       "expect": {
         "outcome": "Allow",
@@ -133,7 +133,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Allow", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": true}
     },
@@ -146,7 +146,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -159,13 +159,13 @@
     {
       "name": "eval-audit-unreadable-request-over-untrusted-source",
       "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
-      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
@@ -179,7 +179,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
     },
@@ -192,8 +192,8 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "Apps"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
       },
       "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
     },
@@ -206,7 +206,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
     },
@@ -219,7 +219,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Blocked"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
     },
@@ -232,7 +232,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Allow", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": true}
     },
@@ -245,8 +245,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
-        "Options": {"SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
       },
       "expect": {
         "outcome": "Allow",
@@ -265,7 +265,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Fabrikam.Blocked", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -301,7 +301,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -331,7 +331,7 @@
         "Manager": "Winget",
         "Source": {"Name": "msstore"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     }

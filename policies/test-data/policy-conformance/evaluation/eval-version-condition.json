@@ -26,7 +26,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -61,7 +61,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.2"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -90,7 +90,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -125,7 +125,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.4"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -154,7 +154,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.5.0"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -190,7 +190,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.9.0"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -220,7 +220,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.10.0"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -256,7 +256,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.0"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -291,7 +291,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.0.1"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -321,7 +321,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3+build.5"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -357,7 +357,7 @@
         "Manager": "Chocolatey",
         "Source": {"Name": "chocolatey"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-rc.1"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "Elevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -387,7 +387,7 @@
         "Manager": "Chocolatey",
         "Source": {"Name": "chocolatey"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "Elevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -417,7 +417,7 @@
         "Manager": "Chocolatey",
         "Source": {"Name": "chocolatey"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "Elevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -453,7 +453,7 @@
         "Manager": "Chocolatey",
         "Source": {"Name": "chocolatey"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "Elevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -489,7 +489,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -498,74 +498,6 @@
         "optIns": [],
         "audited": false
       }
-    },
-    {
-      "name": "eval-version-prerelease-flag-ignored",
-      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
-      "note": "Options.PreRelease has no effect (§reading); the version installed, 1.2.3, is not a pre-release.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}],
-        "Rules": [
-          {
-            "Id": "allow-version",
-            "Decision": "Allow",
-            "Select": {"Operations": ["Install"], "Version": {"Prerelease": "Exclude"}}
-          }
-        ]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Chocolatey",
-        "Source": {"Name": "chocolatey"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"PreRelease": true},
-        "Client": {"RequestedElevation": "Standard"}
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [{"id": "allow-version"}],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "eval-version-prerelease-flag-absent-prerelease",
-      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
-      "note": "Pre-release is read from the version, not from Options.PreRelease.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}],
-        "Rules": [
-          {
-            "Id": "allow-version",
-            "Decision": "Allow",
-            "Select": {"Operations": ["Install"], "Version": {"Prerelease": "Exclude"}}
-          }
-        ]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Chocolatey",
-        "Source": {"Name": "chocolatey"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"},
-        "Options": {"PreRelease": false},
-        "Client": {"RequestedElevation": "Standard"}
-      },
-      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "eval-version-unknown-allow-not-applicable",
@@ -593,7 +525,7 @@
         "Manager": "Scoop",
         "Source": {"Name": "main"},
         "Package": {"Id": "git"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -617,7 +549,7 @@
         "Manager": "Scoop",
         "Source": {"Name": "main"},
         "Package": {"Id": "git"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -654,7 +586,7 @@
         "Manager": "Scoop",
         "Source": {"Name": "main"},
         "Package": {"Id": "git"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -690,7 +622,7 @@
         "Manager": "Chocolatey",
         "Source": {"Name": "chocolatey"},
         "Package": {"Id": "Contoso.Tool", "Version": "nightly"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "Elevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -721,7 +653,7 @@
         "Manager": "Chocolatey",
         "Source": {"Name": "chocolatey"},
         "Package": {"Id": "Contoso.Tool", "Version": "nightly"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "Elevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -757,7 +689,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "0.9.0"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -793,7 +725,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -829,7 +761,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "0.9.0"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -860,7 +792,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -875,7 +807,7 @@
       "oracle": "contract policies/CONTRACT.policy.md §version-condition",
       "note": "Under Winget no version is a pre-release, but comparisons use the pre-release under every manager (§version-scheme), so '1.2.3-beta' is lower than the Minimum '1.2.3'. Control: eval-version-minimum-inclusive.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-version", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.2.3"}}}]},
-      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     }
   ]
