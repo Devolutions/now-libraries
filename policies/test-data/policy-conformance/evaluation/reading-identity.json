@@ -90,7 +90,7 @@
     {
       "name": "read-identity-default-lowercase-allow",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "The default canonical form maps ASCII letters to lowercase. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default canonical form. The default canonical form maps ASCII letters to lowercase. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -183,9 +183,9 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Tool",
@@ -208,7 +208,7 @@
     {
       "name": "read-identity-default-lowercase-deny",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "The default canonical form maps ASCII letters to lowercase. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default canonical form. The default canonical form maps ASCII letters to lowercase. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -306,9 +306,9 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Tool",
@@ -331,7 +331,7 @@
     {
       "name": "read-identity-default-pattern-canonicalized-allow",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "A pattern's characters are put in canonical form. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default canonical form. A pattern's characters are put in canonical form. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -424,9 +424,9 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "contoso.tool",
@@ -449,7 +449,7 @@
     {
       "name": "read-identity-default-pattern-canonicalized-deny",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "A pattern's characters are put in canonical form. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default canonical form. A pattern's characters are put in canonical form. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -547,9 +547,9 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "contoso.tool",
@@ -572,7 +572,7 @@
     {
       "name": "read-identity-default-wildcard-allow",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default canonical form. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -665,9 +665,9 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Tool",
@@ -690,7 +690,7 @@
     {
       "name": "read-identity-default-wildcard-deny",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default canonical form. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -788,9 +788,9 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Tool",
@@ -813,7 +813,7 @@
     {
       "name": "read-identity-default-other-name-allow",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default canonical form. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -906,9 +906,9 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Tool",
@@ -927,7 +927,7 @@
     {
       "name": "read-identity-default-other-name-deny",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default canonical form. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1025,9 +1025,9 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Tool",
@@ -1050,7 +1050,7 @@
     {
       "name": "read-identity-default-name-at-version-allow",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "'name@version' names 'name' (an uninstall, since the identifier selects the version). Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default reading of identifiers. 'name@version' names 'name' (an uninstall, since the identifier selects the version). Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1143,9 +1143,9 @@
       },
       "request": {
         "Operation": "Uninstall",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Tool@1.2.3"
@@ -1167,7 +1167,7 @@
     {
       "name": "read-identity-default-name-at-version-deny",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "'name@version' names 'name' (an uninstall, since the identifier selects the version). Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default reading of identifiers. 'name@version' names 'name' (an uninstall, since the identifier selects the version). Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1265,9 +1265,9 @@
       },
       "request": {
         "Operation": "Uninstall",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Tool@1.2.3"
@@ -1289,7 +1289,7 @@
     {
       "name": "read-identity-default-name-at-version-not-whole-allow",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "The package name excludes '@version'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default reading of identifiers. The package name excludes '@version'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1382,9 +1382,9 @@
       },
       "request": {
         "Operation": "Uninstall",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Tool@1.2.3"
@@ -1402,7 +1402,7 @@
     {
       "name": "read-identity-default-name-at-version-not-whole-deny",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "The package name excludes '@version'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default reading of identifiers. The package name excludes '@version'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1500,9 +1500,9 @@
       },
       "request": {
         "Operation": "Uninstall",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Tool@1.2.3"
@@ -1524,7 +1524,7 @@
     {
       "name": "read-identity-default-leading-at-allow",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "An '@' that is the first character does not split the identifier. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default reading of identifiers. An '@' that is the first character does not split the identifier. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1617,9 +1617,9 @@
       },
       "request": {
         "Operation": "Uninstall",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "@Contoso"
@@ -1641,7 +1641,7 @@
     {
       "name": "read-identity-default-leading-at-deny",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "An '@' that is the first character does not split the identifier. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default reading of identifiers. An '@' that is the first character does not split the identifier. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1739,9 +1739,9 @@
       },
       "request": {
         "Operation": "Uninstall",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "@Contoso"
@@ -1763,7 +1763,7 @@
     {
       "name": "read-identity-default-last-at-allow",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "The split is at the last '@'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default reading of identifiers. The split is at the last '@'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1856,9 +1856,9 @@
       },
       "request": {
         "Operation": "Uninstall",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "A@B@C"
@@ -1880,7 +1880,7 @@
     {
       "name": "read-identity-default-last-at-deny",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "The split is at the last '@'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Dotnet keeps the default reading of identifiers. The split is at the last '@'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1978,9 +1978,9 @@
       },
       "request": {
         "Operation": "Uninstall",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "A@B@C"
@@ -2002,7 +2002,7 @@
     {
       "name": "read-identity-default-unicode-case-only-allow",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "The pattern has U+017F LATIN SMALL LETTER LONG S, which the canonical form (ASCII letters only) keeps, so no canonical match; its simple uppercase mapping is U+0053 (UnicodeData.txt 16.0.0 line 384: '017F;LATIN SMALL LETTER LONG S;Ll;0;L;<compat> 0073;;;;N;;;0053;;0053'), so it matches when case is ignored (§text-comparison): unknown. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart. §package-identity: Packages does not match only when the patterns do not match each package name, so a name they would match only ignoring case makes it unknown.",
+      "note": "Dotnet keeps the default canonical form. The pattern has U+017F LATIN SMALL LETTER LONG S, which the canonical form (ASCII letters only) keeps, so no canonical match; its simple uppercase mapping is U+0053 (UnicodeData.txt 16.0.0 line 384: '017F;LATIN SMALL LETTER LONG S;Ll;0;L;<compat> 0073;;;;N;;;0053;;0053'), so it matches when case is ignored (§text-comparison): unknown. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart. §package-identity: Packages does not match only when the patterns do not match each package name, so a name they would match only ignoring case makes it unknown.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2095,9 +2095,9 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Setup",
@@ -2116,7 +2116,7 @@
     {
       "name": "read-identity-default-unicode-case-only-deny",
       "oracle": "contract policies/CONTRACT.policy.md §package-identity",
-      "note": "The pattern has U+017F LATIN SMALL LETTER LONG S, which the canonical form (ASCII letters only) keeps, so no canonical match; its simple uppercase mapping is U+0053 (UnicodeData.txt 16.0.0 line 384: '017F;LATIN SMALL LETTER LONG S;Ll;0;L;<compat> 0073;;;;N;;;0053;;0053'), so it matches when case is ignored (§text-comparison): unknown. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart. §package-identity: Packages does not match only when the patterns do not match each package name, so a name they would match only ignoring case makes it unknown.",
+      "note": "Dotnet keeps the default canonical form. The pattern has U+017F LATIN SMALL LETTER LONG S, which the canonical form (ASCII letters only) keeps, so no canonical match; its simple uppercase mapping is U+0053 (UnicodeData.txt 16.0.0 line 384: '017F;LATIN SMALL LETTER LONG S;Ll;0;L;<compat> 0073;;;;N;;;0053;;0053'), so it matches when case is ignored (§text-comparison): unknown. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart. §package-identity: Packages does not match only when the patterns do not match each package name, so a name they would match only ignoring case makes it unknown.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2214,9 +2214,9 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Contoso.Setup",
@@ -6071,7 +6071,7 @@
     {
       "name": "read-identity-npm-alias-with-version-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "The last '@' after ':' selects the version. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "The broker drops the suffix after the last '@' after ':', so the alias names both registry names and selects no version. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -6189,7 +6189,7 @@
     {
       "name": "read-identity-npm-alias-with-version-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "The last '@' after ':' selects the version. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "The broker drops the suffix after the last '@' after ':', so the alias names both registry names and selects no version. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -11248,6 +11248,2396 @@
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "deny-pkg", "Decision": "Deny", "Select": {"Packages": ["zlib"]}}, {"Id": "allow-any", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib@1.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-identity-winget-at-whole-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "A Winget identifier names itself, '@' included, so a pattern naming the whole identifier matches it. Control: read-identity-winget-at-not-split. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool@1.2.3"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-at-whole-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "A Winget identifier names itself, '@' included, so a pattern naming the whole identifier matches it. Control: read-identity-winget-at-not-split. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool@1.2.3"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-at-not-split-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "A Winget identifier is not split at '@', so a pattern naming the text before '@' does not match it. Contrast read-identity-default-name-at-version, under Dotnet. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-at-not-split-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "A Winget identifier is not split at '@', so a pattern naming the text before '@' does not match it. Contrast read-identity-default-name-at-version, under Dotnet. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-powershell-at-whole-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "A PowerShell identifier names itself, '@' included, so a pattern naming the whole identifier matches it. Control: read-identity-powershell-at-not-split. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool@1.2.3"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-powershell-at-whole-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "A PowerShell identifier names itself, '@' included, so a pattern naming the whole identifier matches it. Control: read-identity-powershell-at-not-split. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool@1.2.3"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-powershell-at-not-split-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "A PowerShell identifier is not split at '@', so a pattern naming the text before '@' does not match it. Contrast read-identity-default-name-at-version, under Dotnet. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-powershell-at-not-split-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "A PowerShell identifier is not split at '@', so a pattern naming the text before '@' does not match it. Contrast read-identity-default-name-at-version, under Dotnet. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-powershell7-at-whole-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "A PowerShell7 identifier names itself, '@' included, so a pattern naming the whole identifier matches it. Control: read-identity-powershell7-at-not-split. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool@1.2.3"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-powershell7-at-whole-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "A PowerShell7 identifier names itself, '@' included, so a pattern naming the whole identifier matches it. Control: read-identity-powershell7-at-not-split. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool@1.2.3"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-powershell7-at-not-split-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "A PowerShell7 identifier is not split at '@', so a pattern naming the text before '@' does not match it. Contrast read-identity-default-name-at-version, under Dotnet. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-powershell7-at-not-split-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "A PowerShell7 identifier is not split at '@', so a pattern naming the text before '@' does not match it. Contrast read-identity-default-name-at-version, under Dotnet. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-case-exact-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "A WinGet package name keeps its case in canonical form, so a pattern with the same characters matches it. Control: read-identity-winget-case-other. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-case-exact-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "A WinGet package name keeps its case in canonical form, so a pattern with the same characters matches it. Control: read-identity-winget-case-other. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "Contoso.Tool"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-case-other-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "A WinGet package name keeps its case, so a pattern that matches it only ignoring case makes Packages unknown: the Allow rule fails closed and the Deny rule applies. Contrast read-identity-default-lowercase, under Dotnet. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "contoso.tool"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-case-other-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "A WinGet package name keeps its case, so a pattern that matches it only ignoring case makes Packages unknown: the Allow rule fails closed and the Deny rule applies. Contrast read-identity-default-lowercase, under Dotnet. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "contoso.tool"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-wildcard-exact-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "The text around '*' keeps its case under WinGet, so 'Contoso.*' matches 'Contoso.Tool'. Control: read-identity-winget-wildcard-other-case. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "Contoso.*"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-wildcard-exact-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "The text around '*' keeps its case under WinGet, so 'Contoso.*' matches 'Contoso.Tool'. Control: read-identity-winget-wildcard-other-case. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "Contoso.*"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-wildcard-other-case-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'CONTOSO.*' matches 'Contoso.Tool' only ignoring case, so Packages is unknown. Contrast read-identity-default-wildcard, under Dotnet. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "CONTOSO.*"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-winget-wildcard-other-case-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'CONTOSO.*' matches 'Contoso.Tool' only ignoring case, so Packages is unknown. Contrast read-identity-default-wildcard, under Dotnet. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "CONTOSO.*"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
     }
   ]
 }

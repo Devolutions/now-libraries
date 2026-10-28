@@ -54,9 +54,9 @@ File `eval-trusted-sources.json`.
 
 ### §source-selector
 
-- `AnySource`: `eval-trusted-any-source`, `eval-selection-sources-any-source`; against an unknown source, `read-{chocolatey,dotnet}-uninstall-any-source-allow` in `reading-managers.json`.
-- `Source`, known and unknown: `eval-trusted-named-source`, `eval-trusted-named-source-known-npm-source`, `eval-applicability-list-unknown-entry`, and the unknown Uninstall sources of Chocolatey and Dotnet, `read-{chocolatey,dotnet}-uninstall-source-selector-{allow,deny}`.
-  An unknown source never reaches the trusted sources check, since only Chocolatey and Dotnet Uninstalls have one and the check ignores Uninstalls.
+- `AnySource`: `eval-trusted-any-source`, `eval-selection-sources-any-source`; against an unknown source, `read-{chocolatey,dotnet}-uninstall-any-source-allow` in `reading-managers.json`, and `read-{scoop,powershell,powershell7}-{update,uninstall}-any-source-allow`.
+- `Source`, known and unknown: `eval-trusted-named-source`, `eval-trusted-named-source-known-npm-source`, `eval-applicability-list-unknown-entry`, and the unknown sources of Chocolatey and Dotnet Uninstalls and of Scoop, PowerShell and PowerShell7 Updates and Uninstalls, `read-{chocolatey,dotnet}-uninstall-source-selector-{allow,deny}`, `read-{scoop,powershell,powershell7}-{update,uninstall}-source-selector-{allow,deny}`.
+- An unknown source in the trusted sources check: a Scoop, PowerShell or PowerShell7 Update is untrusted under a list that names its source, `read-{scoop,powershell,powershell7}-update-trusted-named-source`, and trusted under `AnySource`, `read-{scoop,powershell,powershell7}-update-any-source-allow`.
 - A Scoop manifest source, compared with exact characters and unknown when only case differs: the `read-scoop-manifest-selector-*` and `read-scoop-manifest-trusted-*` cases of `reading-scoop.json`.
 - `Source` compares ignoring case as §text-comparison defines, under `Winget` too: `eval-text-source-name-case-ignored`, `eval-text-source-name-dotless-i`, `eval-text-source-name-dotted-capital-i`.
 - Another manager: `eval-untrusted-other-manager-any-source`, `eval-untrusted-other-manager-same-source-name`, `eval-selection-sources-other-manager`, `eval-applicability-other-manager-selector-unknown-source`.
