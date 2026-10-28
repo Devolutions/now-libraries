@@ -201,7 +201,7 @@ The source of an Install or Update request is trusted when a selector in the lis
 An Install or Update request whose source is not trusted is denied whatever the rules say ([§precedence](#precedence)).
 A manager with no selector in the list therefore cannot install or update anything.
 A rule may name a source the list does not trust.
-The source of every Uninstall, and of an Update through a manager whose reading says so, is unknown ([§managers](#managers)), so a `Source` selector of that manager is unknown for it ([§source-selector](#source-selector)), and, in `Select` or in an `Except` entry, the selector never keeps a Deny rule from being applicable to that request and never makes an Allow rule applicable to it ([§applicability](#applicability)).
+The source of every Uninstall, and of an Update through a manager whose reading says so, is unknown ([§managers](#managers)), so a `Source` selector of the request's manager is unknown for the request ([§source-selector](#source-selector)), and, in `Select` or in an `Except` entry, the selector never keeps a Deny rule from being applicable to that request and never makes an Allow rule applicable to it ([§applicability](#applicability)).
 For installs and updates, a rule only narrows which trusted sources it applies to.
 
 <a id="source-selector"></a>
@@ -260,7 +260,7 @@ The values of operations, scopes, architectures and elevations are those of [§r
 | `Architectures` | a non-empty list of architectures                                           | architecture is in the list         |
 | `Elevation`     | one elevation                                                               | elevation is that elevation         |
 
-`Packages` tests package names whatever the manager, so a rule meant for one manager's package should also name that manager in `Sources`.
+`Packages` tests package names whatever the manager, so a rule meant for one manager's package should also name that manager in `Sources`, with `AnySource` when the rule is to apply to that manager's uninstalls, whose source is unknown ([§managers](#managers)).
 
 <a id="version-condition"></a>
 ### Version condition
@@ -363,6 +363,7 @@ The evaluator's input is a well-formed package request ([CONTRACT.wire.md §pack
 ### Reading a request
 
 Each property is the value that the manager's reading ([§managers](#managers)) assigns to the request, which is the value the manager acts on when the broker runs the command, so a change to how the broker builds commands is a change to this contract.
+A manager's reading may leave a property unknown even though the command fixes it, which only resolves that property toward denial ([§applicability](#applicability)).
 A value the client sends that the command does not carry has no effect on any property.
 An `OptIns` key makes the request use its opt-in even when the command does not carry what the key asks for, so a decision depends only on the policy and the request, never on what a broker version does with the key.
 A request is unreadable when:
@@ -438,7 +439,7 @@ Unless a manager's reading below states otherwise:
 - the scope is `Scope`, and `User` when it is absent;
 - the architecture is `Package.Architecture`, and unknown when it is absent.
 
-The source of an Uninstall is unknown under every manager ([§source-selector](#source-selector)), because no command shows which source the installed package came from, even when the broker passes a source name, as it does to WinGet and PowerShell.
+The source of an Uninstall is unknown under every manager ([§source-selector](#source-selector)), because no command the broker builds limits an uninstall to packages installed from `Source.Name`, even where it passes `Source.Name` to the manager, as WinGet `--source`, PowerShell `-Repository` and a Scoop `<bucket>/<app>` do, and a Vcpkg uninstall also removes ports of other triplets ([§manager-vcpkg](#manager-vcpkg)).
 A reading below that names the only source name of its manager, or of some of its operations, compares `Source.Name` with it ignoring ASCII case.
 A plain source name starts with an ASCII letter or digit and contains only ASCII letters, digits, `.`, `-`, `_` and spaces.
 The batch characters are `"`, `%`, `!`, `^`, `&`, `|`, `<` and `>`, which the broker cannot pass to a manager that it runs through a batch file.
@@ -539,7 +540,7 @@ The broker builds no Vcpkg command, so a request is unreadable, when:
 - its `Package.Id` is not a port spec, or has a triplet that differs from `Source.Name` in any character.
 
 An Install's identifier names its port, so `port[features]:triplet` names `port`, and no identifier selects the version.
-The package identity, the source and the architecture of an Update or Uninstall are unknown, so `Packages` is unknown for it ([§package-identity](#package-identity)), because the broker runs `upgrade --no-dry-run`, which also rebuilds the ports that depend on the named one, and `remove --recurse`, which also removes them, and those ports may be built for another triplet, so the command changes installed ports the request does not name.
+The package identity and the architecture of an Update or Uninstall, and the source of an Update, are unknown, so `Packages` is unknown for it ([§package-identity](#package-identity)), because the broker runs `upgrade --no-dry-run`, which also rebuilds the ports that depend on the named one, and `remove --recurse`, which also removes them, and those ports may be built for another triplet, so the command changes installed ports the request does not name.
 The architecture of an Install is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise.
 The broker cannot pin a version through Vcpkg.
 
@@ -637,7 +638,7 @@ The scope is `Machine` when `Scope` is absent, and a requested architecture of `
 
 A source name that is not a plain source name, or a `Package.Id` that contains `[` or `]`, makes the request unreadable, because PowerShell reads other characters as wildcards or matches them by its own rules.
 An identifier names itself and selects no version, because the broker passes it whole as the value of `-Name`.
-The source of an Update is unknown ([§source-selector](#source-selector)), because `Update-Module` updates the module from the repository it was installed from; a `PowerShell7` Update is read the same way, although `Update-PSResource` searches only `Source.Name`.
+The source of an Update is unknown ([§source-selector](#source-selector)), because `Update-Module` updates the module from the repository it was installed from; under `PowerShell7`, `Update-PSResource` searches only `Source.Name`, but the module the Update replaces may have been installed from another repository, so `Source.Name` does not fix the source of the package the command acts on.
 Under `PowerShell7`, a `Package.Version` may also contain `[`, `]`, `(`, `)`, `,`, `*` and spaces.
 The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
