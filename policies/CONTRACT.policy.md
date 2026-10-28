@@ -112,7 +112,6 @@ These rules apply throughout this contract and are not repeated.
 Two strings are equal ignoring case when they have the same code points after each code point is replaced by its simple uppercase mapping in `UnicodeData.txt` of [Unicode 16.0.0][unicode16]; no other normalization applies.
 Implementations use that table rather than their platform's casing, so they agree.
 Custom parameters, install locations, source names and the patterns that match them compare ignoring case.
-PowerShell source names are normalized first ([§manager-powershell](#manager-powershell)).
 Package ids compare in their manager's canonical form ([§package-identity](#package-identity)).
 Rule ids, and values from a closed set this contract defines, such as `Allow` or `Winget`, match only with their exact characters.
 
@@ -301,6 +300,7 @@ A grant's or forbid's `Except` narrows only that grant or forbid, never another 
 
 This table is the closed set of opt-ins, and its order is the order in which a decision names them.
 A request uses an opt-in when one of the parts of the request ([§request-input](#request-input)) in its row carries it, and the opt-ins a request uses are never unknown.
+An optional string part carries its opt-in whenever it is present, even when it is empty.
 A custom parameter carries an opt-in when its manager's reading ([§managers](#managers)) assigns it to that opt-in, and it then needs both that opt-in's grant and a `CustomParameters` grant.
 
 | Opt-in                  | Meaning                                                              | Carried by                                                                  |
@@ -356,21 +356,26 @@ A document with several defects reports a non-empty subset of the errors that ap
 <a id="request-input"></a>
 ### Request input
 
-The evaluator's input is the request as the client sends it to the broker, with these parts:
+The evaluator's input is the request as the client sends it to the broker, with these parts.
+Lengths count bytes in UTF-8.
 
-| Part                                                      | Value                                                                  |
-| --------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `Operation`                                               | `Install`, `Update` or `Uninstall`                                     |
-| `Manager`                                                 | a manager identifier ([§managers](#managers))                          |
-| `Source.Name`, `Source.Url`                               | a name of 1 to 128 bytes in UTF-8, and an optional URL                 |
-| `Package.Id`, `Package.Version`, `Package.Architecture`, `Package.Channel` | a non-empty identifier, and an optional version, architecture and channel |
-| `Options.Scope`                                           | an optional scope                                                      |
+| Part                                                          | Value                                                                    |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `Operation`                                                   | `Install`, `Update` or `Uninstall`                                       |
+| `Manager`                                                     | a manager identifier ([§managers](#managers))                            |
+| `Source.Name`                                                 | a string of 1 to 128 bytes                                               |
+| `Source.Url`                                                  | an optional string of at most 2048 bytes                                 |
+| `Package.Id`                                                  | a string of 1 to 256 ASCII letters, digits and `.`, `_`, `+`, `@`, `/`, `:`, `[`, `]`, `,`, `#`, `$`, `%`, `{`, `}` and `-` |
+| `Package.Version`                                             | an optional string of 1 to 128 bytes                                     |
+| `Package.Architecture`                                        | an optional architecture ([§request-properties](#request-properties))    |
+| `Package.Channel`                                             | an optional string of 1 to 16 bytes                                      |
+| `Options.Scope`                                               | an optional scope ([§request-properties](#request-properties))           |
 | `Options.Interactive`, `Options.SkipHashCheck`, `Options.PreRelease`, `Options.UninstallPrevious`, `Options.NoUpgrade` | booleans |
-| `Options.CustomInstallLocation`                           | an optional string                                                     |
-| `Options.CustomParameters`                                | a list of at most 64 strings                                           |
-| `Options.PreOperationCommand`, `Options.PostOperationCommand` | optional strings                                                   |
-| `Options.KillBeforeOperation`                             | a list of at most 64 strings                                           |
-| `Client.RequestedElevation`                               | `Standard` or `Elevated`                                               |
+| `Options.CustomInstallLocation`                               | an optional string of at most 2048 bytes                                 |
+| `Options.CustomParameters`                                    | a list of at most 64 strings of 1 to 512 bytes                           |
+| `Options.PreOperationCommand`, `Options.PostOperationCommand` | optional strings of at most 2048 bytes                                   |
+| `Options.KillBeforeOperation`                                 | a list of at most 64 strings of 1 to 128 bytes                           |
+| `Client.RequestedElevation`                                   | `Standard` or `Elevated`                                                 |
 
 <a id="reading"></a>
 ### Reading a request
@@ -379,7 +384,7 @@ Each property is the value that the manager's reading ([§managers](#managers)) 
 A value the client sends that the command does not carry has no effect on any property or opt-in; in particular `Options.PreRelease` has none.
 A request is unreadable when:
 
-- a part has a value outside its set in [§request-input](#request-input), or a list or name exceeds its bound;
+- a part has a value outside its set in [§request-input](#request-input);
 - the broker builds no command for its manager ([§managers](#managers));
 - it carries custom parameters through a manager whose reading accepts none;
 - it carries `Source.Url`, except as [§manager-bun](#manager-bun) allows;
@@ -415,7 +420,8 @@ This table is the only list of the values of request properties.
 <a id="package-identity"></a>
 ### Package identity
 
-A request's package names are the packages its `Package.Id` names, as its manager's reading parses the identifier; a plain identifier names one package, itself.
+A request's package names are the packages its `Package.Id` names, as its manager's reading parses the identifier.
+Unless the manager's reading states otherwise, an identifier `name@version`, where that `@` is its last `@` and is not its first character, names `name` and selects the version, and any other identifier names one package, itself.
 A package name compares in its manager's canonical form, and a pattern's characters between `*` are put in that canonical form before matching.
 Unless the manager's reading states otherwise, the canonical form maps ASCII letters to lowercase.
 For each package name, the `Packages` patterns match when one matches it in canonical form, are unknown when none does but one would when case is ignored ([§text-comparison](#text-comparison)), and do not match otherwise.
@@ -452,10 +458,12 @@ A reading below that names the only source name of its manager compares `Source.
 #### Winget
 
 The reading accepts custom parameters.
-An element that starts with `--` names a long option by its text after `--` and before its first `=`, and a long option matches a name in the table ignoring ASCII case.
-Any other element that starts with `-` names a short option by its text after `-` and before its first `=`, and a short option matches a name in the table with its exact characters.
-An option the table lists with a value takes the text after its first `=` when the element has one, and otherwise the next element, which is then not read as an option.
-When no element follows, the option still has its effect without a value: `--location` gives no install location, so the request fails the install location check ([§install-location](#install-location)), and `--scope` or `--architecture` makes its property unknown.
+An element that is exactly `--` ends the options: no later element names an option.
+Before it, an element that starts with `--` names a long option by its text after `--` and before its first `=`, and a long option matches a name in the table ignoring ASCII case.
+Any other element that starts with `-` and has another character names one short option for each character after `-` and before its first `=`, and a short option matches a name in the table with its exact characters, so `-ei` names `-e` and `-i`.
+An option the table lists with a value takes one only when it is a long option or the only short option its element names.
+It then takes the text after the element's first `=` when the element has one, without a leading and a trailing `"` when the text has both and at least two characters, and otherwise the next element, which is then not read as an option.
+An option that takes no value, because its element names other short options or no element follows, still has its effect: `--location` gives no install location, so the request fails the install location check ([§install-location](#install-location)), and `--scope` or `--architecture` makes its property unknown.
 
 | Custom parameter                  | Effect                                                                     |
 | --------------------------------- | -------------------------------------------------------------------------- |
@@ -492,7 +500,7 @@ The broker cannot pin a version through Scoop, and a `Package.Channel` makes the
 #### Vcpkg
 
 The source name is a triplet.
-An identifier `port[features]:triplet` names `port`.
+An identifier `port[features]:triplet` names `port`, and no identifier selects the version.
 The architecture is `Package.Architecture`; when it is absent, it is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise.
 The broker cannot pin a version through Vcpkg.
 
@@ -502,15 +510,16 @@ The broker cannot pin a version through Vcpkg.
 The only source name is `npm`, and a request with another source name is unreadable.
 Package names keep their case in canonical form.
 A registry name is `name` or `@scope/name`, where `scope` and `name` are one or more ASCII letters, digits, `-`, `.`, `_` and `~` and do not start with `-`, `.` or `_`; a registry name is at most 214 bytes and does not end with `.tgz`, `.tar` or `.tar.gz` ignoring ASCII case.
-A registry name names itself.
-An identifier `name@version` names `name`, and an alias `alias@npm:target` or `alias@npm:target@version` names `alias` and `target`, when `name`, `alias` and `target` are registry names and each `version` is non-empty, contains none of `:`, `/`, `\` and `#`, does not start with `.`, and does not end with `.tgz`, `.tar` or `.tar.gz` ignoring ASCII case.
-Any other identifier, such as a Git, URL or path specifier, has an unknown package identity and an unknown source, because it may fetch from outside the named source.
+An identifier that is a registry name names itself.
+An alias `alias:target`, split at its first `:`, names `alias` and `target` when both are registry names, and `alias:target@version`, where that `@` is the last `@` after the `:` and is not the first character after it, also selects the version.
+Any other identifier, such as `name@version` or a Git, URL or path specifier, has an unknown package identity and an unknown source, because it may fetch from outside the named source.
 The architecture is `Neutral` when `Package.Architecture` is absent.
 
 <a id="manager-bun"></a>
 #### Bun
 
-The reading is that of [§manager-npm](#manager-npm), except for sources and channels.
+The reading is that of [§manager-npm](#manager-npm), except for identifiers, sources and channels.
+An identifier that is a registry name names itself, and any other identifier has an unknown package identity and an unknown source.
 The only source name is `Bun`, and a request with another source name is unreadable.
 A request carrying `Source.Url` is readable only when that URL, without its trailing `/` characters, equals `https://www.npmjs.com` ignoring ASCII case.
 A `Package.Channel` makes the request unreadable.
@@ -520,7 +529,6 @@ A `Package.Channel` makes the request unreadable.
 
 The only source name is `crates.io`, and a request with another source name is unreadable.
 The canonical form maps ASCII letters to lowercase and `_` to `-`.
-An identifier `name@version` names `name`.
 The architecture is `Neutral` when `Package.Architecture` is absent, and a `Package.Channel` makes the request unreadable.
 
 <a id="manager-pip"></a>
@@ -543,8 +551,7 @@ The scope is `Machine` when `Options.Scope` is absent, and a requested architect
 <a id="manager-powershell"></a>
 #### PowerShell and PowerShell7
 
-Source names are put in [Unicode normalization form C][uax15], with the data of [Unicode 16.0.0][unicode16-ucd], and then compare ignoring case.
-A source name containing `*`, `?`, `[`, `]` or `` ` `` makes the request unreadable.
+A source name that does not start with an ASCII letter or digit, or contains a character other than ASCII letters, digits, `.`, `-`, `_` and space, makes the request unreadable, because PowerShell reads other characters as wildcards or matches them by its own rules.
 The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
 <a id="install-location"></a>
@@ -562,7 +569,7 @@ A network path, a device path or a relative path would give an elevated installe
 ### Missing version
 
 The version is `Package.Version` when it is concrete, and unknown otherwise.
-A version is concrete when it is present and non-empty, no custom parameter or decorated identifier selects the version, and the manager does not resolve it as a range.
+A version is concrete when it is present, neither a custom parameter nor the identifier ([§package-identity](#package-identity)) selects the version, and the manager does not resolve it as a range.
 `Npm`, `Bun`, `Cargo` and `Dotnet` resolve a version as a range unless it is a version ([§version-scheme](#version-scheme)) with at least three release components, and `PowerShell7` needs a version.
 The broker cannot pin a version through `Scoop` or `Vcpkg`; a request carrying `Package.Version` through them is unreadable, and their version is unknown.
 An Install or Update request through any other manager is missing its version when its version is not concrete, and is denied whatever the policy says, so that rule matching always has the version.
@@ -707,6 +714,5 @@ A pattern `*` means a pattern made only of `*` characters.
 [rfc6901]: https://www.rfc-editor.org/rfc/rfc6901
 [rfc8259]: https://www.rfc-editor.org/rfc/rfc8259
 [semver]: https://semver.org/spec/v2.0.0.html
-[uax15]: https://www.unicode.org/reports/tr15/
 [unicode16]: https://www.unicode.org/Public/16.0.0/ucd/UnicodeData.txt
 [unicode16-ucd]: https://www.unicode.org/Public/16.0.0/ucd/
