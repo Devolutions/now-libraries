@@ -110,7 +110,7 @@ These rules apply throughout this contract and are not repeated.
 ### Text comparison
 
 Two strings are equal ignoring case when they have the same code points after each code point is replaced by its simple uppercase mapping in `UnicodeData.txt` of [Unicode 16.0.0][unicode16]; no other normalization applies.
-Implementations use that table rather than their platform's casing, so they agree; NTFS file-name comparison and .NET `OrdinalIgnoreCase` also compare by uppercase mapping, so two install locations that name the same folder on NTFS are equal ignoring case.
+Implementations use that table rather than their platform's casing, so they agree.
 Custom parameters, install locations, source names and the patterns that match them compare ignoring case.
 PowerShell source names are normalized first ([§manager-powershell](#manager-powershell)).
 Package ids compare in their manager's canonical form ([§package-identity](#package-identity)).
@@ -132,7 +132,7 @@ A reader ignores one leading UTF-8 byte order mark.
 A document is malformed when it is not valid UTF-8, is not well-formed RFC 8259 JSON, has a top-level value that is not an object, contains a string with an unpaired surrogate, or nests arrays and objects more than 64 levels deep, counting the top-level object as level 1.
 Comments, trailing commas and other extensions to RFC 8259 are not well-formed.
 The magnitude or precision of a number never makes a document malformed.
-Keys match only with their exact characters.
+Keys match only with their exact characters, after JSON escapes are decoded.
 `null` is a value of the wrong type wherever it appears.
 Key order and whitespace carry no meaning, and writers may choose any.
 The order of entries in a list carries no meaning, except the order in which a decision names rules.
@@ -284,7 +284,7 @@ So no version condition applies to an uninstall, and a rule that tests the versi
 ### Grants and Forbids
 
 `Grants` and `Forbids` are objects whose keys are opt-ins from [§opt-ins](#opt-ins) and whose values are grant or forbid objects.
-A grant or forbid for `CustomParameters` or `CustomInstallLocation` has these keys, and a grant or forbid for any other opt-in is `{}`.
+A grant or forbid for `CustomParameters` or `CustomInstallLocation` has these keys, and a grant or forbid for any other opt-in is an object with no keys, so a key in it is `UnknownKey`.
 
 | Key        | Required | Value                                                  |
 | ---------- | -------- | ------------------------------------------------------ |
@@ -386,6 +386,7 @@ A request is unreadable when:
 - it carries a version through a manager that cannot pin one ([§missing-version](#missing-version));
 - a custom parameter is empty;
 - a custom parameter, `Package.Id` or `Source.Name` contains U+0000, U+000A or U+000D, which the broker cannot pass to a manager;
+- `Source.Name` starts or ends with a code point that has the `White_Space` property in `PropList.txt` of [Unicode 16.0.0][unicode16-ucd], or contains a code point that has the `Default_Ignorable_Code_Point` property in `DerivedCoreProperties.txt` of [Unicode 16.0.0][unicode16-ucd], because such a name looks like another;
 - its manager's reading states another case.
 
 Custom parameters are the elements of `Options.CustomParameters`, which the broker passes to the manager as they are, neither splitting nor joining them.
@@ -409,7 +410,7 @@ This table is the only list of the values of request properties.
 | Version      | a version string                       | [§missing-version](#missing-version)                                        |
 | Scope        | `User`, `Machine`                      | the manager's reading                                                       |
 | Architecture | `X86`, `X64`, `Arm64`, `Neutral`       | the manager's reading                                                       |
-| Elevation    | `NonElevated`, `Elevated`              | `Elevated` when the scope is `Machine` or `Client.RequestedElevation` is `Elevated`, `NonElevated` otherwise; never unknown |
+| Elevation    | `NonElevated`, `Elevated`              | `Elevated` when `Options.Scope` is `Machine` or `Client.RequestedElevation` is `Elevated`, `NonElevated` otherwise; never unknown |
 
 <a id="package-identity"></a>
 ### Package identity
@@ -425,7 +426,8 @@ So an Allow rule's selection matches only when it covers every package the ident
 <a id="version-scheme"></a>
 ### Version scheme
 
-A version is an optional `v` or `V`, then one or more release components of ASCII digits separated by `.`, then optionally `-` and a pre-release of `.`-separated identifiers of ASCII letters, digits and `-`, then optionally `+` and build metadata of ASCII letters, digits, `-` and `.`.
+A version is an optional `v` or `V`, then one or more release components of ASCII digits separated by `.`, then optionally `-` and a pre-release of `.`-separated identifiers of ASCII letters, digits and `-`, then optionally `+` and build metadata of zero or more ASCII letters, digits, `-` and `.`.
+Each pre-release identifier is non-empty, and one made only of digits has no leading zero unless it is `0`, as [Semantic Versioning 2.0.0][semver] requires.
 Release components compare numerically, whatever their length or leading zeros, and missing trailing components count as zero, so `1.2` equals `1.2.0`.
 A version with a pre-release is lower than the same release without one, and pre-releases compare by [Semantic Versioning 2.0.0][semver] precedence.
 Build metadata never affects a comparison.
@@ -443,6 +445,8 @@ Unless a manager's reading below states otherwise:
 - the scope is `Options.Scope`, and `User` when it is absent;
 - the architecture is `Package.Architecture`, and unknown when it is absent;
 - `Package.Channel` makes no request unreadable.
+
+A reading below that names the only source name of its manager compares `Source.Name` with it ignoring ASCII case.
 
 <a id="manager-winget"></a>
 #### Winget
@@ -489,7 +493,7 @@ The broker cannot pin a version through Scoop, and a `Package.Channel` makes the
 
 The source name is a triplet.
 An identifier `port[features]:triplet` names `port`.
-The architecture is `Package.Architecture`; when it is absent, it is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-`, and unknown otherwise.
+The architecture is `Package.Architecture`; when it is absent, it is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise.
 The broker cannot pin a version through Vcpkg.
 
 <a id="manager-npm"></a>
@@ -540,7 +544,7 @@ The scope is `Machine` when `Options.Scope` is absent, and a requested architect
 #### PowerShell and PowerShell7
 
 Source names are put in [Unicode normalization form C][uax15], with the data of [Unicode 16.0.0][unicode16-ucd], and then compare ignoring case.
-A source name containing `*`, `?`, `[`, `]` or `` ` ``, or a code point with the `Default_Ignorable_Code_Point` property in `DerivedCoreProperties.txt` of [Unicode 16.0.0][unicode16-ucd], makes the request unreadable.
+A source name containing `*`, `?`, `[`, `]` or `` ` `` makes the request unreadable.
 The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
 <a id="install-location"></a>
