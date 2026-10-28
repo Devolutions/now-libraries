@@ -264,6 +264,29 @@ fn scoop_custom_parameters_carry_opt_ins(#[case] custom_parameters: &[&str], #[c
     assert_eq!(opt_ins(&request), expected);
 }
 
+#[rstest]
+// oracle: contract policies/CONTRACT.policy.md §reading
+#[case::interactive_under_powershell(
+    with(install("PowerShell", "PSGallery", "Pester", "5.0"), |r| r.options.interactive = true),
+    &["Interactive"]
+)]
+#[case::install_location_under_npm(
+    with(install("Npm", "npm", "react", "1.0.0"), |r| r.options.custom_install_location = Some("C:\\Apps".to_owned())),
+    &["CustomInstallLocation"]
+)]
+fn options_the_command_drops_carry_opt_ins(#[case] subject: Request, #[case] expected: &[&str]) {
+    assert_eq!(opt_ins(&subject), expected);
+}
+
+#[test]
+fn install_location_the_command_drops_is_checked() {
+    // oracle: contract policies/CONTRACT.policy.md §reading
+    // oracle: contract policies/CONTRACT.policy.md §install-location
+    let mut request = install("Npm", "npm", "react", "1.0.0");
+    request.options.custom_install_location = Some("Apps".to_owned());
+    assert_eq!(check_of(GRANT_ALL, &request), Check::InstallLocation);
+}
+
 /// An Allow rule granting any install location and custom parameter.
 const GRANT_LOCATIONS: &str = r#"[{"Id":"all","Decision":"Allow","Select":{},"Grants":{"CustomInstallLocation":{"Patterns":["*"]},"CustomParameters":{"Patterns":["*"]}}}]"#;
 

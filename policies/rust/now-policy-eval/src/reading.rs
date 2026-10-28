@@ -92,6 +92,7 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
         Elevation::NonElevated
     };
 
+    // An `Options` field carries its opt-in under every manager, even one whose command does not carry the field.
     let mut opt_ins = parameters.opt_ins;
     for (opt_in, field_carries) in [
         (OptIn::Interactive, options.interactive),
@@ -105,7 +106,7 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
         (OptIn::UninstallPrevious, options.uninstall_previous),
         (OptIn::NoUpgrade, options.no_upgrade),
     ] {
-        if field_carries && option_field_counts(manager, opt_in) {
+        if field_carries {
             opt_ins.insert(opt_in);
         }
     }
@@ -140,18 +141,6 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
         custom_parameters: options.custom_parameters.clone(),
         install_location,
     })
-}
-
-/// Returns whether an `Options` field that carries `opt_in` makes a request through `manager` use it.
-///
-/// The opt-in table of the contract says an `Options` field carries its opt-in whatever the manager.
-///
-/// UNTESTED: whether a field counts as its opt-in when the manager's command does not carry that field, such as `Options.Interactive` under PowerShell, is an open question of the contract, because its reading section says a value the command does not carry has no effect on any opt-in.
-/// This function follows the opt-in table and is the one place to change when the question is answered.
-/// When changing it, check that no other code adds an opt-in from an `Options` field.
-fn option_field_counts(manager: Manager, opt_in: OptIn) -> bool {
-    let _ = (manager, opt_in);
-    true
 }
 
 fn optional<T>(value: Option<&str>, from_name: fn(&str) -> Option<T>) -> Result<Option<T>, Unreadable> {
