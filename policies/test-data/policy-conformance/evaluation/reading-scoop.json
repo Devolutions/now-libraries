@@ -3396,6 +3396,9 @@
             "Id": "allow-url",
             "Decision": "Allow",
             "Select": {
+              "Operations": [
+                "Install"
+              ],
               "Sources": [
                 {
                   "Manager": "Scoop",
@@ -3512,6 +3515,9 @@
             "Id": "allow-url",
             "Decision": "Allow",
             "Select": {
+              "Operations": [
+                "Install"
+              ],
               "Sources": [
                 {
                   "Manager": "Scoop",
@@ -3632,6 +3638,9 @@
             "Id": "deny-url",
             "Decision": "Deny",
             "Select": {
+              "Operations": [
+                "Install"
+              ],
               "Sources": [
                 {
                   "Manager": "Scoop",
@@ -3757,6 +3766,9 @@
             "Id": "deny-url",
             "Decision": "Deny",
             "Select": {
+              "Operations": [
+                "Install"
+              ],
               "Sources": [
                 {
                   "Manager": "Scoop",
@@ -5537,6 +5549,9 @@
             "Id": "allow-src",
             "Decision": "Allow",
             "Select": {
+              "Operations": [
+                "Install"
+              ],
               "Sources": [
                 {
                   "Manager": "Scoop",
@@ -5657,6 +5672,9 @@
             "Id": "deny-src",
             "Decision": "Deny",
             "Select": {
+              "Operations": [
+                "Install"
+              ],
               "Sources": [
                 {
                   "Manager": "Scoop",
@@ -5895,6 +5913,9 @@
             "Id": "allow-src",
             "Decision": "Allow",
             "Select": {
+              "Operations": [
+                "Update"
+              ],
               "Sources": [
                 {
                   "Manager": "Scoop",
@@ -6011,6 +6032,9 @@
             "Id": "deny-src",
             "Decision": "Deny",
             "Select": {
+              "Operations": [
+                "Update"
+              ],
               "Sources": [
                 {
                   "Manager": "Scoop",
@@ -6274,247 +6298,6 @@
         "outcome": "Deny",
         "check": "UntrustedSource",
         "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-scoop-uninstall-source-selector-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §managers",
-      "note": "The source of a Scoop Uninstall is unknown, so a Source selector naming Source.Name is unknown and the Allow rule fails closed. Control: read-scoop-install-source-selector-allow.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-reading",
-          "Publisher": "Policy conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [
-          {
-            "Manager": "Winget",
-            "AnySource": true
-          },
-          {
-            "Manager": "PowerShell",
-            "AnySource": true
-          },
-          {
-            "Manager": "PowerShell7",
-            "AnySource": true
-          },
-          {
-            "Manager": "Apt",
-            "AnySource": true
-          },
-          {
-            "Manager": "Bun",
-            "AnySource": true
-          },
-          {
-            "Manager": "Cargo",
-            "AnySource": true
-          },
-          {
-            "Manager": "Chocolatey",
-            "AnySource": true
-          },
-          {
-            "Manager": "Dnf",
-            "AnySource": true
-          },
-          {
-            "Manager": "Dotnet",
-            "AnySource": true
-          },
-          {
-            "Manager": "Flatpak",
-            "AnySource": true
-          },
-          {
-            "Manager": "Homebrew",
-            "AnySource": true
-          },
-          {
-            "Manager": "Npm",
-            "AnySource": true
-          },
-          {
-            "Manager": "Pacman",
-            "AnySource": true
-          },
-          {
-            "Manager": "Pip",
-            "AnySource": true
-          },
-          {
-            "Manager": "Scoop",
-            "AnySource": true
-          },
-          {
-            "Manager": "Snap",
-            "AnySource": true
-          },
-          {
-            "Manager": "Vcpkg",
-            "AnySource": true
-          }
-        ],
-        "Rules": [
-          {
-            "Id": "allow-src",
-            "Decision": "Allow",
-            "Select": {
-              "Sources": [
-                {
-                  "Manager": "Scoop",
-                  "Source": "main"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "request": {
-        "Operation": "Uninstall",
-        "Manager": "Scoop",
-        "Source": {
-          "Name": "main"
-        },
-        "Package": {
-          "Id": "git"
-        },
-        "Elevation": "NonElevated"
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "DefaultDeny",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-scoop-uninstall-source-selector-deny",
-      "oracle": "contract policies/CONTRACT.policy.md §managers",
-      "note": "The source of a Scoop Uninstall is unknown, so a Deny rule naming another source still applies. Control: read-scoop-install-source-selector-deny.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-reading",
-          "Publisher": "Policy conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [
-          {
-            "Manager": "Winget",
-            "AnySource": true
-          },
-          {
-            "Manager": "PowerShell",
-            "AnySource": true
-          },
-          {
-            "Manager": "PowerShell7",
-            "AnySource": true
-          },
-          {
-            "Manager": "Apt",
-            "AnySource": true
-          },
-          {
-            "Manager": "Bun",
-            "AnySource": true
-          },
-          {
-            "Manager": "Cargo",
-            "AnySource": true
-          },
-          {
-            "Manager": "Chocolatey",
-            "AnySource": true
-          },
-          {
-            "Manager": "Dnf",
-            "AnySource": true
-          },
-          {
-            "Manager": "Dotnet",
-            "AnySource": true
-          },
-          {
-            "Manager": "Flatpak",
-            "AnySource": true
-          },
-          {
-            "Manager": "Homebrew",
-            "AnySource": true
-          },
-          {
-            "Manager": "Npm",
-            "AnySource": true
-          },
-          {
-            "Manager": "Pacman",
-            "AnySource": true
-          },
-          {
-            "Manager": "Pip",
-            "AnySource": true
-          },
-          {
-            "Manager": "Scoop",
-            "AnySource": true
-          },
-          {
-            "Manager": "Snap",
-            "AnySource": true
-          },
-          {
-            "Manager": "Vcpkg",
-            "AnySource": true
-          }
-        ],
-        "Rules": [
-          {
-            "Id": "deny-src",
-            "Decision": "Deny",
-            "Select": {
-              "Sources": [
-                {
-                  "Manager": "Scoop",
-                  "Source": "other"
-                }
-              ]
-            }
-          },
-          {
-            "Id": "allow-all",
-            "Decision": "Allow",
-            "Select": {}
-          }
-        ]
-      },
-      "request": {
-        "Operation": "Uninstall",
-        "Manager": "Scoop",
-        "Source": {
-          "Name": "main"
-        },
-        "Package": {
-          "Id": "git"
-        },
-        "Elevation": "NonElevated"
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-src"
-          }
-        ],
         "optIns": [],
         "audited": false
       }

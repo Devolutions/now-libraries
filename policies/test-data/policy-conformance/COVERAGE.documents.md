@@ -54,7 +54,7 @@ Every expected value comes from the cited anchor or a published source named in 
 
 - `doc-trust-*` for selectors in `TrustedSources`.
 - Any non-empty string is a valid `Source`, including names no readable request carries: `doc-trust-source-{129-bytes,leading-space,space-only,line-feed,nul,zero-width-space,powershell-wildcard,npm-other-name}-valid` and, in a selection, `doc-sel-sources-unreadable-name-valid` and `doc-sel-sources-other-npm-name-valid`; the rejected neighbour is `doc-trust-source-empty-invalid`.
-- `doc-sel-sources-*` and `doc-sel-except-sources-missing-source` for selectors in a selection.
+- `doc-sel-sources-*` and `doc-sel-except-sources-missing-source` for selectors in a selection; a selector without the key `Source` does not make its selection need `Operations`: `doc-sel-sources-neither-key-without-operations`.
 - `doc-trust-every-manager-valid` and `doc-trust-manager-*-invalid` check the manager identifiers of §managers.
 
 ### §rules
@@ -64,6 +64,9 @@ Every expected value comes from the cited anchor or a published source named in 
 ### §selection
 
 - `doc-sel-*`: every condition with valid values, empty lists, single values where a list is required, entries outside §request-properties, unknown conditions, and the same checks inside `Except` entries (`doc-sel-except-*`).
+- A selection with a `Sources` entry that has the key `Source` also has `Operations` without `Uninstall`: `MissingKey` at `Operations` without it, `doc-sel-named-source-missing-operations`, `doc-sel-named-source-deny-missing-operations`, `doc-sel-mixed-sources-missing-operations`, `doc-sel-except-named-source-missing-operations`; `ConflictingKeys` at `Sources` with `Uninstall`, `doc-sel-named-source-uninstall-conflict`, `doc-sel-named-source-install-and-uninstall-conflict`, `doc-sel-except-named-source-uninstall-conflict`; controls `doc-sel-named-source-install-update-valid`, `doc-sel-except-named-source-install-valid`, `doc-sel-any-source-without-operations-valid`, `doc-sel-any-source-uninstall-valid`.
+- The key `Source` triggers the rule whatever its value: `doc-sel-named-source-empty-value-without-operations` and `doc-sel-named-source-null-value-without-operations`, with the single-defect neighbour `doc-sel-named-source-empty-value-install`; an `Operations` that is not a list is only `WrongType`, neither missing nor a list containing `Uninstall`: `doc-sel-named-source-operations-string-wrong-type`.
+- `Version` and a selector naming a source without `Operations` give one error, `MissingKey` at `Operations`: `doc-sel-version-and-named-source-missing-operations`, control `doc-sel-version-and-named-source-valid`; with `Uninstall` the selection has two errors, `ConflictingKeys` at `Version` and at `Sources`, reported as a subset: `doc-sel-version-and-named-source-uninstall-conflict`.
 
 ### §version-condition
 
@@ -96,6 +99,7 @@ Every expected value comes from the cited anchor or a published source named in 
 - Every code with a single-defect case: `DocumentTooLarge` (`doc-json-size-over-limit`), `MalformedDocument` (`doc-json-*-malformed`), `DuplicateKey` (`doc-err-duplicate-key`), `UnsupportedFormatVersion` (`doc-format-version-*-unsupported`), `MissingKey`, `UnknownKey`, `ConflictingKeys`, `WrongType`, `InvalidValue` (throughout), `DuplicateRuleId` (`doc-rule-duplicate-id`).
 - Pointer rules: the member for `DuplicateKey`, `UnknownKey` and `ConflictingKeys` (`doc-err-duplicate-key-*`, `doc-err-pointer-*`, `doc-trust-source-and-any-source-conflict`); the absent member for `MissingKey` (`doc-trust-neither-source-key-missing`, `doc-vercond-without-operations-missing`); the value for `WrongType`, `InvalidValue` and `UnsupportedFormatVersion`; the later rule's `Id` (`doc-rule-duplicate-id-not-adjacent`); the empty pointer for the whole document.
 - RFC 6901 escaping: `doc-err-pointer-slash`, `doc-err-pointer-tilde`, `doc-err-pointer-tilde-one-literal`, `doc-err-pointer-empty-key`, `doc-err-pointer-escaped-solidus-key`, `doc-err-pointer-nested-escapes`, `doc-err-duplicate-key-over-unknown-key`.
+- Several defects in one selection, reported as a subset: `doc-sel-sources-conflict-without-operations`, `doc-sel-sources-unknown-key-without-operations`, `doc-sel-version-and-named-source-uninstall-conflict`, `doc-sel-named-source-empty-value-without-operations`, `doc-sel-named-source-null-value-without-operations`.
 - Array indexes: `doc-trust-second-entry-pointer`, `doc-rule-second-rule-pointer`, `doc-sel-operations-second-entry-invalid`.
 - A defect in one entry of a list is reported at that entry, as "the value, which is the entry when the defect is in one entry of a list" states: every `WrongType` or `InvalidValue` case whose pointer ends in an index, such as `doc-sel-operations-second-entry-invalid`, `doc-rule-except-empty-selection-invalid`, `doc-grant-params-empty-pattern-invalid` and `doc-trust-entry-string-wrong-type`, each citing that text in `note`; a list that is empty is reported at the list, as in `doc-sel-sources-empty-invalid`.
 - Precedence: `doc-err-too-large-over-*`, `doc-err-malformed-*`, `doc-err-duplicate-key-over-*`, `doc-err-duplicate-format-version-*`, `doc-err-duplicate-key-inside-unknown-value`, `doc-err-unsupported-*`, `doc-err-missing-format-version-over-other-errors`, `doc-err-empty-object-reports-format-version-only`, and `doc-json-unpaired-surrogate-in-key-malformed`.

@@ -117,20 +117,9 @@
       "oracle": "contract policies/CONTRACT.policy.md §selection",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
         "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
-        "Rules": [
-          {
-            "Id": "allow-sel",
-            "Decision": "Allow",
-            "Select": {"Sources": [{"Manager": "Winget", "Source": "winget"}]}
-          }
-        ]
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}}]
       },
       "request": {
         "Operation": "Install",
@@ -153,20 +142,9 @@
       "note": "The source is trusted through AnySource; only the rule's selection excludes it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
         "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
-        "Rules": [
-          {
-            "Id": "allow-sel",
-            "Decision": "Allow",
-            "Select": {"Sources": [{"Manager": "Winget", "Source": "winget"}]}
-          }
-        ]
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}}]
       },
       "request": {
         "Operation": "Install",
@@ -247,22 +225,9 @@
       "note": "One selection may name sources of several managers; one matching selector suffices.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
         "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
-        "Rules": [
-          {
-            "Id": "allow-sel",
-            "Decision": "Allow",
-            "Select": {
-              "Sources": [{"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Winget", "Source": "winget"}]
-            }
-          }
-        ]
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Winget", "Source": "winget"}]}}]
       },
       "request": {
         "Operation": "Install",
@@ -765,6 +730,66 @@
         "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-sources-named-excludes-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "A selection naming a source lists Install and Update, so the Allow rule does not select the WinGet Uninstall. Control: eval-selection-sources-any-source-uninstall.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Install", "Update"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}}]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-sources-any-source-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "An AnySource selector needs no Operations and matches the unknown source of a WinGet Uninstall. Contrast eval-selection-sources-named-excludes-uninstall.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "AnySource": true}]}}]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
     }
   ]
 }

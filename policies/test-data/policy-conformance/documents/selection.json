@@ -10,8 +10,8 @@
     {
       "name": "doc-sel-every-condition-deny-valid",
       "oracle": "contract policies/CONTRACT.policy.md §selection",
-      "note": "Uninstall in Operations without Version; NonElevated; a source the trusted list does not name.",
-      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Operations": ["Uninstall"], "Sources": [{"Manager": "Apt", "Source": "main"}], "Packages": ["vim"], "Scopes": ["Machine"], "Architectures": ["Neutral"], "Elevation": "NonElevated"}}]},
+      "note": "Uninstall in Operations, which allows neither Version nor a selector naming a source; NonElevated; AnySource for a manager the trusted list does not name.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Operations": ["Uninstall"], "Sources": [{"Manager": "Apt", "AnySource": true}], "Packages": ["vim"], "Scopes": ["Machine"], "Architectures": ["Neutral"], "Elevation": "NonElevated"}}]},
       "expect": {"valid": true}
     },
     {
@@ -200,14 +200,14 @@
       "name": "doc-sel-sources-conflict",
       "oracle": "contract policies/CONTRACT.policy.md §source-selector",
       "note": "Control: doc-sel-every-condition-valid.",
-      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget", "AnySource": true}]}}]},
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget", "AnySource": true}]}}]},
       "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Select/Sources/0/AnySource"}]}
     },
     {
       "name": "doc-sel-sources-missing-source",
       "oracle": "contract policies/CONTRACT.policy.md §source-selector",
       "note": "Control: doc-sel-every-condition-valid.",
-      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget"}, {"Manager": "Npm"}]}}]},
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget"}, {"Manager": "Npm"}]}}]},
       "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Sources/1/Source"}]}
     },
     {
@@ -235,7 +235,7 @@
       "name": "doc-sel-sources-unknown-key",
       "oracle": "contract policies/CONTRACT.policy.md §source-selector",
       "note": "Control: doc-sel-every-condition-valid.",
-      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget", "Name": "winget"}]}}]},
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget", "Name": "winget"}]}}]},
       "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Select/Sources/0/Name"}]}
     },
     {
@@ -931,15 +931,159 @@
       "name": "doc-sel-sources-unreadable-name-valid",
       "oracle": "contract policies/CONTRACT.policy.md §source-selector",
       "note": "A selector in a selection may name a source that no readable request carries: ' winget' starts with White_Space (§reading). §source-selector asks only for a non-empty string. Control: doc-sel-every-condition-valid.",
-      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Winget", "Source": " winget"}]}}]},
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": " winget"}]}}]},
       "expect": {"valid": true}
     },
     {
       "name": "doc-sel-sources-other-npm-name-valid",
       "oracle": "contract policies/CONTRACT.policy.md §source-selector",
       "note": "Npm's only source name is 'npm' (§manager-npm), so no readable request matches 'registry'. §source-selector asks only for a non-empty string. Control: doc-sel-every-condition-valid.",
-      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Npm", "Source": "registry"}]}}]},
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Npm", "Source": "registry"}]}}]},
       "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-named-source-missing-operations",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "A selection whose Sources names a source also has Operations. Control: doc-sel-named-source-install-update-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget"}]}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-sel-named-source-deny-missing-operations",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "The rule binds Deny rules too. Control: doc-sel-named-source-install-update-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget"}]}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-sel-named-source-uninstall-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Operations listing Uninstall beside a selector naming a source; the pointer is Sources. Control: doc-sel-named-source-install-update-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Uninstall"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}}]},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Select/Sources"}]}
+    },
+    {
+      "name": "doc-sel-named-source-install-and-uninstall-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Uninstall anywhere in Operations conflicts. Control: doc-sel-named-source-install-update-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install", "Uninstall"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}}]},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Select/Sources"}]}
+    },
+    {
+      "name": "doc-sel-named-source-install-update-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install", "Update"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-any-source-without-operations-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Only a selector with Source needs Operations; AnySource selects uninstalls too. Contrast doc-sel-named-source-missing-operations.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "AnySource": true}]}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-any-source-uninstall-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "AnySource beside Operations listing Uninstall is valid. Contrast doc-sel-named-source-uninstall-conflict.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Uninstall"], "Sources": [{"Manager": "Winget", "AnySource": true}]}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-mixed-sources-missing-operations",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "A selector naming a source needs Operations even beside an AnySource selector. Control: doc-sel-any-source-without-operations-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "Npm", "Source": "npm"}]}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-sel-except-named-source-missing-operations",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "An Except entry naming a source needs its own Operations, even when the rule's Select lists operations. Control: doc-sel-except-named-source-install-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"]}, "Except": [{"Sources": [{"Manager": "Winget", "Source": "winget"}]}]}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Except/0/Operations"}]}
+    },
+    {
+      "name": "doc-sel-except-named-source-uninstall-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Control: doc-sel-except-named-source-install-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Uninstall"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}]}]},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Except/0/Sources"}]}
+    },
+    {
+      "name": "doc-sel-except-named-source-install-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}]}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-version-and-named-source-missing-operations",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Both Version and a selector naming a source require Operations, and the selection has one error, MissingKey at Operations. Control: doc-sel-version-and-named-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget"}], "Version": {"Minimum": "1.0"}}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-sel-version-and-named-source-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install", "Update"], "Sources": [{"Manager": "Winget", "Source": "winget"}], "Version": {"Minimum": "1.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-version-and-named-source-uninstall-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "When both rules find Uninstall in Operations, the selection has two errors, ConflictingKeys at Version and at Sources; with several errors a non-empty subset is reported (§errors). Control: doc-sel-version-and-named-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Uninstall"], "Sources": [{"Manager": "Winget", "Source": "winget"}], "Version": {"Minimum": "1.0"}}}]},
+      "expect": {"someOf": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Select/Version"}, {"code": "ConflictingKeys", "pointer": "/Rules/0/Select/Sources"}]}
+    },
+    {
+      "name": "doc-sel-sources-conflict-without-operations",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A selector with both Source and AnySource beside no Operations: ConflictingKeys at AnySource, and a selector with Source, so MissingKey at Operations. Contrast doc-sel-sources-conflict.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget", "AnySource": true}]}}]},
+      "expect": {"someOf": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Select/Sources/0/AnySource"}, {"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-sel-sources-unknown-key-without-operations",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A selector naming a source with an unknown key beside no Operations: two defects. Contrast doc-sel-sources-unknown-key.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget", "Name": "winget"}]}}]},
+      "expect": {"someOf": [{"code": "UnknownKey", "pointer": "/Rules/0/Select/Sources/0/Name"}, {"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-sel-sources-neither-key-without-operations",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "A selector without the Source key does not trigger the Operations requirement, so the selection needs no Operations and the only error is MissingKey at Source. Contrast doc-sel-named-source-missing-operations.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget"}]}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Sources/0/Source"}]}
+    },
+    {
+      "name": "doc-sel-named-source-empty-value-without-operations",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "A Sources entry with the key Source requires Operations whatever its value; the empty Source is a second defect, so a non-empty subset is reported (§errors). Contrast doc-sel-named-source-empty-value-install.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": ""}]}}]},
+      "expect": {"someOf": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Sources/0/Source"}, {"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-sel-named-source-empty-value-install",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "With Operations [Install], the empty Source is the only defect. Control: doc-sel-named-source-install-update-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": ""}]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Sources/0/Source"}]}
+    },
+    {
+      "name": "doc-sel-named-source-null-value-without-operations",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "A null Source still has the key Source, so the selection requires Operations; the null is a second defect, so a non-empty subset is reported (§errors). Contrast doc-sel-sources-neither-key-without-operations.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": null}]}}]},
+      "expect": {"someOf": [{"code": "WrongType", "pointer": "/Rules/0/Select/Sources/0/Source"}, {"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-sel-named-source-operations-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Operations is present but not a list, so it is neither missing nor a list containing Uninstall: the only error is WrongType at Operations. Contrast doc-sel-named-source-uninstall-conflict.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": "Uninstall", "Sources": [{"Manager": "Winget", "Source": "winget"}]}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Operations"}]}
     }
   ]
 }

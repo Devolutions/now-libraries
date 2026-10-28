@@ -9817,7 +9817,7 @@
     {
       "name": "read-identity-npm-known-source-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "The source of an Npm Install is Source.Name, so a Source selector naming 'npm' matches. Contrast read-npm-uninstall-source-selector-allow.",
+      "note": "The source of an Npm Install is Source.Name, so a Source selector naming 'npm' matches.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -9901,6 +9901,9 @@
             "Id": "allow-npm",
             "Decision": "Allow",
             "Select": {
+              "Operations": [
+                "Install"
+              ],
               "Sources": [
                 {
                   "Manager": "Npm",
