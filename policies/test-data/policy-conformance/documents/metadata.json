@@ -1,0 +1,366 @@
+{
+  "cases": [
+    {
+      "name": "doc-meta-missing-id",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Metadata/Id"}]}
+    },
+    {
+      "name": "doc-meta-missing-publisher",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Metadata/Publisher"}]}
+    },
+    {
+      "name": "doc-meta-missing-revision",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-missing-publishedat",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-meta-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "Version": "1.0"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Metadata/Version"}]}
+    },
+    {
+      "name": "doc-meta-key-differing-in-case-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Keys match with their exact characters, so publisher is unknown beside Publisher, and is not a duplicate of it.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "publisher": "x"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Metadata/publisher"}]}
+    },
+    {
+      "name": "doc-meta-all-keys-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-01-01T00:00:00Z", "ValidUntil": "2027-01-01T00:00:00Z", "Description": "d", "SupportUrl": "https://example.test/support"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-meta-id-whitespace-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "A single space is a non-empty string.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": " ", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-meta-id-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-id-whitespace-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Id"}]}
+    },
+    {
+      "name": "doc-meta-publisher-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Publisher"}]}
+    },
+    {
+      "name": "doc-meta-support-url-not-url-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "SupportUrl is a non-empty string; the contract sets no URL syntax.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "SupportUrl": "see the intranet"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-meta-support-url-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-support-url-not-url-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "SupportUrl": ""}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/SupportUrl"}]}
+    },
+    {
+      "name": "doc-meta-description-empty-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Description is a string with no non-empty requirement, unlike Id, Publisher and SupportUrl.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "Description": ""}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-meta-id-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": 1, "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/Id"}]}
+    },
+    {
+      "name": "doc-meta-id-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": null, "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/Id"}]}
+    },
+    {
+      "name": "doc-meta-publisher-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": ["x"], "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/Publisher"}]}
+    },
+    {
+      "name": "doc-meta-revision-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": "1", "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-boolean-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": true, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": null, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-description-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "Description": 1}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/Description"}]}
+    },
+    {
+      "name": "doc-meta-description-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "Description": null}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/Description"}]}
+    },
+    {
+      "name": "doc-meta-supporturl-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "SupportUrl": 1}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/SupportUrl"}]}
+    },
+    {
+      "name": "doc-meta-validfrom-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": 1}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/ValidFrom"}]}
+    },
+    {
+      "name": "doc-meta-validuntil-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Control: doc-meta-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidUntil": null}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-meta-revision-max-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "The upper bound of Revision.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 2147483647, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-meta-revision-one-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "The lower bound of Revision.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-meta-revision-zero-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision 0 is below 1. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 0, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-negative-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision -1 is below 1. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": -1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-negative-zero-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision -0 is the integer 0, below 1. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": -0, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-above-max-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision 2147483648 is one above 2147483647. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 2147483648, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-wraps-u32-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision 4294967297 is above 2147483647; it is 2^32 + 1, which a 32-bit wrap would read as 1. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 4294967297, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-wraps-u64-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision 18446744073709551617 is above 2147483647; it is 2^64 + 1, which a 64-bit wrap would read as 1. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 18446744073709551617, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-int-min-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision -2147483648 is below 1. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": -2147483648, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-fraction-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision 1.0 is written with a fraction, though its value is 1. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1.0, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-exponent-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision 1e0 is written with an exponent, though its value is 1. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1e0, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-uppercase-exponent-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision 1E2 is written with an exponent, though its value is 100. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1E2, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-negative-exponent-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision 100e-2 is written with an exponent, though its value is 1. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 100e-2, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-non-integer-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision 1.5 is not an integer. Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1.5, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-revision-huge-exponent-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "Revision 1e400 is written with an exponent and far outside the range; the magnitude does not make the document malformed (§json). Control: doc-meta-revision-one-valid or doc-meta-revision-max-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1e400, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-meta-valid-from-invalid-timestamp",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "ValidFrom is a timestamp, and 2026-02-30 does not exist. Control: doc-window-from-only-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-02-30T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidFrom"}]}
+    },
+    {
+      "name": "doc-meta-valid-until-invalid-timestamp",
+      "oracle": "contract policies/CONTRACT.policy.md §metadata",
+      "note": "ValidUntil is a timestamp, and it lacks its offset. Control: doc-window-until-only-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidUntil": "2027-01-01T00:00:00"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-window-from-only-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §validity-window",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-until-only-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §validity-window",
+      "note": "ValidUntil earlier than PublishedAt is not an error; only ValidFrom later than ValidUntil is.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidUntil": "2020-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §validity-window",
+      "note": "Equal bounds: ValidFrom is not later than ValidUntil.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-06-01T00:00:00Z", "ValidUntil": "2026-06-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-from-after-until-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §validity-window",
+      "note": "ValidFrom is one second later than ValidUntil; the error points at ValidUntil. Control: doc-window-equal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-06-01T00:00:01Z", "ValidUntil": "2026-06-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-window-until-before-from-in-key-order-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §validity-window",
+      "note": "The pointer is ValidUntil whatever the key order.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"ValidUntil": "2026-01-01T00:00:00Z", "ValidFrom": "2027-01-01T00:00:00Z", "Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-window-offsets-compare-as-instants-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidFrom is 2025-12-31T23:00:00Z as an instant, one hour before ValidUntil, though its text sorts later.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-01-01T01:00:00+02:00", "ValidUntil": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-offsets-compare-as-instants-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil is 2025-12-31T23:00:00Z as an instant, one hour before ValidFrom, though its text sorts later. Control: doc-window-offsets-compare-as-instants-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-01-01T00:00:00Z", "ValidUntil": "2026-01-01T01:00:00+02:00"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-window-nanosecond-later-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidFrom is one nanosecond later; timestamps compare at nanosecond precision. Control: doc-window-fraction-trailing-zeros-equal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-01-01T00:00:00.000000001Z", "ValidUntil": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-window-fraction-trailing-zeros-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Both are the same instant, so ValidFrom is not later.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-01-01T00:00:00.100000000Z", "ValidUntil": "2026-01-01T00:00:00.1Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-year-boundary-offsets-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Instants in year 0000 and year 10000 UTC; both timestamps are valid as written, and ValidFrom is earlier.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "0001-01-01T00:00:00+01:00", "ValidUntil": "9999-12-31T23:59:59-01:00"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-year-0001-offset-order-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil is 0000-12-31T23:00:00Z as an instant, one hour before ValidFrom. Control: doc-window-year-boundary-offsets-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "0001-01-01T00:00:00Z", "ValidUntil": "0001-01-01T00:00:00+01:00"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    }
+  ]
+}

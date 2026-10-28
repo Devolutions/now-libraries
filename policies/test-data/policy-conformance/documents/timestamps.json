@@ -1,0 +1,324 @@
+{
+  "cases": [
+    {
+      "name": "doc-time-utc-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-fraction-1-digit-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00.5Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-fraction-9-digits-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00.123456789Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-offset-max-positive-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00+23:59"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-offset-max-negative-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00-23:59"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-offset-zero-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00+00:00"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-offset-negative-zero-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The form allows -HH:MM, and -00:00 is within 23:59.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00-00:00"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-year-0001-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "0001-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-year-9999-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "9999-12-31T23:59:59Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-leap-day-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "2024 is divisible by 4 and not by 100.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2024-02-29T12:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-leap-day-400-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "2000 is divisible by 400, so it is a Gregorian leap year.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2000-02-29T12:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-last-nanosecond-of-year-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-12-31T23:59:59.999999999Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-year-0001-positive-offset-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The instant is in year 0000 UTC, but the contract constrains the year as written, 0001, and the offset is within 23:59.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "0001-01-01T00:00:00+01:00"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-year-9999-negative-offset-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The instant is in year 10000 UTC, but the contract constrains the year as written, 9999, and the offset is within 23:59.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "9999-12-31T23:59:59-01:00"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-time-fraction-10-digits-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "A fraction has 1 to 9 digits. Control: doc-time-fraction-9-digits-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00.1234567891Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-fraction-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "A . is followed by 1 to 9 digits. Control: doc-time-fraction-1-digit-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00.Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-fraction-comma-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The fraction separator is .. Control: doc-time-fraction-1-digit-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00,5Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-lowercase-t-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "T is uppercase, although RFC 3339 §5.6 also allows t. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01t00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-lowercase-z-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Z is uppercase, although RFC 3339 §5.6 also allows z. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-space-separator-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The date and time are separated by T. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01 00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-no-offset-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "An offset or Z is required. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-date-only-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The time is required. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-no-seconds-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Seconds are required. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-one-digit-hour-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Hours have two digits. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T0:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-year-0000-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The year is 0001 to 9999. Control: doc-time-year-0001-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "0000-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-five-digit-year-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The year has four digits. Control: doc-time-year-9999-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "12026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-negative-year-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The year has four digits and no sign. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "-2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-month-13-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The date exists in the Gregorian calendar. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-13-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-month-00-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The date exists in the Gregorian calendar. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-00-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-day-00-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The date exists in the Gregorian calendar. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-00T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-april-31-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "April has 30 days. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-04-31T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-february-29-common-year-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "2023 is not a leap year. Control: doc-time-leap-day-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2023-02-29T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-february-29-century-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "1900 is divisible by 100 and not by 400, so it is not a Gregorian leap year. Control: doc-time-leap-day-400-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "1900-02-29T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-hour-24-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Hours are 00 to 23. Control: doc-time-year-9999-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T24:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-minute-60-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Minutes are 00 to 59. Control: doc-time-year-9999-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:60:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-leap-second-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Seconds are 00 to 59, although RFC 3339 §5.6 allows 60 for a leap second. Control: doc-time-year-9999-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-12-31T23:59:60Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-offset-24-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "An offset is at most 23:59. Control: doc-time-offset-max-positive-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00+24:00"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-offset-minute-60-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Offset minutes are 00 to 59 (RFC 3339 §5.6 time-numoffset uses time-minute). Control: doc-time-offset-max-positive-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00+05:60"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-offset-without-colon-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "An offset is written +HH:MM. Control: doc-time-offset-zero-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00+0100"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-offset-hours-only-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "An offset is written +HH:MM. Control: doc-time-offset-zero-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00+01"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-leading-space-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Nothing precedes the date. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": " 2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-trailing-space-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "Nothing follows the offset. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z "}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-non-ascii-digits-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The year is written in ARABIC-INDIC DIGIT characters U+0660 and U+0662; RFC 3339 §5.6 builds date-fullyear from DIGIT, which RFC 5234 Appendix B.1 defines as %x30-39. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "٢٠٢٦-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The empty string is not of the form. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": ""}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A timestamp is a string. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": 1767225600}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A timestamp is a string. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": null}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/PublishedAt"}]}
+    },
+    {
+      "name": "doc-time-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A timestamp is a string. Control: doc-time-utc-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": ["2026-01-01T00:00:00Z"]}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata/PublishedAt"}]}
+    }
+  ]
+}

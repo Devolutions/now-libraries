@@ -1,0 +1,339 @@
+{
+  "policy": {
+    "PolicyFormatVersion": "2.0.0",
+    "Metadata": {
+      "Id": "conformance-eval",
+      "Publisher": "Conformance suite",
+      "Revision": 1,
+      "PublishedAt": "2026-01-01T00:00:00Z",
+      "ValidFrom": "2026-01-01T00:00:00Z",
+      "ValidUntil": "2026-12-31T23:59:59Z"
+    },
+    "Enforcement": {"AuditMode": true},
+    "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
+    "Rules": [
+      {"Id": "allow-contoso", "Decision": "Allow", "Select": {"Packages": ["Contoso.*"]}},
+      {"Id": "deny-blocked", "Decision": "Deny", "Select": {"Packages": ["*.Blocked"]}}
+    ]
+  },
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "eval-audit-unreadable-request",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading). Audit mode does not let this check through.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget", "Url": "https://example.test"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-audit-validity-window",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "ValidityWindow: the time is after ValidUntil. Audit mode does not let this check through.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-audit-install-location",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "InstallLocation: the relative location 'Apps' fails the install location check. Audit mode does not let this check through.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomInstallLocation": "Apps"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-audit-missing-version",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "MissingVersion: the install has no Package.Version. Audit mode does not let this check through.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-audit-untrusted-source",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "UntrustedSource: the source 'msstore' is not trusted. Audit mode lets this check through.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Allow", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": true}
+    },
+    {
+      "name": "eval-audit-deny-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "DenyRule: deny-blocked applies to the package. Audit mode lets this check through.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-blocked"}],
+        "optIns": [],
+        "audited": true
+      }
+    },
+    {
+      "name": "eval-audit-ungranted-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. Audit mode lets this check through.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"SkipHashCheck": true},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-contoso"}],
+        "optIns": ["SkipHashCheck"],
+        "audited": true
+      }
+    },
+    {
+      "name": "eval-audit-default-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "DefaultDeny: no Allow rule selects the Fabrikam package. Audit mode lets this check through.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Allow", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": true}
+    },
+    {
+      "name": "eval-audit-allow-rules",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "An allowed request is not audited.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-contoso"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-audit-unreadable-request-over-untrusted-source",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading); UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore", "Url": "https://example.test"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-audit-validity-window-over-untrusted-source",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "ValidityWindow: the time is after ValidUntil; UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-audit-install-location-over-untrusted-source",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "InstallLocation: the relative location 'Apps' fails the install location check; UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomInstallLocation": "Apps"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-audit-missing-version-over-untrusted-source",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "MissingVersion: the install has no Package.Version; UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-audit-missing-version-over-deny-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "MissingVersion: the install has no Package.Version; DenyRule: deny-blocked applies to the package. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Blocked"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-audit-untrusted-source-over-deny-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "UntrustedSource: the source 'msstore' is not trusted; DenyRule: deny-blocked applies to the package. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Allow", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": true}
+    },
+    {
+      "name": "eval-audit-deny-rule-over-ungranted-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "DenyRule: deny-blocked applies to the package; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
+        "Options": {"SkipHashCheck": true},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-blocked"}],
+        "optIns": [],
+        "audited": true
+      }
+    },
+    {
+      "name": "eval-audit-deny-rule-over-default-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "DenyRule: deny-blocked applies to the package; DefaultDeny: no Allow rule selects the Fabrikam package. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Fabrikam.Blocked", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-blocked"}],
+        "optIns": [],
+        "audited": true
+      }
+    },
+    {
+      "name": "eval-audit-mode-false",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "AuditMode false.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidFrom": "2026-01-01T00:00:00Z",
+          "ValidUntil": "2026-12-31T23:59:59Z"
+        },
+        "Enforcement": {"AuditMode": false},
+        "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
+        "Rules": [
+          {"Id": "allow-contoso", "Decision": "Allow", "Select": {"Packages": ["Contoso.*"]}},
+          {"Id": "deny-blocked", "Decision": "Deny", "Select": {"Packages": ["*.Blocked"]}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-audit-mode-absent",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "Enforcement without AuditMode means false.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidFrom": "2026-01-01T00:00:00Z",
+          "ValidUntil": "2026-12-31T23:59:59Z"
+        },
+        "Enforcement": {},
+        "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
+        "Rules": [
+          {"Id": "allow-contoso", "Decision": "Allow", "Select": {"Packages": ["Contoso.*"]}},
+          {"Id": "deny-blocked", "Decision": "Deny", "Select": {"Packages": ["*.Blocked"]}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    }
+  ]
+}

@@ -1,0 +1,502 @@
+{
+  "cases": [
+    {
+      "name": "doc-rule-allow-minimal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-deny-minimal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-all-keys-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Every rule key on an Allow rule and on a Deny rule; Reason may be empty.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Update"]}, "Enabled": true, "Reason": "Routine updates", "Except": [{"Packages": ["Contoso.Admin*"]}], "Grants": {"Interactive": {}}}, {"Id": "r2", "Decision": "Deny", "Select": {}, "Enabled": false, "Reason": "", "Except": [{"Operations": ["Uninstall"]}], "Forbids": {"SkipHashCheck": {}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-id-single-letter-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "An ASCII letter or digit, then ASCII letters, digits, '.', '_', ':' and '-'.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "a", "Decision": "Allow", "Select": {}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-id-single-digit-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "An ASCII letter or digit, then ASCII letters, digits, '.', '_', ':' and '-'.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "1", "Decision": "Allow", "Select": {}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-id-all-punctuation-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "An ASCII letter or digit, then ASCII letters, digits, '.', '_', ':' and '-'.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "A.b_c:d-e", "Decision": "Allow", "Select": {}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-id-digit-then-dash-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "An ASCII letter or digit, then ASCII letters, digits, '.', '_', ':' and '-'.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "0-", "Decision": "Allow", "Select": {}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-id-mixed-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "An ASCII letter or digit, then ASCII letters, digits, '.', '_', ':' and '-'.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "Rule-01.v2:x_y", "Decision": "Allow", "Select": {}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-id-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It has no first character. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-leading-dot-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It starts with '.'. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": ".a", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-leading-dash-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It starts with '-'. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "-a", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-leading-underscore-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It starts with '_'. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "_a", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-leading-colon-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It starts with ':'. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": ":a", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-space-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It contains a space. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "a b", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-slash-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It contains '/'. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "a/b", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-plus-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It contains '+'. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "a+b", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-non-ascii-letter-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It contains U+00E9, which is not an ASCII letter. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "régle", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-fullwidth-digit-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It is U+FF11 FULLWIDTH DIGIT ONE, which is not an ASCII digit. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "１", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-trailing-newline-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "It ends with U+000A. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1\n", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-long-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "The Id syntax sets no maximum length; this one is 4096 characters.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr", "Decision": "Allow", "Select": {}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-id-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": 1, "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": null, "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-id-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Id"}]}
+    },
+    {
+      "name": "doc-rule-duplicate-id",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "The later rule's Id. Control: doc-rule-distinct-ids-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}}, {"Id": "r1", "Decision": "Deny", "Select": {}}]},
+      "expect": {"errors": [{"code": "DuplicateRuleId", "pointer": "/Rules/1/Id"}]}
+    },
+    {
+      "name": "doc-rule-distinct-ids-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}}, {"Id": "r2", "Decision": "Deny", "Select": {}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-duplicate-id-not-adjacent",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "The third rule repeats the first rule's Id.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}}, {"Id": "r2", "Decision": "Allow", "Select": {}}, {"Id": "r1", "Decision": "Deny", "Select": {}}]},
+      "expect": {"errors": [{"code": "DuplicateRuleId", "pointer": "/Rules/2/Id"}]}
+    },
+    {
+      "name": "doc-rule-ids-differing-in-case-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "Rule ids match only with their exact characters, so R1 and r1 differ.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "R1", "Decision": "Allow", "Select": {}}, {"Id": "r1", "Decision": "Allow", "Select": {}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-identical-rules-duplicate-id",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Unlike other lists, Rules may not repeat an entry, because rule ids are unique.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}}, {"Id": "r1", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "DuplicateRuleId", "pointer": "/Rules/1/Id"}]}
+    },
+    {
+      "name": "doc-rule-three-equal-ids",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "The second and third rules each repeat an earlier Id, so two errors apply and the reported subset is implementation-defined.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}}, {"Id": "r1", "Decision": "Allow", "Select": {}}, {"Id": "r1", "Decision": "Allow", "Select": {}}]},
+      "expect": {"someOf": [{"code": "DuplicateRuleId", "pointer": "/Rules/1/Id"}, {"code": "DuplicateRuleId", "pointer": "/Rules/2/Id"}]}
+    },
+    {
+      "name": "doc-rule-decision-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Select": {}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Decision"}]}
+    },
+    {
+      "name": "doc-rule-decision-lowercase-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Decision is Allow or Deny with exact characters (§text-comparison). Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Decision"}]}
+    },
+    {
+      "name": "doc-rule-decision-uppercase-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Decision is Allow or Deny with exact characters (§text-comparison). Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "DENY", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Decision"}]}
+    },
+    {
+      "name": "doc-rule-decision-unlisted-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Decision is Allow or Deny with exact characters (§text-comparison). Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Block", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Decision"}]}
+    },
+    {
+      "name": "doc-rule-decision-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Decision is Allow or Deny with exact characters (§text-comparison). Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Decision"}]}
+    },
+    {
+      "name": "doc-rule-decision-trailing-space-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Decision is Allow or Deny with exact characters (§text-comparison). Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow ", "Select": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Decision"}]}
+    },
+    {
+      "name": "doc-rule-decision-boolean-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": true, "Select": {}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Decision"}]}
+    },
+    {
+      "name": "doc-rule-decision-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": null, "Select": {}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Decision"}]}
+    },
+    {
+      "name": "doc-rule-enabled-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Enabled is a boolean. Control: doc-rule-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Enabled": "false"}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Enabled"}]}
+    },
+    {
+      "name": "doc-rule-enabled-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Enabled is a boolean. Control: doc-rule-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Enabled": null}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Enabled"}]}
+    },
+    {
+      "name": "doc-rule-enabled-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Enabled is a boolean. Control: doc-rule-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Enabled": 0}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Enabled"}]}
+    },
+    {
+      "name": "doc-rule-reason-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Reason is a string. Control: doc-rule-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Reason": 1}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Reason"}]}
+    },
+    {
+      "name": "doc-rule-reason-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Reason is a string. Control: doc-rule-all-keys-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Reason": null}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Reason"}]}
+    },
+    {
+      "name": "doc-rule-select-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Select is required even for a rule that selects every request. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow"}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select"}]}
+    },
+    {
+      "name": "doc-rule-select-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Select is a selection object. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": []}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select"}]}
+    },
+    {
+      "name": "doc-rule-select-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Select is a selection object. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": null}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select"}]}
+    },
+    {
+      "name": "doc-rule-select-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Select is a selection object. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": "*"}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select"}]}
+    },
+    {
+      "name": "doc-rule-except-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Install"]}]}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-except-repeated-entry-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "A list other than Rules may repeat an entry.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Install"]}, {"Operations": ["Install"]}]}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-except-empty-list-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Except is a non-empty list. Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": []}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Except"}]}
+    },
+    {
+      "name": "doc-rule-except-empty-selection-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "An Except entry that is {} would except every request. Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{}]}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Except/0"}]}
+    },
+    {
+      "name": "doc-rule-except-second-entry-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "The {} entry is the second one, on a Deny rule.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Except": [{"Operations": ["Install"]}, {}]}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Except/1"}]}
+    },
+    {
+      "name": "doc-rule-except-object-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Except is a list of selections, not a selection. Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": {}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Except"}]}
+    },
+    {
+      "name": "doc-rule-except-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Except is a list of selections, not a selection. Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": null}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Except"}]}
+    },
+    {
+      "name": "doc-rule-except-selection-object-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Except is a list of selections, not a selection. Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": {"Operations": ["Install"]}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Except"}]}
+    },
+    {
+      "name": "doc-rule-except-entry-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "An Except entry is a selection object. Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": ["Install"]}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Except/0"}]}
+    },
+    {
+      "name": "doc-rule-allow-grants-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-deny-forbids-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-rule-grants-on-deny-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: doc-rule-allow-grants-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Grants": {"Interactive": {}}}]},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Grants"}]}
+    },
+    {
+      "name": "doc-rule-forbids-on-allow-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: doc-rule-deny-forbids-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Forbids": {"Interactive": {}}}]},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Forbids"}]}
+    },
+    {
+      "name": "doc-rule-grants-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Grants is a non-empty object. Control: doc-rule-allow-grants-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Grants"}]}
+    },
+    {
+      "name": "doc-rule-forbids-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Forbids is a non-empty object. Control: doc-rule-deny-forbids-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Forbids"}]}
+    },
+    {
+      "name": "doc-rule-grants-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Grants on an Allow rule is an object. Control: doc-rule-allow-grants-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": ["Interactive"]}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Grants"}]}
+    },
+    {
+      "name": "doc-rule-grants-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Grants on an Allow rule is an object. Control: doc-rule-allow-grants-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": null}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Grants"}]}
+    },
+    {
+      "name": "doc-rule-grants-boolean-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Grants on an Allow rule is an object. Control: doc-rule-allow-grants-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": true}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Grants"}]}
+    },
+    {
+      "name": "doc-rule-forbids-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Forbids on a Deny rule is an object. Control: doc-rule-deny-forbids-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": "Interactive"}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Forbids"}]}
+    },
+    {
+      "name": "doc-rule-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Priority": 1}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Priority"}]}
+    },
+    {
+      "name": "doc-rule-entry-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "A Rules entry is a rule object. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": ["r1"]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0"}]}
+    },
+    {
+      "name": "doc-rule-entry-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "A Rules entry is a rule object. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [null]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0"}]}
+    },
+    {
+      "name": "doc-rule-entry-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "A Rules entry is a rule object. Control: doc-rule-allow-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [[]]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0"}]}
+    },
+    {
+      "name": "doc-rule-disabled-still-validated",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "A disabled rule is never applicable, but it is still an object the contract defines, so its defects are errors. Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Enabled": false, "Except": [{}]}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Except/0"}]}
+    },
+    {
+      "name": "doc-rule-disabled-grants-on-deny-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Validation does not depend on Enabled.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Enabled": false, "Grants": {"Interactive": {}}}]},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Grants"}]}
+    },
+    {
+      "name": "doc-rule-second-rule-pointer",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "The pointer indexes the second rule from 0.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}}, {"Id": "r2", "Decision": "Deny"}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/1/Select"}]}
+    }
+  ]
+}

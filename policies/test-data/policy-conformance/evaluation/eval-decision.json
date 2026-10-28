@@ -1,0 +1,583 @@
+{
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "eval-decision-allow-rule-reason",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Reason": "Routine installs", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all", "reason": "Routine installs"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-deny-rule-reason",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-all", "Decision": "Deny", "Reason": "Frozen for the audit", "Select": {}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-all", "reason": "Frozen for the audit"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-empty-reason",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "The rule has a Reason, the empty string, and the decision carries it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Reason": "", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all", "reason": ""}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-ungranted-rule-reason",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Reason": "Plain installs only", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"Interactive": true},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all", "reason": "Plain installs only"}],
+        "optIns": ["Interactive"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-allow-rules-in-rules-order",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "Rules are named in the order of Rules, not sorted, and a non-applicable rule is skipped.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "zeta", "Decision": "Allow", "Select": {}},
+          {"Id": "skipped", "Decision": "Allow", "Select": {"Packages": ["Fabrikam.*"]}},
+          {"Id": "alpha", "Decision": "Allow", "Reason": "Second", "Select": {}},
+          {"Id": "mid", "Decision": "Allow", "Select": {}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "zeta"}, {"id": "alpha", "reason": "Second"}, {"id": "mid"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-deny-rules-in-rules-order",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "Allow rules are not named under DenyRule.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "deny-zeta", "Decision": "Deny", "Select": {}},
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-alpha", "Decision": "Deny", "Select": {}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-zeta"}, {"id": "deny-alpha"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-ungranted-names-every-applicable-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "Every applicable Allow rule is named, and only the ungranted opt-in.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "plain", "Decision": "Allow", "Select": {}},
+          {"Id": "allow-interactive", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}}},
+          {
+            "Id": "allow-fabrikam",
+            "Decision": "Allow",
+            "Select": {"Packages": ["Fabrikam.*"]},
+            "Grants": {"SkipHashCheck": {}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"Interactive": true, "SkipHashCheck": true},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "plain"}, {"id": "allow-interactive"}],
+        "optIns": ["SkipHashCheck"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-ungranted-opt-in-order-install",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "'--override' and '/quiet' carry CustomParameters and InstallerArguments (§manager-winget); opt-ins are named in the order of §opt-ins.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {
+          "Interactive": true,
+          "SkipHashCheck": true,
+          "CustomInstallLocation": "C:\\Apps",
+          "CustomParameters": ["--override", "/quiet"],
+          "PreOperationCommand": "cmd /c echo",
+          "KillBeforeOperation": ["tool.exe"],
+          "NoUpgrade": true
+        },
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [
+          "Interactive",
+          "SkipHashCheck",
+          "CustomInstallLocation",
+          "CustomParameters",
+          "InstallerArguments",
+          "PrePostCommands",
+          "KillBeforeOperation",
+          "NoUpgrade"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-ungranted-opt-in-order-update",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "Opt-ins are named in the order of §opt-ins.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {
+          "Interactive": true,
+          "SkipHashCheck": true,
+          "CustomInstallLocation": "C:\\Apps",
+          "CustomParameters": ["--override", "/quiet"],
+          "PreOperationCommand": "cmd /c echo",
+          "KillBeforeOperation": ["tool.exe"],
+          "UninstallPrevious": true
+        },
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [
+          "Interactive",
+          "SkipHashCheck",
+          "CustomInstallLocation",
+          "CustomParameters",
+          "InstallerArguments",
+          "PrePostCommands",
+          "KillBeforeOperation",
+          "UninstallPrevious"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-default-deny-names-opt-ins",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "DefaultDeny names every opt-in the request uses, and no rule.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": []
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {
+          "Interactive": true,
+          "SkipHashCheck": true,
+          "CustomInstallLocation": "C:\\Apps",
+          "CustomParameters": ["--override", "/quiet"],
+          "PreOperationCommand": "cmd /c echo",
+          "KillBeforeOperation": ["tool.exe"],
+          "NoUpgrade": true
+        },
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [
+          "Interactive",
+          "SkipHashCheck",
+          "CustomInstallLocation",
+          "CustomParameters",
+          "InstallerArguments",
+          "PrePostCommands",
+          "KillBeforeOperation",
+          "NoUpgrade"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-default-deny-disabled-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "A disabled rule is never applicable and is not named.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Enabled": false,
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"Interactive": {}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"Interactive": true},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": ["Interactive"], "audited": false}
+    },
+    {
+      "name": "eval-decision-deny-opt-ins-in-table-order",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "Rules follow Rules; opt-ins follow §opt-ins.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"Interactive": {}, "NoUpgrade": {}}
+          },
+          {"Id": "deny-no-upgrade", "Decision": "Deny", "Select": {}, "Forbids": {"NoUpgrade": {}}},
+          {"Id": "deny-interactive", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"NoUpgrade": true, "Interactive": true},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-no-upgrade"}, {"id": "deny-interactive"}],
+        "optIns": ["Interactive", "NoUpgrade"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-deny-opt-in-named-once",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "Two rules deny for Interactive; it is named once.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}}},
+          {"Id": "deny-a", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}}},
+          {"Id": "deny-b", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"Interactive": true},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-a"}, {"id": "deny-b"}],
+        "optIns": ["Interactive"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-deny-names-only-denying-rules",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "deny-skip-hash applies but does not deny a request without SkipHashCheck.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-skip-hash", "Decision": "Deny", "Select": {}, "Forbids": {"SkipHashCheck": {}}},
+          {"Id": "deny-all", "Decision": "Deny", "Select": {}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-decision-deny-with-and-without-forbids",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "deny-all denies the request without an opt-in; deny-interactive denies it for Interactive.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}}},
+          {"Id": "deny-all", "Decision": "Deny", "Select": {}},
+          {"Id": "deny-interactive", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"Interactive": true},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-all"}, {"id": "deny-interactive"}],
+        "optIns": ["Interactive"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-decision-allow-names-no-deny-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §decision",
+      "note": "deny-interactive applies but does not deny, so the decision is AllowRules and names Allow rules only.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-interactive", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}

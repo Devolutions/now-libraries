@@ -1,0 +1,331 @@
+{
+  "cases": [
+    {
+      "name": "doc-minimal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §document-keys",
+      "note": "Every required key, an empty TrustedSources and an empty Rules; the control for most single-defect cases in this directory.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-top-missing-metadata",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid. MissingKey points at the absent member.",
+      "document": {"PolicyFormatVersion": "2.0.0", "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Metadata"}]}
+    },
+    {
+      "name": "doc-top-missing-trustedsources",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid. MissingKey points at the absent member.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "Rules": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/TrustedSources"}]}
+    },
+    {
+      "name": "doc-top-missing-rules",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid. MissingKey points at the absent member.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules"}]}
+    },
+    {
+      "name": "doc-top-missing-policy-format-version",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-top-metadata-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": "p", "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata"}]}
+    },
+    {
+      "name": "doc-top-metadata-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid. null is a value of the wrong type wherever it appears (§json).",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": null, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata"}]}
+    },
+    {
+      "name": "doc-top-metadata-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": [], "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Metadata"}]}
+    },
+    {
+      "name": "doc-top-trustedsources-object-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": {}, "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources"}]}
+    },
+    {
+      "name": "doc-top-trustedsources-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid. null is a value of the wrong type wherever it appears (§json).",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": null, "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources"}]}
+    },
+    {
+      "name": "doc-top-rules-object-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": {}},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules"}]}
+    },
+    {
+      "name": "doc-top-rules-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": "r1"},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules"}]}
+    },
+    {
+      "name": "doc-top-rules-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid. null is a value of the wrong type wherever it appears (§json).",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": null},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules"}]}
+    },
+    {
+      "name": "doc-top-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Extra": 1},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Extra"}]}
+    },
+    {
+      "name": "doc-top-unknown-schema-key",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "No key outside the table is allowed, including a JSON Schema reference; '$' needs no escaping in a JSON Pointer (RFC 6901).",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "$schema": "https://example.test/policy.json"},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/$schema"}]}
+    },
+    {
+      "name": "doc-top-key-differing-in-case-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Keys match only with their exact characters, so policyFormatVersion is a different, unknown key beside the real PolicyFormatVersion.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "policyFormatVersion": "2.0.0"},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/policyFormatVersion"}]}
+    },
+    {
+      "name": "doc-top-reordered-keys-and-whitespace-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid with reversed key order and RFC 8259 whitespace (space, tab, CR, LF) before, between and after tokens; key order and whitespace carry no meaning.",
+      "text": "\r\n\t{ \"Rules\" :[ ] ,\n\t\"TrustedSources\":[],\"Metadata\":{\"PublishedAt\":\"2026-01-01T00:00:00Z\",\"Revision\":1,\"Publisher\":\"x\",\"Id\":\"p\"},\r\n\"PolicyFormatVersion\"\t:\t\"2.0.0\"}\r\n",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-enforcement-empty-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "AuditMode is optional.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Enforcement": {}},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-enforcement-audit-true-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Enforcement": {"AuditMode": true}},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-enforcement-audit-false-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Enforcement": {"AuditMode": false}},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-enforcement-audit-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "AuditMode is a boolean. Control: doc-enforcement-audit-true-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Enforcement": {"AuditMode": "true"}},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Enforcement/AuditMode"}]}
+    },
+    {
+      "name": "doc-enforcement-audit-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "AuditMode is a boolean. Control: doc-enforcement-audit-true-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Enforcement": {"AuditMode": null}},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Enforcement/AuditMode"}]}
+    },
+    {
+      "name": "doc-enforcement-audit-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "AuditMode is a boolean. Control: doc-enforcement-audit-true-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Enforcement": {"AuditMode": 1}},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Enforcement/AuditMode"}]}
+    },
+    {
+      "name": "doc-enforcement-boolean-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "Enforcement is an object. Control: doc-enforcement-empty-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Enforcement": true},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Enforcement"}]}
+    },
+    {
+      "name": "doc-enforcement-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "Enforcement is an object. Control: doc-enforcement-empty-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Enforcement": null},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Enforcement"}]}
+    },
+    {
+      "name": "doc-enforcement-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "Enforcement is an object. Control: doc-enforcement-empty-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Enforcement": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Enforcement"}]}
+    },
+    {
+      "name": "doc-enforcement-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
+      "note": "Enforcement has one key, AuditMode. Control: doc-enforcement-audit-true-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Enforcement": {"AuditMode": true, "Mode": "Audit"}},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Enforcement/Mode"}]}
+    },
+    {
+      "name": "doc-format-version-escaped-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version; RFC 8259 §7",
+      "note": "The string value \\u0032.0.0 decodes to 2.0.0 under RFC 8259 §7, so it is the supported version.",
+      "document": {"PolicyFormatVersion": "\u0032.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-format-version-patch-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.1", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-minor-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.1.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-major-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "3.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-one-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "1.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-legacy-short-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "1.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-two-components-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-one-component-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-v-prefix-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "v2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-leading-space-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": " 2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-trailing-space-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0 ", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-pre-release-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0-rc.1", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-build-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0+1", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-empty-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "Only the exact string 2.0.0 is defined; the pointer is the value. Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-number-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "A PolicyFormatVersion that is not a string is UnsupportedFormatVersion, not WrongType (§errors).",
+      "document": {"PolicyFormatVersion": 2, "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-fraction-number-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "A PolicyFormatVersion that is not a string is UnsupportedFormatVersion, not WrongType (§errors).",
+      "document": {"PolicyFormatVersion": 2.0, "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-null-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "A PolicyFormatVersion that is not a string is UnsupportedFormatVersion, not WrongType (§errors).",
+      "document": {"PolicyFormatVersion": null, "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-boolean-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "A PolicyFormatVersion that is not a string is UnsupportedFormatVersion, not WrongType (§errors).",
+      "document": {"PolicyFormatVersion": true, "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-array-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "A PolicyFormatVersion that is not a string is UnsupportedFormatVersion, not WrongType (§errors).",
+      "document": {"PolicyFormatVersion": ["2.0.0"], "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-format-version-object-unsupported",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
+      "note": "A PolicyFormatVersion that is not a string is UnsupportedFormatVersion, not WrongType (§errors).",
+      "document": {"PolicyFormatVersion": {"Major": 2}, "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    }
+  ]
+}

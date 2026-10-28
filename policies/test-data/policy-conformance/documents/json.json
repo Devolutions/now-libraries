@@ -1,0 +1,451 @@
+{
+  "cases": [
+    {
+      "name": "doc-json-size-at-limit-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid padded with trailing spaces to exactly 4,194,304 bytes.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "padTo": 4194304,
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-size-over-limit",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid padded to 4,194,305 bytes, one over the limit. Control: doc-json-size-at-limit-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "padTo": 4194305,
+      "expect": {"errors": [{"code": "DocumentTooLarge", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-size-counts-utf8-bytes-at-limit-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description holds three U+1F600, 4 UTF-8 bytes each; the input is exactly 4,194,304 bytes.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"😀😀😀\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "padTo": 4194304,
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-size-counts-utf8-bytes-over-limit",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "4,194,305 bytes, but only 4,194,299 UTF-16 code units and 4,194,296 code points, so a reader that counts characters instead of bytes accepts it. Control: doc-json-size-counts-utf8-bytes-at-limit-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"😀😀😀\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "padTo": 4194305,
+      "expect": {"errors": [{"code": "DocumentTooLarge", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-bom-accepted",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "One leading UTF-8 byte order mark EF BB BF before doc-minimal-valid.",
+      "base64": "77u/eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIn0sICJUcnVzdGVkU291cmNlcyI6IFtdLCAiUnVsZXMiOiBbXX0=",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-bom-counted-at-limit-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "BOM plus document plus spaces is exactly 4,194,304 bytes.",
+      "base64": "77u/eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIn0sICJUcnVzdGVkU291cmNlcyI6IFtdLCAiUnVsZXMiOiBbXX0=",
+      "padTo": 4194304,
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-bom-counted-over-limit",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "BOM plus document plus spaces is 4,194,305 bytes; without the BOM it would be 4,194,302 bytes, under the limit, so this fails only when the BOM is counted. Control: doc-json-bom-counted-at-limit-valid.",
+      "base64": "77u/eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIn0sICJUcnVzdGVkU291cmNlcyI6IFtdLCAiUnVsZXMiOiBbXX0=",
+      "padTo": 4194305,
+      "expect": {"errors": [{"code": "DocumentTooLarge", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-two-boms-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "A reader ignores one leading BOM; the second U+FEFF is not JSON whitespace (RFC 8259 §2). Control: doc-json-bom-accepted.",
+      "base64": "77u/77u/eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIn0sICJUcnVzdGVkU291cmNlcyI6IFtdLCAiUnVsZXMiOiBbXX0=",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-bom-after-whitespace-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The BOM is not leading, so it stays in the text and is not JSON whitespace. Control: doc-json-bom-accepted.",
+      "base64": "IO+7v3siUG9saWN5Rm9ybWF0VmVyc2lvbiI6ICIyLjAuMCIsICJNZXRhZGF0YSI6IHsiSWQiOiAicCIsICJQdWJsaXNoZXIiOiAieCIsICJSZXZpc2lvbiI6IDEsICJQdWJsaXNoZWRBdCI6ICIyMDI2LTAxLTAxVDAwOjAwOjAwWiJ9LCAiVHJ1c3RlZFNvdXJjZXMiOiBbXSwgIlJ1bGVzIjogW119",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-utf16-encoded-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "doc-minimal-valid encoded as UTF-16LE with its BOM; FF is never valid in UTF-8.",
+      "base64": "//57ACIAUABvAGwAaQBjAHkARgBvAHIAbQBhAHQAVgBlAHIAcwBpAG8AbgAiADoAIAAiADIALgAwAC4AMAAiACwAIAAiAE0AZQB0AGEAZABhAHQAYQAiADoAIAB7ACIASQBkACIAOgAgACIAcAAiACwAIAAiAFAAdQBiAGwAaQBzAGgAZQByACIAOgAgACIAeAAiACwAIAAiAFIAZQB2AGkAcwBpAG8AbgAiADoAIAAxACwAIAAiAFAAdQBiAGwAaQBzAGgAZQBkAEEAdAAiADoAIAAiADIAMAAyADYALQAwADEALQAwADEAVAAwADAAOgAwADAAOgAwADAAWgAiAH0ALAAgACIAVAByAHUAcwB0AGUAZABTAG8AdQByAGMAZQBzACIAOgAgAFsAXQAsACAAIgBSAHUAbABlAHMAIgA6ACAAWwBdAH0A",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-utf8-four-byte-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description holds U+1F600 as the valid 4-byte sequence F0 9F 98 80; the control for the invalid UTF-8 cases.",
+      "base64": "eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIiwgIkRlc2NyaXB0aW9uIjogIvCfmIAifSwgIlRydXN0ZWRTb3VyY2VzIjogW10sICJSdWxlcyI6IFtdfQ==",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-utf8-noncharacter-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "EF BF BF is U+FFFF, a noncharacter but a valid UTF-8 scalar value, and allowed in an RFC 8259 string.",
+      "base64": "eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIiwgIkRlc2NyaXB0aW9uIjogIu+/vyJ9LCAiVHJ1c3RlZFNvdXJjZXMiOiBbXSwgIlJ1bGVzIjogW119",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-invalid-utf8-byte-ff-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description holds invalid UTF-8: FF never occurs in UTF-8 (RFC 3629 §4). Control: doc-json-utf8-four-byte-valid.",
+      "base64": "eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIiwgIkRlc2NyaXB0aW9uIjogIv8ifSwgIlRydXN0ZWRTb3VyY2VzIjogW10sICJSdWxlcyI6IFtdfQ==",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-invalid-utf8-overlong-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description holds invalid UTF-8: C0 80 is an overlong encoding of U+0000 (RFC 3629 §4). Control: doc-json-utf8-four-byte-valid.",
+      "base64": "eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIiwgIkRlc2NyaXB0aW9uIjogIsCAIn0sICJUcnVzdGVkU291cmNlcyI6IFtdLCAiUnVsZXMiOiBbXX0=",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-invalid-utf8-encoded-surrogate-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description holds invalid UTF-8: ED A0 80 encodes the surrogate U+D800, which UTF-8 excludes (RFC 3629 §4). Control: doc-json-utf8-four-byte-valid.",
+      "base64": "eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIiwgIkRlc2NyaXB0aW9uIjogIu2ggCJ9LCAiVHJ1c3RlZFNvdXJjZXMiOiBbXSwgIlJ1bGVzIjogW119",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-invalid-utf8-above-max-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description holds invalid UTF-8: F4 90 80 80 would encode U+110000, above U+10FFFF (RFC 3629 §4). Control: doc-json-utf8-four-byte-valid.",
+      "base64": "eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIiwgIkRlc2NyaXB0aW9uIjogIvSQgIAifSwgIlRydXN0ZWRTb3VyY2VzIjogW10sICJSdWxlcyI6IFtdfQ==",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-invalid-utf8-truncated-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description holds invalid UTF-8: E2 82 is a 3-byte sequence cut short by the closing quote (RFC 3629 §4). Control: doc-json-utf8-four-byte-valid.",
+      "base64": "eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIiwgIkRlc2NyaXB0aW9uIjogIuKCIn0sICJUcnVzdGVkU291cmNlcyI6IFtdLCAiUnVsZXMiOiBbXX0=",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-invalid-utf8-lone-continuation-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description holds invalid UTF-8: 80 is a continuation byte with no lead byte (RFC 3629 §4). Control: doc-json-utf8-four-byte-valid.",
+      "base64": "eyJQb2xpY3lGb3JtYXRWZXJzaW9uIjogIjIuMC4wIiwgIk1ldGFkYXRhIjogeyJJZCI6ICJwIiwgIlB1Ymxpc2hlciI6ICJ4IiwgIlJldmlzaW9uIjogMSwgIlB1Ymxpc2hlZEF0IjogIjIwMjYtMDEtMDFUMDA6MDA6MDBaIiwgIkRlc2NyaXB0aW9uIjogIoAifSwgIlRydXN0ZWRTb3VyY2VzIjogW10sICJSdWxlcyI6IFtdfQ==",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-top-level-array-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level value must be an object. Control: doc-minimal-valid.",
+      "text": "[]",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-top-level-string-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level value must be an object. Control: doc-minimal-valid.",
+      "text": "\"2.0.0\"",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-top-level-number-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level value must be an object. Control: doc-minimal-valid.",
+      "text": "1",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-top-level-null-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level value must be an object. Control: doc-minimal-valid.",
+      "text": "null",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-top-level-boolean-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level value must be an object. Control: doc-minimal-valid.",
+      "text": "true",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-top-level-array-of-document-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "A valid document wrapped in an array has a top-level value that is not an object.",
+      "text": "[{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}]",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-empty-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Zero bytes are no JSON value.",
+      "text": "",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-whitespace-only-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Whitespace alone is no JSON value.",
+      "text": " \n",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-bom-only-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "After the ignored BOM no JSON value remains.",
+      "base64": "77u/",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-trailing-comma-object-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with a trailing comma after the last member (§json). Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], }",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-trailing-comma-array-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with a trailing comma after the last array element (§json). Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [{\"Id\": \"r1\", \"Decision\": \"Allow\", \"Select\": {}},]}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-line-comment-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with a // comment (§json). Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []\n// comment\n}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-block-comment-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with a /* */ comment (§json). Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], /* c */ \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-single-quoted-string-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with a single-quoted string. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": 'x', \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-unquoted-key-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with an unquoted key. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", Publisher: \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-leading-zero-number-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with a number with a leading zero, which RFC 8259 §6 excludes. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 01, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-plus-sign-number-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with a number with a leading +, which RFC 8259 §6 excludes. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": +1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-nan-literal-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with the literal NaN. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": NaN, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-uppercase-literal-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with the literal True, where RFC 8259 §3 has only lowercase true. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Enforcement\": {\"AuditMode\": True}, \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-trailing-value-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with a second value after the document. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []} {}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-unterminated-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with a missing closing brace. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-raw-control-character-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with an unescaped U+0001 inside a string, which RFC 8259 §7 requires to be escaped. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\u0001\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-raw-tab-in-string-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with an unescaped tab inside a string, which RFC 8259 §7 requires to be escaped. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\ty\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-invalid-escape-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with the escape \\x, which RFC 8259 §7 does not define. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"\\x41\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-short-unicode-escape-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with a \\u escape with two hex digits instead of four. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"\\u41\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-nbsp-whitespace-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with U+00A0 between tokens, which is not one of the four RFC 8259 §2 whitespace characters. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-form-feed-whitespace-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json; RFC 8259",
+      "note": "doc-minimal-valid with U+000C between tokens, which is not one of the four RFC 8259 §2 whitespace characters. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\":\f[]}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-surrogate-pair-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "A paired escape \\ud83d\\ude00 is U+1F600; the control for the unpaired surrogate cases.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\ud83d\\ude00\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-escaped-nul-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "An escaped U+0000 is a valid string character under RFC 8259 §7; nothing in §json rejects it in a document.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"a\\u0000b\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-escaped-noncharacter-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "U+FFFF is not a surrogate, so the string is not malformed.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\uffff\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-unpaired-surrogate-lone-high-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description is \"\\ud800\", which contains an unpaired surrogate. Control: doc-json-surrogate-pair-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\ud800\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-unpaired-surrogate-lone-low-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description is \"\\udc00\", which contains an unpaired surrogate. Control: doc-json-surrogate-pair-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\udc00\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-unpaired-surrogate-reversed-pair-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description is \"\\udc00\\ud800\", which contains an unpaired surrogate. Control: doc-json-surrogate-pair-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\udc00\\ud800\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-unpaired-surrogate-high-before-ascii-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description is \"\\ud800x\", which contains an unpaired surrogate. Control: doc-json-surrogate-pair-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\ud800x\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-unpaired-surrogate-two-highs-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description is \"\\ud800\\ud800\", which contains an unpaired surrogate. Control: doc-json-surrogate-pair-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\ud800\\ud800\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-unpaired-surrogate-in-key-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "A key is a string, so a key with an unpaired surrogate makes the document malformed; MalformedDocument is then the only error, though the key is also unknown.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"\\ud800\": 1, \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-depth-64-arrays-not-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level object is level 1 and X holds 63 nested arrays, so the deepest level is 64, which is allowed. No valid document can nest this deep, so the one defect is the unknown key X.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"X\": [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}",
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/X"}]}
+    },
+    {
+      "name": "doc-json-depth-65-arrays-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "X holds 64 nested arrays, so the deepest level is 65. MalformedDocument is the only error. Control: doc-json-depth-64-arrays-not-malformed.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"X\": [[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-depth-64-objects-not-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "X holds 63 nested objects, so the deepest level is 64.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"X\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}",
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/X"}]}
+    },
+    {
+      "name": "doc-json-depth-65-objects-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "X holds 64 nested objects, so the deepest level is 65. Control: doc-json-depth-64-objects-not-malformed.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"X\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {\"a\": {}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-depth-64-mixed-not-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "X holds 31 arrays each containing an object, then an empty array: 63 containers below the top-level object, so the deepest level is 64.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"X\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": []}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}",
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/X"}]}
+    },
+    {
+      "name": "doc-json-depth-65-mixed-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "X holds 32 arrays each containing an object, the innermost holding the number 1: 64 containers below the top-level object, so the deepest level is 65. Arrays and objects both count. Control: doc-json-depth-64-mixed-not-malformed.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"X\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": [{\"a\": 1}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-json-huge-exponent-not-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The magnitude of a number never makes a document malformed, so the one defect is the unknown key X.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"X\": 1e999999}",
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/X"}]}
+    },
+    {
+      "name": "doc-json-long-precision-not-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Neither precision nor magnitude makes a document malformed, so the one defect is the unknown key X.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"X\": -123456789012345678901234567890.123456789012345678901234567890e-999999}",
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/X"}]}
+    },
+    {
+      "name": "doc-json-escaped-key-matches",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Keys match after JSON escapes are decoded, so Publishe\\u0072 is Publisher and \\u0052ules is Rules.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publishe\u0072": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "\u0052ules": []},
+      "expect": {"valid": true}
+    }
+  ]
+}

@@ -210,14 +210,14 @@ A source selector names one manager and either one of its sources or all of them
 | Key         | Required                    | Value                                          |
 | ----------- | --------------------------- | ---------------------------------------------- |
 | `Manager`   | yes                         | a manager identifier ([§managers](#managers)) |
-| `Source`    | exactly one of the two keys | a non-empty source name                        |
+| `Source`    | exactly one of the two keys | a non-empty string, which names a source       |
 | `AnySource` | exactly one of the two keys | `true`                                         |
 
 A selector with both `Source` and `AnySource` is `ConflictingKeys` at `AnySource`, and one with neither is `MissingKey` at `Source`.
 `AnySource` with the value `false` is `InvalidValue`, because such a selector would name no source.
 A selector does not match a request through another manager.
 For a request through its manager, a selector with `AnySource` matches whatever the source, including an unknown one.
-For a request through its manager, a selector with `Source` matches a known source equal to it under the manager's source comparison, does not match a different known source, and is unknown for an unknown source.
+For a request through its manager, a selector with `Source` matches a known source equal to it ignoring case ([§text-comparison](#text-comparison)), does not match a different known source, and is unknown for an unknown source.
 
 <a id="rules"></a>
 ### Rules
@@ -292,7 +292,7 @@ A grant or forbid for `CustomParameters` or `CustomInstallLocation` has these ke
 
 A value is covered by a grant or forbid when it matches one of its `Patterns` and none of its `Except` patterns.
 For `CustomParameters`, the values are the request's custom parameters, each element on its own, option values included; for `CustomInstallLocation`, the value is the request's normalized install location ([§install-location](#install-location)).
-A `CustomInstallLocation` pattern is normalized as an install location is before it is matched, so `C:/Apps/*` matches `C:\Apps\Tool`.
+Before a `CustomInstallLocation` pattern is matched, each `/` in it becomes `\`, repeated `\` are collapsed, and a trailing `\` is dropped unless it follows a `:`, as an install location is normalized, so `C:/Apps/*` matches `C:\Apps\Tool`.
 A grant's or forbid's `Except` narrows only that grant or forbid, never another one and never another rule.
 
 <a id="opt-ins"></a>
@@ -338,7 +338,7 @@ Every error carries its code and a [JSON Pointer][rfc6901] to where it is:
 
 - for `DuplicateKey`, `UnknownKey` and `ConflictingKeys`, the member;
 - for `MissingKey`, the absent member;
-- for `WrongType`, `InvalidValue` and `UnsupportedFormatVersion`, the value;
+- for `WrongType`, `InvalidValue` and `UnsupportedFormatVersion`, the value, which is the entry when the defect is in one entry of a list;
 - for `DuplicateRuleId`, the later rule's `Id`;
 - for `DocumentTooLarge` and `MalformedDocument`, the whole document, which is the empty pointer.
 
@@ -381,7 +381,8 @@ Lengths count bytes in UTF-8.
 ### Reading a request
 
 Each property is the value that the manager's reading ([§managers](#managers)) assigns to the request, which is the value the manager acts on when the broker runs the command, so a change to how the broker builds commands is a change to this contract.
-A value the client sends that the command does not carry has no effect on any property or opt-in; in particular `Options.PreRelease` has none.
+A value the client sends that the command does not carry has no effect on any property; in particular `Options.PreRelease` has none.
+A part in a row of [§opt-ins](#opt-ins) carries that opt-in even when the command does not carry the part, so a decision depends only on the policy and the request, never on what a broker version does with them.
 A request is unreadable when:
 
 - a part has a value outside its set in [§request-input](#request-input);
@@ -425,7 +426,7 @@ Unless the manager's reading states otherwise, an identifier `name@version`, whe
 A package name compares in its manager's canonical form, and a pattern's characters between `*` are put in that canonical form before matching.
 Unless the manager's reading states otherwise, the canonical form maps ASCII letters to lowercase.
 For each package name, the `Packages` patterns match when one matches it in canonical form, are unknown when none does but one would when case is ignored ([§text-comparison](#text-comparison)), and do not match otherwise.
-`Packages` matches when the patterns match every package name, does not match when they match none, and is unknown otherwise.
+`Packages` matches when the patterns match every package name, does not match when, for every package name, the patterns do not match it, and is unknown otherwise, so a name they would match only ignoring case makes it unknown.
 `Packages` is unknown when the manager's reading makes the package identity unknown.
 So an Allow rule's selection matches only when it covers every package the identifier names, and a Deny rule's selection matches when it covers any of them, whatever their case.
 
@@ -437,7 +438,7 @@ Each pre-release identifier is non-empty, and one made only of digits has no lea
 Release components compare numerically, whatever their length or leading zeros, and missing trailing components count as zero, so `1.2` equals `1.2.0`.
 A version with a pre-release is lower than the same release without one, and pre-releases compare by [Semantic Versioning 2.0.0][semver] precedence.
 Build metadata never affects a comparison.
-A version is a pre-release when it has a pre-release, except under `Winget`, where no version is a pre-release.
+A version is a pre-release when it has a pre-release, except under `Winget`, where no version is a pre-release; comparisons use the pre-release under every manager.
 
 <a id="managers"></a>
 ### Managers
@@ -462,7 +463,7 @@ An element that is exactly `--` ends the options: no later element names an opti
 Before it, an element that starts with `--` names a long option by its text after `--` and before its first `=`, and a long option matches a name in the table ignoring ASCII case.
 Any other element that starts with `-` and has another character names one short option for each character after `-` and before its first `=`, and a short option matches a name in the table with its exact characters, so `-ei` names `-e` and `-i`.
 An option the table lists with a value takes one only when it is a long option or the only short option its element names.
-It then takes the text after the element's first `=` when the element has one, without a leading and a trailing `"` when the text has both and at least two characters, and otherwise the next element, which is then not read as an option.
+It then takes the text after the element's first `=` when the element has one, without a leading and a trailing `"` when the text has both and at least two characters, and otherwise the next element, which is then only that value, even when it is `--` or starts with `-`.
 An option that takes no value, because its element names other short options or no element follows, still has its effect: `--location` gives no install location, so the request fails the install location check ([§install-location](#install-location)), and `--scope` or `--architecture` makes its property unknown.
 
 | Custom parameter                  | Effect                                                                     |
@@ -485,6 +486,7 @@ The scope is unknown when neither `Options.Scope` nor `--scope` sets it.
 
 The reading accepts custom parameters.
 A short cluster is an element that starts with one `-` followed by at least one character other than `-`.
+An option name ends at the element's first `=` and matches ignoring ASCII case, so `--ARCH=64bit` is `--arch` and `-S` is a short cluster containing `s`.
 
 | Custom parameter                                     | Effect                                    |
 | ---------------------------------------------------- | ----------------------------------------- |
@@ -500,7 +502,7 @@ The broker cannot pin a version through Scoop, and a `Package.Channel` makes the
 #### Vcpkg
 
 The source name is a triplet.
-An identifier `port[features]:triplet` names `port`, and no identifier selects the version.
+An identifier names its text before its first `[` or `:`, so `port[features]:triplet` names `port`, and no identifier selects the version.
 The architecture is `Package.Architecture`; when it is absent, it is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise.
 The broker cannot pin a version through Vcpkg.
 
@@ -513,13 +515,14 @@ A registry name is `name` or `@scope/name`, where `scope` and `name` are one or 
 An identifier that is a registry name names itself.
 An alias `alias:target`, split at its first `:`, names `alias` and `target` when both are registry names, and `alias:target@version`, where that `@` is the last `@` after the `:` and is not the first character after it, also selects the version.
 Any other identifier, such as `name@version` or a Git, URL or path specifier, has an unknown package identity and an unknown source, because it may fetch from outside the named source.
+Such an identifier selects the version when it contains `#`, or when a part of it between `:` characters contains `@` after that part's first character.
 The architecture is `Neutral` when `Package.Architecture` is absent.
 
 <a id="manager-bun"></a>
 #### Bun
 
 The reading is that of [§manager-npm](#manager-npm), except for identifiers, sources and channels.
-An identifier that is a registry name names itself, and any other identifier has an unknown package identity and an unknown source.
+An identifier that is a registry name names itself, keeping its case in canonical form, and any other identifier has an unknown package identity and an unknown source and selects the version as under [§manager-npm](#manager-npm).
 The only source name is `Bun`, and a request with another source name is unreadable.
 A request carrying `Source.Url` is readable only when that URL, without its trailing `/` characters, equals `https://www.npmjs.com` ignoring ASCII case.
 A `Package.Channel` makes the request unreadable.
@@ -559,8 +562,8 @@ The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
 A request that uses `CustomInstallLocation` passes the install location check when it carries exactly one install location, from `Options.CustomInstallLocation` and its custom parameters together, and that location is a plain local path.
 Each field or option that sets a location counts as one, even when two of them set the same location.
-A plain local path is an ASCII letter followed by `:` and a separator, optionally followed by segments, where a separator is `\` or `/`.
-A segment is not `.` or `..`, does not start with a space, does not end with `.` or a space, and contains no control character (Unicode general category Cc, U+0000 to U+001F and U+007F to U+009F), and none of `: * ? " < > |`.
+A plain local path is an ASCII letter followed by `:` and a separator, then any sequence of separators and segments, where a separator is `\` or `/` and a segment is a maximal run of other characters.
+A segment is not `.` or `..`, does not start with a space (U+0020), does not end with `.` or a space, and contains no control character (Unicode general category Cc, U+0000 to U+001F and U+007F to U+009F), and none of `: * ? " < > |`.
 The normalized location has an uppercase drive letter and uses `\` as its only separator, with repeated separators collapsed and a trailing separator dropped unless it follows the drive's `:`, so the normalized drive root is `C:\`; grant and forbid patterns match it.
 The check reads only the path's text and does not ask the operating system what a drive letter refers to, so both implementations give the same result on any machine.
 A network path, a device path or a relative path would give an elevated installer a target that no rule can describe, so the check applies whatever the policy says.
@@ -570,7 +573,7 @@ A network path, a device path or a relative path would give an elevated installe
 
 The version is `Package.Version` when it is concrete, and unknown otherwise.
 A version is concrete when it is present, neither a custom parameter nor the identifier ([§package-identity](#package-identity)) selects the version, and the manager does not resolve it as a range.
-`Npm`, `Bun`, `Cargo` and `Dotnet` resolve a version as a range unless it is a version ([§version-scheme](#version-scheme)) with at least three release components, and `PowerShell7` needs a version.
+`Npm`, `Bun`, `Cargo` and `Dotnet` resolve a version as a range unless it is a version ([§version-scheme](#version-scheme)) with at least three release components, and `PowerShell7` resolves one as a range unless it is a version, because its `-Version` accepts NuGet version ranges.
 The broker cannot pin a version through `Scoop` or `Vcpkg`; a request carrying `Package.Version` through them is unreadable, and their version is unknown.
 An Install or Update request through any other manager is missing its version when its version is not concrete, and is denied whatever the policy says, so that rule matching always has the version.
 An Uninstall request is never missing its version, because no version condition applies to it ([§version-condition](#version-condition)).
@@ -594,7 +597,7 @@ An `Except` list matches when one of its entries matches, otherwise is unknown w
 Unknown resolves toward denial, which keeps every rule fail-closed:
 
 - an enabled Allow rule is applicable when its `Select` matches and its `Except` neither matches nor is unknown;
-- an enabled Deny rule is applicable when its `Select` matches or is unknown and its `Except` does not match.
+- an enabled Deny rule is applicable when its `Select` matches or is unknown and its `Except` does not match, an unknown `Except` counting as not matching.
 
 Whether a rule is applicable never depends on the opt-ins a request uses, so an Allow rule cannot require an opt-in.
 An exception narrows only the rule, grant or forbid it is written in.

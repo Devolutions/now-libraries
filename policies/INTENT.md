@@ -51,6 +51,8 @@ A second implementation, rather than the Rust crate shipped to .NET, avoids ship
 For every policy and request, the Rust and C# implementations reach the same decision and name the same rules and opt-ins.
 The evaluator reads raw requests, including what each package manager does with them.
 A request is read the way the broker will execute it, so a change to how the broker builds commands is a change to the specification.
+An option the client sends is the exception: it always counts as asked for, even when the broker drops it.
+A decision depends only on the policy and the request, never on what a given broker version does with the options, so that decisions stay predictable and stable.
 
 <a id="rules"></a>
 ## Rules

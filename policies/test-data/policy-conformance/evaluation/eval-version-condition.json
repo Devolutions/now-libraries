@@ -1,0 +1,874 @@
+{
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "eval-version-minimum-inclusive",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.2.3"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-below-minimum",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.2.3"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.2"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-version-maximum-inclusive",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Maximum": "1.2.3"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-above-maximum",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Maximum": "1.2.3"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.4"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-version-between-bounds",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0", "Maximum": "2.0"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.5.0"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-components-numeric-below",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Release components compare numerically: 9 < 10 (§version-scheme).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.10"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.9.0"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-version-components-numeric-above",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "1.10.0 equals 1.10 (§version-scheme).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.10"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.10.0"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-trailing-zero-equal",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Missing trailing components count as zero (§version-scheme).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Maximum": "1.2"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.0"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-extra-component-above",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Maximum": "1.2"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.0.1"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-version-build-metadata-ignored",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Build metadata never affects a comparison (§version-scheme).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Maximum": "1.2.3"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3+build.5"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-prerelease-below-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Under Chocolatey, 1.2.3-rc.1 is lower than 1.2.3 (§version-scheme).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.2.3"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {"Name": "chocolatey"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-rc.1"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-version-prerelease-exclude-prerelease",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Under Chocolatey, 1.2.3-beta is a pre-release (§version-scheme).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Prerelease": "Exclude"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {"Name": "chocolatey"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-version-prerelease-exclude-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Control: eval-version-prerelease-exclude-prerelease.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Prerelease": "Exclude"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {"Name": "chocolatey"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-prerelease-without-exclude",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Without Prerelease, a pre-release satisfies the condition like any other version.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {"Name": "chocolatey"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-prerelease-exclude-winget",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Under Winget no version is a pre-release (§version-scheme).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Prerelease": "Exclude"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-prerelease-flag-ignored",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Options.PreRelease has no effect (§reading); the version installed, 1.2.3, is not a pre-release.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Prerelease": "Exclude"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {"Name": "chocolatey"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"PreRelease": true},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-prerelease-flag-absent-prerelease",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Pre-release is read from the version, not from Options.PreRelease.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Prerelease": "Exclude"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {"Name": "chocolatey"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"},
+        "Options": {"PreRelease": false},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-version-unknown-allow-not-applicable",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "The broker cannot pin a version through Scoop, so the version is unknown and an Allow rule's condition is unknown (§applicability). Control: eval-version-unknown-allow-without-version.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Scoop", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {"Name": "main"},
+        "Package": {"Id": "git"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-version-unknown-allow-without-version",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "A Scoop install without a version is not missing its version (§missing-version).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Scoop", "AnySource": true}],
+        "Rules": [{"Id": "allow-install", "Decision": "Allow", "Select": {"Operations": ["Install"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {"Name": "main"},
+        "Package": {"Id": "git"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-install"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-unknown-deny-applicable",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "The Scoop version is unknown, so a Deny rule's version condition is unknown and the rule applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Scoop", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {
+            "Id": "deny-version",
+            "Decision": "Deny",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {"Name": "main"},
+        "Package": {"Id": "git"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-not-a-version-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "'nightly' is concrete under Chocolatey but is not a version, so the condition is unknown.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-version",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {"Name": "chocolatey"},
+        "Package": {"Id": "Contoso.Tool", "Version": "nightly"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-version-not-a-version-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "'nightly' is not a version, so the condition is unknown and the Deny rule applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {
+            "Id": "deny-version",
+            "Decision": "Deny",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {"Name": "chocolatey"},
+        "Package": {"Id": "Contoso.Tool", "Version": "nightly"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-deny-condition-holds",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {
+            "Id": "deny-version",
+            "Decision": "Deny",
+            "Select": {"Operations": ["Install"], "Version": {"Maximum": "1.0"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "0.9.0"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-version"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-deny-condition-fails",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {
+            "Id": "deny-version",
+            "Decision": "Deny",
+            "Select": {"Operations": ["Install"], "Version": {"Maximum": "1.0"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-version-except-excludes-old-install",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-recent",
+            "Decision": "Allow",
+            "Select": {},
+            "Except": [{"Operations": ["Install"], "Version": {"Maximum": "1.0"}}]
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "0.9.0"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-version-except-leaves-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "The Except entry lists only Install, so no version condition applies to the uninstall.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-recent",
+            "Decision": "Allow",
+            "Select": {},
+            "Except": [{"Operations": ["Install"], "Version": {"Maximum": "1.0"}}]
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-recent"}],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}
