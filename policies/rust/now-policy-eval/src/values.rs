@@ -38,11 +38,19 @@ macro_rules! closed_set {
 }
 
 closed_set! {
-    pub(crate) enum Operation { Install, Update, Uninstall }
+    /// What a request asks the broker to do with the package ([§request-properties]).
+    ///
+    /// [§request-properties]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#request-properties
+    pub enum Operation { Install, Update, Uninstall }
 }
 
 closed_set! {
-    pub(crate) enum Manager {
+    /// A package manager ([§managers]).
+    ///
+    /// The broker builds commands for only some of them, and a request through another is unreadable.
+    ///
+    /// [§managers]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#managers
+    pub enum Manager {
         Winget,
         PowerShell,
         PowerShell7,
@@ -64,19 +72,31 @@ closed_set! {
 }
 
 closed_set! {
-    pub(crate) enum Scope { User, Machine }
+    /// Where a package is installed for: one user or the whole machine ([§request-properties]).
+    ///
+    /// [§request-properties]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#request-properties
+    pub enum Scope { User, Machine }
 }
 
 closed_set! {
-    pub(crate) enum Architecture { X86, X64, Arm64, Neutral }
+    /// The architecture of the package ([§request-properties]).
+    ///
+    /// [§request-properties]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#request-properties
+    pub enum Architecture { X86, X64, Arm64, Neutral }
 }
 
 closed_set! {
-    pub(crate) enum Elevation { NonElevated, Elevated }
+    /// Whether a request asks the broker to run it with administrator rights ([§request-properties]).
+    ///
+    /// [§request-properties]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#request-properties
+    pub enum Elevation { NonElevated, Elevated }
 }
 
 closed_set! {
-    pub(crate) enum RequestedElevation { Standard, Elevated }
+    /// How the installer arguments of a request combine with the installer's own ([§opt-ins]).
+    ///
+    /// [§opt-ins]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.wire.md#opt-ins
+    pub enum InstallerArgumentsMode { Append, Replace }
 }
 
 closed_set! {

@@ -1,4 +1,7 @@
-use now_policy_eval::{Check, Decision, Outcome, Policy, Request, Timestamp, parse_policy};
+use now_policy_eval::{
+    Check, CustomInstallLocation, CustomParameters, Decision, Elevation, Manager, Operation, OptIns, Outcome, Package,
+    Policy, Request, Source, Timestamp, parse_policy,
+};
 
 /// The metadata every test document uses unless the test is about metadata.
 pub(crate) const METADATA: &str =
@@ -44,28 +47,41 @@ pub(crate) fn time(text: &str) -> Timestamp {
 
 /// A plain WinGet install of `Contoso.Tool` 1.2.3 from the `winget` source.
 pub(crate) fn winget_install() -> Request {
-    let mut request = Request {
-        operation: "Install".to_owned(),
-        manager: "Winget".to_owned(),
-        ..Request::default()
-    };
-    request.source.name = "winget".to_owned();
-    request.package.id = "Contoso.Tool".to_owned();
+    let mut request = request("Install", "Winget", "winget", "Contoso.Tool");
     request.package.version = Some("1.2.3".to_owned());
-    request.client.requested_elevation = "Standard".to_owned();
     request
 }
 
-/// A plain request through `manager` for `id` from `source`, with no version.
+/// A plain non-elevated request through `manager` for `id` from `source`, with no version, scope, architecture or opt-in.
 pub(crate) fn request(operation: &str, manager: &str, source: &str, id: &str) -> Request {
-    let mut request = Request {
-        operation: operation.to_owned(),
-        manager: manager.to_owned(),
-        ..Request::default()
-    };
-    request.source.name = source.to_owned();
-    request.package.id = id.to_owned();
-    request.client.requested_elevation = "Standard".to_owned();
+    Request {
+        operation: Operation::from_name(operation).expect("test operation"),
+        manager: Manager::from_name(manager).expect("test manager"),
+        source: Source {
+            name: source.to_owned(),
+        },
+        package: Package {
+            id: id.to_owned(),
+            version: None,
+            architecture: None,
+        },
+        scope: None,
+        elevation: Elevation::NonElevated,
+        opt_ins: OptIns::default(),
+    }
+}
+
+/// Returns `request` with the custom parameters `values`.
+pub(crate) fn with_parameters(mut request: Request, values: &[&str]) -> Request {
+    request.opt_ins.custom_parameters = Some(CustomParameters {
+        values: values.iter().map(|value| (*value).to_owned()).collect(),
+    });
+    request
+}
+
+/// Returns `request` with the install location `path`.
+pub(crate) fn with_location(mut request: Request, path: &str) -> Request {
+    request.opt_ins.custom_install_location = Some(CustomInstallLocation { path: path.to_owned() });
     request
 }
 

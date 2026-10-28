@@ -72,7 +72,7 @@ pub(crate) struct Selection {
 pub(crate) struct VersionCondition {
     pub(crate) minimum: Option<Version>,
     pub(crate) maximum: Option<Version>,
-    pub(crate) exclude_pre_release: bool,
+    pub(crate) exclude_prerelease: bool,
 }
 
 /// A validation error code ([§errors]).
@@ -694,7 +694,7 @@ impl Validator {
             self.error(ErrorCode::InvalidValue, pointer);
         }
 
-        let exclude_pre_release = match object.get("Prerelease") {
+        let exclude_prerelease = match object.get("Prerelease") {
             Some((value, pointer)) => {
                 let text = self.string(value, pointer.clone());
                 if text.is_some_and(|text| text != "Exclude") {
@@ -708,7 +708,7 @@ impl Validator {
         Some(VersionCondition {
             minimum,
             maximum,
-            exclude_pre_release,
+            exclude_prerelease,
         })
     }
 

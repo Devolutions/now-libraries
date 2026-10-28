@@ -1,7 +1,11 @@
 //! Properties of the evaluator over generated policies and requests, and of the reader over malformed input.
 
-use now_policy_eval::{Check, Decision, Outcome, Request, evaluate, parse_policy};
+use now_policy_eval::{
+    Check, CustomInstallLocation, CustomParameters, Decision, Elevation, Manager, Operation, OptIns, Outcome, Package,
+    Request, Scope, Source, evaluate, parse_policy,
+};
 use proptest::prelude::*;
+use proptest::sample::select;
 use {rstest as _, serde_json as _};
 
 mod generators;
@@ -142,38 +146,37 @@ fn comparable(mut decision: Decision) -> Decision {
     decision
 }
 
-/// Requests whose parts are arbitrary text, mostly in the shape of real requests.
+/// Requests whose strings are arbitrary text, mostly in the shape of real requests, and whose other members come from their closed sets.
 fn arbitrary_request() -> impl Strategy<Value = Request> {
     let text = || prop_oneof![".{0,12}", "[-a-zA-Z0-9:@\\\\/=\"]{0,12}"];
     (
-        prop_oneof![Just("Install".to_owned()), Just("Uninstall".to_owned()), text()],
-        prop_oneof![
-            Just("Winget".to_owned()),
-            Just("Scoop".to_owned()),
-            Just("Npm".to_owned()),
-            text()
-        ],
+        select(Operation::ALL),
+        select(Manager::ALL),
         text(),
         text(),
         prop::option::of(text()),
+        prop::option::of(select(Scope::ALL)),
+        select(Elevation::ALL),
         prop::option::of(text()),
         prop::collection::vec(text(), 0..5),
-        prop_oneof![Just("Standard".to_owned()), text()],
     )
         .prop_map(
-            |(operation, manager, source, id, version, location, parameters, elevation)| {
-                let mut request = Request {
-                    operation,
-                    manager,
-                    ..Request::default()
-                };
-                request.source.name = source;
-                request.package.id = id;
-                request.package.version = version;
-                request.options.custom_install_location = location;
-                request.options.custom_parameters = parameters;
-                request.client.requested_elevation = elevation;
-                request
+            |(operation, manager, source, id, version, scope, elevation, location, parameters)| Request {
+                operation,
+                manager,
+                source: Source { name: source },
+                package: Package {
+                    id,
+                    version,
+                    architecture: None,
+                },
+                scope,
+                elevation,
+                opt_ins: OptIns {
+                    custom_install_location: location.map(|path| CustomInstallLocation { path }),
+                    custom_parameters: Some(CustomParameters { values: parameters }),
+                    ..OptIns::default()
+                },
             },
         )
 }

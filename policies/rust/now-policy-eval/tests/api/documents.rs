@@ -425,9 +425,9 @@ fn valid_source_selectors(#[case] selector: &str) {
 #[case::unknown_manager(r#"{"Manager":"Nix","AnySource":true}"#, "InvalidValue", "/TrustedSources/0/Manager")]
 #[case::missing_manager(r#"{"AnySource":true}"#, "MissingKey", "/TrustedSources/0/Manager")]
 #[case::unknown_key(
-    r#"{"Manager":"Winget","AnySource":true,"Url":"x"}"#,
+    r#"{"Manager":"Winget","AnySource":true,"Mirror":"x"}"#,
     "UnknownKey",
-    "/TrustedSources/0/Url"
+    "/TrustedSources/0/Mirror"
 )]
 #[case::not_an_object(r#""Winget""#, "WrongType", "/TrustedSources/0")]
 fn invalid_source_selectors(#[case] selector: &str, #[case] code: &str, #[case] pointer: &str) {
@@ -583,7 +583,7 @@ fn valid_selections(#[case] selection: &str) {
 #[case::empty_package_pattern(r#"{"Packages":[""]}"#, "InvalidValue", "/Rules/0/Select/Packages/0")]
 #[case::unknown_scope(r#"{"Scopes":["Global"]}"#, "InvalidValue", "/Rules/0/Select/Scopes/0")]
 #[case::lowercase_architecture(r#"{"Architectures":["x64"]}"#, "InvalidValue", "/Rules/0/Select/Architectures/0")]
-#[case::requested_elevation_value(r#"{"Elevation":"Standard"}"#, "InvalidValue", "/Rules/0/Select/Elevation")]
+#[case::elevation_value(r#"{"Elevation":"Admin"}"#, "InvalidValue", "/Rules/0/Select/Elevation")]
 #[case::elevation_list(r#"{"Elevation":["Elevated"]}"#, "WrongType", "/Rules/0/Select/Elevation")]
 #[case::unknown_condition(r#"{"Manager":"Winget"}"#, "UnknownKey", "/Rules/0/Select/Manager")]
 #[case::version_without_operations(r#"{"Version":{"Minimum":"1.0"}}"#, "MissingKey", "/Rules/0/Select/Operations")]
@@ -602,12 +602,12 @@ fn valid_selections(#[case] selection: &str) {
     "InvalidValue",
     "/Rules/0/Select/Version/Minimum"
 )]
-#[case::maximum_with_empty_pre_release_identifier(
+#[case::maximum_with_empty_prerelease_identifier(
     r#"{"Operations":["Install"],"Version":{"Maximum":"1.0.0-a..b"}}"#,
     "InvalidValue",
     "/Rules/0/Select/Version/Maximum"
 )]
-#[case::maximum_with_leading_zero_pre_release(
+#[case::maximum_with_leading_zero_prerelease(
     r#"{"Operations":["Install"],"Version":{"Maximum":"1.0.0-01"}}"#,
     "InvalidValue",
     "/Rules/0/Select/Version/Maximum"
@@ -617,7 +617,7 @@ fn valid_selections(#[case] selection: &str) {
     "InvalidValue",
     "/Rules/0/Select/Version/Maximum"
 )]
-#[case::release_above_its_pre_release(
+#[case::release_above_its_prerelease(
     r#"{"Operations":["Install"],"Version":{"Minimum":"1.0.0","Maximum":"1.0.0-rc"}}"#,
     "InvalidValue",
     "/Rules/0/Select/Version/Maximum"

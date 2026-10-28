@@ -4,7 +4,8 @@ NOW policy evaluation
 This crate reads policy documents in format 2.x and evaluates package requests against them, as `policies/CONTRACT.policy.md` specifies.
 
 - `parse_policy` reads the bytes of a document into a `Policy`, or into every validation error it finds, each with its code and JSON Pointer.
-- `Request` holds a request as the client sends it; enumerated parts are strings, so a value outside the contract's set reaches the evaluator and makes the request unreadable.
+- `Request` mirrors the package request of `policies/CONTRACT.wire.md` without its `RequestId`; a member from a closed set is an enum.
+  A request that the types allow and the wire contract rejects as `BadRequest`, such as an empty `Package.Id`, is denied by the check `UnreadableRequest`.
 - `evaluate` decides one request against a policy at an evaluation time, a `Timestamp`, and returns the `Decision` with its outcome, check, rules, opt-ins and audit flag.
 
 The crate has no dependency on the format 1.x crates, so removing format 1.x support leaves it untouched.

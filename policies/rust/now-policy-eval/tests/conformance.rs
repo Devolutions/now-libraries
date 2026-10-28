@@ -8,7 +8,11 @@ use core::fmt::Write as _;
 use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 
-use now_policy_eval::{Decision, Policy, Request, Timestamp, evaluate, parse_policy};
+use now_policy_eval::{
+    Architecture, CustomInstallLocation, CustomParameters, Decision, Elevation, InstallerArguments,
+    InstallerArgumentsMode, KillBeforeOperation, Manager, Operation, OptIns, Package, Policy, PrePostCommands, Request,
+    Scope, Source, Timestamp, evaluate, parse_policy,
+};
 use serde_json::Value;
 use serde_json::value::RawValue;
 use {proptest as _, rstest as _};
@@ -307,81 +311,137 @@ fn read_decision(expect: &Value) -> Result<Value, String> {
     Ok(expect.clone())
 }
 
-/// Reads the suite's request object into a [`Request`], rejecting keys and types the format does not define.
+type JsonObject = serde_json::Map<String, Value>;
+
+/// Reads the suite's request object into a [`Request`] as the README defines it.
+///
+/// A request that is not well-formed fails the case: an unknown or missing member, a value outside its domain, or `Scope` `Machine` with `Elevation` `NonElevated`.
 fn read_request(value: &Value) -> Result<Request, String> {
     let object = fields(
         value,
         "request",
-        &["Operation", "Manager", "Source", "Package", "Options", "Client"],
+        &[
+            "Operation",
+            "Manager",
+            "Source",
+            "Package",
+            "Scope",
+            "Elevation",
+            "OptIns",
+        ],
     )?;
 
-    let mut request = Request {
-        operation: required_string(object, "Operation")?,
-        manager: required_string(object, "Manager")?,
-        ..Request::default()
-    };
-
-    let source = fields(
-        object.get("Source").ok_or("the request has no `Source`")?,
-        "Source",
-        &["Name", "Url"],
-    )?;
-    request.source.name = required_string(source, "Name")?;
-    request.source.url = optional_string(source, "Url")?;
-
+    let source = fields(required(object, "Source")?, "Source", &["Name"])?;
     let package = fields(
-        object.get("Package").ok_or("the request has no `Package`")?,
+        required(object, "Package")?,
         "Package",
-        &["Id", "Version", "Architecture", "Channel"],
+        &["Id", "Version", "Architecture"],
     )?;
-    request.package.id = required_string(package, "Id")?;
-    request.package.version = optional_string(package, "Version")?;
-    request.package.architecture = optional_string(package, "Architecture")?;
-    request.package.channel = optional_string(package, "Channel")?;
 
-    if let Some(options) = object.get("Options") {
-        let options = fields(
-            options,
-            "Options",
-            &[
-                "Scope",
-                "Interactive",
-                "SkipHashCheck",
-                "PreRelease",
-                "UninstallPrevious",
-                "NoUpgrade",
-                "CustomInstallLocation",
-                "CustomParameters",
-                "PreOperationCommand",
-                "PostOperationCommand",
-                "KillBeforeOperation",
-            ],
-        )?;
-        let target = &mut request.options;
-        target.scope = optional_string(options, "Scope")?;
-        target.interactive = boolean(options, "Interactive")?;
-        target.skip_hash_check = boolean(options, "SkipHashCheck")?;
-        target.pre_release = boolean(options, "PreRelease")?;
-        target.uninstall_previous = boolean(options, "UninstallPrevious")?;
-        target.no_upgrade = boolean(options, "NoUpgrade")?;
-        target.custom_install_location = optional_string(options, "CustomInstallLocation")?;
-        target.custom_parameters = string_list(options, "CustomParameters")?;
-        target.pre_operation_command = optional_string(options, "PreOperationCommand")?;
-        target.post_operation_command = optional_string(options, "PostOperationCommand")?;
-        target.kill_before_operation = string_list(options, "KillBeforeOperation")?;
+    let id = bounded_string(package, "Id", 1, 256)?;
+    if let Some(character) = id
+        .chars()
+        .find(|c| !(c.is_ascii_alphanumeric() || ".+_@/:[],#$%{}-".contains(*c)))
+    {
+        return Err(format!(
+            "`Id` has the character `{character}`, which the contract does not allow"
+        ));
     }
 
-    let client = fields(
-        object.get("Client").ok_or("the request has no `Client`")?,
-        "Client",
-        &["RequestedElevation"],
-    )?;
-    request.client.requested_elevation = required_string(client, "RequestedElevation")?;
+    let scope = optional_enum(object, "Scope", Scope::from_name)?;
+    let elevation = enum_value(object, "Elevation", Elevation::from_name)?;
+    if scope == Some(Scope::Machine) && elevation == Elevation::NonElevated {
+        return Err("`Scope` `Machine` contradicts `Elevation` `NonElevated`".to_owned());
+    }
 
-    Ok(request)
+    Ok(Request {
+        operation: enum_value(object, "Operation", Operation::from_name)?,
+        manager: enum_value(object, "Manager", Manager::from_name)?,
+        source: Source {
+            name: bounded_string(source, "Name", 1, 128)?,
+        },
+        package: Package {
+            id,
+            version: optional_bounded_string(package, "Version", 1, 128)?,
+            architecture: optional_enum(package, "Architecture", Architecture::from_name)?,
+        },
+        scope,
+        elevation,
+        opt_ins: match object.get("OptIns") {
+            Some(opt_ins) => read_opt_ins(opt_ins)?,
+            None => OptIns::default(),
+        },
+    })
 }
 
-fn fields<'a>(value: &'a Value, part: &str, known: &[&str]) -> Result<&'a serde_json::Map<String, Value>, String> {
+fn read_opt_ins(value: &Value) -> Result<OptIns, String> {
+    let object = fields(
+        value,
+        "OptIns",
+        &[
+            "Interactive",
+            "SkipHashCheck",
+            "CustomInstallLocation",
+            "CustomParameters",
+            "InstallerArguments",
+            "PrePostCommands",
+            "KillBeforeOperation",
+            "UninstallPrevious",
+            "NoUpgrade",
+        ],
+    )?;
+
+    // A key without a value is present as `{}`.
+    let present = |key: &str| -> Result<bool, String> {
+        match object.get(key) {
+            None => Ok(false),
+            Some(value) => fields(value, key, &[]).map(|_| true),
+        }
+    };
+    let valued = |key: &str, known: &[&str]| object.get(key).map(|value| fields(value, key, known)).transpose();
+
+    let mut opt_ins = OptIns {
+        interactive: present("Interactive")?,
+        skip_hash_check: present("SkipHashCheck")?,
+        uninstall_previous: present("UninstallPrevious")?,
+        no_upgrade: present("NoUpgrade")?,
+        ..OptIns::default()
+    };
+
+    if let Some(location) = valued("CustomInstallLocation", &["Path"])? {
+        opt_ins.custom_install_location = Some(CustomInstallLocation {
+            path: bounded_string(location, "Path", 1, 2048)?,
+        });
+    }
+    if let Some(parameters) = valued("CustomParameters", &["Values"])? {
+        opt_ins.custom_parameters = Some(CustomParameters {
+            values: bounded_list(parameters, "Values", 64, 512, |_| true)?,
+        });
+    }
+    if let Some(arguments) = valued("InstallerArguments", &["Arguments", "Mode"])? {
+        opt_ins.installer_arguments = Some(InstallerArguments {
+            arguments: bounded_string(arguments, "Arguments", 1, 2048)?,
+            mode: enum_value(arguments, "Mode", InstallerArgumentsMode::from_name)?,
+        });
+    }
+    if let Some(commands) = valued("PrePostCommands", &["Pre", "Post"])? {
+        let pre = optional_bounded_string(commands, "Pre", 1, 2048)?;
+        let post = optional_bounded_string(commands, "Post", 1, 2048)?;
+        if pre.is_none() && post.is_none() {
+            return Err("`PrePostCommands` has neither `Pre` nor `Post`".to_owned());
+        }
+        opt_ins.pre_post_commands = Some(PrePostCommands { pre, post });
+    }
+    if let Some(kill) = valued("KillBeforeOperation", &["Processes"])? {
+        opt_ins.kill_before_operation = Some(KillBeforeOperation {
+            processes: bounded_list(kill, "Processes", 64, 128, |process| !process.contains(['*', '?']))?,
+        });
+    }
+
+    Ok(opt_ins)
+}
+
+fn fields<'a>(value: &'a Value, part: &str, known: &[&str]) -> Result<&'a JsonObject, String> {
     let object = value.as_object().ok_or_else(|| format!("`{part}` is not an object"))?;
     for key in object.keys() {
         if !known.contains(&key.as_str()) {
@@ -391,40 +451,56 @@ fn fields<'a>(value: &'a Value, part: &str, known: &[&str]) -> Result<&'a serde_
     Ok(object)
 }
 
-fn required_string(object: &serde_json::Map<String, Value>, key: &str) -> Result<String, String> {
-    optional_string(object, key)?.ok_or_else(|| format!("no `{key}`"))
+fn required<'a>(object: &'a JsonObject, key: &str) -> Result<&'a Value, String> {
+    object.get(key).ok_or_else(|| format!("no `{key}`"))
 }
 
-fn optional_string(object: &serde_json::Map<String, Value>, key: &str) -> Result<Option<String>, String> {
+fn optional_bounded_string(object: &JsonObject, key: &str, min: usize, max: usize) -> Result<Option<String>, String> {
     match object.get(key) {
         None => Ok(None),
-        Some(Value::String(text)) => Ok(Some(text.clone())),
+        Some(Value::String(text)) if (min..=max).contains(&text.len()) => Ok(Some(text.clone())),
+        Some(other) => Err(format!("`{key}` is not a string of {min} to {max} bytes: {other}")),
+    }
+}
+
+fn bounded_string(object: &JsonObject, key: &str, min: usize, max: usize) -> Result<String, String> {
+    optional_bounded_string(object, key, min, max)?.ok_or_else(|| format!("no `{key}`"))
+}
+
+/// Reads a list of 1 to `max_count` strings of 1 to `max_len` bytes that all satisfy `allowed`.
+fn bounded_list(
+    object: &JsonObject,
+    key: &str,
+    max_count: usize,
+    max_len: usize,
+    allowed: impl Fn(&str) -> bool,
+) -> Result<Vec<String>, String> {
+    let elements = match required(object, key)? {
+        Value::Array(elements) if (1..=max_count).contains(&elements.len()) => elements,
+        other => return Err(format!("`{key}` is not a list of 1 to {max_count} strings: {other}")),
+    };
+
+    elements
+        .iter()
+        .map(|element| match element {
+            Value::String(text) if (1..=max_len).contains(&text.len()) && allowed(text) => Ok(text.clone()),
+            other => Err(format!("`{key}` has an element outside its domain: {other}")),
+        })
+        .collect()
+}
+
+fn optional_enum<T>(object: &JsonObject, key: &str, from_name: fn(&str) -> Option<T>) -> Result<Option<T>, String> {
+    match object.get(key) {
+        None => Ok(None),
+        Some(Value::String(name)) => from_name(name)
+            .map(Some)
+            .ok_or_else(|| format!("`{key}` has the value `{name}`, which the contract does not define")),
         Some(other) => Err(format!("`{key}` is not a string: {other}")),
     }
 }
 
-fn boolean(object: &serde_json::Map<String, Value>, key: &str) -> Result<bool, String> {
-    match object.get(key) {
-        None => Ok(false),
-        Some(Value::Bool(flag)) => Ok(*flag),
-        Some(other) => Err(format!("`{key}` is not a boolean: {other}")),
-    }
-}
-
-fn string_list(object: &serde_json::Map<String, Value>, key: &str) -> Result<Vec<String>, String> {
-    match object.get(key) {
-        None => Ok(Vec::new()),
-        Some(Value::Array(elements)) => elements
-            .iter()
-            .map(|element| {
-                element
-                    .as_str()
-                    .map(str::to_owned)
-                    .ok_or_else(|| format!("`{key}` has an element that is not a string: {element}"))
-            })
-            .collect(),
-        Some(other) => Err(format!("`{key}` is not a list: {other}")),
-    }
+fn enum_value<T>(object: &JsonObject, key: &str, from_name: fn(&str) -> Option<T>) -> Result<T, String> {
+    optional_enum(object, key, from_name)?.ok_or_else(|| format!("no `{key}`"))
 }
 
 fn value_field(object: &RawObject, key: &str) -> Result<Option<Value>, String> {

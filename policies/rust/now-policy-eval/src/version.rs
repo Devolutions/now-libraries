@@ -12,7 +12,7 @@ pub(crate) struct Version {
     /// The number of release components as written.
     release_count: usize,
     /// Pre-release identifiers; empty when the version has no pre-release.
-    pre_release: Vec<String>,
+    prerelease: Vec<String>,
 }
 
 impl Version {
@@ -32,8 +32,8 @@ impl Version {
             return None;
         }
 
-        let (release_text, pre_release_text) = match text.split_once('-') {
-            Some((release, pre_release)) => (release, Some(pre_release)),
+        let (release_text, prerelease_text) = match text.split_once('-') {
+            Some((release, prerelease)) => (release, Some(prerelease)),
             None => (text, None),
         };
 
@@ -49,23 +49,23 @@ impl Version {
             release.pop();
         }
 
-        let mut pre_release = Vec::new();
-        if let Some(pre_release_text) = pre_release_text {
-            for identifier in pre_release_text.split('.') {
+        let mut prerelease = Vec::new();
+        if let Some(prerelease_text) = prerelease_text {
+            for identifier in prerelease_text.split('.') {
                 let valid = !identifier.is_empty()
                     && identifier.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
                     && !(is_numeric(identifier) && 1 < identifier.len() && identifier.starts_with('0'));
                 if !valid {
                     return None;
                 }
-                pre_release.push(identifier.to_owned());
+                prerelease.push(identifier.to_owned());
             }
         }
 
         Some(Self {
             release,
             release_count,
-            pre_release,
+            prerelease,
         })
     }
 
@@ -74,9 +74,39 @@ impl Version {
         self.release_count
     }
 
-    pub(crate) fn has_pre_release(&self) -> bool {
-        !self.pre_release.is_empty()
+    pub(crate) fn has_prerelease(&self) -> bool {
+        !self.prerelease.is_empty()
     }
+}
+
+/// Returns whether `text` is a version as [Semantic Versioning 2.0.0] defines it.
+///
+/// [Semantic Versioning 2.0.0]: https://semver.org/spec/v2.0.0.html
+pub(crate) fn is_semantic_version(text: &str) -> bool {
+    let (text, build) = match text.split_once('+') {
+        Some((text, build)) => (text, Some(build)),
+        None => (text, None),
+    };
+    let (core, prerelease) = match text.split_once('-') {
+        Some((core, prerelease)) => (core, Some(prerelease)),
+        None => (text, None),
+    };
+
+    let is_identifier =
+        |identifier: &str| !identifier.is_empty() && identifier.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-');
+    let has_leading_zero = |identifier: &str| 1 < identifier.len() && identifier.starts_with('0');
+
+    let core: Vec<&str> = core.split('.').collect();
+    core.len() == 3
+        && core
+            .iter()
+            .all(|component| is_numeric(component) && !component.is_empty() && !has_leading_zero(component))
+        && prerelease.is_none_or(|prerelease| {
+            prerelease.split('.').all(|identifier| {
+                is_identifier(identifier) && !(is_numeric(identifier) && has_leading_zero(identifier))
+            })
+        })
+        && build.is_none_or(|build| build.split('.').all(is_identifier))
 }
 
 impl PartialEq for Version {
@@ -102,11 +132,11 @@ impl Ord for Version {
             .map(|component| (component.len(), component))
             .cmp(other.release.iter().map(|component| (component.len(), component)));
 
-        release.then_with(|| match (self.has_pre_release(), other.has_pre_release()) {
+        release.then_with(|| match (self.has_prerelease(), other.has_prerelease()) {
             (false, false) => Ordering::Equal,
             (false, true) => Ordering::Greater,
             (true, false) => Ordering::Less,
-            (true, true) => compare_pre_release(&self.pre_release, &other.pre_release),
+            (true, true) => compare_prerelease(&self.prerelease, &other.prerelease),
         })
     }
 }
@@ -116,7 +146,7 @@ fn is_numeric(identifier: &str) -> bool {
 }
 
 /// Compares pre-releases by Semantic Versioning 2.0.0 precedence.
-fn compare_pre_release(a: &[String], b: &[String]) -> Ordering {
+fn compare_prerelease(a: &[String], b: &[String]) -> Ordering {
     for (a, b) in a.iter().zip(b) {
         let ordering = match (is_numeric(a), is_numeric(b)) {
             (true, true) => a.len().cmp(&b.len()).then_with(|| a.cmp(b)),

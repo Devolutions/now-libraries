@@ -1,9 +1,12 @@
 //! Reading requests: unreadable requests, properties, opt-ins, install locations and missing versions.
 
-use now_policy_eval::{Check, Request};
+use now_policy_eval::{
+    Architecture, Check, Elevation, InstallerArguments, InstallerArgumentsMode, KillBeforeOperation, PrePostCommands,
+    Request, Scope,
+};
 use rstest::rstest;
 
-use crate::common::{ALLOW_ALL, check_of, evaluate_rules, request, winget_install};
+use crate::common::{ALLOW_ALL, check_of, evaluate_rules, request, winget_install, with_location, with_parameters};
 
 /// A request through `manager` installing `id` at `version` from `source`.
 fn install(manager: &str, source: &str, id: &str, version: &str) -> Request {
@@ -17,9 +20,16 @@ fn with(mut request: Request, change: fn(&mut Request)) -> Request {
     request
 }
 
-fn parameters(mut request: Request, parameters: &[&str]) -> Request {
-    request.options.custom_parameters = parameters.iter().map(|parameter| (*parameter).to_owned()).collect();
+fn elevated(mut request: Request) -> Request {
+    request.elevation = Elevation::Elevated;
     request
+}
+
+fn installer_arguments(arguments: &str) -> InstallerArguments {
+    InstallerArguments {
+        arguments: arguments.to_owned(),
+        mode: InstallerArgumentsMode::Append,
+    }
 }
 
 /// Returns the opt-ins a request uses, as the ungranted opt-ins of a catch-all Allow rule without grants.
@@ -38,64 +48,53 @@ const GRANT_ALL: &str = r#"[{"Id":"all","Decision":"Allow","Select":{},"Grants":
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §reading
-#[case::operation_out_of_set(|r: &mut Request| r.operation = "Repair".to_owned())]
-#[case::operation_in_other_case(|r: &mut Request| r.operation = "install".to_owned())]
-#[case::manager_out_of_set(|r: &mut Request| r.manager = "WinGet".to_owned())]
-#[case::requested_elevation_out_of_set(|r: &mut Request| r.client.requested_elevation = "Admin".to_owned())]
-#[case::requested_elevation_absent(|r: &mut Request| r.client.requested_elevation = String::new())]
-#[case::architecture_out_of_set(|r: &mut Request| r.package.architecture = Some("x64".to_owned()))]
-#[case::scope_out_of_set(|r: &mut Request| r.options.scope = Some("Global".to_owned()))]
-#[case::empty_source_name(|r: &mut Request| r.source.name = String::new())]
-#[case::source_name_of_129_bytes(|r: &mut Request| r.source.name = "s".repeat(129))]
-#[case::source_url_of_2049_bytes(|r: &mut Request| r.source.url = Some("u".repeat(2049)))]
-#[case::empty_package_id(|r: &mut Request| r.package.id = String::new())]
-#[case::package_id_of_257_characters(|r: &mut Request| r.package.id = "p".repeat(257))]
-#[case::package_id_with_space(|r: &mut Request| r.package.id = "Contoso Tool".to_owned())]
-#[case::package_id_with_tilde(|r: &mut Request| r.package.id = "Contoso~Tool".to_owned())]
-#[case::package_id_non_ascii(|r: &mut Request| r.package.id = "Contosö".to_owned())]
-#[case::empty_version(|r: &mut Request| r.package.version = Some(String::new()))]
-#[case::version_of_129_bytes(|r: &mut Request| r.package.version = Some("1".repeat(129)))]
-#[case::empty_channel(|r: &mut Request| r.package.channel = Some(String::new()))]
-#[case::channel_of_17_bytes(|r: &mut Request| r.package.channel = Some("c".repeat(17)))]
-#[case::install_location_of_2049_bytes(|r: &mut Request| r.options.custom_install_location = Some(format!("C:\\{}", "a".repeat(2046))))]
-#[case::pre_operation_command_of_2049_bytes(|r: &mut Request| r.options.pre_operation_command = Some("c".repeat(2049)))]
-#[case::post_operation_command_of_2049_bytes(|r: &mut Request| r.options.post_operation_command = Some("c".repeat(2049)))]
-#[case::sixty_five_custom_parameters(|r: &mut Request| r.options.custom_parameters = vec!["/q".to_owned(); 65])]
-#[case::custom_parameter_of_513_bytes(|r: &mut Request| r.options.custom_parameters = vec!["p".repeat(513)])]
-#[case::empty_custom_parameter(|r: &mut Request| r.options.custom_parameters = vec![String::new()])]
-#[case::sixty_five_processes_to_kill(|r: &mut Request| r.options.kill_before_operation = vec!["a.exe".to_owned(); 65])]
-#[case::empty_process_to_kill(|r: &mut Request| r.options.kill_before_operation = vec![String::new()])]
-#[case::process_to_kill_of_129_bytes(|r: &mut Request| r.options.kill_before_operation = vec!["p".repeat(129)])]
-#[case::custom_parameter_with_line_feed(|r: &mut Request| r.options.custom_parameters = vec!["/a\nb".to_owned()])]
-#[case::custom_parameter_with_carriage_return(|r: &mut Request| r.options.custom_parameters = vec!["/a\rb".to_owned()])]
-#[case::custom_parameter_with_nul(|r: &mut Request| r.options.custom_parameters = vec!["/a\0b".to_owned()])]
-#[case::source_name_with_nul(|r: &mut Request| r.source.name = "win\0get".to_owned())]
-#[case::source_name_with_line_feed(|r: &mut Request| r.source.name = "win\nget".to_owned())]
-fn unreadable_winget_requests(#[case] change: fn(&mut Request)) {
-    assert_eq!(
-        check_of(GRANT_ALL, &with(winget_install(), change)),
-        Check::UnreadableRequest
-    );
+#[case::custom_parameter_with_line_feed(with_parameters(winget_install(), &["/a\nb"]))]
+#[case::custom_parameter_with_carriage_return(with_parameters(winget_install(), &["/a\rb"]))]
+#[case::custom_parameter_with_nul(with_parameters(winget_install(), &["/a\0b"]))]
+#[case::installer_arguments_with_line_feed(with(winget_install(), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/a\nb"))))]
+#[case::installer_arguments_with_carriage_return(with(winget_install(), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/a\rb"))))]
+#[case::installer_arguments_with_nul(with(winget_install(), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/a\0b"))))]
+#[case::source_name_with_nul(request("Uninstall", "Dotnet", "nuget\0org", "dotnet-ef"))]
+#[case::source_name_with_line_feed(request("Uninstall", "Dotnet", "nuget\norg", "dotnet-ef"))]
+#[case::source_name_with_carriage_return(request("Uninstall", "Dotnet", "nuget\rorg", "dotnet-ef"))]
+// oracle: contract policies/CONTRACT.policy.md §reading
+// oracle: contract policies/CONTRACT.policy.md §manager-winget
+#[case::winget_id_with_percent(request("Uninstall", "Winget", "winget", "Contoso%Tool"))]
+#[case::winget_id_starting_with_dash(request("Uninstall", "Winget", "winget", "-Contoso"))]
+#[case::dotnet_id_starting_with_dash(install("Dotnet", "nuget.org", "-dotnet-ef", "8.0.0"))]
+#[case::winget_location_with_percent(with_location(winget_install(), "C:\\Apps\\%x"))]
+#[case::winget_custom_parameter_with_ampersand(with_parameters(winget_install(), &["/a&b"]))]
+#[case::winget_custom_parameter_with_quote(with_parameters(winget_install(), &["/a\"b"]))]
+#[case::winget_custom_parameter_with_caret(with_parameters(winget_install(), &["/a^b"]))]
+#[case::winget_installer_arguments_with_pipe(with(winget_install(), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/a|b"))))]
+#[case::winget_installer_arguments_with_pipe_on_uninstall(with(request("Uninstall", "Winget", "winget", "Contoso.Tool"), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/a|b"))))]
+#[case::winget_source_name_with_wide_space(request("Install", "Winget", "my\u{3000}source", "Contoso.Tool"))]
+#[case::winget_non_ascii_source_name(request("Uninstall", "Winget", "Dépôt", "Contoso.Tool"))]
+#[case::winget_source_name_starting_with_underscore(request("Uninstall", "Winget", "_source", "Contoso.Tool"))]
+fn unreadable_requests_by_characters(#[case] subject: Request) {
+    assert_eq!(check_of(GRANT_ALL, &subject), Check::UnreadableRequest);
 }
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §reading
 // oracle: spec Unicode 16.0.0 PropList.txt White_Space
 // oracle: spec Unicode 16.0.0 DerivedCoreProperties.txt Default_Ignorable_Code_Point
-#[case::leading_space(" winget")]
-#[case::trailing_tab("winget\t")]
-#[case::trailing_no_break_space("winget\u{A0}")]
-#[case::leading_ideographic_space("\u{3000}winget")]
-#[case::trailing_next_line("winget\u{85}")]
-#[case::zero_width_space("win\u{200B}get")]
-#[case::soft_hyphen("win\u{AD}get")]
-#[case::mongolian_vowel_separator("win\u{180E}get")]
-#[case::variation_selector("winget\u{FE0F}")]
-#[case::tag_character("win\u{E0041}get")]
+#[case::leading_space(" nuget")]
+#[case::trailing_tab("nuget\t")]
+#[case::trailing_no_break_space("nuget\u{A0}")]
+#[case::leading_ideographic_space("\u{3000}nuget")]
+#[case::trailing_next_line("nuget\u{85}")]
+#[case::zero_width_space("nu\u{200B}get")]
+#[case::soft_hyphen("nu\u{AD}get")]
+#[case::mongolian_vowel_separator("nu\u{180E}get")]
+#[case::variation_selector("nuget\u{FE0F}")]
+#[case::tag_character("nu\u{E0041}get")]
 fn source_names_that_look_like_another_are_unreadable(#[case] name: &str) {
-    let mut request = winget_install();
-    request.source.name = name.to_owned();
-    assert_eq!(check_of(GRANT_ALL, &request), Check::UnreadableRequest);
+    // The source of a Dotnet Uninstall is not passed to the manager, so only the generic rule applies to its name.
+    assert_eq!(
+        check_of(GRANT_ALL, &request("Uninstall", "Dotnet", name, "dotnet-ef")),
+        Check::UnreadableRequest
+    );
 }
 
 #[rstest]
@@ -105,30 +104,41 @@ fn source_names_that_look_like_another_are_unreadable(#[case] name: &str) {
 #[case::non_ascii("Dépôt")]
 #[case::length_128(&"s".repeat(128))]
 fn distinct_source_names_are_readable(#[case] name: &str) {
-    let mut request = winget_install();
-    request.source.name = name.to_owned();
-    assert_eq!(check_of(GRANT_ALL, &request), Check::AllowRules);
+    assert_eq!(
+        check_of(GRANT_ALL, &request("Uninstall", "Dotnet", name, "dotnet-ef")),
+        Check::AllowRules
+    );
 }
 
 #[test]
 fn package_id_of_256_allowed_characters_is_readable() {
-    // oracle: contract policies/CONTRACT.policy.md §request-input
-    let mut request = winget_install();
+    // oracle: contract policies/CONTRACT.wire.md §package-request
     let characters = "aZ09._+/:[],#$%{}-";
-    request.package.id = characters.repeat(256 / characters.len() + 1)[..256].to_owned();
-    assert_eq!(check_of(GRANT_ALL, &request), Check::AllowRules);
+    let id = characters.repeat(256 / characters.len() + 1)[..256].to_owned();
+    assert_eq!(
+        check_of(GRANT_ALL, &install("Dotnet", "nuget.org", &id, "8.0.0")),
+        Check::AllowRules
+    );
 }
 
 #[test]
 fn input_bounds_at_their_maximum_are_readable() {
-    // oracle: contract policies/CONTRACT.policy.md §request-input
-    let mut request = winget_install();
+    // oracle: contract policies/CONTRACT.wire.md §package-request
+    let mut request = with_location(winget_install(), &format!("C:\\{}", "a".repeat(2045)));
+    request.source.name = "s".repeat(128);
     request.package.version = Some("1".repeat(128));
-    request.package.channel = Some("c".repeat(16));
-    request.options.custom_parameters = vec!["p".repeat(512); 64];
-    request.options.pre_operation_command = Some("c".repeat(2048));
-    request.options.post_operation_command = Some(String::new());
-    request.options.kill_before_operation = vec!["k".repeat(128); 64];
+    request.opt_ins.custom_parameters = with_parameters(winget_install(), &["x"]).opt_ins.custom_parameters;
+    if let Some(parameters) = request.opt_ins.custom_parameters.as_mut() {
+        parameters.values = vec!["p".repeat(512); 64];
+    }
+    request.opt_ins.installer_arguments = Some(installer_arguments(&"a".repeat(2048)));
+    request.opt_ins.pre_post_commands = Some(PrePostCommands {
+        pre: Some("c".repeat(2048)),
+        post: Some("c".to_owned()),
+    });
+    request.opt_ins.kill_before_operation = Some(KillBeforeOperation {
+        processes: vec!["k".repeat(128); 64],
+    });
     assert_eq!(check_of(GRANT_ALL, &request), Check::AllowRules);
 }
 
@@ -140,29 +150,36 @@ fn input_bounds_at_their_maximum_are_readable() {
 #[case::homebrew(install("Homebrew", "homebrew/core", "git", "1.0"))]
 #[case::pacman(install("Pacman", "core", "git", "1.0"))]
 #[case::snap(install("Snap", "snapcraft", "git", "1.0"))]
-#[case::custom_parameters_through_chocolatey(parameters(install("Chocolatey", "chocolatey", "git", "1.0"), &["--force"]))]
-#[case::custom_parameters_through_powershell(parameters(install("PowerShell", "PSGallery", "Pester", "1.0"), &["-Force"]))]
-#[case::custom_parameters_through_npm(parameters(install("Npm", "npm", "react", "1.0.0"), &["--force"]))]
+#[case::custom_parameters_through_chocolatey(elevated(with_parameters(install("Chocolatey", "chocolatey", "git", "1.0"), &["--force"])))]
+#[case::custom_parameters_through_powershell(with_parameters(install("PowerShell", "PSGallery", "Pester", "1.0"), &["-Force"]))]
+#[case::custom_parameters_through_npm(with_parameters(install("Npm", "npm", "react", "1.0.0"), &["--force"]))]
+#[case::custom_parameters_through_cargo(with_parameters(install("Cargo", "crates.io", "serde", "1.0.0"), &["--force"]))]
+#[case::custom_parameters_through_pip(with_parameters(install("Pip", "pip", "requests", "2.31"), &["--force"]))]
+#[case::custom_parameters_through_dotnet(with_parameters(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), &["--force"]))]
+#[case::custom_parameters_through_vcpkg(with_parameters(request("Install", "Vcpkg", "x64-windows", "zlib"), &["--force"]))]
+#[case::installer_arguments_through_scoop(with(request("Install", "Scoop", "main", "git"), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/q"))))]
+#[case::installer_arguments_through_chocolatey(elevated(with(install("Chocolatey", "chocolatey", "git", "1.0"), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/q")))))]
+#[case::installer_arguments_through_powershell(with(install("PowerShell", "PSGallery", "Pester", "1.0"), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/q"))))]
 #[case::version_through_scoop(install("Scoop", "main", "git", "1.0"))]
 #[case::version_through_vcpkg(install("Vcpkg", "x64-windows", "zlib", "1.0"))]
-#[case::channel_through_scoop(with(request("Install", "Scoop", "main", "git"), |r| r.package.channel = Some("beta".to_owned())))]
-#[case::channel_through_bun(with(install("Bun", "Bun", "react", "1.0.0"), |r| r.package.channel = Some("beta".to_owned())))]
-#[case::channel_through_cargo(with(install("Cargo", "crates.io", "serde", "1.0.0"), |r| r.package.channel = Some("beta".to_owned())))]
 #[case::other_npm_source(install("Npm", "registry", "react", "1.0.0"))]
 #[case::other_bun_source(install("Bun", "npm", "react", "1.0.0"))]
 #[case::other_cargo_source(install("Cargo", "crates", "serde", "1.0.0"))]
 #[case::other_pip_source(install("Pip", "pypi", "requests", "1.0"))]
+#[case::other_dotnet_source_on_install(install("Dotnet", "nuget", "dotnet-ef", "8.0.0"))]
 #[case::npm_source_with_non_ascii_case(install("Npm", "\u{1E3F}pm", "react", "1.0.0"))]
-#[case::source_url_through_npm(with(install("Npm", "npm", "react", "1.0.0"), |r| r.source.url = Some("https://www.npmjs.com".to_owned())))]
-#[case::other_source_url_through_bun(with(install("Bun", "Bun", "react", "1.0.0"), |r| r.source.url = Some("https://registry.npmjs.org".to_owned())))]
-#[case::source_url_through_pip(with(install("Pip", "pip", "requests", "2.31"), |r| r.source.url = Some("https://pypi.org/simple".to_owned())))]
-#[case::other_source_url_through_cargo(with(install("Cargo", "crates.io", "serde", "1.0.0"), |r| r.source.url = Some("https://crates.io".to_owned())))]
-#[case::other_source_url_through_dotnet(with(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), |r| r.source.url = Some("https://example.test/index.json".to_owned())))]
-#[case::bun_source_url_with_path(with(install("Bun", "Bun", "react", "1.0.0"), |r| r.source.url = Some("https://www.npmjs.com/x".to_owned())))]
 #[case::powershell_wildcard_source(install("PowerShell", "PS*Gallery", "Pester", "1.0"))]
 #[case::powershell_source_starting_with_dot(install("PowerShell", ".PSGallery", "Pester", "1.0"))]
 #[case::powershell7_source_with_bang(install("PowerShell7", "PSGallery!", "Pester", "1.0"))]
 #[case::powershell_non_ascii_source(install("PowerShell", "Dépôt", "Pester", "1.0"))]
+#[case::powershell_version_range(install("PowerShell", "PSGallery", "Pester", "[5.0,6.0)"))]
+#[case::powershell_id_with_bracket(install("PowerShell", "PSGallery", "Pester[1]", "5.0"))]
+#[case::chocolatey_install_with_other_source_characters(elevated(install("Chocolatey", "choco!", "git", "2.4")))]
+#[case::bun_version_that_is_not_semantic(install("Bun", "Bun", "react", "18.2"))]
+#[case::bun_version_with_leading_zero(install("Bun", "Bun", "react", "18.02.0"))]
+#[case::bun_alias_is_not_an_identifier(install("Bun", "Bun", "my-react:react", "18.2.0"))]
+#[case::npm_identifier_outside_the_registry(install("Npm", "npm", "github:user/repo", "1.0.0"))]
+#[case::npm_version_with_caret(install("Npm", "npm", "react", "^18.2.0"))]
 fn unreadable_requests_through_managers(#[case] subject: Request) {
     assert_eq!(check_of(GRANT_ALL, &subject), Check::UnreadableRequest);
 }
@@ -173,122 +190,208 @@ fn unreadable_requests_through_managers(#[case] subject: Request) {
 #[case::bun_source_in_lower_case(install("Bun", "bun", "react", "1.0.0"))]
 #[case::cargo_source_in_mixed_case(install("Cargo", "Crates.IO", "serde", "1.0.0"))]
 #[case::pip_source_in_upper_case(install("Pip", "PIP", "requests", "2.31"))]
-#[case::bun_npmjs_url_with_trailing_slashes(with(install("Bun", "Bun", "react", "1.0.0"), |r| r.source.url = Some("HTTPS://WWW.NPMJS.COM//".to_owned())))]
-#[case::source_url_through_winget(with(winget_install(), |r| r.source.url = Some("https://cdn.winget.microsoft.com/cache".to_owned())))]
-#[case::empty_source_url_through_scoop(with(request("Install", "Scoop", "main", "git"), |r| r.source.url = Some(String::new())))]
-#[case::cargo_index_url(with(install("Cargo", "crates.io", "serde", "1.0.0"), |r| r.source.url = Some("https://index.crates.io//".to_owned())))]
-#[case::dotnet_other_url_on_uninstall(with(request("Uninstall", "Dotnet", "nuget.org", "dotnet-ef"), |r| r.source.url = Some("https://example.test/index.json".to_owned())))]
-#[case::npm_channel(with(install("Npm", "npm", "react", "1.0.0"), |r| r.package.channel = Some("next".to_owned())))]
-#[case::chocolatey_channel(with(install("Chocolatey", "chocolatey", "git", "2.0"), |r| r.package.channel = Some("beta".to_owned())))]
+#[case::dotnet_source_in_upper_case(install("Dotnet", "NuGet.org", "dotnet-ef", "8.0.0"))]
+#[case::npm_channel_like_version(install("Npm", "npm", "react", "1.0.0-next.1"))]
 #[case::powershell_source_with_space_dot_dash_underscore(install("PowerShell", "My Repo_1.2-x", "Pester", "5.0"))]
 #[case::scoop_bucket_without_version(request("Install", "Scoop", "extras", "git"))]
-#[case::scoop_manifest_url(request("Install", "Scoop", "https://example.test/git.json", "git"))]
+#[case::scoop_manifest_url(request(
+    "Install",
+    "Scoop",
+    "https://example.test/git.json",
+    "https://example.test/git.json"
+))]
 #[case::vcpkg_without_version(request("Install", "Vcpkg", "x64-windows", "zlib"))]
-#[case::scoop_custom_parameters(parameters(request("Install", "Scoop", "main", "git"), &["--global"]))]
+#[case::scoop_custom_parameters(with_parameters(request("Install", "Scoop", "main", "git"), &["--verbose"]))]
+#[case::chocolatey_uninstall_with_any_source(elevated(request("Uninstall", "Chocolatey", "any source!", "git")))]
+#[case::bun_semantic_version(install("Bun", "Bun", "react", "18.2.0-rc.1+build.5"))]
 fn readable_requests_through_managers(#[case] subject: Request) {
     assert_eq!(check_of(GRANT_ALL, &subject), Check::AllowRules);
 }
 
-#[test]
-fn pre_release_option_has_no_effect() {
-    // oracle: contract policies/CONTRACT.policy.md §reading
-    let rules = r#"[
-        {"Id":"stable","Decision":"Allow","Select":{"Operations":["Install"],"Version":{"Prerelease":"Exclude"}}},
-        {"Id":"deny-pre","Decision":"Deny","Select":{"Operations":["Install"],"Version":{"Minimum":"0.0.0-0","Maximum":"1.2.3-zzz"}}}
-    ]"#;
-    let mut request = install("Chocolatey", "chocolatey", "git", "1.2.3");
-    let without = evaluate_rules(rules, &request);
-    request.options.pre_release = true;
-    assert_eq!(evaluate_rules(rules, &request), without);
-    assert_eq!(without.check, Check::AllowRules);
+#[rstest]
+// oracle: contract policies/CONTRACT.policy.md §manager-scoop
+#[case::elevated(elevated(request("Install", "Scoop", "main", "git")))]
+#[case::interactive(with(request("Install", "Scoop", "main", "git"), |r| r.opt_ins.interactive = true))]
+#[case::install_location(with_location(request("Install", "Scoop", "main", "git"), "C:\\Apps"))]
+#[case::no_upgrade(with(request("Install", "Scoop", "main", "git"), |r| r.opt_ins.no_upgrade = true))]
+#[case::uninstall_previous(with(request("Install", "Scoop", "main", "git"), |r| r.opt_ins.uninstall_previous = true))]
+#[case::uninstall_with_skip_hash_check(with(request("Uninstall", "Scoop", "main", "git"), |r| r.opt_ins.skip_hash_check = true))]
+#[case::update_with_architecture(with(request("Update", "Scoop", "main", "git"), |r| r.package.architecture = Some(Architecture::X64)))]
+#[case::install_with_neutral_architecture(with(request("Install", "Scoop", "main", "git"), |r| r.package.architecture = Some(Architecture::Neutral)))]
+#[case::id_with_bracket(request("Install", "Scoop", "main", "git[1]"))]
+#[case::id_starting_with_dash(request("Install", "Scoop", "main", "-git"))]
+#[case::id_ending_with_dot(request("Install", "Scoop", "main", "git."))]
+#[case::bucket_with_json_id(request("Install", "Scoop", "main", "git.json"))]
+#[case::manifest_url_with_other_id(request("Install", "Scoop", "https://example.test/git.json", "git"))]
+#[case::manifest_url_in_another_case(request(
+    "Install",
+    "Scoop",
+    "https://example.test/git.json",
+    "HTTPS://example.test/git.json"
+))]
+#[case::global_parameter(with_parameters(request("Install", "Scoop", "main", "git"), &["--global"]))]
+#[case::arch_parameter_in_upper_case(with_parameters(request("Install", "Scoop", "main", "git"), &["--ARCH=x"]))]
+#[case::short_cluster_with_global(with_parameters(request("Install", "Scoop", "main", "git"), &["-G"]))]
+#[case::short_cluster_with_architecture(with_parameters(request("Install", "Scoop", "main", "git"), &["-qa"]))]
+#[case::skip_hash_check_long(with_parameters(request("Install", "Scoop", "main", "git"), &["--skip-hash-check"]))]
+#[case::skip_hash_check_short(with_parameters(request("Install", "Scoop", "main", "git"), &["-s"]))]
+#[case::skip_hash_check_in_cluster(with_parameters(request("Install", "Scoop", "main", "git"), &["-ks"]))]
+#[case::end_of_options(with_parameters(request("Install", "Scoop", "main", "git"), &["--"]))]
+#[case::parameter_that_is_not_an_option(with_parameters(request("Install", "Scoop", "main", "git"), &["value"]))]
+#[case::parameter_with_space(with_parameters(request("Install", "Scoop", "main", "git"), &["--x=a b"]))]
+fn unreadable_requests_through_scoop(#[case] subject: Request) {
+    assert_eq!(check_of(GRANT_ALL, &subject), Check::UnreadableRequest);
+}
+
+#[rstest]
+// oracle: contract policies/CONTRACT.policy.md §manager-scoop
+#[case::similar_long_option(&["--globalx"])]
+#[case::lone_dash(&["-"])]
+#[case::short_option(&["-q"])]
+#[case::short_option_with_value_not_naming_a_cluster_character(&["-q=s"])]
+#[case::double_dash_is_not_a_cluster(&["--s"])]
+fn readable_requests_through_scoop(#[case] custom_parameters: &[&str]) {
+    let subject = with_parameters(request("Install", "Scoop", "main", "git"), custom_parameters);
+    assert_eq!(opt_ins(&subject), ["CustomParameters"]);
+}
+
+#[rstest]
+// oracle: contract policies/CONTRACT.policy.md §managers
+#[case::vcpkg_elevated(elevated(request("Install", "Vcpkg", "x64-windows", "zlib")))]
+#[case::vcpkg_interactive(with(request("Install", "Vcpkg", "x64-windows", "zlib"), |r| r.opt_ins.interactive = true))]
+#[case::vcpkg_architecture(with(request("Install", "Vcpkg", "x64-windows", "zlib"), |r| r.package.architecture = Some(Architecture::X64)))]
+#[case::vcpkg_source_that_is_not_a_triplet(request("Install", "Vcpkg", "x64 windows", "zlib"))]
+#[case::vcpkg_id_with_other_triplet(request("Install", "Vcpkg", "x64-windows", "zlib:x86-windows"))]
+#[case::vcpkg_id_with_triplet_in_other_case(request("Install", "Vcpkg", "x64-windows", "zlib:X64-windows"))]
+#[case::vcpkg_id_with_upper_case_port(request("Install", "Vcpkg", "x64-windows", "Zlib"))]
+#[case::npm_elevated(elevated(install("Npm", "npm", "react", "1.0.0")))]
+#[case::npm_skip_hash_check(with(install("Npm", "npm", "react", "1.0.0"), |r| r.opt_ins.skip_hash_check = true))]
+#[case::npm_install_location(with_location(install("Npm", "npm", "react", "1.0.0"), "C:\\Apps"))]
+#[case::npm_architecture(with(install("Npm", "npm", "react", "1.0.0"), |r| r.package.architecture = Some(Architecture::X64)))]
+#[case::npm_id_with_percent(install("Npm", "npm", "re%act", "1.0.0"))]
+#[case::cargo_elevated(elevated(install("Cargo", "crates.io", "serde", "1.0.0")))]
+#[case::cargo_pre_post_commands(with(install("Cargo", "crates.io", "serde", "1.0.0"), |r| r.opt_ins.pre_post_commands = Some(PrePostCommands { pre: Some("x".to_owned()), post: None })))]
+#[case::cargo_kill_before_operation(with(install("Cargo", "crates.io", "serde", "1.0.0"), |r| r.opt_ins.kill_before_operation = Some(KillBeforeOperation { processes: vec!["a.exe".to_owned()] })))]
+#[case::cargo_location_with_batch_character(with_location(
+    install("Cargo", "crates.io", "serde", "1.0.0"),
+    "C:\\Apps\\%x"
+))]
+#[case::cargo_uninstall_with_version(with(request("Uninstall", "Cargo", "crates.io", "serde"), |r| r.package.version = Some("1.0.0".to_owned())))]
+#[case::cargo_id_with_dot(install("Cargo", "crates.io", "serde.json", "1.0.0"))]
+#[case::pip_id_ending_with_dash(install("Pip", "pip", "requests-", "2.31"))]
+#[case::pip_uninstall_with_version(with(request("Uninstall", "Pip", "pip", "requests"), |r| r.package.version = Some("2.31".to_owned())))]
+#[case::dotnet_machine_scope(elevated(with(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), |r| r.scope = Some(Scope::Machine))))]
+#[case::dotnet_uninstall_with_architecture(with(request("Uninstall", "Dotnet", "nuget.org", "dotnet-ef"), |r| r.package.architecture = Some(Architecture::X64)))]
+#[case::chocolatey_user_scope(elevated(with(install("Chocolatey", "chocolatey", "git", "2.4"), |r| r.scope = Some(Scope::User))))]
+#[case::chocolatey_arm64(elevated(with(install("Chocolatey", "chocolatey", "git", "2.4"), |r| r.package.architecture = Some(Architecture::Arm64))))]
+#[case::chocolatey_install_location(elevated(with_location(
+    install("Chocolatey", "chocolatey", "git", "2.4"),
+    "C:\\Apps"
+)))]
+#[case::chocolatey_id_ending_with_nupkg(elevated(install("Chocolatey", "chocolatey", "git.NUPKG", "2.4")))]
+#[case::chocolatey_id_all(elevated(install("Chocolatey", "chocolatey", "ALL", "2.4")))]
+fn unreadable_requests_through_a_manager_that_cannot_carry_them(#[case] subject: Request) {
+    assert_eq!(check_of(GRANT_ALL, &subject), Check::UnreadableRequest);
 }
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §opt-ins
-#[case::interactive(|r: &mut Request| r.options.interactive = true, &["Interactive"])]
-#[case::skip_hash_check(|r: &mut Request| r.options.skip_hash_check = true, &["SkipHashCheck"])]
-#[case::install_location(|r: &mut Request| r.options.custom_install_location = Some("C:\\Apps".to_owned()), &["CustomInstallLocation"])]
-#[case::custom_parameter(|r: &mut Request| r.options.custom_parameters = vec!["/quiet".to_owned()], &["CustomParameters"])]
-#[case::empty_pre_operation_command(|r: &mut Request| r.options.pre_operation_command = Some(String::new()), &["PrePostCommands"])]
-#[case::post_operation_command(|r: &mut Request| r.options.post_operation_command = Some("cmd /c echo".to_owned()), &["PrePostCommands"])]
-#[case::kill_before_operation(|r: &mut Request| r.options.kill_before_operation = vec!["tool.exe".to_owned()], &["KillBeforeOperation"])]
-#[case::uninstall_previous(|r: &mut Request| r.options.uninstall_previous = true, &["UninstallPrevious"])]
-#[case::no_upgrade(|r: &mut Request| r.options.no_upgrade = true, &["NoUpgrade"])]
-#[case::empty_kill_list(|r: &mut Request| r.options.kill_before_operation = Vec::new(), &[])]
-#[case::every_option_in_table_order(
+#[case::interactive(|r: &mut Request| r.opt_ins.interactive = true, &["Interactive"])]
+#[case::skip_hash_check(|r: &mut Request| r.opt_ins.skip_hash_check = true, &["SkipHashCheck"])]
+#[case::install_location(|r: &mut Request| r.opt_ins = with_location(request("Install", "Winget", "winget", "x"), "C:\\Apps").opt_ins, &["CustomInstallLocation"])]
+#[case::custom_parameter(|r: &mut Request| r.opt_ins = with_parameters(request("Install", "Winget", "winget", "x"), &["/quiet"]).opt_ins, &["CustomParameters"])]
+#[case::installer_arguments(|r: &mut Request| r.opt_ins.installer_arguments = Some(installer_arguments("/quiet")), &["InstallerArguments"])]
+#[case::pre_operation_command(|r: &mut Request| r.opt_ins.pre_post_commands = Some(PrePostCommands { pre: Some("cmd".to_owned()), post: None }), &["PrePostCommands"])]
+#[case::post_operation_command(|r: &mut Request| r.opt_ins.pre_post_commands = Some(PrePostCommands { pre: None, post: Some("cmd".to_owned()) }), &["PrePostCommands"])]
+#[case::kill_before_operation(|r: &mut Request| r.opt_ins.kill_before_operation = Some(KillBeforeOperation { processes: vec!["tool.exe".to_owned()] }), &["KillBeforeOperation"])]
+#[case::uninstall_previous(|r: &mut Request| r.opt_ins.uninstall_previous = true, &["UninstallPrevious"])]
+#[case::no_upgrade(|r: &mut Request| r.opt_ins.no_upgrade = true, &["NoUpgrade"])]
+#[case::every_opt_in_in_table_order(
     |r: &mut Request| {
-        r.options.no_upgrade = true;
-        r.options.uninstall_previous = true;
-        r.options.kill_before_operation = vec!["tool.exe".to_owned()];
-        r.options.pre_operation_command = Some("cmd".to_owned());
-        r.options.custom_parameters = vec!["/quiet".to_owned()];
-        r.options.custom_install_location = Some("C:\\Apps".to_owned());
-        r.options.skip_hash_check = true;
-        r.options.interactive = true;
+        r.opt_ins = with_parameters(with_location(request("Install", "Winget", "winget", "x"), "C:\\Apps"), &["/quiet"]).opt_ins;
+        r.opt_ins.no_upgrade = true;
+        r.opt_ins.uninstall_previous = true;
+        r.opt_ins.kill_before_operation = Some(KillBeforeOperation { processes: vec!["tool.exe".to_owned()] });
+        r.opt_ins.pre_post_commands = Some(PrePostCommands { pre: Some("cmd".to_owned()), post: None });
+        r.opt_ins.installer_arguments = Some(installer_arguments("/quiet"));
+        r.opt_ins.skip_hash_check = true;
+        r.opt_ins.interactive = true;
     },
-    &["Interactive", "SkipHashCheck", "CustomInstallLocation", "CustomParameters", "PrePostCommands", "KillBeforeOperation", "UninstallPrevious", "NoUpgrade"]
+    &["Interactive", "SkipHashCheck", "CustomInstallLocation", "CustomParameters", "InstallerArguments", "PrePostCommands", "KillBeforeOperation", "UninstallPrevious", "NoUpgrade"]
 )]
-fn winget_options_carry_opt_ins(#[case] change: fn(&mut Request), #[case] expected: &[&str]) {
+fn winget_opt_ins_are_used_when_present(#[case] change: fn(&mut Request), #[case] expected: &[&str]) {
     assert_eq!(opt_ins(&with(winget_install(), change)), expected);
 }
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §manager-winget
-#[case::plain_parameter(&["/quiet"], &["CustomParameters"])]
-#[case::override_with_value(&["--override", "/quiet"], &["CustomParameters", "InstallerArguments"])]
-#[case::custom_with_equals(&["--custom=/quiet"], &["CustomParameters", "InstallerArguments"])]
-#[case::override_without_value(&["--override"], &["CustomParameters", "InstallerArguments"])]
-#[case::interactive_long(&["--interactive"], &["Interactive", "CustomParameters"])]
-#[case::interactive_long_ignoring_ascii_case(&["--INTERACTIVE"], &["Interactive", "CustomParameters"])]
-#[case::interactive_short(&["-i"], &["Interactive", "CustomParameters"])]
-#[case::interactive_in_short_cluster(&["-ei"], &["Interactive", "CustomParameters"])]
-#[case::short_option_in_other_case(&["-I"], &["CustomParameters"])]
-#[case::short_options_end_at_equals(&["-e=i"], &["CustomParameters"])]
-#[case::ignore_security_hash(&["--ignore-security-hash"], &["SkipHashCheck", "CustomParameters"])]
-#[case::force(&["--force"], &["SkipHashCheck", "CustomParameters"])]
-#[case::no_upgrade(&["--no-upgrade"], &["CustomParameters", "NoUpgrade"])]
-#[case::uninstall_previous(&["--uninstall-previous"], &["CustomParameters", "UninstallPrevious"])]
-#[case::long_option_name_ends_at_equals(&["--interactive=false"], &["Interactive", "CustomParameters"])]
-#[case::option_after_end_of_options(&["--", "--interactive"], &["CustomParameters"])]
-#[case::value_is_not_read_as_an_option(&["--override", "--interactive"], &["CustomParameters", "InstallerArguments"])]
-#[case::lone_dash_is_not_an_option(&["-", "x"], &["CustomParameters"])]
-#[case::every_option_in_table_order(&["--no-upgrade", "--uninstall-previous", "--override", "/q", "--force", "-i"], &["Interactive", "SkipHashCheck", "CustomParameters", "InstallerArguments", "UninstallPrevious", "NoUpgrade"])]
-fn winget_custom_parameters_carry_opt_ins(#[case] custom_parameters: &[&str], #[case] expected: &[&str]) {
-    assert_eq!(opt_ins(&parameters(winget_install(), custom_parameters)), expected);
+#[case::long_option_with_value(&["--location", "C:\\Apps"])]
+#[case::short_option_with_value(&["-l", "C:\\Apps"])]
+#[case::long_option_ignoring_ascii_case_with_equals(&["--LOCATION=C:\\Apps"])]
+#[case::short_option_sharing_its_element(&["-il", "C:\\Apps"])]
+#[case::interactive_long(&["--interactive"])]
+#[case::interactive_long_ignoring_ascii_case(&["--INTERACTIVE"])]
+#[case::interactive_short(&["-i"])]
+#[case::interactive_in_short_cluster(&["-ei"])]
+#[case::long_option_name_ends_at_equals(&["--interactive=false"])]
+#[case::override_with_value(&["--override", "/quiet"])]
+#[case::override_without_value(&["--override"])]
+#[case::custom_with_equals(&["--custom=/quiet"])]
+#[case::ignore_security_hash(&["--ignore-security-hash"])]
+#[case::force(&["/quiet", "--force"])]
+#[case::no_upgrade(&["--no-upgrade"])]
+#[case::uninstall_previous(&["--uninstall-previous"])]
+#[case::source(&["--source", "msstore"])]
+#[case::short_source(&["-s", "msstore"])]
+#[case::manifest(&["--manifest=app.yaml"])]
+#[case::short_manifest(&["-m", "app.yaml"])]
+fn winget_custom_parameters_asking_for_another_opt_in_or_source_are_unreadable(#[case] custom_parameters: &[&str]) {
+    assert_eq!(
+        check_of(GRANT_ALL, &with_parameters(winget_install(), custom_parameters)),
+        Check::UnreadableRequest
+    );
 }
 
 #[rstest]
-// oracle: contract policies/CONTRACT.policy.md §manager-scoop
-#[case::skip_hash_check_long(&["--skip-hash-check"], &["SkipHashCheck", "CustomParameters"])]
-#[case::skip_hash_check_short(&["-s"], &["SkipHashCheck", "CustomParameters"])]
-#[case::skip_hash_check_in_cluster(&["-ks"], &["SkipHashCheck", "CustomParameters"])]
-#[case::double_dash_is_not_a_cluster(&["--s"], &["CustomParameters"])]
-#[case::other_option(&["--global"], &["CustomParameters"])]
-fn scoop_custom_parameters_carry_opt_ins(#[case] custom_parameters: &[&str], #[case] expected: &[&str]) {
-    let request = parameters(request("Install", "Scoop", "main", "git"), custom_parameters);
-    assert_eq!(opt_ins(&request), expected);
+// oracle: contract policies/CONTRACT.policy.md §manager-winget
+#[case::plain_parameter(&["/quiet"])]
+#[case::short_option_in_other_case(&["-I"])]
+#[case::short_options_end_at_equals(&["-e=i"])]
+#[case::option_after_end_of_options(&["--", "--interactive"])]
+#[case::lone_dash_is_not_an_option(&["-", "x"])]
+#[case::value_of_an_option_is_not_an_option(&["--architecture", "--interactive"])]
+#[case::value_of_an_option_after_equals_is_not_an_option(&["--architecture=--force"])]
+fn winget_custom_parameters_that_ask_for_nothing_else_are_custom_parameters_only(#[case] custom_parameters: &[&str]) {
+    assert_eq!(
+        opt_ins(&with_parameters(winget_install(), custom_parameters)),
+        ["CustomParameters"]
+    );
 }
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §reading
 #[case::interactive_under_powershell(
-    with(install("PowerShell", "PSGallery", "Pester", "5.0"), |r| r.options.interactive = true),
+    with(install("PowerShell", "PSGallery", "Pester", "5.0"), |r| r.opt_ins.interactive = true),
     &["Interactive"]
 )]
-#[case::install_location_under_npm(
-    with(install("Npm", "npm", "react", "1.0.0"), |r| r.options.custom_install_location = Some("C:\\Apps".to_owned())),
+#[case::install_location_under_powershell(
+    with_location(install("PowerShell", "PSGallery", "Pester", "5.0"), "C:\\Apps"),
     &["CustomInstallLocation"]
 )]
-fn options_the_command_drops_carry_opt_ins(#[case] subject: Request, #[case] expected: &[&str]) {
+// oracle: contract policies/CONTRACT.policy.md §manager-winget
+#[case::installer_arguments_on_a_winget_uninstall(
+    with(request("Uninstall", "Winget", "winget", "Contoso.Tool"), |r| r.opt_ins.installer_arguments = Some(installer_arguments("/quiet"))),
+    &["InstallerArguments"]
+)]
+fn opt_ins_the_command_does_not_carry_are_still_used(#[case] subject: Request, #[case] expected: &[&str]) {
     assert_eq!(opt_ins(&subject), expected);
 }
 
 #[test]
-fn install_location_the_command_drops_is_checked() {
+fn install_location_the_command_does_not_carry_is_checked() {
     // oracle: contract policies/CONTRACT.policy.md §reading
     // oracle: contract policies/CONTRACT.policy.md §install-location
-    let mut request = install("Npm", "npm", "react", "1.0.0");
-    request.options.custom_install_location = Some("Apps".to_owned());
+    let request = with_location(install("PowerShell", "PSGallery", "Pester", "5.0"), "Apps");
     assert_eq!(check_of(GRANT_ALL, &request), Check::InstallLocation);
 }
 
@@ -303,14 +406,12 @@ const GRANT_LOCATIONS: &str = r#"[{"Id":"all","Decision":"Allow","Select":{},"Gr
 #[case::forward_slashes_and_repeated_separators("d://apps//tool/")]
 #[case::inner_dot_and_space("C:\\a.b c\\x")]
 fn plain_local_paths_pass(#[case] location: &str) {
-    let mut request = winget_install();
-    request.options.custom_install_location = Some(location.to_owned());
+    let request = with_location(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), location);
     assert_eq!(check_of(GRANT_LOCATIONS, &request), Check::AllowRules);
 }
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §install-location
-#[case::empty("")]
 #[case::drive_without_separator("C:")]
 #[case::drive_relative("C:Apps")]
 #[case::relative("Apps\\Tool")]
@@ -335,35 +436,19 @@ fn plain_local_paths_pass(#[case] location: &str) {
 #[case::delete_control("C:\\Apps\\a\u{7F}b")]
 #[case::c1_control("C:\\Apps\\a\u{9F}b")]
 fn other_install_locations_fail(#[case] location: &str) {
-    let mut request = winget_install();
-    request.options.custom_install_location = Some(location.to_owned());
+    let request = with_location(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), location);
     assert_eq!(check_of(GRANT_LOCATIONS, &request), Check::InstallLocation);
-}
-
-#[rstest]
-// oracle: contract policies/CONTRACT.policy.md §manager-winget
-#[case::long_option_with_value(&["--location", "C:\\Apps"], Check::AllowRules)]
-#[case::short_option_with_value(&["-l", "C:\\Apps"], Check::AllowRules)]
-#[case::long_option_ignoring_ascii_case_with_equals(&["--LOCATION=C:\\Apps"], Check::AllowRules)]
-#[case::quoted_value_after_equals(&["--location=\"C:\\Program Files\\Contoso\""], Check::AllowRules)]
-#[case::short_option_with_equals(&["-l=C:\\Apps"], Check::AllowRules)]
-#[case::option_without_value(&["--location"], Check::InstallLocation)]
-#[case::short_option_sharing_its_element(&["-il", "C:\\Apps"], Check::InstallLocation)]
-#[case::option_twice_with_one_location(&["--location", "C:\\Apps", "-l", "C:\\Apps"], Check::InstallLocation)]
-#[case::relative_value(&["--location", "Apps"], Check::InstallLocation)]
-fn winget_location_options(#[case] custom_parameters: &[&str], #[case] expected: Check) {
-    assert_eq!(
-        check_of(GRANT_ALL, &parameters(winget_install(), custom_parameters)),
-        expected
-    );
 }
 
 #[test]
-fn location_set_by_the_field_and_an_option_fails_even_when_equal() {
+fn install_location_check_reads_only_the_install_location() {
     // oracle: contract policies/CONTRACT.policy.md §install-location
-    let mut request = parameters(winget_install(), &["--location", "C:\\Apps"]);
-    request.options.custom_install_location = Some("C:\\Apps".to_owned());
-    assert_eq!(check_of(GRANT_LOCATIONS, &request), Check::InstallLocation);
+    let mut request = with_parameters(winget_install(), &["--scope=user"]);
+    request.opt_ins.installer_arguments = Some(installer_arguments("Apps"));
+    request.opt_ins.custom_install_location = with_location(winget_install(), "C:\\Apps")
+        .opt_ins
+        .custom_install_location;
+    assert_eq!(check_of(GRANT_ALL, &request), Check::AllowRules);
 }
 
 #[rstest]
@@ -377,45 +462,36 @@ fn location_set_by_the_field_and_an_option_fails_even_when_equal() {
     Check::MissingVersion
 )]
 #[case::leading_at_selects_no_version(install("Winget", "winget", "@Contoso", "1.2.3"), Check::AllowRules)]
-#[case::version_option(parameters(winget_install(), &["--version", "1.2.3"]), Check::MissingVersion)]
-#[case::short_version_option_without_value(parameters(winget_install(), &["-v"]), Check::MissingVersion)]
+#[case::version_option(with_parameters(winget_install(), &["--version", "1.2.3"]), Check::MissingVersion)]
+#[case::short_version_option_without_value(with_parameters(winget_install(), &["-v"]), Check::MissingVersion)]
+#[case::version_option_takes_an_option_as_its_value(
+    with_parameters(winget_install(), &["--version", "--interactive"]),
+    Check::MissingVersion
+)]
 #[case::npm_two_components(install("Npm", "npm", "react", "18.2"), Check::MissingVersion)]
-#[case::npm_range(install("Npm", "npm", "react", "^18.2.0"), Check::MissingVersion)]
+#[case::npm_tilde_range(install("Npm", "npm", "react", "~18.2.0"), Check::MissingVersion)]
+#[case::npm_wildcard_range(install("Npm", "npm", "react", "18.*"), Check::MissingVersion)]
 #[case::npm_three_components(install("Npm", "npm", "react", "18.2.0"), Check::AllowRules)]
-#[case::npm_pre_release(install("Npm", "npm", "react", "19.0.0-rc.1"), Check::AllowRules)]
-#[case::npm_alias_selects_the_version(install("Npm", "npm", "my-react:react@18.2.0", "18.2.0"), Check::MissingVersion)]
-#[case::bun_two_components(install("Bun", "Bun", "react", "18.2"), Check::MissingVersion)]
+#[case::npm_prerelease(install("Npm", "npm", "react", "19.0.0-rc.1"), Check::AllowRules)]
+#[case::bun_three_components(install("Bun", "Bun", "react", "18.2.0"), Check::AllowRules)]
 // oracle: contract policies/CONTRACT.policy.md §missing-version
 #[case::powershell7_range(install("PowerShell7", "PSGallery", "Pester", "[5.0,6.0)"), Check::MissingVersion)]
 #[case::powershell7_wildcard(install("PowerShell7", "PSGallery", "Pester", "5.*"), Check::MissingVersion)]
 #[case::powershell7_open_range(install("PowerShell7", "PSGallery", "Pester", "[5.0,]"), Check::MissingVersion)]
 #[case::powershell7_version(install("PowerShell7", "PSGallery", "Pester", "5.3.3"), Check::AllowRules)]
 #[case::powershell7_two_components(install("PowerShell7", "PSGallery", "Pester", "5.3"), Check::AllowRules)]
-#[case::powershell7_pre_release(install("PowerShell7", "PSGallery", "Pester", "5.4.0-rc1"), Check::AllowRules)]
-#[case::powershell_range(install("PowerShell", "PSGallery", "Pester", "[5.0,6.0)"), Check::AllowRules)]
+#[case::powershell7_prerelease(install("PowerShell7", "PSGallery", "Pester", "5.4.0-rc1"), Check::AllowRules)]
 // oracle: contract policies/CONTRACT.policy.md §manager-npm
-// oracle: contract policies/CONTRACT.policy.md §manager-bun
-#[case::npm_hash_selects_the_version(
-    install("Npm", "npm", "github:contoso/tool#v1.2.3", "1.2.3"),
-    Check::MissingVersion
-)]
-#[case::npm_at_after_first_character_selects_the_version(
-    install("Npm", "npm", "git+ssh:git@host/tool", "1.2.3"),
-    Check::MissingVersion
-)]
-#[case::bun_hash_selects_the_version(
-    install("Bun", "Bun", "github:contoso/tool#v1.2.3", "1.2.3"),
-    Check::MissingVersion
-)]
-#[case::npm_leading_at_of_each_part_selects_no_version(
-    install("Npm", "npm", "@scope:@scope/tool", "1.2.3"),
+#[case::npm_alias_suffix_selects_no_version(
+    install("Npm", "npm", "my-react:react@18.2.0", "18.2.0"),
     Check::AllowRules
 )]
+#[case::npm_scoped_name_selects_no_version(install("Npm", "npm", "@contoso/ui", "1.2.3"), Check::AllowRules)]
 #[case::cargo_one_component(install("Cargo", "crates.io", "serde", "1"), Check::MissingVersion)]
 #[case::cargo_three_components(install("Cargo", "crates.io", "serde", "1.0.0"), Check::AllowRules)]
 #[case::dotnet_two_components(install("Dotnet", "nuget.org", "dotnet-ef", "8.0"), Check::MissingVersion)]
 #[case::dotnet_four_components(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0.1"), Check::AllowRules)]
-#[case::chocolatey_two_components(install("Chocolatey", "chocolatey", "git", "2.4"), Check::AllowRules)]
+#[case::chocolatey_two_components(elevated(install("Chocolatey", "chocolatey", "git", "2.4")), Check::AllowRules)]
 #[case::pip_two_components(install("Pip", "pip", "requests", "2.31"), Check::AllowRules)]
 #[case::scoop_install_without_version(request("Install", "Scoop", "main", "git"), Check::AllowRules)]
 #[case::vcpkg_update_without_version(request("Update", "Vcpkg", "x64-windows", "zlib"), Check::AllowRules)]
@@ -431,13 +507,13 @@ fn check_selecting(condition: &str, request: &Request) -> Check {
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §managers
-#[case::winget_field(with(winget_install(), |r| r.options.scope = Some("Machine".to_owned())), "Machine")]
-#[case::winget_option(parameters(winget_install(), &["--scope", "machine"]), "Machine")]
-#[case::winget_option_ignoring_ascii_case(parameters(winget_install(), &["--scope=USER"]), "User")]
-#[case::winget_option_after_end_of_options(parameters(with(winget_install(), |r| r.options.scope = Some("User".to_owned())), &["--", "--scope", "machine"]), "User")]
+#[case::winget_field(elevated(with(winget_install(), |r| r.scope = Some(Scope::Machine))), "Machine")]
+#[case::winget_option(elevated(with_parameters(winget_install(), &["--scope", "machine"])), "Machine")]
+#[case::winget_option_ignoring_ascii_case(with_parameters(winget_install(), &["--scope=USER"]), "User")]
+#[case::winget_option_after_end_of_options(with_parameters(with(winget_install(), |r| r.scope = Some(Scope::User)), &["--", "--scope", "machine"]), "User")]
 #[case::default_user(request("Uninstall", "Npm", "npm", "react"), "User")]
-#[case::chocolatey_default_machine(request("Uninstall", "Chocolatey", "chocolatey", "git"), "Machine")]
-#[case::chocolatey_field(with(request("Uninstall", "Chocolatey", "chocolatey", "git"), |r| r.options.scope = Some("User".to_owned())), "User")]
+#[case::chocolatey_default_machine(elevated(request("Uninstall", "Chocolatey", "chocolatey", "git")), "Machine")]
+#[case::chocolatey_field(elevated(with(request("Uninstall", "Chocolatey", "chocolatey", "git"), |r| r.scope = Some(Scope::Machine))), "Machine")]
 #[case::powershell_install(install("PowerShell", "PSGallery", "Pester", "5.0"), "User")]
 #[case::pip_install(install("Pip", "pip", "requests", "2.31"), "User")]
 fn known_scopes(#[case] subject: Request, #[case] scope: &str) {
@@ -451,11 +527,11 @@ fn known_scopes(#[case] subject: Request, #[case] scope: &str) {
 // oracle: contract policies/CONTRACT.policy.md §managers
 // oracle: contract policies/CONTRACT.policy.md §applicability
 #[case::winget_without_scope(winget_install())]
-#[case::winget_field_and_option(parameters(with(winget_install(), |r| r.options.scope = Some("Machine".to_owned())), &["--scope", "machine"]))]
-#[case::winget_two_options(parameters(winget_install(), &["--scope", "user", "--scope", "user"]))]
-#[case::winget_option_with_other_value(parameters(winget_install(), &["--scope", "global"]))]
-#[case::winget_option_without_value(parameters(winget_install(), &["--scope"]))]
-#[case::pip_uninstall(with(request("Uninstall", "Pip", "pip", "requests"), |r| r.options.scope = Some("User".to_owned())))]
+#[case::winget_field_and_option(elevated(with_parameters(with(winget_install(), |r| r.scope = Some(Scope::Machine)), &["--scope", "machine"])))]
+#[case::winget_two_options(elevated(with_parameters(winget_install(), &["--scope", "user", "--scope", "user"])))]
+#[case::winget_option_with_other_value(elevated(with_parameters(winget_install(), &["--scope", "global"])))]
+#[case::winget_option_without_value(elevated(with_parameters(winget_install(), &["--scope"])))]
+#[case::pip_uninstall(with(request("Uninstall", "Pip", "pip", "requests"), |r| r.scope = Some(Scope::User)))]
 #[case::powershell_uninstall(request("Uninstall", "PowerShell", "PSGallery", "Pester"))]
 #[case::powershell7_uninstall(request("Uninstall", "PowerShell7", "PSGallery", "Pester"))]
 fn unknown_scopes(#[case] subject: Request) {
@@ -466,20 +542,33 @@ fn unknown_scopes(#[case] subject: Request) {
 }
 
 #[rstest]
+// oracle: contract policies/CONTRACT.policy.md §reading
+#[case::machine_option_without_elevation(with_parameters(winget_install(), &["--scope", "machine"]))]
+#[case::machine_option_with_user_scope(with_parameters(with(winget_install(), |r| r.scope = Some(Scope::User)), &["--scope=machine"]))]
+#[case::scope_option_without_value(with_parameters(winget_install(), &["--scope"]))]
+#[case::scope_option_with_other_value(with_parameters(winget_install(), &["--scope", "global"]))]
+#[case::scope_option_twice(with_parameters(winget_install(), &["--scope", "user", "--scope", "user"]))]
+#[case::scope_option_and_field(with_parameters(with(winget_install(), |r| r.scope = Some(Scope::User)), &["--scope", "user"]))]
+#[case::chocolatey_default_machine(install("Chocolatey", "chocolatey", "git", "2.4"))]
+#[case::chocolatey_uninstall_default_machine(request("Uninstall", "Chocolatey", "chocolatey", "git"))]
+fn scope_that_may_be_machine_without_elevation_is_unreadable(#[case] subject: Request) {
+    assert_eq!(check_of(GRANT_ALL, &subject), Check::UnreadableRequest);
+}
+
+#[rstest]
 // oracle: contract policies/CONTRACT.policy.md §managers
-#[case::winget_field(with(winget_install(), |r| r.package.architecture = Some("Arm64".to_owned())), "Arm64")]
-#[case::winget_option(parameters(winget_install(), &["-a", "X86"]), "X86")]
-#[case::scoop_field(with(request("Install", "Scoop", "main", "git"), |r| r.package.architecture = Some("X64".to_owned())), "X64")]
+#[case::winget_field(with(winget_install(), |r| r.package.architecture = Some(Architecture::Arm64)), "Arm64")]
+#[case::winget_option(with_parameters(winget_install(), &["-a", "X86"]), "X86")]
+#[case::scoop_field(with(request("Install", "Scoop", "main", "git"), |r| r.package.architecture = Some(Architecture::X64)), "X64")]
 #[case::vcpkg_triplet(request("Install", "Vcpkg", "x64-windows", "zlib"), "X64")]
 #[case::vcpkg_triplet_ignoring_ascii_case(request("Install", "Vcpkg", "ARM64-Linux", "zlib"), "Arm64")]
-#[case::vcpkg_field_over_triplet(with(request("Install", "Vcpkg", "x64-windows", "zlib"), |r| r.package.architecture = Some("X86".to_owned())), "X86")]
 #[case::npm_default(install("Npm", "npm", "react", "18.2.0"), "Neutral")]
 #[case::bun_default(install("Bun", "Bun", "react", "18.2.0"), "Neutral")]
 #[case::cargo_default(install("Cargo", "crates.io", "serde", "1.0.0"), "Neutral")]
 #[case::pip_default(install("Pip", "pip", "requests", "2.31"), "Neutral")]
-#[case::dotnet_field(with(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), |r| r.package.architecture = Some("X64".to_owned())), "X64")]
-#[case::chocolatey_field(with(install("Chocolatey", "chocolatey", "git", "2.4"), |r| r.package.architecture = Some("X86".to_owned())), "X86")]
-#[case::powershell_whatever_the_field(with(install("PowerShell", "PSGallery", "Pester", "5.0"), |r| r.package.architecture = Some("X64".to_owned())), "Neutral")]
+#[case::dotnet_field(with(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), |r| r.package.architecture = Some(Architecture::X64)), "X64")]
+#[case::chocolatey_field(elevated(with(install("Chocolatey", "chocolatey", "git", "2.4"), |r| r.package.architecture = Some(Architecture::X86))), "X86")]
+#[case::powershell_whatever_the_field(with(install("PowerShell", "PSGallery", "Pester", "5.0"), |r| r.package.architecture = Some(Architecture::X64)), "Neutral")]
 fn known_architectures(#[case] subject: Request, #[case] architecture: &str) {
     assert_eq!(
         check_selecting(&format!(r#""Architectures":["{architecture}"]"#), &subject),
@@ -491,15 +580,13 @@ fn known_architectures(#[case] subject: Request, #[case] architecture: &str) {
 // oracle: contract policies/CONTRACT.policy.md §managers
 // oracle: contract policies/CONTRACT.policy.md §applicability
 #[case::winget_without_architecture(winget_install())]
-#[case::winget_field_and_option(parameters(with(winget_install(), |r| r.package.architecture = Some("X64".to_owned())), &["--architecture", "x64"]))]
-#[case::winget_option_with_other_value(parameters(winget_install(), &["--architecture", "amd64"]))]
-#[case::winget_option_sharing_its_element(parameters(winget_install(), &["-ia", "x64"]))]
-#[case::scoop_arch_option(parameters(with(request("Install", "Scoop", "main", "git"), |r| r.package.architecture = Some("X64".to_owned())), &["--arch", "64bit"]))]
-#[case::scoop_short_cluster(parameters(with(request("Install", "Scoop", "main", "git"), |r| r.package.architecture = Some("X64".to_owned())), &["-ga"]))]
+#[case::winget_field_and_option(with_parameters(with(winget_install(), |r| r.package.architecture = Some(Architecture::X64)), &["--architecture", "x64"]))]
+#[case::winget_option_with_other_value(with_parameters(winget_install(), &["--architecture", "amd64"]))]
+#[case::winget_option_sharing_its_element(with_parameters(winget_install(), &["-ea", "x64"]))]
 #[case::vcpkg_other_triplet(request("Install", "Vcpkg", "wasm32-emscripten", "zlib"))]
-#[case::dotnet_neutral(with(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), |r| r.package.architecture = Some("Neutral".to_owned())))]
-#[case::chocolatey_x64(with(install("Chocolatey", "chocolatey", "git", "2.4"), |r| r.package.architecture = Some("X64".to_owned())))]
-#[case::chocolatey_without_architecture(install("Chocolatey", "chocolatey", "git", "2.4"))]
+#[case::dotnet_neutral(with(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), |r| r.package.architecture = Some(Architecture::Neutral)))]
+#[case::chocolatey_x64(elevated(with(install("Chocolatey", "chocolatey", "git", "2.4"), |r| r.package.architecture = Some(Architecture::X64))))]
+#[case::chocolatey_without_architecture(elevated(install("Chocolatey", "chocolatey", "git", "2.4")))]
 fn unknown_architectures(#[case] subject: Request) {
     assert_eq!(
         check_selecting(r#""Architectures":["X86","X64","Arm64","Neutral"]"#, &subject),
@@ -509,11 +596,11 @@ fn unknown_architectures(#[case] subject: Request) {
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §request-properties
-#[case::machine_scope_field(|r: &mut Request| r.options.scope = Some("Machine".to_owned()), "Elevated")]
-#[case::elevated_client(|r: &mut Request| r.client.requested_elevation = "Elevated".to_owned(), "Elevated")]
-#[case::user_scope_standard_client(|r: &mut Request| r.options.scope = Some("User".to_owned()), "NonElevated")]
-#[case::machine_scope_option_only(|r: &mut Request| r.options.custom_parameters = vec!["--scope".to_owned(), "machine".to_owned()], "NonElevated")]
-fn elevation_is_read(#[case] change: fn(&mut Request), #[case] elevation: &str) {
+#[case::elevated_member(|r: &mut Request| r.elevation = Elevation::Elevated, "Elevated")]
+#[case::machine_scope_member(|r: &mut Request| { r.scope = Some(Scope::Machine); r.elevation = Elevation::Elevated; }, "Elevated")]
+#[case::non_elevated_member(|r: &mut Request| r.elevation = Elevation::NonElevated, "NonElevated")]
+#[case::user_scope_member(|r: &mut Request| r.scope = Some(Scope::User), "NonElevated")]
+fn elevation_is_read_from_the_member(#[case] change: fn(&mut Request), #[case] elevation: &str) {
     assert_eq!(
         check_selecting(
             &format!(r#""Elevation":"{elevation}""#),
@@ -523,12 +610,60 @@ fn elevation_is_read(#[case] change: fn(&mut Request), #[case] elevation: &str) 
     );
 }
 
-#[test]
-fn chocolatey_default_machine_scope_does_not_elevate() {
-    // oracle: contract policies/CONTRACT.policy.md §request-properties
-    let request = install("Chocolatey", "chocolatey", "git", "2.4");
+#[rstest]
+// oracle: contract policies/CONTRACT.policy.md §manager-dotnet
+// oracle: contract policies/CONTRACT.policy.md §manager-chocolatey
+// oracle: contract policies/CONTRACT.policy.md §source-selector
+#[case::dotnet_install(
+    install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"),
+    Check::AllowRules,
+    Check::AllowRules
+)]
+#[case::dotnet_uninstall(
+    request("Uninstall", "Dotnet", "nuget.org", "dotnet-ef"),
+    Check::DefaultDeny,
+    Check::AllowRules
+)]
+#[case::chocolatey_install(
+    elevated(install("Chocolatey", "chocolatey", "git", "2.4")),
+    Check::AllowRules,
+    Check::AllowRules
+)]
+#[case::chocolatey_uninstall(
+    elevated(request("Uninstall", "Chocolatey", "chocolatey", "git")),
+    Check::DefaultDeny,
+    Check::AllowRules
+)]
+fn source_of_an_uninstall_through_dotnet_or_chocolatey_is_unknown(
+    #[case] subject: Request,
+    #[case] named: Check,
+    #[case] any: Check,
+) {
     assert_eq!(
-        check_selecting(r#""Scopes":["Machine"],"Elevation":"NonElevated""#, &request),
-        Check::AllowRules
+        (
+            check_selecting(
+                r#""Sources":[{"Manager":"Dotnet","Source":"nuget.org"},{"Manager":"Chocolatey","Source":"chocolatey"}]"#,
+                &subject
+            ),
+            check_selecting(
+                r#""Sources":[{"Manager":"Dotnet","AnySource":true},{"Manager":"Chocolatey","AnySource":true}]"#,
+                &subject
+            ),
+        ),
+        (named, any)
+    );
+}
+
+#[test]
+fn chocolatey_default_machine_scope_needs_elevation_and_is_machine() {
+    // oracle: contract policies/CONTRACT.policy.md §manager-chocolatey
+    // oracle: contract policies/CONTRACT.policy.md §reading
+    let subject = install("Chocolatey", "chocolatey", "git", "2.4");
+    assert_eq!(
+        (
+            check_selecting(r#""Scopes":["Machine"]"#, &subject),
+            check_selecting(r#""Scopes":["Machine"],"Elevation":"Elevated""#, &elevated(subject)),
+        ),
+        (Check::UnreadableRequest, Check::AllowRules)
     );
 }

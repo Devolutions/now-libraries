@@ -19,6 +19,9 @@ use {proptest as _, rstest as _, serde_json as _};
 
 pub use document::{ErrorCode, Policy, ValidationError, parse_policy};
 pub use evaluate::{Check, Decision, DecisionRule, Outcome, evaluate};
-pub use request::{Client, Options, Package, Request, Source};
+pub use request::{
+    CustomInstallLocation, CustomParameters, InstallerArguments, KillBeforeOperation, OptIns, Package, PrePostCommands,
+    Request, Source,
+};
 pub use timestamp::{InvalidTimestamp, Timestamp};
-pub use values::OptIn;
+pub use values::{Architecture, Elevation, InstallerArgumentsMode, Manager, Operation, OptIn, Scope};

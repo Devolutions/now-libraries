@@ -1,10 +1,13 @@
 //! Evaluating requests: applicability, grants, precedence, audit mode and decisions.
 
-use now_policy_eval::{Check, Request};
+use now_policy_eval::{
+    Check, CustomInstallLocation, Elevation, InstallerArguments, InstallerArgumentsMode, KillBeforeOperation, Manager,
+    Operation, Request,
+};
 use rstest::rstest;
 
 use crate::common::{
-    ALLOW_ALL, METADATA, TRUST_ALL, check_of, document, evaluate, evaluate_at, evaluate_rules, request, summary,
+    self, ALLOW_ALL, METADATA, TRUST_ALL, check_of, document, evaluate, evaluate_at, evaluate_rules, request, summary,
     winget_install,
 };
 
@@ -29,13 +32,15 @@ fn expected(
 fn install(manager: &str, source: &str, id: &str, version: &str) -> Request {
     let mut request = request("Install", manager, source, id);
     request.package.version = Some(version.to_owned());
+    // Chocolatey installs machine-wide unless told otherwise, which needs elevation.
+    if manager == "Chocolatey" {
+        request.elevation = Elevation::Elevated;
+    }
     request
 }
 
 fn with_parameters(parameters: &[&str]) -> Request {
-    let mut request = winget_install();
-    request.options.custom_parameters = parameters.iter().map(|parameter| (*parameter).to_owned()).collect();
-    request
+    common::with_parameters(winget_install(), parameters)
 }
 
 /// Builds a policy document with metadata extended by `metadata_extra` and an optional enforcement object.
@@ -96,7 +101,7 @@ fn untrusted_source_is_denied_whatever_the_rules_say() {
     // oracle: contract policies/CONTRACT.policy.md §trusted-sources
     let rules = r#"[{"Id":"winget","Decision":"Allow","Select":{"Sources":[{"Manager":"Winget","Source":"winget"}]}}]"#;
     let mut request = winget_install();
-    request.operation = "Update".to_owned();
+    request.operation = Operation::Update;
     assert_eq!(
         summary(&evaluate(&document("[]", rules), &request)),
         expected("Deny", "UntrustedSource", &[], &[], false)
@@ -118,36 +123,14 @@ fn trusted_sources_do_not_govern_uninstalls() {
 fn source_compares_ignoring_case_with_unicode_simple_uppercase() {
     // oracle: contract policies/CONTRACT.policy.md §text-comparison
     // oracle: spec Unicode 16.0.0 UnicodeData.txt
-    // U+00E9 maps to U+00C9 and U+03C3 maps to U+03A3 in the simple uppercase mapping.
+    // U+017F maps to U+0053 in the simple uppercase mapping, so the selector equals `msstore` ignoring case.
     let mut request = winget_install();
-    request.source.name = "dépôt-σ".to_owned();
-    let trusted = r#"[{"Manager":"Winget","Source":"DÉPÔT-Σ"}]"#;
+    request.source.name = "msstore".to_owned();
+    let trusted = r#"[{"Manager":"Winget","Source":"mſstore"}]"#;
     assert_eq!(
         evaluate(&document(trusted, ALLOW_ALL), &request).check,
         Check::AllowRules
     );
-}
-
-#[test]
-fn unknown_source_is_not_trusted_by_a_named_source() {
-    // oracle: contract policies/CONTRACT.policy.md §source-selector
-    // oracle: contract policies/CONTRACT.policy.md §manager-npm
-    // An alias whose target is not a registry name has an unknown source under Npm.
-    let request = install("Npm", "npm", "github:user/repo", "1.0.0");
-    let named = r#"[{"Manager":"Npm","Source":"npm"}]"#;
-    assert_eq!(
-        evaluate(&document(named, ALLOW_ALL), &request).check,
-        Check::UntrustedSource
-    );
-}
-
-#[test]
-fn unknown_source_is_trusted_by_any_source() {
-    // oracle: contract policies/CONTRACT.policy.md §source-selector
-    // oracle: contract policies/CONTRACT.policy.md §manager-npm
-    let request = install("Npm", "npm", "github:user/repo", "1.0.0");
-    let any = r#"[{"Manager":"Npm","AnySource":true}]"#;
-    assert_eq!(evaluate(&document(any, ALLOW_ALL), &request).check, Check::AllowRules);
 }
 
 #[test]
@@ -164,7 +147,7 @@ fn disabled_rule_is_never_applicable() {
 fn no_rules_deny_by_default() {
     // oracle: contract policies/CONTRACT.policy.md §precedence
     let mut request = winget_install();
-    request.options.interactive = true;
+    request.opt_ins.interactive = true;
     assert_eq!(
         summary(&evaluate_rules("[]", &request)),
         expected("Deny", "DefaultDeny", &[], &["Interactive"], false)
@@ -175,7 +158,7 @@ fn no_rules_deny_by_default() {
 fn allow_rule_without_grants_permits_only_plain_requests() {
     // oracle: contract policies/CONTRACT.policy.md §rules
     let mut request = winget_install();
-    request.options.no_upgrade = true;
+    request.opt_ins.no_upgrade = true;
     assert_eq!(
         summary(&evaluate_rules(ALLOW_ALL, &request)),
         expected("Deny", "UngrantedOptIn", &["all"], &["NoUpgrade"], false)
@@ -211,7 +194,7 @@ fn deny_rule_with_forbids_denies_only_requests_using_them(
         {"Id":"no-interactive","Decision":"Deny","Select":{},"Forbids":{"Interactive":{}}}
     ]"#;
     let mut request = winget_install();
-    request.options.interactive = interactive;
+    request.opt_ins.interactive = interactive;
     assert_eq!(
         summary(&evaluate_rules(policy_rules, &request)),
         expected(outcome, check, rules, opt_ins, false)
@@ -249,12 +232,12 @@ fn selection_conditions(#[case] selection: &str, #[case] check: &str) {
 #[case::v_prefix(r#""Minimum":"V1.2.3","Maximum":"v1.2.3""#, "1.2.3", "AllowRules")]
 #[case::below_minimum(r#""Minimum":"1.2.4""#, "1.2.3", "DefaultDeny")]
 #[case::above_maximum(r#""Maximum":"1.2.2""#, "1.2.3", "DefaultDeny")]
-#[case::pre_release_below_its_release(r#""Minimum":"1.2.3""#, "1.2.3-rc.1", "DefaultDeny")]
-#[case::pre_release_within_bounds(r#""Maximum":"1.2.3""#, "1.2.3-rc.1", "AllowRules")]
-#[case::numeric_pre_release_identifiers_compare_numerically(r#""Minimum":"1.0.0-rc.9""#, "1.0.0-rc.10", "AllowRules")]
+#[case::prerelease_below_its_release(r#""Minimum":"1.2.3""#, "1.2.3-rc.1", "DefaultDeny")]
+#[case::prerelease_within_bounds(r#""Maximum":"1.2.3""#, "1.2.3-rc.1", "AllowRules")]
+#[case::numeric_prerelease_identifiers_compare_numerically(r#""Minimum":"1.0.0-rc.9""#, "1.0.0-rc.10", "AllowRules")]
 #[case::numeric_identifier_below_alphanumeric(r#""Minimum":"1.0.0-alpha""#, "1.0.0-1", "DefaultDeny")]
-#[case::shorter_pre_release_is_lower(r#""Minimum":"1.0.0-alpha.1""#, "1.0.0-alpha", "DefaultDeny")]
-#[case::pre_release_identifiers_compare_in_ascii_order(r#""Minimum":"1.0.0-beta""#, "1.0.0-Beta", "DefaultDeny")]
+#[case::shorter_prerelease_is_lower(r#""Minimum":"1.0.0-alpha.1""#, "1.0.0-alpha", "DefaultDeny")]
+#[case::prerelease_identifiers_compare_in_ascii_order(r#""Minimum":"1.0.0-beta""#, "1.0.0-Beta", "DefaultDeny")]
 #[case::build_metadata_ignored(r#""Minimum":"1.2.3+zzz","Maximum":"1.2.3+aaa""#, "1.2.3+mmm", "AllowRules")]
 #[case::not_a_version_is_unknown(r#""Minimum":"0.0.1""#, "1.2.3.beta", "DefaultDeny")]
 fn version_conditions(#[case] condition: &str, #[case] version: &str, #[case] check: &str) {
@@ -266,9 +249,9 @@ fn version_conditions(#[case] condition: &str, #[case] version: &str, #[case] ch
 
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §version-scheme
-#[case::chocolatey_pre_release_excluded("Chocolatey", "chocolatey", "2.0.0-beta", "DefaultDeny")]
+#[case::chocolatey_prerelease_excluded("Chocolatey", "chocolatey", "2.0.0-beta", "DefaultDeny")]
 #[case::chocolatey_release_kept("Chocolatey", "chocolatey", "2.0.0+beta", "AllowRules")]
-#[case::winget_has_no_pre_release("Winget", "winget", "2.0.0-beta", "AllowRules")]
+#[case::winget_has_no_prerelease("Winget", "winget", "2.0.0-beta", "AllowRules")]
 fn prerelease_exclude(#[case] manager: &str, #[case] source: &str, #[case] version: &str, #[case] check: &str) {
     let rules =
         r#"[{"Id":"a","Decision":"Allow","Select":{"Operations":["Install"],"Version":{"Prerelease":"Exclude"}}}]"#;
@@ -338,8 +321,6 @@ fn unknown_properties_resolve_toward_denial(#[case] rules: &str, #[case] check: 
     "AllowRules"
 )]
 #[case::npm_scoped_alias_target(install("Npm", "npm", "ui:@contoso/ui", "1.0.0"), "*ui", "AllowRules", "DenyRule")]
-#[case::npm_unknown_identity(install("Npm", "npm", "github:user/repo", "1.0.0"), "*", "DefaultDeny", "DenyRule")]
-#[case::bun_alias_is_unknown(install("Bun", "Bun", "my-react:react", "18.2.0"), "*", "DefaultDeny", "DenyRule")]
 #[case::pip_runs_of_separators(
     install("Pip", "pip", "Foo__Bar.baz", "1.0"),
     "foo-bar_BAZ",
@@ -440,18 +421,22 @@ fn grant_except_narrows_only_its_own_grant() {
 }
 
 #[rstest]
-// oracle: contract policies/CONTRACT.policy.md §reading
-// oracle: contract policies/CONTRACT.policy.md §manager-winget
+// oracle: contract policies/CONTRACT.policy.md §opt-in-evaluation
 #[case::custom_parameters_only(r#""CustomParameters":{"Patterns":["*"]}"#, "UngrantedOptIn", &["InstallerArguments"])]
 #[case::installer_arguments_only(r#""InstallerArguments":{}"#, "UngrantedOptIn", &["CustomParameters"])]
-#[case::both(r#""InstallerArguments":{},"CustomParameters":{"Patterns":["--override","/quiet"]}"#, "AllowRules", &[])]
-fn custom_parameter_with_another_opt_in_needs_both_grants(
+#[case::both(r#""InstallerArguments":{},"CustomParameters":{"Patterns":["/quiet"]}"#, "AllowRules", &[])]
+fn custom_parameters_and_installer_arguments_need_their_own_grants(
     #[case] grants: &str,
     #[case] check: &str,
     #[case] opt_ins: &[&'static str],
 ) {
     let rules = format!(r#"[{{"Id":"a","Decision":"Allow","Select":{{}},"Grants":{{{grants}}}}}]"#);
-    let decision = evaluate_rules(&rules, &with_parameters(&["--override", "/quiet"]));
+    let mut request = with_parameters(&["/quiet"]);
+    request.opt_ins.installer_arguments = Some(InstallerArguments {
+        arguments: "/norestart".to_owned(),
+        mode: InstallerArgumentsMode::Append,
+    });
+    let decision = evaluate_rules(&rules, &request);
     let names: Vec<&str> = decision.opt_ins.iter().map(|opt_in| opt_in.as_str()).collect();
     assert_eq!((decision.check.as_str(), names.as_slice()), (check, opt_ins));
 }
@@ -476,7 +461,9 @@ fn install_location_grants(#[case] pattern: &str, #[case] location: &str, #[case
         r#"[{{"Id":"a","Decision":"Allow","Select":{{}},"Grants":{{"CustomInstallLocation":{{"Patterns":["{pattern}"]}}}}}}]"#
     );
     let mut request = winget_install();
-    request.options.custom_install_location = Some(location.to_owned());
+    request.opt_ins.custom_install_location = Some(CustomInstallLocation {
+        path: location.to_owned(),
+    });
     assert_eq!(check_of(&rules, &request).as_str(), check);
 }
 
@@ -512,7 +499,9 @@ fn install_location_forbids(#[case] location: &str, #[case] check: &str) {
         {"Id":"d","Decision":"Deny","Select":{},"Forbids":{"CustomInstallLocation":{"Patterns":["c:/windows/*"],"Except":["C:/Windows/Temp/*"]}}}
     ]"#;
     let mut request = winget_install();
-    request.options.custom_install_location = Some(location.to_owned());
+    request.opt_ins.custom_install_location = Some(CustomInstallLocation {
+        path: location.to_owned(),
+    });
     assert_eq!(check_of(rules, &request).as_str(), check);
 }
 
@@ -536,7 +525,9 @@ fn install_location_forbid_patterns_drop_a_trailing_separator(
     ]"#
     );
     let mut request = winget_install();
-    request.options.custom_install_location = Some(location.to_owned());
+    request.opt_ins.custom_install_location = Some(CustomInstallLocation {
+        path: location.to_owned(),
+    });
     assert_eq!(check_of(&rules, &request).as_str(), check);
 }
 
@@ -551,11 +542,11 @@ fn allow_rule_cannot_require_an_opt_in() {
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §precedence
 #[case::unreadable_over_validity_window(
-    |r: &mut Request| { r.operation = "Repair".to_owned(); },
+    |r: &mut Request| { r.manager = Manager::Apt; },
     "UnreadableRequest"
 )]
 #[case::validity_window_over_install_location(
-    |r: &mut Request| { r.options.custom_install_location = Some("Apps".to_owned()); },
+    |r: &mut Request| { r.opt_ins.custom_install_location = Some(CustomInstallLocation { path: "Apps".to_owned() }); },
     "ValidityWindow"
 )]
 fn precedence_outside_the_validity_window(#[case] change: fn(&mut Request), #[case] check: &str) {
@@ -568,7 +559,7 @@ fn precedence_outside_the_validity_window(#[case] change: fn(&mut Request), #[ca
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §precedence
 #[case::install_location_over_missing_version(
-    |r: &mut Request| { r.package.version = None; r.options.custom_install_location = Some("Apps".to_owned()); },
+    |r: &mut Request| { r.package.version = None; r.opt_ins.custom_install_location = Some(CustomInstallLocation { path: "Apps".to_owned() }); },
     "InstallLocation"
 )]
 #[case::missing_version_over_untrusted_source(
@@ -580,7 +571,7 @@ fn precedence_outside_the_validity_window(#[case] change: fn(&mut Request), #[ca
     "UntrustedSource"
 )]
 #[case::deny_rule_over_ungranted_opt_in(
-    |r: &mut Request| { r.options.interactive = true; },
+    |r: &mut Request| { r.opt_ins.interactive = true; },
     "DenyRule"
 )]
 fn precedence_of_checks(#[case] change: fn(&mut Request), #[case] check: &str) {
@@ -605,11 +596,11 @@ fn precedence_of_checks(#[case] change: fn(&mut Request), #[case] check: &str) {
     expected("Allow", "DenyRule", &["ban: Banned"], &[], true)
 )]
 #[case::ungranted_opt_in(
-    |r: &mut Request| { r.options.skip_hash_check = true; },
+    |r: &mut Request| { r.opt_ins.skip_hash_check = true; },
     expected("Allow", "UngrantedOptIn", &["tools"], &["SkipHashCheck"], true)
 )]
 #[case::default_deny(
-    |r: &mut Request| { r.package.id = "Fabrikam.App".to_owned(); r.options.interactive = true; },
+    |r: &mut Request| { r.package.id = "Fabrikam.App".to_owned(); r.opt_ins.interactive = true; },
     expected("Allow", "DefaultDeny", &[], &["Interactive"], true)
 )]
 #[case::allowed_request_is_not_audited(
@@ -617,11 +608,11 @@ fn precedence_of_checks(#[case] change: fn(&mut Request), #[case] check: &str) {
     expected("Allow", "AllowRules", &["tools"], &[], false)
 )]
 #[case::unreadable_request(
-    |r: &mut Request| { r.package.id = String::new(); },
+    |r: &mut Request| { r.manager = Manager::Apt; },
     expected("Deny", "UnreadableRequest", &[], &[], false)
 )]
 #[case::install_location(
-    |r: &mut Request| { r.options.custom_install_location = Some("\\\\server\\share".to_owned()); },
+    |r: &mut Request| { r.opt_ins.custom_install_location = Some(CustomInstallLocation { path: "\\\\server\\share".to_owned() }); },
     expected("Deny", "InstallLocation", &[], &[], false)
 )]
 #[case::missing_version(
@@ -680,9 +671,11 @@ fn deny_rule_decision_names_every_denying_rule_in_policy_order() {
         {"Id":"not-denying","Decision":"Deny","Select":{},"Forbids":{"KillBeforeOperation":{}}}
     ]"#;
     let mut request = winget_install();
-    request.options.no_upgrade = true;
-    request.options.interactive = true;
-    request.options.custom_install_location = Some("C:\\Apps".to_owned());
+    request.opt_ins.no_upgrade = true;
+    request.opt_ins.interactive = true;
+    request.opt_ins.custom_install_location = Some(CustomInstallLocation {
+        path: "C:\\Apps".to_owned(),
+    });
     assert_eq!(
         summary(&evaluate_rules(rules, &request)),
         expected(
@@ -704,9 +697,11 @@ fn ungranted_opt_in_decision_names_every_applicable_allow_rule() {
         {"Id":"a","Decision":"Allow","Select":{"Packages":["Contoso.*"]}}
     ]"#;
     let mut request = winget_install();
-    request.options.kill_before_operation = vec!["tool.exe".to_owned()];
-    request.options.no_upgrade = true;
-    request.options.skip_hash_check = true;
+    request.opt_ins.kill_before_operation = Some(KillBeforeOperation {
+        processes: vec!["tool.exe".to_owned()],
+    });
+    request.opt_ins.no_upgrade = true;
+    request.opt_ins.skip_hash_check = true;
     assert_eq!(
         summary(&evaluate_rules(rules, &request)),
         expected(
@@ -728,7 +723,7 @@ fn allow_decision_names_every_applicable_allow_rule() {
         {"Id":"other","Decision":"Allow","Select":{"Packages":["Fabrikam.*"]}}
     ]"#;
     let mut request = winget_install();
-    request.options.interactive = true;
+    request.opt_ins.interactive = true;
     assert_eq!(
         summary(&evaluate_rules(rules, &request)),
         expected("Allow", "AllowRules", &["broad", "narrow: Contoso"], &[], false)

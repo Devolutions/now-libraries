@@ -3,7 +3,7 @@
 //! [§evaluation]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#evaluation
 
 use crate::document::{OptInPatterns, Policy, Rule, Selection, SourceSelector, VersionCondition};
-use crate::reading::{InstallLocation, ReadRequest, canonical_package_name, read};
+use crate::reading::{InstallLocation, ReadRequest, read};
 use crate::request::Request;
 use crate::text::{eq_ignore_case, map_pattern_segments, pattern_matches_exact, pattern_matches_ignore_case};
 use crate::timestamp::Timestamp;
@@ -93,6 +93,8 @@ pub struct Decision {
 }
 
 /// Evaluates `request` against `policy` at the evaluation time `time`.
+///
+/// A request that is not well-formed under the wire contract ([`Request`]) is outside the contract, so the decision is a denial by the check `UnreadableRequest`, whatever the policy says.
 pub fn evaluate(policy: &Policy, request: &Request, time: Timestamp) -> Decision {
     let Ok(request) = read(request) else {
         return decide(policy, Check::UnreadableRequest, Vec::new(), OptInSet::default());
@@ -308,6 +310,16 @@ fn selector_matches(selector: &SourceSelector, request: &ReadRequest) -> Match {
 
     match (&selector.source, &request.source) {
         (None, _) => Match::Yes,
+        // A Scoop manifest source compares with exact characters, and a name that differs only in case is unknown.
+        (Some(name), Some(source)) if request.manifest_source => {
+            if name == source {
+                Match::Yes
+            } else if eq_ignore_case(name, source) {
+                Match::Unknown
+            } else {
+                Match::No
+            }
+        }
         (Some(name), Some(source)) => Match::from_bool(eq_ignore_case(name, source)),
         (Some(_), None) => Match::Unknown,
     }
@@ -317,14 +329,10 @@ fn selector_matches(selector: &SourceSelector, request: &ReadRequest) -> Match {
 ///
 /// [§package-identity]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#package-identity
 fn packages_match(patterns: &[String], request: &ReadRequest) -> Match {
-    let Some(names) = &request.package_names else {
-        return Match::Unknown;
-    };
-
-    let manager = request.manager;
+    let names = &request.package_names;
     let patterns: Vec<String> = patterns
         .iter()
-        .map(|pattern| map_pattern_segments(pattern, |segment| canonical_package_name(manager, segment)))
+        .map(|pattern| map_pattern_segments(pattern, |segment| request.canonical_form.apply(segment)))
         .collect();
 
     let mut all_match = true;
@@ -361,12 +369,12 @@ fn version_matches(condition: &VersionCondition, request: &ReadRequest) -> Match
         return Match::Unknown;
     };
 
-    let is_pre_release = version.has_pre_release() && request.manager != Manager::Winget;
+    let is_prerelease = version.has_prerelease() && request.manager != Manager::Winget;
 
     Match::from_bool(
         condition.minimum.as_ref().is_none_or(|minimum| minimum <= &version)
             && condition.maximum.as_ref().is_none_or(|maximum| &version <= maximum)
-            && !(condition.exclude_pre_release && is_pre_release),
+            && !(condition.exclude_prerelease && is_prerelease),
     )
 }
 

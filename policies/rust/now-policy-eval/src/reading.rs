@@ -5,10 +5,10 @@
 //! [§reading]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#reading
 //! [§managers]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#managers
 
-use crate::request::Request;
+use crate::request::{OptIns, Request};
 use crate::text::{is_default_ignorable, is_white_space};
-use crate::values::{Architecture, Elevation, Manager, Operation, OptIn, OptInSet, RequestedElevation, Scope};
-use crate::version::Version;
+use crate::values::{Architecture, Elevation, Manager, Operation, OptIn, OptInSet, Scope};
+use crate::version::{Version, is_semantic_version};
 
 /// The properties and opt-ins of a readable request ([§request-properties]).
 ///
@@ -20,8 +20,13 @@ pub(crate) struct ReadRequest {
     pub(crate) operation: Operation,
     pub(crate) manager: Manager,
     pub(crate) source: Option<String>,
+    /// Whether the source is a Scoop manifest URL or path, which compares with exact characters ([§manager-scoop]).
+    ///
+    /// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
+    pub(crate) manifest_source: bool,
     /// The package names in their manager's canonical form.
-    pub(crate) package_names: Option<Vec<String>>,
+    pub(crate) package_names: Vec<String>,
+    pub(crate) canonical_form: CanonicalForm,
     /// The concrete version.
     pub(crate) version: Option<String>,
     pub(crate) missing_version: bool,
@@ -40,7 +45,7 @@ pub(crate) struct ReadRequest {
 pub(crate) enum InstallLocation {
     /// The request does not use `CustomInstallLocation`.
     NotUsed,
-    /// The request carries exactly one location, a plain local path, normalized.
+    /// The request carries one location, a plain local path, normalized.
     Passes(String),
     /// The request fails the install location check.
     Fails,
@@ -53,29 +58,45 @@ pub(crate) enum InstallLocation {
 pub(crate) struct Unreadable;
 
 /// Reads `request` the way the broker executes it.
+///
+/// A request that is not well-formed is unreadable, because it is outside the contract.
 pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
-    let operation = Operation::from_name(&request.operation).ok_or(Unreadable)?;
-    let manager = Manager::from_name(&request.manager).ok_or(Unreadable)?;
-    let requested_elevation = RequestedElevation::from_name(&request.client.requested_elevation).ok_or(Unreadable)?;
-    let requested_architecture = optional(request.package.architecture.as_deref(), Architecture::from_name)?;
-    let requested_scope = optional(request.options.scope.as_deref(), Scope::from_name)?;
+    if !request.is_well_formed() {
+        return Err(Unreadable);
+    }
 
-    check_input_bounds(request)?;
-    check_manager_rules(request, operation, manager)?;
+    let operation = request.operation;
+    let manager = request.manager;
+    let used = used_opt_ins(&request.opt_ins);
+    let custom_parameters: &[String] = request
+        .opt_ins
+        .custom_parameters
+        .as_ref()
+        .map_or(&[], |parameters| &parameters.values);
 
-    let options = &request.options;
+    if !(command_is_built(request, used, custom_parameters) && version_is_readable(request)) {
+        return Err(Unreadable);
+    }
+
     let parameters = match manager {
-        Manager::Winget => read_winget_parameters(&options.custom_parameters),
-        Manager::Scoop => read_scoop_parameters(&options.custom_parameters),
+        Manager::Winget => read_winget_parameters(custom_parameters)?,
+        Manager::Scoop
+            if custom_parameters
+                .iter()
+                .any(|parameter| scoop_parameter_is_refused(parameter)) =>
+        {
+            return Err(Unreadable);
+        }
         _ => ParameterEffects::default(),
     };
 
+    let manifest_source = manager == Manager::Scoop && is_scoop_manifest(&request.source.name);
     let identity = read_identity(manager, &request.package.id);
+    let canonical_form = canonical_form(manager, manifest_source);
 
-    let source = if identity.unknown_source {
-        None
-    } else {
-        Some(request.source.name.clone())
+    let source = match (manager, operation) {
+        (Manager::Chocolatey | Manager::Dotnet, Operation::Uninstall) => None,
+        _ => Some(request.source.name.clone()),
     };
 
     let version = concrete_version(manager, request.package.version.as_deref(), &identity, &parameters);
@@ -83,236 +104,318 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
         && !matches!(manager, Manager::Scoop | Manager::Vcpkg)
         && version.is_none();
 
-    let scope = read_scope(manager, operation, requested_scope, &parameters);
-    let architecture = read_architecture(manager, requested_architecture, &request.source.name, &parameters);
+    let scope = read_scope(manager, operation, request.scope, &parameters);
+    let architecture = read_architecture(manager, request.package.architecture, &request.source.name, &parameters);
 
-    let elevation = if requested_scope == Some(Scope::Machine) || requested_elevation == RequestedElevation::Elevated {
-        Elevation::Elevated
-    } else {
-        Elevation::NonElevated
-    };
+    // A request that may act machine-wide without saying so in `Scope` is unreadable when it runs non-elevated.
+    let scope_unknown_by_parameter = !parameters.scopes.is_empty() && scope.is_none();
+    if request.elevation == Elevation::NonElevated && (scope == Some(Scope::Machine) || scope_unknown_by_parameter) {
+        return Err(Unreadable);
+    }
 
-    // An `Options` field carries its opt-in under every manager, even one whose command does not carry the field.
-    let mut opt_ins = parameters.opt_ins;
-    for (opt_in, field_carries) in [
-        (OptIn::Interactive, options.interactive),
-        (OptIn::SkipHashCheck, options.skip_hash_check),
-        (OptIn::CustomInstallLocation, options.custom_install_location.is_some()),
-        (
-            OptIn::PrePostCommands,
-            options.pre_operation_command.is_some() || options.post_operation_command.is_some(),
-        ),
-        (OptIn::KillBeforeOperation, !options.kill_before_operation.is_empty()),
-        (OptIn::UninstallPrevious, options.uninstall_previous),
-        (OptIn::NoUpgrade, options.no_upgrade),
-    ] {
-        if field_carries {
-            opt_ins.insert(opt_in);
+    let install_location = match &request.opt_ins.custom_install_location {
+        None => InstallLocation::NotUsed,
+        Some(location) => {
+            normalize_plain_local_path(&location.path).map_or(InstallLocation::Fails, InstallLocation::Passes)
         }
-    }
-    if !options.custom_parameters.is_empty() {
-        opt_ins.insert(OptIn::CustomParameters);
-    }
-
-    let mut locations: Vec<Option<&str>> = Vec::new();
-    if let Some(location) = &options.custom_install_location {
-        locations.push(Some(location));
-    }
-    locations.extend(parameters.locations.iter().map(Option::as_deref));
-    let install_location = match locations.as_slice() {
-        [] => InstallLocation::NotUsed,
-        [Some(location)] => {
-            normalize_plain_local_path(location).map_or(InstallLocation::Fails, InstallLocation::Passes)
-        }
-        _ => InstallLocation::Fails,
     };
 
     Ok(ReadRequest {
         operation,
         manager,
         source,
-        package_names: identity.names,
+        manifest_source,
+        package_names: identity.names.iter().map(|name| canonical_form.apply(name)).collect(),
+        canonical_form,
         version,
         missing_version,
         scope,
         architecture,
-        elevation,
-        opt_ins,
-        custom_parameters: options.custom_parameters.clone(),
+        elevation: request.elevation,
+        opt_ins: used,
+        custom_parameters: custom_parameters.to_vec(),
         install_location,
     })
 }
 
-fn optional<T>(value: Option<&str>, from_name: fn(&str) -> Option<T>) -> Result<Option<T>, Unreadable> {
-    value.map(|name| from_name(name).ok_or(Unreadable)).transpose()
+/// Returns the opt-ins a request uses, which are exactly the keys of its `OptIns` ([§opt-ins]).
+///
+/// [§opt-ins]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#opt-ins
+fn used_opt_ins(opt_ins: &OptIns) -> OptInSet {
+    let mut used = OptInSet::default();
+    for (opt_in, present) in [
+        (OptIn::Interactive, opt_ins.interactive),
+        (OptIn::SkipHashCheck, opt_ins.skip_hash_check),
+        (OptIn::CustomInstallLocation, opt_ins.custom_install_location.is_some()),
+        (OptIn::CustomParameters, opt_ins.custom_parameters.is_some()),
+        (OptIn::InstallerArguments, opt_ins.installer_arguments.is_some()),
+        (OptIn::PrePostCommands, opt_ins.pre_post_commands.is_some()),
+        (OptIn::KillBeforeOperation, opt_ins.kill_before_operation.is_some()),
+        (OptIn::UninstallPrevious, opt_ins.uninstall_previous),
+        (OptIn::NoUpgrade, opt_ins.no_upgrade),
+    ] {
+        if present {
+            used.insert(opt_in);
+        }
+    }
+    used
 }
 
-/// Checks the lengths and character sets of [§request-input] and the characters the broker cannot pass.
+/// Returns whether the broker builds a command for `request`, apart from the cases that concern its version and custom parameters ([§reading], [§managers]).
 ///
-/// [§request-input]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#request-input
-fn check_input_bounds(request: &Request) -> Result<(), Unreadable> {
-    let options = &request.options;
+/// [§reading]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#reading
+/// [§managers]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#managers
+fn command_is_built(request: &Request, used: OptInSet, custom_parameters: &[String]) -> bool {
+    let manager = request.manager;
+    let id = request.package.id.as_str();
+    let source = request.source.name.as_str();
+    let uninstall = request.operation == Operation::Uninstall;
+    let elevated = request.elevation == Elevation::Elevated;
+    let architecture = request.package.architecture;
+    let has_concrete_architecture = matches!(
+        architecture,
+        Some(Architecture::X86 | Architecture::X64 | Architecture::Arm64)
+    );
+    let refuses = |opt_ins: &[OptIn]| opt_ins.iter().any(|opt_in| used.contains(*opt_in));
 
-    let within = |text: &str, min: usize, max: usize| min <= text.len() && text.len() <= max;
-    let optional_within =
-        |text: &Option<String>, min: usize, max: usize| text.as_deref().is_none_or(|text| within(text, min, max));
+    let installer_arguments = request
+        .opt_ins
+        .installer_arguments
+        .as_ref()
+        .map(|arguments| arguments.arguments.as_str());
+    let location = request
+        .opt_ins
+        .custom_install_location
+        .as_ref()
+        .map(|location| location.path.as_str());
 
-    let package_id_valid = within(&request.package.id, 1, 256)
-        && request.package.id.bytes().all(|b| {
-            b.is_ascii_alphanumeric()
-                || matches!(
-                    b,
-                    b'.' | b'_'
-                        | b'+'
-                        | b'@'
-                        | b'/'
-                        | b':'
-                        | b'['
-                        | b']'
-                        | b','
-                        | b'#'
-                        | b'$'
-                        | b'%'
-                        | b'{'
-                        | b'}'
-                        | b'-'
-                )
-        });
+    // The broker cannot pass U+0000, U+000A and U+000D to a manager.
+    let unpassable = |text: &str| text.contains(['\0', '\n', '\r']);
+    let source_distinct = !source.starts_with(is_white_space)
+        && !source.ends_with(is_white_space)
+        && !source.chars().any(is_default_ignorable);
+    let id_reads_as_an_option = matches!(manager, Manager::Winget | Manager::Dotnet) && id.starts_with('-');
 
-    let valid = within(&request.source.name, 1, 128)
-        && optional_within(&request.source.url, 0, 2048)
-        && package_id_valid
-        && optional_within(&request.package.version, 1, 128)
-        && optional_within(&request.package.channel, 1, 16)
-        && optional_within(&options.custom_install_location, 0, 2048)
-        && options.custom_parameters.len() <= 64
-        && options
-            .custom_parameters
-            .iter()
-            .all(|parameter| within(parameter, 1, 512))
-        && optional_within(&options.pre_operation_command, 0, 2048)
-        && optional_within(&options.post_operation_command, 0, 2048)
-        && options.kill_before_operation.len() <= 64
-        && options
-            .kill_before_operation
-            .iter()
-            .all(|process| within(process, 1, 128));
+    let common = !unpassable(source)
+        && !unpassable(id)
+        && !custom_parameters.iter().any(|parameter| unpassable(parameter))
+        && !installer_arguments.is_some_and(unpassable)
+        && source_distinct
+        && (matches!(manager, Manager::Winget | Manager::Scoop) || !used.contains(OptIn::CustomParameters))
+        && (manager == Manager::Winget || !used.contains(OptIn::InstallerArguments))
+        && !id_reads_as_an_option;
+    if !common {
+        return false;
+    }
 
-    let passable = |text: &str| !text.contains(['\0', '\n', '\r']);
-    let source_name = &request.source.name;
-    let source_name_distinct = !source_name.starts_with(is_white_space)
-        && !source_name.ends_with(is_white_space)
-        && !source_name.chars().any(is_default_ignorable);
+    match manager {
+        Manager::Winget => {
+            !has_batch_character(id)
+                && !location.is_some_and(has_batch_character)
+                && !custom_parameters.iter().any(|parameter| has_batch_character(parameter))
+                && !installer_arguments.is_some_and(has_batch_character)
+                && is_plain_source_name(source)
+        }
+        Manager::PowerShell | Manager::PowerShell7 => is_plain_source_name(source) && !id.contains(['[', ']']),
+        Manager::Scoop => {
+            !elevated
+                && !refuses(&[
+                    OptIn::Interactive,
+                    OptIn::CustomInstallLocation,
+                    OptIn::NoUpgrade,
+                    OptIn::UninstallPrevious,
+                ])
+                && !(uninstall && used.contains(OptIn::SkipHashCheck))
+                && !(request.operation != Operation::Install && architecture.is_some())
+                && !(request.operation == Operation::Install && architecture == Some(Architecture::Neutral))
+                && !id.contains(['[', ']'])
+                && !id.starts_with('-')
+                && scoop_sources_are_readable(source, id)
+        }
+        Manager::Vcpkg => {
+            !elevated
+                && !refuses(&[
+                    OptIn::Interactive,
+                    OptIn::SkipHashCheck,
+                    OptIn::CustomInstallLocation,
+                    OptIn::NoUpgrade,
+                    OptIn::UninstallPrevious,
+                ])
+                && architecture.is_none()
+                && is_vcpkg_triplet(source)
+                && parse_vcpkg_port_spec(id).is_some_and(|(_, triplet)| triplet.is_none_or(|triplet| triplet == source))
+        }
+        Manager::Npm | Manager::Bun => {
+            let (only_source, identifier_is_known) = if manager == Manager::Npm {
+                ("npm", npm_names(id).is_some())
+            } else {
+                ("Bun", is_npm_registry_name(id))
+            };
+            let uninstall_version_unpassable =
+                manager == Manager::Npm && uninstall && request.package.version.as_deref().is_some_and(unpassable);
 
-    if valid
-        && passable(source_name)
-        && passable(&request.package.id)
-        && options.custom_parameters.iter().all(|parameter| passable(parameter))
-        && source_name_distinct
-    {
-        Ok(())
-    } else {
-        Err(Unreadable)
+            source.eq_ignore_ascii_case(only_source)
+                && !elevated
+                && !refuses(&[
+                    OptIn::Interactive,
+                    OptIn::SkipHashCheck,
+                    OptIn::CustomInstallLocation,
+                    OptIn::NoUpgrade,
+                    OptIn::UninstallPrevious,
+                ])
+                && !has_concrete_architecture
+                && identifier_is_known
+                && !id.contains('%')
+                && !uninstall_version_unpassable
+        }
+        Manager::Cargo => {
+            source.eq_ignore_ascii_case("crates.io")
+                && !elevated
+                && !refuses(&[
+                    OptIn::Interactive,
+                    OptIn::SkipHashCheck,
+                    OptIn::NoUpgrade,
+                    OptIn::UninstallPrevious,
+                    OptIn::PrePostCommands,
+                    OptIn::KillBeforeOperation,
+                ])
+                && !has_concrete_architecture
+                && id.len() <= 64
+                && !id.starts_with('-')
+                && id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_'))
+                && !location.is_some_and(has_batch_character)
+                && !(uninstall && request.package.version.is_some())
+        }
+        Manager::Pip => {
+            source.eq_ignore_ascii_case("pip")
+                && !elevated
+                && !refuses(&[
+                    OptIn::Interactive,
+                    OptIn::SkipHashCheck,
+                    OptIn::CustomInstallLocation,
+                    OptIn::NoUpgrade,
+                    OptIn::UninstallPrevious,
+                ])
+                && !has_concrete_architecture
+                && id.bytes().next().is_some_and(|b| b.is_ascii_alphanumeric())
+                && id.bytes().next_back().is_some_and(|b| b.is_ascii_alphanumeric())
+                && id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'_' | b'-'))
+                && !(uninstall && request.package.version.is_some())
+        }
+        Manager::Dotnet => {
+            (uninstall || source.eq_ignore_ascii_case("nuget.org"))
+                && request.scope != Some(Scope::Machine)
+                && !refuses(&[
+                    OptIn::Interactive,
+                    OptIn::SkipHashCheck,
+                    OptIn::NoUpgrade,
+                    OptIn::UninstallPrevious,
+                ])
+                && !(uninstall && architecture.is_some())
+        }
+        Manager::Chocolatey => {
+            let lowercase_id = id.to_ascii_lowercase();
+
+            request.scope != Some(Scope::User)
+                && !matches!(architecture, Some(Architecture::Arm64 | Architecture::Neutral))
+                && !(uninstall && architecture.is_some())
+                && !refuses(&[OptIn::CustomInstallLocation, OptIn::NoUpgrade, OptIn::UninstallPrevious])
+                && !(uninstall && used.contains(OptIn::SkipHashCheck))
+                && id.len() <= 100
+                && !id.starts_with(['-', '.'])
+                && id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b'_'))
+                && !lowercase_id.ends_with(".config")
+                && !lowercase_id.ends_with(".nupkg")
+                && lowercase_id != "all"
+                && (uninstall || is_plain_source_name(source))
+        }
+        Manager::Apt | Manager::Dnf | Manager::Flatpak | Manager::Homebrew | Manager::Pacman | Manager::Snap => false,
     }
 }
 
-/// Checks the rules of [§managers] and each manager's reading that make a request unreadable.
+/// Returns whether the request's `Package.Version`, when present, is one its manager can pin and has characters the broker passes ([§managers]).
 ///
 /// [§managers]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#managers
-fn check_manager_rules(request: &Request, operation: Operation, manager: Manager) -> Result<(), Unreadable> {
-    let source_name = request.source.name.as_str();
-    let has_channel = request.package.channel.is_some();
+fn version_is_readable(request: &Request) -> bool {
+    let Some(version) = request.package.version.as_deref() else {
+        return true;
+    };
 
-    let builds_command = matches!(
-        manager,
-        Manager::Winget
-            | Manager::PowerShell
-            | Manager::PowerShell7
-            | Manager::Bun
-            | Manager::Cargo
-            | Manager::Chocolatey
-            | Manager::Dotnet
-            | Manager::Npm
-            | Manager::Pip
-            | Manager::Scoop
-            | Manager::Vcpkg
-    );
-
-    let accepts_custom_parameters = matches!(manager, Manager::Winget | Manager::Scoop);
-
-    let source_url_allowed = match (&request.source.url, manager) {
-        (None, _) => true,
-        (Some(_), Manager::Winget | Manager::Scoop) => true,
-        (Some(url), Manager::Bun) => url.trim_end_matches('/').eq_ignore_ascii_case("https://www.npmjs.com"),
-        (Some(url), Manager::Cargo) => url
-            .trim_end_matches('/')
-            .eq_ignore_ascii_case("https://index.crates.io"),
-        (Some(_), Manager::Dotnet) if operation == Operation::Uninstall => true,
-        (Some(url), Manager::Dotnet) => {
-            url.eq_ignore_ascii_case("https://api.nuget.org/v3/index.json") || url.chars().all(is_white_space)
+    match request.manager {
+        Manager::Scoop | Manager::Vcpkg => false,
+        Manager::Bun => is_semantic_version(version),
+        Manager::Pip => version
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'!' | b'+' | b'-' | b'_')),
+        manager => {
+            let added = match manager {
+                Manager::Npm => "~*",
+                Manager::Cargo => "=~*",
+                Manager::Dotnet => "[](),*",
+                Manager::PowerShell7 => "[](),* ",
+                _ => "",
+            };
+            request.operation == Operation::Uninstall
+                || (!version.starts_with('-')
+                    && version
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || ".-+_".contains(c) || added.contains(c)))
         }
-        (Some(_), _) => false,
-    };
-
-    let pins_version = !matches!(manager, Manager::Scoop | Manager::Vcpkg);
-
-    let manager_reading_allows = match manager {
-        Manager::Npm => source_name.eq_ignore_ascii_case("npm"),
-        Manager::Bun => source_name.eq_ignore_ascii_case("Bun") && !has_channel,
-        Manager::Cargo => source_name.eq_ignore_ascii_case("crates.io") && !has_channel,
-        Manager::Pip => source_name.eq_ignore_ascii_case("pip"),
-        Manager::Scoop => !has_channel,
-        Manager::PowerShell | Manager::PowerShell7 => is_powershell_source_name(source_name),
-        _ => true,
-    };
-
-    if builds_command
-        && (accepts_custom_parameters || request.options.custom_parameters.is_empty())
-        && source_url_allowed
-        && (pins_version || request.package.version.is_none())
-        && manager_reading_allows
-    {
-        Ok(())
-    } else {
-        Err(Unreadable)
     }
 }
 
-/// Returns whether PowerShell reads `name` as a plain source name ([§manager-powershell]).
+/// Returns whether `text` has a character the broker cannot pass to a manager that it runs through a batch file ([§managers]).
 ///
-/// [§manager-powershell]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-powershell
-fn is_powershell_source_name(name: &str) -> bool {
+/// [§managers]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#managers
+fn has_batch_character(text: &str) -> bool {
+    text.contains(['"', '%', '!', '^', '&', '|', '<', '>'])
+}
+
+/// Returns whether `name` is a plain source name ([§managers]).
+///
+/// [§managers]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#managers
+fn is_plain_source_name(name: &str) -> bool {
     name.bytes().next().is_some_and(|first| first.is_ascii_alphanumeric())
         && name
             .bytes()
             .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-' | b'_' | b' '))
 }
 
-/// What a request's custom parameters do, according to its manager's reading.
+/// What a request's custom parameters do to its properties, according to its manager's reading.
 #[derive(Debug, Default)]
 struct ParameterEffects {
-    opt_ins: OptInSet,
-    /// Each install location an option sets, `None` when the option takes no value.
-    locations: Vec<Option<String>>,
     /// Each scope an option sets, `None` when it sets no valid scope.
     scopes: Vec<Option<Scope>>,
     /// Each architecture an option sets, `None` when it sets no valid architecture.
     architectures: Vec<Option<Architecture>>,
-    architecture_unknown: bool,
     selects_version: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum WingetOption {
+    /// Would ask for `CustomInstallLocation`.
     Location,
     Scope,
     Architecture,
+    /// Would ask for `Interactive`.
     Interactive,
+    /// Would ask for `InstallerArguments`.
     InstallerArguments,
+    /// Would ask for `SkipHashCheck`.
     SkipHashCheck,
+    /// Would ask for `NoUpgrade`.
     NoUpgrade,
+    /// Would ask for `UninstallPrevious`.
     UninstallPrevious,
     Version,
+    /// Would change the source.
+    Source,
 }
 
 impl WingetOption {
@@ -329,6 +432,8 @@ impl WingetOption {
             ("no-upgrade", WingetOption::NoUpgrade),
             ("uninstall-previous", WingetOption::UninstallPrevious),
             ("version", WingetOption::Version),
+            ("source", WingetOption::Source),
+            ("manifest", WingetOption::Source),
         ];
 
         LONG.iter()
@@ -342,6 +447,7 @@ impl WingetOption {
             'a' => Some(Self::Architecture),
             'i' => Some(Self::Interactive),
             'v' => Some(Self::Version),
+            's' | 'm' => Some(Self::Source),
             _ => None,
         }
     }
@@ -349,15 +455,15 @@ impl WingetOption {
     fn takes_value(self) -> bool {
         matches!(
             self,
-            Self::Location | Self::Scope | Self::Architecture | Self::InstallerArguments | Self::Version
+            Self::Location | Self::Scope | Self::Architecture | Self::InstallerArguments | Self::Version | Self::Source
         )
     }
 }
 
-/// Reads WinGet custom parameters ([§manager-winget]).
+/// Reads WinGet custom parameters, or fails when one would ask for an opt-in or change the source ([§manager-winget]).
 ///
 /// [§manager-winget]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-winget
-fn read_winget_parameters(parameters: &[String]) -> ParameterEffects {
+fn read_winget_parameters(parameters: &[String]) -> Result<ParameterEffects, Unreadable> {
     let mut effects = ParameterEffects::default();
     let mut idx = 0;
 
@@ -370,7 +476,7 @@ fn read_winget_parameters(parameters: &[String]) -> ParameterEffects {
         }
 
         let names = element.split('=').next().unwrap_or_default();
-        let (options, takes_value): (Vec<WingetOption>, bool) = if let Some(long) = names.strip_prefix("--") {
+        let (named_options, takes_value): (Vec<WingetOption>, bool) = if let Some(long) = names.strip_prefix("--") {
             (WingetOption::from_long(long).into_iter().collect(), true)
         } else if let Some(shorts) = names.strip_prefix('-').filter(|_| 1 < element.len()) {
             (
@@ -381,10 +487,10 @@ fn read_winget_parameters(parameters: &[String]) -> ParameterEffects {
             continue;
         };
 
-        for option in options {
+        for option in named_options {
             let value = if option.takes_value() && takes_value {
                 match element.split_once('=') {
-                    Some((_, value)) => Some(strip_quotes(value).to_owned()),
+                    Some((_, value)) => Some(value.to_owned()),
                     None => {
                         let next = parameters.get(idx).cloned();
                         if next.is_some() {
@@ -398,7 +504,13 @@ fn read_winget_parameters(parameters: &[String]) -> ParameterEffects {
             };
 
             match option {
-                WingetOption::Location => effects.locations.push(value),
+                WingetOption::Location
+                | WingetOption::Interactive
+                | WingetOption::InstallerArguments
+                | WingetOption::SkipHashCheck
+                | WingetOption::NoUpgrade
+                | WingetOption::UninstallPrevious
+                | WingetOption::Source => return Err(Unreadable),
                 WingetOption::Scope => effects.scopes.push(value.and_then(|value| {
                     Scope::ALL
                         .iter()
@@ -411,131 +523,131 @@ fn read_winget_parameters(parameters: &[String]) -> ParameterEffects {
                         .copied()
                         .find(|architecture| architecture.as_str().eq_ignore_ascii_case(&value))
                 })),
-                WingetOption::Interactive => effects.opt_ins.insert(OptIn::Interactive),
-                WingetOption::InstallerArguments => effects.opt_ins.insert(OptIn::InstallerArguments),
-                WingetOption::SkipHashCheck => effects.opt_ins.insert(OptIn::SkipHashCheck),
-                WingetOption::NoUpgrade => effects.opt_ins.insert(OptIn::NoUpgrade),
-                WingetOption::UninstallPrevious => effects.opt_ins.insert(OptIn::UninstallPrevious),
                 WingetOption::Version => effects.selects_version = true,
             }
-
-            if option == WingetOption::Location {
-                effects.opt_ins.insert(OptIn::CustomInstallLocation);
-            }
         }
     }
 
-    return effects;
-
-    fn strip_quotes(text: &str) -> &str {
-        if 2 <= text.len() && text.starts_with('"') && text.ends_with('"') {
-            &text[1..text.len() - 1]
-        } else {
-            text
-        }
-    }
+    Ok(effects)
 }
 
-/// Reads Scoop custom parameters ([§manager-scoop]).
+/// Returns whether a Scoop custom parameter makes the request unreadable ([§manager-scoop]).
 ///
 /// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
-fn read_scoop_parameters(parameters: &[String]) -> ParameterEffects {
-    let mut effects = ParameterEffects::default();
+fn scoop_parameter_is_refused(parameter: &str) -> bool {
+    // An option name ends at the element's first `=` and matches ignoring ASCII case.
+    let name = parameter.split('=').next().unwrap_or_default().to_ascii_lowercase();
+    let short_cluster = name
+        .strip_prefix('-')
+        .and_then(|rest| rest.chars().next())
+        .is_some_and(|second| second != '-');
+    let single_hyphen = parameter.starts_with('-') && !parameter.starts_with("--");
 
-    for element in parameters {
-        // An option name ends at the element's first `=` and matches ignoring ASCII case.
-        let name = element.split('=').next().unwrap_or_default().to_ascii_lowercase();
-        let short_cluster = name
-            .strip_prefix('-')
-            .and_then(|rest| rest.chars().next())
-            .is_some_and(|second| second != '-');
-
-        if name == "--skip-hash-check" || (short_cluster && name.contains('s')) {
-            effects.opt_ins.insert(OptIn::SkipHashCheck);
-        }
-
-        if name == "--arch" || (short_cluster && name.contains('a')) {
-            effects.architecture_unknown = true;
-        }
-
-        // An element not starting with `-` that contains `@` makes the version unknown, which a Scoop version always is.
-    }
-
-    effects
+    parameter == "--"
+        || !parameter.starts_with('-')
+        || parameter.chars().any(is_white_space)
+        || matches!(name.as_str(), "--global" | "--all" | "--arch" | "--skip-hash-check")
+        || (single_hyphen && parameter.to_ascii_lowercase().contains(['g', 'a']))
+        || (short_cluster && name.contains('s'))
 }
 
-/// The package names an identifier names, and what it leaves unknown ([§package-identity]).
+/// Returns whether `text` is a Scoop manifest URL or local path ([§manager-scoop]).
+///
+/// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
+fn is_scoop_manifest(text: &str) -> bool {
+    let after_slashes = text.trim_start_matches('/');
+    text.contains("...")
+        || text.contains(":\\")
+        || text.contains("\\\\")
+        || ["http://", "https://", "ftp://", "ftps://"]
+            .iter()
+            .any(|scheme| starts_with_ignore_ascii_case(after_slashes, scheme))
+}
+
+fn starts_with_ignore_ascii_case(text: &str, prefix: &str) -> bool {
+    text.get(..prefix.len())
+        .is_some_and(|head| head.eq_ignore_ascii_case(prefix))
+}
+
+/// Returns whether the request's source name and identifier name exactly one Scoop manifest or app ([§manager-scoop]).
+///
+/// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
+fn scoop_sources_are_readable(source: &str, id: &str) -> bool {
+    let is_word = |text: &str| {
+        !text.is_empty()
+            && text
+                .bytes()
+                .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.'))
+    };
+
+    let names_one_entry = if is_scoop_manifest(source) || is_scoop_manifest(id) {
+        id == source && (starts_with_ignore_ascii_case(id, "http://") || starts_with_ignore_ascii_case(id, "https://"))
+    } else {
+        is_word(source) && is_word(id) && !id.to_ascii_lowercase().ends_with(".json")
+    };
+
+    names_one_entry && !source.ends_with('.') && !id.ends_with('.')
+}
+
+/// The package names an identifier names, and whether it selects a version ([§package-identity]).
 ///
 /// [§package-identity]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#package-identity
 struct Identity {
-    /// The names in canonical form, or `None` when the identity is unknown.
-    names: Option<Vec<String>>,
+    /// The names as written, which the caller puts in canonical form.
+    names: Vec<String>,
     selects_version: bool,
-    unknown_source: bool,
 }
 
+/// Reads the identifier of a request whose command [`command_is_built`] accepted.
 fn read_identity(manager: Manager, id: &str) -> Identity {
-    let known = |names: Vec<&str>, selects_version: bool| Identity {
-        names: Some(
-            names
-                .into_iter()
-                .map(|name| canonical_package_name(manager, name))
-                .collect(),
-        ),
-        selects_version,
-        unknown_source: false,
-    };
-
     match manager {
-        Manager::Npm => {
-            if is_npm_registry_name(id) {
-                return known(vec![id], false);
-            }
-            if let Some((alias, target)) = id.split_once(':') {
-                let (target, selects_version) = match target.rfind('@') {
-                    Some(at) if 0 < at => (&target[..at], true),
-                    _ => (target, false),
-                };
-                if is_npm_registry_name(alias) && is_npm_registry_name(target) {
-                    return known(vec![alias, target], selects_version);
-                }
-            }
-            unknown_npm_identity(id)
-        }
-        Manager::Bun => {
-            if is_npm_registry_name(id) {
-                known(vec![id], false)
-            } else {
-                unknown_npm_identity(id)
-            }
-        }
-        Manager::Vcpkg => known(vec![vcpkg_port(id)], false),
+        Manager::Npm => Identity {
+            names: npm_names(id)
+                .unwrap_or_default()
+                .into_iter()
+                .map(str::to_owned)
+                .collect(),
+            selects_version: false,
+        },
+        Manager::Vcpkg => Identity {
+            names: parse_vcpkg_port_spec(id)
+                .map(|(port, _)| port.to_owned())
+                .into_iter()
+                .collect(),
+            selects_version: false,
+        },
+        // A bucket's app names contain no `@`, and a manifest URL or path is fetched as given.
+        Manager::Bun | Manager::Scoop => Identity {
+            names: vec![id.to_owned()],
+            selects_version: false,
+        },
         _ => match id.rfind('@') {
-            Some(at) if 0 < at => known(vec![&id[..at]], true),
-            _ => known(vec![id], false),
+            Some(at) if 0 < at => Identity {
+                names: vec![id[..at].to_owned()],
+                selects_version: true,
+            },
+            _ => Identity {
+                names: vec![id.to_owned()],
+                selects_version: false,
+            },
         },
     }
 }
 
-/// The identity of an Npm or Bun identifier that is neither a registry name nor an alias of registry names ([§manager-npm]).
+/// Returns the names an Npm identifier names, or `None` when it is neither a registry name nor an alias ([§manager-npm]).
 ///
 /// [§manager-npm]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-npm
-fn unknown_npm_identity(id: &str) -> Identity {
-    let at_after_first_character = |part: &str| part.chars().skip(1).any(|c| c == '@');
-
-    Identity {
-        names: None,
-        selects_version: id.contains('#') || id.split(':').any(at_after_first_character),
-        unknown_source: true,
+fn npm_names(id: &str) -> Option<Vec<&str>> {
+    if is_npm_registry_name(id) {
+        return Some(vec![id]);
     }
-}
 
-/// Returns the port a Vcpkg identifier `port[features]:triplet` names ([§manager-vcpkg]).
-///
-/// [§manager-vcpkg]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-vcpkg
-fn vcpkg_port(id: &str) -> &str {
-    let end = id.find(['[', ':']).unwrap_or(id.len());
-    &id[..end]
+    let (alias, target) = id.split_once(':')?;
+    let target = match target.rfind('@') {
+        Some(at) if 0 < at => &target[..at],
+        _ => target,
+    };
+    (is_npm_registry_name(alias) && is_npm_registry_name(target)).then(|| vec![alias, target])
 }
 
 /// Returns whether `name` is an npm registry name ([§manager-npm]).
@@ -566,28 +678,90 @@ fn is_npm_registry_name(name: &str) -> bool {
         && !lowercase.ends_with(".tar.gz")
 }
 
-/// Puts a package name, or the characters of a pattern between `*`, in `manager`'s canonical form ([§package-identity]).
+/// Returns whether `text` is a Vcpkg triplet ([§manager-vcpkg]).
+///
+/// [§manager-vcpkg]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-vcpkg
+fn is_vcpkg_triplet(text: &str) -> bool {
+    !text.is_empty()
+        && text
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_' | b'.'))
+}
+
+/// Splits a Vcpkg port spec into its port and its triplet, or returns `None` when `id` is not a port spec ([§manager-vcpkg]).
+///
+/// [§manager-vcpkg]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-vcpkg
+fn parse_vcpkg_port_spec(id: &str) -> Option<(&str, Option<&str>)> {
+    let is_name = |text: &str| {
+        !text.is_empty()
+            && !text.starts_with('-')
+            && text
+                .bytes()
+                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+    };
+
+    let (head, triplet) = match id.split_once(':') {
+        Some((head, triplet)) => (head, Some(triplet)),
+        None => (id, None),
+    };
+    let (port, features) = match head.split_once('[') {
+        Some((port, features)) => (port, Some(features.strip_suffix(']')?)),
+        None => (head, None),
+    };
+
+    (is_name(port)
+        && features.is_none_or(|features| features.split(',').all(is_name))
+        && triplet.is_none_or(is_vcpkg_triplet))
+    .then_some((port, triplet))
+}
+
+/// How a manager puts a package name in canonical form ([§package-identity]).
 ///
 /// [§package-identity]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#package-identity
-pub(crate) fn canonical_package_name(manager: Manager, name: &str) -> String {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum CanonicalForm {
+    /// ASCII letters in lowercase.
+    Lowercase,
+    /// The name as written.
+    Exact,
+    /// ASCII letters in lowercase and `_` as `-`.
+    Cargo,
+    /// ASCII letters in lowercase and each run of `-`, `_` and `.` as one `-`.
+    Pip,
+}
+
+fn canonical_form(manager: Manager, manifest_source: bool) -> CanonicalForm {
     match manager {
-        Manager::Npm | Manager::Bun => name.to_owned(),
-        Manager::Cargo => name.to_ascii_lowercase().replace('_', "-"),
-        Manager::Pip => {
-            let mut canonical = String::with_capacity(name.len());
-            for c in name.chars() {
-                if matches!(c, '-' | '_' | '.') {
-                    // Every `-` already in the canonical form ends a run, so a run continues when the form ends with one.
-                    if !canonical.ends_with('-') {
-                        canonical.push('-');
+        Manager::Npm | Manager::Bun => CanonicalForm::Exact,
+        Manager::Scoop if manifest_source => CanonicalForm::Exact,
+        Manager::Cargo => CanonicalForm::Cargo,
+        Manager::Pip => CanonicalForm::Pip,
+        _ => CanonicalForm::Lowercase,
+    }
+}
+
+impl CanonicalForm {
+    /// Puts a package name, or the characters of a pattern between `*`, in canonical form.
+    pub(crate) fn apply(self, name: &str) -> String {
+        match self {
+            Self::Exact => name.to_owned(),
+            Self::Lowercase => name.to_ascii_lowercase(),
+            Self::Cargo => name.to_ascii_lowercase().replace('_', "-"),
+            Self::Pip => {
+                let mut canonical = String::with_capacity(name.len());
+                for c in name.chars() {
+                    if matches!(c, '-' | '_' | '.') {
+                        // Every `-` already in the canonical form ends a run, so a run continues when the form ends with one.
+                        if !canonical.ends_with('-') {
+                            canonical.push('-');
+                        }
+                    } else {
+                        canonical.push(c.to_ascii_lowercase());
                     }
-                } else {
-                    canonical.push(c.to_ascii_lowercase());
                 }
+                canonical
             }
-            canonical
         }
-        _ => name.to_ascii_lowercase(),
     }
 }
 
@@ -657,8 +831,7 @@ fn read_architecture(
                 _ => None,
             }
         }
-        Manager::Scoop if parameters.architecture_unknown => None,
-        Manager::Vcpkg => requested.or_else(|| {
+        Manager::Vcpkg => {
             let triplet = source_name.to_ascii_lowercase();
             [
                 ("x86-", Architecture::X86),
@@ -668,7 +841,7 @@ fn read_architecture(
             .into_iter()
             .find(|(prefix, _)| triplet.starts_with(prefix))
             .map(|(_, architecture)| architecture)
-        }),
+        }
         Manager::Npm | Manager::Bun | Manager::Cargo | Manager::Pip => Some(requested.unwrap_or(Architecture::Neutral)),
         Manager::Dotnet if requested == Some(Architecture::Neutral) => None,
         Manager::Chocolatey if requested == Some(Architecture::X64) => None,

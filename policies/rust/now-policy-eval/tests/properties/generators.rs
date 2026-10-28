@@ -2,7 +2,11 @@
 
 use core::fmt::Write as _;
 
-use now_policy_eval::{Policy, Request, Timestamp, parse_policy};
+use now_policy_eval::{
+    Architecture, CustomInstallLocation, CustomParameters, Elevation, InstallerArguments, InstallerArgumentsMode,
+    KillBeforeOperation, Manager, Operation, OptIns, Package, Policy, PrePostCommands, Request, Scope, Source,
+    Timestamp, parse_policy,
+};
 use proptest::prelude::*;
 use proptest::sample::{select, subsequence};
 
@@ -55,7 +59,7 @@ pub(crate) struct GenSelector {
 pub(crate) struct GenVersion {
     minimum: Option<&'static str>,
     maximum: Option<&'static str>,
-    exclude_pre_release: bool,
+    exclude_prerelease: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -118,7 +122,7 @@ fn selection(non_trivial: bool) -> impl Strategy<Value = GenSelection> {
             (low.is_some() || high.is_some() || exclude).then(|| GenVersion {
                 minimum: low.map(|idx| BOUNDS[idx]),
                 maximum: high.map(|idx| BOUNDS[idx]),
-                exclude_pre_release: exclude,
+                exclude_prerelease: exclude,
             })
         });
 
@@ -253,7 +257,7 @@ pub(crate) fn time() -> impl Strategy<Value = Timestamp> {
 }
 
 pub(crate) fn request() -> impl Strategy<Value = Request> {
-    let options = (
+    let opt_ins = (
         prop::option::of(select(SCOPES)),
         [
             prop::bool::weighted(0.15),
@@ -263,28 +267,25 @@ pub(crate) fn request() -> impl Strategy<Value = Request> {
         ],
         prop::option::weighted(0.2, select(LOCATIONS)),
         prop::option::weighted(0.3, subsequence(PARAMETERS, 1..3)),
-        prop::option::weighted(0.2, select(&["", "cmd"][..])),
+        prop::option::weighted(0.2, select(&["cmd"][..])),
         prop::option::weighted(0.2, select(&["tool.exe"][..])),
+        prop::option::weighted(0.15, select(InstallerArgumentsMode::ALL)),
     );
 
     (
-        prop_oneof![10 => select(OPERATIONS), 1 => Just("Repair")],
+        select(OPERATIONS),
         select(MANAGERS),
         prop::option::weighted(0.15, select(SOURCES)),
         select(PACKAGE_IDS),
         prop::option::weighted(0.8, select(VERSIONS)),
         prop::option::of(select(ARCHITECTURES)),
-        select(&["Standard", "Elevated"][..]),
-        options,
+        select(ELEVATIONS),
+        opt_ins,
     )
         .prop_map(
-            |(operation, manager, source, id, version, architecture, elevation, options)| {
-                let (scope, flags, location, parameters, pre_operation, kill) = options;
-                let mut request = Request {
-                    operation: operation.to_owned(),
-                    manager: manager.to_owned(),
-                    ..Request::default()
-                };
+            |(operation, manager, source, id, version, architecture, elevation, opt_ins)| {
+                let (scope, flags, location, parameters, pre_command, kill, installer_arguments_mode) = opt_ins;
+                let mut request = request_through(operation, manager);
                 // Most requests use the source their manager reads, so that few are unreadable.
                 let usual_source = match manager {
                     "Winget" => "winget",
@@ -299,24 +300,59 @@ pub(crate) fn request() -> impl Strategy<Value = Request> {
                 if manager != "Scoop" {
                     request.package.version = version.map(str::to_owned);
                 }
-                request.package.architecture = architecture.map(str::to_owned);
-                request.client.requested_elevation = elevation.to_owned();
-                request.options.scope = scope.map(str::to_owned);
-                request.options.interactive = flags[0];
-                request.options.skip_hash_check = flags[1];
-                request.options.uninstall_previous = flags[2];
-                request.options.no_upgrade = flags[3];
-                request.options.custom_install_location = location.map(str::to_owned);
-                // Only WinGet and Scoop read custom parameters.
-                if matches!(manager, "Winget" | "Scoop") {
-                    request.options.custom_parameters =
-                        parameters.unwrap_or_default().into_iter().map(str::to_owned).collect();
+                request.package.architecture =
+                    architecture.map(|name| Architecture::from_name(name).expect("generator architecture"));
+                request.scope = scope.map(|name| Scope::from_name(name).expect("generator scope"));
+                request.elevation = Elevation::from_name(elevation).expect("generator elevation");
+                // A machine-wide request is elevated, as the wire contract requires.
+                if request.scope == Some(Scope::Machine) {
+                    request.elevation = Elevation::Elevated;
                 }
-                request.options.pre_operation_command = pre_operation.map(str::to_owned);
-                request.options.kill_before_operation = kill.into_iter().map(str::to_owned).collect();
+                request.opt_ins.interactive = flags[0];
+                request.opt_ins.skip_hash_check = flags[1];
+                request.opt_ins.uninstall_previous = flags[2];
+                request.opt_ins.no_upgrade = flags[3];
+                request.opt_ins.custom_install_location =
+                    location.map(|path| CustomInstallLocation { path: path.to_owned() });
+                // Only WinGet and Scoop read custom parameters, and only WinGet reads installer arguments.
+                if matches!(manager, "Winget" | "Scoop") {
+                    request.opt_ins.custom_parameters = parameters.map(|values| CustomParameters {
+                        values: values.into_iter().map(str::to_owned).collect(),
+                    });
+                }
+                if manager == "Winget" {
+                    request.opt_ins.installer_arguments = installer_arguments_mode.map(|mode| InstallerArguments {
+                        arguments: "/q".to_owned(),
+                        mode,
+                    });
+                }
+                request.opt_ins.pre_post_commands = pre_command.map(|command| PrePostCommands {
+                    pre: Some(command.to_owned()),
+                    post: None,
+                });
+                request.opt_ins.kill_before_operation = kill.map(|process| KillBeforeOperation {
+                    processes: vec![process.to_owned()],
+                });
                 request
             },
         )
+}
+
+/// A request through `manager` for `operation` with a placeholder package and no opt-in.
+fn request_through(operation: &str, manager: &str) -> Request {
+    Request {
+        operation: Operation::from_name(operation).expect("generator operation"),
+        manager: Manager::from_name(manager).expect("generator manager"),
+        source: Source { name: String::new() },
+        package: Package {
+            id: String::new(),
+            version: None,
+            architecture: None,
+        },
+        scope: None,
+        elevation: Elevation::NonElevated,
+        opt_ins: OptIns::default(),
+    }
 }
 
 /// Reorders the entries of every list with a deterministic generator seeded by `seed`.
@@ -490,7 +526,7 @@ fn write_selection(out: &mut String, selection: &GenSelection) {
         if let Some(maximum) = version.maximum {
             fields.push(format!(r#""Maximum":"{maximum}""#));
         }
-        if version.exclude_pre_release {
+        if version.exclude_prerelease {
             fields.push(r#""Prerelease":"Exclude""#.to_owned());
         }
         members.push(format!(r#""Version":{{{}}}"#, fields.join(",")));
