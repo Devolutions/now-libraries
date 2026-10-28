@@ -217,7 +217,7 @@ A selector with both `Source` and `AnySource` is `ConflictingKeys` at `AnySource
 `AnySource` with the value `false` is `InvalidValue`, because such a selector would name no source.
 A selector does not match a request through another manager.
 For a request through its manager, a selector with `AnySource` matches whatever the source, including an unknown one.
-For a request through its manager, a selector with `Source` matches a known source equal to it under the manager's source comparison, does not match a different known source, and is unknown for an unknown source.
+For a request through its manager, a selector with `Source` matches a known source equal to it ignoring case ([§text-comparison](#text-comparison)), does not match a different known source, and is unknown for an unknown source.
 
 <a id="rules"></a>
 ### Rules
@@ -292,7 +292,7 @@ A grant or forbid for `CustomParameters` or `CustomInstallLocation` has these ke
 
 A value is covered by a grant or forbid when it matches one of its `Patterns` and none of its `Except` patterns.
 For `CustomParameters`, the values are the request's custom parameters, each element on its own, option values included; for `CustomInstallLocation`, the value is the request's normalized install location ([§install-location](#install-location)).
-A `CustomInstallLocation` pattern is normalized as an install location is before it is matched, so `C:/Apps/*` matches `C:\Apps\Tool`.
+Before a `CustomInstallLocation` pattern is matched, each `/` in it becomes `\`, repeated `\` are collapsed, and a trailing `\` is dropped unless it follows a `:`, as an install location is normalized, so `C:/Apps/*` matches `C:\Apps\Tool`.
 A grant's or forbid's `Except` narrows only that grant or forbid, never another one and never another rule.
 
 <a id="opt-ins"></a>
