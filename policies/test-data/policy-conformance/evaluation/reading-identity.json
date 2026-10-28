@@ -191,9 +191,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -316,9 +314,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -436,9 +432,7 @@
           "Id": "contoso.tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -561,9 +555,7 @@
           "Id": "contoso.tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -681,9 +673,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -806,9 +796,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -926,9 +914,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1047,9 +1033,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1166,9 +1150,7 @@
         "Package": {
           "Id": "Contoso.Tool@1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1290,9 +1272,7 @@
         "Package": {
           "Id": "Contoso.Tool@1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1409,9 +1389,7 @@
         "Package": {
           "Id": "Contoso.Tool@1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1529,9 +1507,7 @@
         "Package": {
           "Id": "Contoso.Tool@1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1648,9 +1624,7 @@
         "Package": {
           "Id": "@Contoso"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1772,9 +1746,7 @@
         "Package": {
           "Id": "@Contoso"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1891,9 +1863,7 @@
         "Package": {
           "Id": "A@B@C"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -2015,9 +1985,7 @@
         "Package": {
           "Id": "A@B@C"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2135,9 +2103,7 @@
           "Id": "Contoso.Setup",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2256,9 +2222,7 @@
           "Id": "Contoso.Setup",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2376,9 +2340,7 @@
           "Id": "serde_json",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -2501,9 +2463,7 @@
           "Id": "serde_json",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2621,9 +2581,7 @@
           "Id": "Serde-JSON",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -2746,9 +2704,7 @@
           "Id": "Serde-JSON",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -2866,9 +2822,7 @@
           "Id": "serde-json",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -2991,9 +2945,7 @@
           "Id": "serde-json",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -3010,7 +2962,7 @@
     {
       "name": "read-identity-cargo-dot-kept-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
-      "note": "Cargo's canonical form maps only '_', not '.'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'serde.json' contains '.', which a Cargo Package.Id may not contain, so the broker builds no Cargo command (§manager-cargo). Control: read-identity-cargo-underscore-to-hyphen-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -3111,13 +3063,11 @@
           "Id": "serde.json",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -3126,7 +3076,7 @@
     {
       "name": "read-identity-cargo-dot-kept-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
-      "note": "Cargo's canonical form maps only '_', not '.'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'serde.json' contains '.', which a Cargo Package.Id may not contain, so the broker builds no Cargo command (§manager-cargo). Control: read-identity-cargo-underscore-to-hyphen-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -3232,18 +3182,12 @@
           "Id": "serde.json",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-any"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -3352,9 +3296,7 @@
           "Id": "Foo__Bar.-baz",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -3477,9 +3419,7 @@
           "Id": "Foo__Bar.-baz",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -3597,9 +3537,7 @@
           "Id": "foo-bar",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -3722,9 +3660,7 @@
           "Id": "foo-bar",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -3842,9 +3778,7 @@
           "Id": "foo-bar",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -3967,9 +3901,7 @@
           "Id": "foo-bar",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -4087,9 +4019,7 @@
           "Id": "foo-bar",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -4208,9 +4138,7 @@
           "Id": "foo-bar",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -4328,9 +4256,7 @@
           "Id": "react",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -4453,9 +4379,7 @@
           "Id": "react",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -4573,9 +4497,7 @@
           "Id": "React",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -4694,9 +4616,7 @@
           "Id": "React",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -4814,9 +4734,7 @@
           "Id": "React",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -4939,9 +4857,7 @@
           "Id": "React",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -5060,9 +4976,7 @@
           "Id": "my-alias:react",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -5186,9 +5100,7 @@
           "Id": "my-alias:react",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -5306,9 +5218,7 @@
           "Id": "my-alias:react",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -5427,9 +5337,7 @@
           "Id": "my-alias:react",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -5547,9 +5455,7 @@
           "Id": "my-alias:react",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -5668,9 +5574,7 @@
           "Id": "my-alias:react",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -5788,9 +5692,7 @@
           "Id": "my-alias:react",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -5909,9 +5811,7 @@
           "Id": "my-alias:react",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -6030,9 +5930,7 @@
           "Id": "my-alias:@types/node",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -6156,9 +6054,7 @@
           "Id": "my-alias:@types/node",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -6276,9 +6172,7 @@
         "Package": {
           "Id": "my-alias:@types/node@20.1.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -6401,9 +6295,7 @@
         "Package": {
           "Id": "my-alias:@types/node@20.1.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -6420,7 +6312,7 @@
     {
       "name": "read-identity-npm-name-at-version-unknown-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "'name@version' is not a registry name or an alias: unknown identity, which even '*' does not match. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'react@18.2.0' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -6520,13 +6412,11 @@
         "Package": {
           "Id": "react@18.2.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -6535,7 +6425,7 @@
     {
       "name": "read-identity-npm-name-at-version-unknown-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "'name@version' is not a registry name or an alias: unknown identity, which even '*' does not match. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'react@18.2.0' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -6640,18 +6530,12 @@
         "Package": {
           "Id": "react@18.2.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -6759,9 +6643,7 @@
         "Package": {
           "Id": "react"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -6883,9 +6765,7 @@
         "Package": {
           "Id": "react"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -6902,7 +6782,7 @@
     {
       "name": "read-identity-npm-not-registry-git-specifier-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'github:user/repo' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -7002,13 +6882,11 @@
         "Package": {
           "Id": "github:user/repo"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -7017,7 +6895,7 @@
     {
       "name": "read-identity-npm-not-registry-git-specifier-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'github:user/repo' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -7122,18 +7000,12 @@
         "Package": {
           "Id": "github:user/repo"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -7141,7 +7013,7 @@
     {
       "name": "read-identity-npm-not-registry-leading-underscore-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'_private' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -7241,13 +7113,11 @@
         "Package": {
           "Id": "_private"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -7256,7 +7126,7 @@
     {
       "name": "read-identity-npm-not-registry-leading-underscore-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'_private' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -7361,18 +7231,12 @@
         "Package": {
           "Id": "_private"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -7380,7 +7244,7 @@
     {
       "name": "read-identity-npm-not-registry-leading-dot-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'.hidden' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -7480,13 +7344,11 @@
         "Package": {
           "Id": ".hidden"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -7495,7 +7357,7 @@
     {
       "name": "read-identity-npm-not-registry-leading-dot-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'.hidden' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -7600,18 +7462,12 @@
         "Package": {
           "Id": ".hidden"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -7619,7 +7475,7 @@
     {
       "name": "read-identity-npm-not-registry-leading-hyphen-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'-dash' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -7719,13 +7575,11 @@
         "Package": {
           "Id": "-dash"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -7734,7 +7588,7 @@
     {
       "name": "read-identity-npm-not-registry-leading-hyphen-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'-dash' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -7839,18 +7693,12 @@
         "Package": {
           "Id": "-dash"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -7858,7 +7706,7 @@
     {
       "name": "read-identity-npm-not-registry-tgz-suffix-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'left-pad.tgz' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -7958,13 +7806,11 @@
         "Package": {
           "Id": "left-pad.tgz"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -7973,7 +7819,7 @@
     {
       "name": "read-identity-npm-not-registry-tgz-suffix-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'left-pad.tgz' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -8078,18 +7924,12 @@
         "Package": {
           "Id": "left-pad.tgz"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -8097,7 +7937,7 @@
     {
       "name": "read-identity-npm-not-registry-tar-suffix-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'left-pad.tar' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -8197,13 +8037,11 @@
         "Package": {
           "Id": "left-pad.tar"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -8212,7 +8050,7 @@
     {
       "name": "read-identity-npm-not-registry-tar-suffix-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'left-pad.tar' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -8317,18 +8155,12 @@
         "Package": {
           "Id": "left-pad.tar"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -8336,7 +8168,7 @@
     {
       "name": "read-identity-npm-not-registry-tar-gz-suffix-upper-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'left-pad.TAR.GZ' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -8436,13 +8268,11 @@
         "Package": {
           "Id": "left-pad.TAR.GZ"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -8451,7 +8281,7 @@
     {
       "name": "read-identity-npm-not-registry-tar-gz-suffix-upper-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'left-pad.TAR.GZ' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -8556,18 +8386,12 @@
         "Package": {
           "Id": "left-pad.TAR.GZ"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -8575,7 +8399,7 @@
     {
       "name": "read-identity-npm-not-registry-scoped-extra-segment-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'@scope/name/extra' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -8675,13 +8499,11 @@
         "Package": {
           "Id": "@scope/name/extra"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -8690,7 +8512,7 @@
     {
       "name": "read-identity-npm-not-registry-scoped-extra-segment-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'@scope/name/extra' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -8795,18 +8617,12 @@
         "Package": {
           "Id": "@scope/name/extra"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -8814,7 +8630,7 @@
     {
       "name": "read-identity-npm-not-registry-215-bytes-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -8914,13 +8730,11 @@
         "Package": {
           "Id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -8929,7 +8743,7 @@
     {
       "name": "read-identity-npm-not-registry-215-bytes-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "Not a registry name: unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-identity-npm-registry-name-star-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -9034,18 +8848,12 @@
         "Package": {
           "Id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -9153,9 +8961,7 @@
         "Package": {
           "Id": "private_"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -9277,9 +9083,7 @@
         "Package": {
           "Id": "private_"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -9396,9 +9200,7 @@
         "Package": {
           "Id": "left-pad.tgz2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -9520,9 +9322,7 @@
         "Package": {
           "Id": "left-pad.tgz2"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -9639,9 +9439,7 @@
         "Package": {
           "Id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -9763,9 +9561,7 @@
         "Package": {
           "Id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -9882,9 +9678,7 @@
         "Package": {
           "Id": "@scope/name"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -10006,9 +9800,7 @@
         "Package": {
           "Id": "@scope/name"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -10018,124 +9810,6 @@
             "id": "deny-pkg"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-identity-npm-unknown-source-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "A non-registry identifier also has an unknown source, so a Source selector is unknown and an Allow rule does not apply. Control: read-identity-npm-known-source-allow.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-reading",
-          "Publisher": "Policy conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [
-          {
-            "Manager": "Winget",
-            "AnySource": true
-          },
-          {
-            "Manager": "PowerShell",
-            "AnySource": true
-          },
-          {
-            "Manager": "PowerShell7",
-            "AnySource": true
-          },
-          {
-            "Manager": "Apt",
-            "AnySource": true
-          },
-          {
-            "Manager": "Bun",
-            "AnySource": true
-          },
-          {
-            "Manager": "Cargo",
-            "AnySource": true
-          },
-          {
-            "Manager": "Chocolatey",
-            "AnySource": true
-          },
-          {
-            "Manager": "Dnf",
-            "AnySource": true
-          },
-          {
-            "Manager": "Dotnet",
-            "AnySource": true
-          },
-          {
-            "Manager": "Flatpak",
-            "AnySource": true
-          },
-          {
-            "Manager": "Homebrew",
-            "AnySource": true
-          },
-          {
-            "Manager": "Npm",
-            "AnySource": true
-          },
-          {
-            "Manager": "Pacman",
-            "AnySource": true
-          },
-          {
-            "Manager": "Pip",
-            "AnySource": true
-          },
-          {
-            "Manager": "Scoop",
-            "AnySource": true
-          },
-          {
-            "Manager": "Snap",
-            "AnySource": true
-          },
-          {
-            "Manager": "Vcpkg",
-            "AnySource": true
-          }
-        ],
-        "Rules": [
-          {
-            "Id": "allow-npm",
-            "Decision": "Allow",
-            "Select": {
-              "Sources": [
-                {
-                  "Manager": "Npm",
-                  "Source": "npm"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "request": {
-        "Operation": "Uninstall",
-        "Manager": "Npm",
-        "Source": {
-          "Name": "npm"
-        },
-        "Package": {
-          "Id": "react@18.2.0"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "DefaultDeny",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -10245,9 +9919,7 @@
         "Package": {
           "Id": "react"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -10257,54 +9929,6 @@
             "id": "allow-npm"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-identity-npm-unknown-source-untrusted",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "The identifier has no '@', so the concrete Package.Version stands, and its unknown source is not trusted by a Source selector (§trusted-sources). Control: read-identity-npm-known-source-trusted.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-reading",
-          "Publisher": "Policy conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [
-          {
-            "Manager": "Npm",
-            "Source": "npm"
-          }
-        ],
-        "Rules": [
-          {
-            "Id": "allow-any",
-            "Decision": "Allow",
-            "Select": {}
-          }
-        ]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {
-          "Name": "npm"
-        },
-        "Package": {
-          "Id": "github:user/repo",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UntrustedSource",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -10344,61 +9968,7 @@
           "Id": "left-pad",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-any"
-          }
-        ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-identity-npm-unknown-source-any-source",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
-      "note": "AnySource trusts an unknown source (§source-selector).",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-reading",
-          "Publisher": "Policy conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [
-          {
-            "Manager": "Npm",
-            "AnySource": true
-          }
-        ],
-        "Rules": [
-          {
-            "Id": "allow-any",
-            "Decision": "Allow",
-            "Select": {}
-          }
-        ]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Npm",
-        "Source": {
-          "Name": "npm"
-        },
-        "Package": {
-          "Id": "github:user/repo",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -10415,7 +9985,7 @@
     {
       "name": "read-identity-bun-alias-unknown-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
-      "note": "Bun reads no alias: any identifier other than a registry name has an unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Bun reads no alias: an identifier other than a registry name makes the request unreadable (§manager-bun).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -10516,13 +10086,11 @@
           "Id": "my-alias:left-pad",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DefaultDeny",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -10531,7 +10099,7 @@
     {
       "name": "read-identity-bun-alias-unknown-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
-      "note": "Bun reads no alias: any identifier other than a registry name has an unknown identity. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Bun reads no alias: an identifier other than a registry name makes the request unreadable (§manager-bun).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -10637,18 +10205,12 @@
           "Id": "my-alias:left-pad",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [
-          {
-            "id": "deny-pkg"
-          }
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -10757,9 +10319,7 @@
           "Id": "left-pad",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -10882,9 +10442,7 @@
           "Id": "left-pad",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -11001,9 +10559,7 @@
         "Package": {
           "Id": "zlib[core]:x64-windows"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -11125,9 +10681,7 @@
         "Package": {
           "Id": "zlib[core]:x64-windows"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -11244,9 +10798,7 @@
         "Package": {
           "Id": "zlib[core]:x64-windows"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -11364,9 +10916,7 @@
         "Package": {
           "Id": "zlib[core]:x64-windows"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -11383,7 +10933,7 @@
     {
       "name": "read-identity-vcpkg-default-lowercase-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "Vcpkg states no canonical form, so the default maps ASCII letters to lowercase. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Vcpkg states no canonical form, so the default maps ASCII letters to lowercase, in the pattern 'ZLIB' too. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -11468,7 +11018,7 @@
             "Decision": "Allow",
             "Select": {
               "Packages": [
-                "zlib"
+                "ZLIB"
               ]
             }
           }
@@ -11481,11 +11031,9 @@
           "Name": "x64-windows"
         },
         "Package": {
-          "Id": "ZLIB"
+          "Id": "zlib"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -11502,7 +11050,7 @@
     {
       "name": "read-identity-vcpkg-default-lowercase-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "Vcpkg states no canonical form, so the default maps ASCII letters to lowercase. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "Vcpkg states no canonical form, so the default maps ASCII letters to lowercase, in the pattern 'ZLIB' too. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -11587,7 +11135,7 @@
             "Decision": "Deny",
             "Select": {
               "Packages": [
-                "zlib"
+                "ZLIB"
               ]
             }
           },
@@ -11605,11 +11153,9 @@
           "Name": "x64-windows"
         },
         "Package": {
-          "Id": "ZLIB"
+          "Id": "zlib"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -11628,7 +11174,7 @@
       "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
       "note": "Bun keeps case in canonical form, so 'left-pad' does not match 'Left-Pad' there but would ignoring case, which makes Packages unknown (§package-identity: a name the patterns would match only ignoring case makes it unknown). Control: read-identity-bun-case-exact-*. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-pkg", "Decision": "Allow", "Select": {"Packages": ["left-pad"]}}]},
-      "request": {"Operation": "Install", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "Left-Pad", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "Left-Pad", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
     {
@@ -11636,7 +11182,7 @@
       "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
       "note": "Bun keeps case in canonical form, so 'left-pad' does not match 'Left-Pad' there but would ignoring case, which makes Packages unknown (§package-identity: a name the patterns would match only ignoring case makes it unknown). Control: read-identity-bun-case-exact-*. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "deny-pkg", "Decision": "Deny", "Select": {"Packages": ["left-pad"]}}, {"Id": "allow-any", "Decision": "Allow", "Select": {}}]},
-      "request": {"Operation": "Install", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "Left-Pad", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "Left-Pad", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-pkg"}], "optIns": [], "audited": false}
     },
     {
@@ -11644,7 +11190,7 @@
       "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
       "note": "The pattern has the identifier's exact case, so it matches in canonical form. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-pkg", "Decision": "Allow", "Select": {"Packages": ["Left-Pad"]}}]},
-      "request": {"Operation": "Install", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "Left-Pad", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "Left-Pad", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-pkg"}], "optIns": [], "audited": false}
     },
     {
@@ -11652,7 +11198,7 @@
       "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
       "note": "The pattern has the identifier's exact case, so it matches in canonical form. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "deny-pkg", "Decision": "Deny", "Select": {"Packages": ["Left-Pad"]}}, {"Id": "allow-any", "Decision": "Allow", "Select": {}}]},
-      "request": {"Operation": "Install", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "Left-Pad", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "Left-Pad", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-pkg"}], "optIns": [], "audited": false}
     },
     {
@@ -11660,7 +11206,7 @@
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
       "note": "An identifier names its text before its first '[' or ':', so 'zlib:x64-windows' names 'zlib'. Control: read-identity-vcpkg-port-features-triplet-*. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-pkg", "Decision": "Allow", "Select": {"Packages": ["zlib"]}}]},
-      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib:x64-windows"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib:x64-windows"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-pkg"}], "optIns": [], "audited": false}
     },
     {
@@ -11668,7 +11214,7 @@
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
       "note": "An identifier names its text before its first '[' or ':', so 'zlib:x64-windows' names 'zlib'. Control: read-identity-vcpkg-port-features-triplet-*. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "deny-pkg", "Decision": "Deny", "Select": {"Packages": ["zlib"]}}, {"Id": "allow-any", "Decision": "Allow", "Select": {}}]},
-      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib:x64-windows"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib:x64-windows"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-pkg"}], "optIns": [], "audited": false}
     },
     {
@@ -11676,7 +11222,7 @@
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
       "note": "An identifier names its text before its first '[' or ':', so 'zlib[core]' names 'zlib'. Control: read-identity-vcpkg-port-features-triplet-*. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-pkg", "Decision": "Allow", "Select": {"Packages": ["zlib"]}}]},
-      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib[core]"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib[core]"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-pkg"}], "optIns": [], "audited": false}
     },
     {
@@ -11684,40 +11230,24 @@
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
       "note": "An identifier names its text before its first '[' or ':', so 'zlib[core]' names 'zlib'. Control: read-identity-vcpkg-port-features-triplet-*. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "deny-pkg", "Decision": "Deny", "Select": {"Packages": ["zlib"]}}, {"Id": "allow-any", "Decision": "Allow", "Select": {}}]},
-      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib[core]"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib[core]"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-pkg"}], "optIns": [], "audited": false}
     },
     {
       "name": "read-identity-vcpkg-at-not-split-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "Vcpkg's reading states which text an identifier names, the text before its first '[' or ':', so the default 'name@version' split does not apply and 'zlib@1.3' names 'zlib@1.3', which 'zlib' does not match. Control: read-identity-vcpkg-at-whole-name-*. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'zlib@1.3' is not a port spec, so the broker builds no Vcpkg command (§manager-vcpkg). Control: read-vcpkg-plain.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-pkg", "Decision": "Allow", "Select": {"Packages": ["zlib"]}}]},
-      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib@1.3"}, "Client": {"RequestedElevation": "Standard"}},
-      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib@1.3"}, "Elevation": "NonElevated"},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "read-identity-vcpkg-at-not-split-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "Vcpkg's reading states which text an identifier names, the text before its first '[' or ':', so the default 'name@version' split does not apply and 'zlib@1.3' names 'zlib@1.3', which 'zlib' does not match. Control: read-identity-vcpkg-at-whole-name-*. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "note": "'zlib@1.3' is not a port spec, so the broker builds no Vcpkg command (§manager-vcpkg). Control: read-vcpkg-plain.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "deny-pkg", "Decision": "Deny", "Select": {"Packages": ["zlib"]}}, {"Id": "allow-any", "Decision": "Allow", "Select": {}}]},
-      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib@1.3"}, "Client": {"RequestedElevation": "Standard"}},
-      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-any"}], "optIns": [], "audited": false}
-    },
-    {
-      "name": "read-identity-vcpkg-at-whole-name-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "'zlib@1.3' names itself, since it has no '[' or ':'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
-      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-pkg", "Decision": "Allow", "Select": {"Packages": ["zlib@1.3"]}}]},
-      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib@1.3"}, "Client": {"RequestedElevation": "Standard"}},
-      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-pkg"}], "optIns": [], "audited": false}
-    },
-    {
-      "name": "read-identity-vcpkg-at-whole-name-deny",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "'zlib@1.3' names itself, since it has no '[' or ':'. Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
-      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "deny-pkg", "Decision": "Deny", "Select": {"Packages": ["zlib@1.3"]}}, {"Id": "allow-any", "Decision": "Allow", "Select": {}}]},
-      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib@1.3"}, "Client": {"RequestedElevation": "Standard"}},
-      "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-pkg"}], "optIns": [], "audited": false}
+      "request": {"Operation": "Install", "Manager": "Vcpkg", "Source": {"Name": "x64-windows"}, "Package": {"Id": "zlib@1.3"}, "Elevation": "NonElevated"},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     }
   ]
 }

@@ -107,9 +107,7 @@
         "Package": {
           "Id": "git"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -137,9 +135,7 @@
           "Id": "git",
           "Version": "2.40.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -163,64 +159,7 @@
           "Id": "git",
           "Version": "2.40.0"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-scoop-channel-unreadable",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Control: read-scoop-plain.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Scoop",
-        "Source": {
-          "Name": "main"
-        },
-        "Package": {
-          "Id": "git",
-          "Channel": "beta"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-scoop-empty-custom-parameter",
-      "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Scoop",
-        "Source": {
-          "Name": "main"
-        },
-        "Package": {
-          "Id": "git"
-        },
-        "Options": {
-          "CustomParameters": [
-            ""
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -233,7 +172,7 @@
     {
       "name": "read-scoop-skip-hash-check",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "A short cluster starts with one '-' followed by a character other than '-'.",
+      "note": "'--skip-hash-check' would ask for SkipHashCheck, so the request is unreadable (§manager-scoop). Control: read-scoop-cluster-without-s.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -243,33 +182,27 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "--skip-hash-check"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--skip-hash-check"
+            ]
+          }
         }
       },
       "expect": {
         "outcome": "Deny",
-        "check": "UngrantedOptIn",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [
-          "SkipHashCheck"
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
         "audited": false
       }
     },
     {
       "name": "read-scoop-short-s",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "A short cluster starts with one '-' followed by a character other than '-'.",
+      "note": "'-s' would ask for SkipHashCheck, so the request is unreadable (§manager-scoop). Control: read-scoop-cluster-without-s.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -279,33 +212,27 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "-s"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-s"
+            ]
+          }
         }
       },
       "expect": {
         "outcome": "Deny",
-        "check": "UngrantedOptIn",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [
-          "SkipHashCheck"
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
         "audited": false
       }
     },
     {
       "name": "read-scoop-cluster-containing-s",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "A short cluster starts with one '-' followed by a character other than '-'.",
+      "note": "'-ks' would ask for SkipHashCheck, so the request is unreadable (§manager-scoop). Control: read-scoop-cluster-without-s.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -315,26 +242,20 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "-ks"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-ks"
+            ]
+          }
         }
       },
       "expect": {
         "outcome": "Deny",
-        "check": "UngrantedOptIn",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [
-          "SkipHashCheck"
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
         "audited": false
       }
     },
@@ -351,13 +272,13 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "-k"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-k"
+            ]
+          }
         }
       },
       "expect": {
@@ -385,13 +306,13 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "--s"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--s"
+            ]
+          }
         }
       },
       "expect": {
@@ -419,13 +340,13 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "--skip"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--skip"
+            ]
+          }
         }
       },
       "expect": {
@@ -443,7 +364,7 @@
     {
       "name": "read-scoop-no-hyphen",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "A short cluster starts with one '-' followed by a character other than '-'.",
+      "note": "'s' does not start with '-', so the request is unreadable (§manager-scoop). Control: read-scoop-cluster-without-s.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -453,23 +374,19 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "s"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "s"
+            ]
+          }
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -477,7 +394,7 @@
     {
       "name": "read-scoop-architecture-field",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -618,9 +535,7 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -640,7 +555,7 @@
     {
       "name": "read-scoop-architecture-arch",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "'--arch' names the option --arch, so the request is unreadable (§manager-scoop). Control: read-scoop-architecture-cluster-without-a.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -781,24 +696,20 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "--arch",
-            "64bit"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--arch",
+              "64bit"
+            ]
+          }
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-any"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -806,7 +717,7 @@
     {
       "name": "read-scoop-architecture-arch-alone",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "'--arch' names the option --arch, so the request is unreadable (§manager-scoop). Control: read-scoop-architecture-cluster-without-a.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -947,23 +858,19 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "--arch"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--arch"
+            ]
+          }
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-any"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -971,7 +878,7 @@
     {
       "name": "read-scoop-architecture-short-a",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "'-a' contains 'a' after its '-', so the request is unreadable (§manager-scoop). Control: read-scoop-architecture-cluster-without-a.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1112,24 +1019,20 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "-a",
-            "64bit"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-a",
+              "64bit"
+            ]
+          }
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-any"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1137,7 +1040,7 @@
     {
       "name": "read-scoop-architecture-cluster-containing-a",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "'-ka' contains 'a' after its '-', so the request is unreadable (§manager-scoop). Control: read-scoop-architecture-cluster-without-a.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1278,23 +1181,19 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "-ka"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-ka"
+            ]
+          }
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-any"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1302,7 +1201,7 @@
     {
       "name": "read-scoop-architecture-cluster-without-a",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1443,13 +1342,13 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "-k"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-k"
+            ]
+          }
         }
       },
       "expect": {
@@ -1470,7 +1369,7 @@
     {
       "name": "read-scoop-architecture-double-hyphen-a",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1611,13 +1510,13 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "--a"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--a"
+            ]
+          }
         }
       },
       "expect": {
@@ -1638,7 +1537,7 @@
     {
       "name": "read-scoop-architecture-cluster-s-and-a",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "'-sa' contains 'a' after its '-', so the request is unreadable (§manager-scoop). Control: read-scoop-architecture-cluster-without-a.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1779,23 +1678,19 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "-sa"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-sa"
+            ]
+          }
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-any"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1834,9 +1729,7 @@
         "Package": {
           "Id": "git"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1884,9 +1777,7 @@
         "Package": {
           "Id": "git"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1899,7 +1790,7 @@
     {
       "name": "read-scoop-manifest-url-untrusted-by-bucket",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "A manifest URL is a known source, which a bucket selector does not match.",
+      "note": "A manifest URL is a known source, which a bucket selector does not match. Package.Id equals Source.Name, so the request is readable (§manager-scoop).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1929,11 +1820,9 @@
           "Name": "https://example.test/git.json"
         },
         "Package": {
-          "Id": "git"
+          "Id": "https://example.test/git.json"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Deny",
@@ -1946,7 +1835,7 @@
     {
       "name": "read-scoop-manifest-url-named",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "A Source selector can name a manifest URL; if the URL were an unknown source the selector would be unknown and not trust it.",
+      "note": "A Source selector names the manifest URL with exact characters, so it matches (§manager-scoop). Control: read-scoop-manifest-url-named-any-case.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1976,11 +1865,9 @@
           "Name": "https://example.test/git.json"
         },
         "Package": {
-          "Id": "git"
+          "Id": "https://example.test/git.json"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1997,7 +1884,7 @@
     {
       "name": "read-scoop-manifest-url-named-any-case",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Source names compare ignoring case (§text-comparison).",
+      "note": "The trusted selector equals the manifest source only ignoring case, so it is unknown for it and does not trust it (§manager-scoop, §trusted-sources). Control: read-scoop-manifest-url-named.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2027,20 +1914,14 @@
           "Name": "HTTPS://EXAMPLE.TEST/GIT.JSON"
         },
         "Package": {
-          "Id": "git"
+          "Id": "HTTPS://EXAMPLE.TEST/GIT.JSON"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UntrustedSource",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -2048,6 +1929,7 @@
     {
       "name": "read-scoop-local-path-named",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A local path source is never readable: only an http:// or https:// manifest URL equal to Package.Id is (§manager-scoop). Control: read-scoop-manifest-url-named.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2079,18 +1961,12 @@
         "Package": {
           "Id": "git"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -2106,11 +1982,9 @@
           "Name": "https://example.test/git.json"
         },
         "Package": {
-          "Id": "git"
+          "Id": "https://example.test/git.json"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -2127,7 +2001,7 @@
     {
       "name": "read-scoop-skip-hash-check-upper",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "An option name matches ignoring ASCII case. Control: read-scoop-skip-hash-check.",
+      "note": "'--SKIP-HASH-CHECK' would ask for SkipHashCheck, so the request is unreadable (§manager-scoop). An option name matches ignoring ASCII case. Control: read-scoop-skip-hash-check.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -2137,33 +2011,27 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "--SKIP-HASH-CHECK"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--SKIP-HASH-CHECK"
+            ]
+          }
         }
       },
       "expect": {
         "outcome": "Deny",
-        "check": "UngrantedOptIn",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [
-          "SkipHashCheck"
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
         "audited": false
       }
     },
     {
       "name": "read-scoop-short-upper-s",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "'-S' is a short cluster containing 's', since names match ignoring ASCII case. Control: read-scoop-short-s.",
+      "note": "'-S' would ask for SkipHashCheck, so the request is unreadable (§manager-scoop). '-S' is a short cluster containing 's', since names match ignoring ASCII case. Control: read-scoop-short-s.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -2173,33 +2041,27 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "-S"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-S"
+            ]
+          }
         }
       },
       "expect": {
         "outcome": "Deny",
-        "check": "UngrantedOptIn",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [
-          "SkipHashCheck"
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
         "audited": false
       }
     },
     {
       "name": "read-scoop-skip-hash-check-attached",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "An option name ends at the element's first '=', so '--skip-hash-check=true' is '--skip-hash-check'. Control: read-scoop-skip-hash-check-longer-name.",
+      "note": "'--skip-hash-check=true' would ask for SkipHashCheck, so the request is unreadable (§manager-scoop). An option name ends at the element's first '=', so '--skip-hash-check=true' is '--skip-hash-check'. Control: read-scoop-skip-hash-check-longer-name.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -2209,26 +2071,20 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "--skip-hash-check=true"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--skip-hash-check=true"
+            ]
+          }
         }
       },
       "expect": {
         "outcome": "Deny",
-        "check": "UngrantedOptIn",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [
-          "SkipHashCheck"
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
         "audited": false
       }
     },
@@ -2245,13 +2101,13 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "--skip-hash-checks"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--skip-hash-checks"
+            ]
+          }
         }
       },
       "expect": {
@@ -2269,7 +2125,7 @@
     {
       "name": "read-scoop-cluster-hyphen-inside",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "'-x-s' starts with one '-' followed by a character other than '-', so the whole element is one short cluster, and it contains 's'. Control: read-scoop-cluster-without-s.",
+      "note": "'-x-s' would ask for SkipHashCheck, so the request is unreadable (§manager-scoop). '-x-s' starts with one '-' followed by a character other than '-', so the whole element is one short cluster, and it contains 's'. Control: read-scoop-cluster-without-s.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -2279,26 +2135,20 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "-x-s"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-x-s"
+            ]
+          }
         }
       },
       "expect": {
         "outcome": "Deny",
-        "check": "UngrantedOptIn",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [
-          "SkipHashCheck"
-        ],
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
         "audited": false
       }
     },
@@ -2315,13 +2165,13 @@
         "Package": {
           "Id": "git"
         },
-        "Options": {
-          "CustomParameters": [
-            "-k=s"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-k=s"
+            ]
+          }
         }
       },
       "expect": {
@@ -2339,7 +2189,7 @@
     {
       "name": "read-scoop-architecture-arch-attached",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "'--arch=64bit' is '--arch', because an option name ends at the element's first '='. Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Control: read-scoop-architecture-longer-name.",
+      "note": "'--arch=64bit' names the option --arch, since an option name ends at the first '=', so the request is unreadable (§manager-scoop). Control: read-scoop-architecture-cluster-without-a.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2480,23 +2330,19 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "--arch=64bit"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--arch=64bit"
+            ]
+          }
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-any"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -2504,7 +2350,7 @@
     {
       "name": "read-scoop-architecture-arch-upper-attached",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "'--ARCH=64bit' is '--arch': the name ends at the first '=' and matches ignoring ASCII case. Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Control: read-scoop-architecture-longer-name.",
+      "note": "'--ARCH=64bit' names the option --arch, since an option name ends at the first '=' and matches ignoring ASCII case, so the request is unreadable (§manager-scoop). Control: read-scoop-architecture-cluster-without-a.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2645,23 +2491,19 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "--ARCH=64bit"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--ARCH=64bit"
+            ]
+          }
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-any"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -2669,7 +2511,7 @@
     {
       "name": "read-scoop-architecture-longer-name",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "'--architecture=64bit' names '--architecture', a longer name with '--arch' as its prefix, which has no effect, so the architecture stays X64. Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "note": "'--architecture=64bit' names '--architecture', a longer name with '--arch' as its prefix, which has no effect, so the architecture stays X64. Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2810,13 +2652,13 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "--architecture=64bit"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--architecture=64bit"
+            ]
+          }
         }
       },
       "expect": {
@@ -2837,7 +2679,7 @@
     {
       "name": "read-scoop-architecture-short-upper-a",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "'-A' is a short cluster containing 'a', since names match ignoring ASCII case. Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Control: read-scoop-architecture-field.",
+      "note": "'-A' contains 'a' ignoring ASCII case, so the request is unreadable (§manager-scoop). Control: read-scoop-architecture-cluster-without-a.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -2978,23 +2820,19 @@
           "Id": "git",
           "Architecture": "X64"
         },
-        "Options": {
-          "CustomParameters": [
-            "-A"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-A"
+            ]
+          }
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-any"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -3012,8 +2850,2366 @@
         "Package": {
           "Id": "git"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-bucket-app",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A bucket name and an app id of ASCII letters, digits, '-', '_' and '.' name one app in the bucket.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "7zip"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-bucket-id-json-suffix",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "An id ending with '.json' would name a local manifest file. Control: read-scoop-bucket-app.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "7zip.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-bucket-id-json-suffix-upper",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "An id ending with '.json' ignoring ASCII case is unreadable. Control: read-scoop-bucket-app.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "7zip.JSON"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-bucket-id-slash",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'/' in the id would name a path inside the bucket. Control: read-scoop-bucket-app.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "a/b"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-bucket-id-at-version",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'@' in the id would select a version after the app name. Control: read-scoop-bucket-app.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "7zip@1.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-bucket-name-colon",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'https:' does not start with 'https://', so it is a bucket name, and ':' is not allowed in one. Control: read-scoop-bucket-app.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https:"
+        },
+        "Package": {
+          "Id": "/x.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-ftp-other-id",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'FTP://h/x.json' is a manifest URL ignoring ASCII case, so the id 'x' is not read as an app in a bucket, and an ftp URL is never readable. Control: read-scoop-bucket-app, whose source is a bucket.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "FTP://h/x.json"
+        },
+        "Package": {
+          "Id": "x"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-unc-source",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A source containing '\\\\' is a local path, and only an http:// or https:// manifest URL equal to Package.Id is readable. Control: read-scoop-bucket-app, whose source is a bucket.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "\\\\srv\\share"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-bucket-dot-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'..' as a bucket ends with '.', so the request is unreadable. Control: read-scoop-bucket-app.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": ".."
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-id-dot-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'..' as an id ends with '.', so the request is unreadable. Control: read-scoop-bucket-app.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": ".."
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-id-trailing-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'7zip.' ends with '.', which Windows drops from a path segment, so the request is unreadable. Control: read-scoop-bucket-app.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "7zip."
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-source-trailing-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'main.' ends with '.', which Windows drops from a path segment, so the request is unreadable. Control: read-scoop-plain.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main."
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-url-id-differs",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A manifest URL source whose Package.Id differs from it is unreadable. Control: read-scoop-manifest-url-any-source.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/git.json"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-url-id-only",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A Package.Id that is a manifest URL through a bucket source is unreadable. Control: read-scoop-manifest-url-any-source.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "https://example.test/git.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-url-id-differs-in-case",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "Package.Id must equal Source.Name with exact characters. Control: read-scoop-manifest-url-any-source.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/git.json"
+        },
+        "Package": {
+          "Id": "https://example.test/GIT.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-ftp-equal",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "An ftp manifest URL is never readable, even when Package.Id equals Source.Name. Control: read-scoop-manifest-http-equal.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "ftp://h/a.json"
+        },
+        "Package": {
+          "Id": "ftp://h/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-leading-slash-equal",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'/https://h/a.json' is a manifest URL once its leading '/' is removed, but Package.Id does not itself start with 'https://', so the request is unreadable. Control: read-scoop-manifest-http-equal.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "/https://h/a.json"
+        },
+        "Package": {
+          "Id": "/https://h/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-http-equal",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "An http:// manifest URL equal to Package.Id is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "http://h/a.json"
+        },
+        "Package": {
+          "Id": "http://h/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-scheme-upper-equal",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'HTTPS://' starts Package.Id ignoring ASCII case, so a manifest URL equal to Package.Id is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "HTTPS://h/a.json"
+        },
+        "Package": {
+          "Id": "HTTPS://h/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-selector-other-case-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The selector equals the manifest source only ignoring case, so it is unknown and the Allow rule fails closed. Control: read-scoop-manifest-selector-exact-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-url",
+            "Decision": "Allow",
+            "Select": {
+              "Sources": [
+                {
+                  "Manager": "Scoop",
+                  "Source": "https://example.test/a.json"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "HTTPS://example.test/a.json"
+        },
+        "Package": {
+          "Id": "HTTPS://example.test/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-selector-exact-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The selector equals the manifest source with exact characters, so it matches.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-url",
+            "Decision": "Allow",
+            "Select": {
+              "Sources": [
+                {
+                  "Manager": "Scoop",
+                  "Source": "https://example.test/a.json"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/a.json"
+        },
+        "Package": {
+          "Id": "https://example.test/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-url"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-selector-other-case-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The selector equals the manifest source only ignoring case, so it is unknown and the Deny rule applies. Control: read-scoop-manifest-selector-other-url-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-url",
+            "Decision": "Deny",
+            "Select": {
+              "Sources": [
+                {
+                  "Manager": "Scoop",
+                  "Source": "https://example.test/a.json"
+                }
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "HTTPS://example.test/a.json"
+        },
+        "Package": {
+          "Id": "HTTPS://example.test/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-url"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-selector-other-url-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A different manifest URL does not match the selector, so the Deny rule does not apply.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-url",
+            "Decision": "Deny",
+            "Select": {
+              "Sources": [
+                {
+                  "Manager": "Scoop",
+                  "Source": "https://example.test/a.json"
+                }
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/b.json"
+        },
+        "Package": {
+          "Id": "https://example.test/b.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-trusted-other-case",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A trusted selector that equals the manifest source only ignoring case is unknown, so it does not trust the source. Control: read-scoop-manifest-trusted-exact.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Scoop",
+            "Source": "https://example.test/a.json"
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "HTTPS://example.test/a.json"
+        },
+        "Package": {
+          "Id": "HTTPS://example.test/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UntrustedSource",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-trusted-exact",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A trusted selector equal to the manifest source with exact characters trusts it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Scoop",
+            "Source": "https://example.test/a.json"
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/a.json"
+        },
+        "Package": {
+          "Id": "https://example.test/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-packages-other-case-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A manifest id names itself and keeps its case, so a pattern equal to it only ignoring case makes Packages unknown and the Allow rule fails closed. Control: read-scoop-manifest-packages-exact-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-app",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "https://example.test/app.json"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/APP.json"
+        },
+        "Package": {
+          "Id": "https://example.test/APP.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-packages-exact-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A pattern equal to the manifest id with exact characters matches it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-app",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "https://example.test/app.json"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/app.json"
+        },
+        "Package": {
+          "Id": "https://example.test/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-app"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-packages-scheme-case-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The pattern equals the manifest id only ignoring case, so Packages is unknown and the Deny rule applies. Control: read-scoop-manifest-packages-other-url-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-app",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "https://example.test/app.json"
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "HTTPS://example.test/app.json"
+        },
+        "Package": {
+          "Id": "HTTPS://example.test/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-app"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-packages-other-url-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A different manifest id does not match the pattern, so the Deny rule does not apply.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-app",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "https://example.test/app.json"
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/other.json"
+        },
+        "Package": {
+          "Id": "https://example.test/other.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-packages-at-whole",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A manifest id names itself and selects no version even when it contains '@', so a pattern naming the whole URL matches it. Control: read-scoop-manifest-packages-at-prefix.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-app",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "https://user@host.test/app.json"
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://user@host.test/app.json"
+        },
+        "Package": {
+          "Id": "https://user@host.test/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-app"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-packages-at-prefix",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The name@version reading would name 'https://user', but a manifest id is not split, so a pattern naming the text before '@' does not match it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-app",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "https://user"
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://user@host.test/app.json"
+        },
+        "Package": {
+          "Id": "https://user@host.test/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-bucket-app-case-folded",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A bucket's app names keep the lowercase canonical form, so 'Git' matches the pattern 'git'. Contrast read-scoop-manifest-packages-other-case-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-app",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "git"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "Git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-app"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-global",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--global' names the option --global, so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--global"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-all",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--all' names the option --all, so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--all"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-global-upper",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--GLOBAL' names --global ignoring ASCII case, so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--GLOBAL"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-short-g",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-g' contains 'g' after its '-', so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-g"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-short-upper-g",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-G' contains 'g' ignoring ASCII case after its '-', so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-G"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-cluster-kg",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-kg' contains 'g' after its '-', so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-kg"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-cluster-qa",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-qa' contains 'a' after its '-', so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-qa"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-short-value-contains-g",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-q=abcg' contains 'a' and 'g' in its text after '-', which includes the text after '=', so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-q=abcg"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-arch-upper-other-value",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--ARCH=x' names --arch ignoring ASCII case, so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--ARCH=x"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-terminator",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--' is exactly '--', so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-white-space",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--no-update-scoop ' contains U+0020, which has the White_Space property, so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--no-update-scoop "
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-no-break-space",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--x\\u00a0y' contains U+00A0, which has the White_Space property, so the request is unreadable. Control: read-scoop-parameter-short-q.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--x y"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-globalx",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--globalx' names --globalx, not --global, so the request is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--globalx"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-single-hyphen",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-' is not a short cluster, and its text after '-' is empty, so the request is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-short-q",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-q' contains none of 'g', 'a' and 's', so the request is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-q"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-short-q-value-s",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-q=s' names only 'q' before its '=', and its text after '-' contains no 'g' or 'a', so the request is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-q=s"
+            ]
+          }
         }
       },
       "expect": {

@@ -1,8 +1,8 @@
 # Coverage: evaluation semantics
 
 Cases in `evaluation/eval-*.json` that check how a valid policy decides a request, by section of `policies/CONTRACT.policy.md`.
-Requests go through `Winget` unless a case needs another manager's reading to make a property unknown or a version a pre-release.
-Outside `eval-carriage.json`, `Interactive`, `SkipHashCheck`, `CustomInstallLocation`, `UninstallPrevious` and `NoUpgrade` appear only in `Winget` requests; `eval-carriage.json` checks them under every manager and operation ([Opt-in carriage](#opt-in-carriage)).
+Requests go through `Winget` unless a case needs another manager's reading to make a property unknown or a version a pre-release, and every request is well-formed under `policies/CONTRACT.wire.md` §package-request.
+Outside `eval-carriage.json`, the `OptIns` keys `Interactive`, `SkipHashCheck`, `CustomInstallLocation`, `UninstallPrevious` and `NoUpgrade` appear only in `Winget` requests; `eval-carriage.json` checks them under every manager and operation ([Opt-in carriage](#opt-in-carriage)).
 
 ## Cases by section
 
@@ -18,7 +18,8 @@ Every Unicode case cites its `UnicodeData.txt` 16.0.0 line in `note`.
   Controls: `eval-text-ss-equals-uppercase-ss`, `eval-text-ff-equals-uppercase-ff`, `eval-text-apostrophe-n-equals-uppercase`, `eval-text-alpha-psili-iota-equals-uppercase`, and `eval-text-alpha-ypogegrammeni-equals-simple-uppercase`, where the simple mapping of U+1F80 applies.
 - No normalization: `eval-text-no-normalization`.
 - Source names: `eval-text-source-name-case-ignored`, `eval-text-source-name-dotless-i`, `eval-text-source-name-dotted-capital-i`.
-- Source names with U+00DF against `SS`, on either side: `eval-text-source-name-sharp-s-not-ss`, `eval-text-source-name-selector-sharp-s-not-ss`, with controls `eval-text-source-name-ss-equals-uppercase-ss` and `eval-text-source-name-selector-sharp-s-other-letters-case-ignored`.
+- A selector with U+00DF against a source `STRASSE`: `eval-text-source-name-selector-sharp-s-not-ss`, control `eval-text-source-name-ss-equals-uppercase-ss`.
+  The non-ASCII characters sit in the selector, since a `Winget` source name is a plain source name (§manager-winget).
 - Install locations: `eval-text-install-location-long-s`.
 
 ### §patterns
@@ -47,14 +48,16 @@ File `eval-validity-window.json`.
 File `eval-trusted-sources.json`.
 
 - Trusted Update, the control of `eval-untrusted-update`: `eval-trusted-update`.
-- Not trusted: `eval-untrusted-other-source`, `eval-untrusted-update`, `eval-untrusted-empty-list`, `eval-untrusted-install-from-source-only-rule-names`, `eval-untrusted-named-source-unknown-source`.
+- Not trusted: `eval-untrusted-other-source`, `eval-untrusted-update`, `eval-untrusted-empty-list`, `eval-untrusted-install-from-source-only-rule-names`.
 - Uninstalls ignore the list: `eval-trusted-uninstall-ignores-empty-list`, `eval-trusted-uninstall-from-source-only-rule-names`.
 - Precedence and audit mode: `eval-precedence-untrusted-source-holds`, `eval-audit-untrusted-source`.
 
 ### §source-selector
 
-- `AnySource`: `eval-trusted-any-source`, `eval-trusted-any-source-unknown-source`, `eval-selection-sources-any-source`.
-- `Source`, known and unknown: `eval-trusted-named-source`, `eval-trusted-named-source-known-npm-source`, `eval-untrusted-named-source-unknown-source`, `eval-applicability-list-unknown-entry`.
+- `AnySource`: `eval-trusted-any-source`, `eval-selection-sources-any-source`; against an unknown source, `read-{chocolatey,dotnet}-uninstall-any-source-allow` in `reading-managers.json`.
+- `Source`, known and unknown: `eval-trusted-named-source`, `eval-trusted-named-source-known-npm-source`, `eval-applicability-list-unknown-entry`, and the unknown Uninstall sources of Chocolatey and Dotnet, `read-{chocolatey,dotnet}-uninstall-source-selector-{allow,deny}`.
+  An unknown source never reaches the trusted sources check, since only Chocolatey and Dotnet Uninstalls have one and the check ignores Uninstalls.
+- A Scoop manifest source, compared with exact characters and unknown when only case differs: the `read-scoop-manifest-selector-*` and `read-scoop-manifest-trusted-*` cases of `reading-scoop.json`.
 - `Source` compares ignoring case as §text-comparison defines, under `Winget` too: `eval-text-source-name-case-ignored`, `eval-text-source-name-dotless-i`, `eval-text-source-name-dotted-capital-i`.
 - Another manager: `eval-untrusted-other-manager-any-source`, `eval-untrusted-other-manager-same-source-name`, `eval-selection-sources-other-manager`, `eval-applicability-other-manager-selector-unknown-source`.
 
@@ -88,7 +91,7 @@ File `eval-version-condition.json`.
 - Bounds, inclusive: `eval-version-minimum-inclusive`, `eval-version-below-minimum`, `eval-version-maximum-inclusive`, `eval-version-above-maximum`, `eval-version-between-bounds`.
 - Comparison as §version-scheme fixes it: `eval-version-components-numeric-below`, `eval-version-components-numeric-above`, `eval-version-trailing-zero-equal`, `eval-version-extra-component-above`, `eval-version-build-metadata-ignored`, `eval-version-prerelease-below-release`.
 - A `Winget` pre-release compares below its release although it is not a pre-release: `eval-version-winget-prerelease-below-minimum`, control `eval-version-minimum-inclusive`.
-- `Prerelease: Exclude`: `eval-version-prerelease-exclude-prerelease`, `eval-version-prerelease-exclude-release`, `eval-version-prerelease-without-exclude`, `eval-version-prerelease-exclude-winget`, `eval-version-prerelease-flag-ignored`, `eval-version-prerelease-flag-absent-prerelease`.
+- `Prerelease: Exclude`: `eval-version-prerelease-exclude-prerelease`, `eval-version-prerelease-exclude-release`, `eval-version-prerelease-without-exclude`, `eval-version-prerelease-exclude-winget`.
 - Unknown version and a value that is not a version: `eval-version-unknown-allow-not-applicable`, `eval-version-unknown-allow-without-version`, `eval-version-unknown-deny-applicable`, `eval-version-not-a-version-allow`, `eval-version-not-a-version-deny`.
 - Deny rules and `Except`: `eval-version-deny-condition-holds`, `eval-version-deny-condition-fails`, `eval-version-except-excludes-old-install`, `eval-version-except-leaves-uninstall`.
 
@@ -106,9 +109,9 @@ File `eval-grants.json`.
 
 File `eval-opt-ins.json`.
 
-- Each field carrier, ungranted and granted: `eval-opt-in-{interactive,skip-hash-check,custom-install-location,custom-parameters,pre-operation-command,post-operation-command,empty-pre-operation-command,kill-before-operation,uninstall-previous,no-upgrade}-{ungranted,granted}`.
-- Parts that carry nothing: `eval-opt-in-false-booleans-plain`, `eval-opt-in-uninstall-previous-false-plain`, `eval-opt-in-empty-lists-plain`, `eval-opt-in-prerelease-flag-plain`.
-- Custom-parameter carriers, each needing its own grant and a `CustomParameters` grant: `eval-opt-in-{interactive,skip-hash-check,location,installer-arguments,uninstall-previous,no-upgrade}-parameter-{needs-own-grant,needs-custom-parameters,both-granted}`, and `eval-opt-in-parameter-neither-granted`.
+- Each `OptIns` key makes the request use its opt-in, ungranted and granted: `eval-opt-in-{interactive,skip-hash-check,custom-install-location,custom-parameters,installer-arguments,pre-operation-command,post-operation-command,kill-before-operation,uninstall-previous,no-upgrade}-{ungranted,granted}`, where `pre-operation-command` and `post-operation-command` set one member of `PrePostCommands` each.
+- `OptIns` `{}` uses nothing: `read-request-empty-opt-ins` in `reading-request.json`.
+- A custom parameter that would ask for another opt-in makes the request unreadable even when the policy grants both: `eval-opt-in-{interactive,skip-hash-check,location,installer-arguments,uninstall-previous,no-upgrade}-parameter-both-granted`, control `eval-opt-in-custom-parameters-granted`.
 
 ### §applicability
 
@@ -129,7 +132,7 @@ File `eval-applicability.json`.
 File `eval-opt-in-evaluation.json`, plus grants adding up in `eval-grants.json`.
 
 - Grants add up across applicable Allow rules only: `eval-grants-add-up-across-rules`, `eval-grants-one-rule-short`, `eval-grants-custom-parameters-add-up`, `eval-grants-not-applicable-rule-grants-nothing`, `eval-grants-location-add-up`.
-- Forbids: `eval-forbid-parameters-not-covered`, `eval-forbid-parameters-one-covered`, `eval-forbid-location-covered`, `eval-forbid-location-not-covered`, `eval-forbid-not-applicable-rule`, `eval-forbid-opt-in-from-parameter`, `eval-forbid-several-opt-ins`.
+- Forbids: `eval-forbid-parameters-not-covered`, `eval-forbid-parameters-one-covered`, `eval-forbid-location-covered`, `eval-forbid-location-not-covered`, `eval-forbid-not-applicable-rule`, `eval-forbid-several-opt-ins`.
 
 ### §precedence
 
@@ -181,28 +184,32 @@ These properties quantify over every valid policy, request and evaluation time, 
 ## Gaps and unchecked boundaries
 
 - §precedence: `UngrantedOptIn` and `DefaultDeny` never hold together, since one needs an applicable Allow rule and the other none, and `AllowRules` holds only when no other check does; those pairs have no case.
-- §opt-ins: an `Options` field carries its opt-in under every manager and operation; `eval-carriage.json` checks that ([Opt-in carriage](#opt-in-carriage)), and the other files keep those fields to `Winget` requests.
+- §opt-ins: an `OptIns` key makes the request use its opt-in under every manager and operation; `eval-carriage.json` checks that ([Opt-in carriage](#opt-in-carriage)), and the other files keep those keys to `Winget` requests.
 - §text-comparison: the Unicode cases sample code points that separate the simple uppercase mapping from lowercasing, case folding, full mappings, normalization and UTF-16 code-unit casing; other code points are not enumerated.
 - §patterns: matching cost for patterns with many `*` is not specified and not checked.
 - §selection `Packages` and §package-identity canonical forms, §reading, §managers, §install-location and §missing-version are other parts of the suite; cases here use them only to reach an evaluation clause, and say which reading they rely on in `note`.
 
 ## Opt-in carriage
 
-File `eval-carriage.json`, which checks that an `Options` field carries its opt-in whatever the manager and operation.
+File `eval-carriage.json`, which checks that an `OptIns` key makes the request use its opt-in whatever the manager and operation.
 In the names below, `<manager>` is each manager the broker builds a command for other than `Winget`: `powershell`, `powershell7`, `bun`, `cargo`, `chocolatey`, `dotnet`, `npm`, `pip`, `scoop` and `vcpkg`.
 `<operation>` is `install`, `update` and `uninstall`, and `<opt-in>` is `interactive`, `skip-hash-check`, `custom-install-location`, `uninstall-previous` and `no-upgrade`.
-Each request is readable and passes every check above `DenyRule`; its `note` says why the version is not missing.
+Each readable request passes every check above `DenyRule`; its `note` says why the version is not missing.
 
-### §reading and §opt-ins
+### §reading and the manager readings
 
-- Each field carries its opt-in under every manager and operation, not granted: `eval-carriage-<manager>-<operation>-<opt-in>-ungranted`, 150 cases, each against the plain control `eval-carriage-<manager>-<operation>-plain`.
-- The same, forbidden by a Deny rule: `eval-carriage-<manager>-<operation>-<opt-in>-forbidden`, 150 cases, each against its `-granted` neighbour.
+- Where the manager's reading refuses the opt-in, the request is unreadable though the policy grants it: `eval-carriage-<manager>-<operation>-<opt-in>-granted` with decision `UnreadableRequest`, 107 cases, each citing its §manager section and against the plain control `eval-carriage-<manager>-<operation>-plain`.
+  The readings accept `Interactive` under Chocolatey, PowerShell and PowerShell7; `SkipHashCheck` under those three and Scoop, but not on a Chocolatey or Scoop Uninstall; `CustomInstallLocation` under Cargo, Dotnet, PowerShell and PowerShell7; `UninstallPrevious` and `NoUpgrade` under PowerShell and PowerShell7.
+
+### §opt-ins
+
+- Where the reading accepts the opt-in, the key makes the request use it, not granted: `eval-carriage-<manager>-<operation>-<opt-in>-ungranted`, 43 cases, each against the plain control `eval-carriage-<manager>-<operation>-plain`.
+- The same, forbidden by a Deny rule: `eval-carriage-<manager>-<operation>-<opt-in>-forbidden`, 43 cases, each against its `-granted` neighbour.
 - Under `Winget`, the pairs the other cases leave out: `eval-carriage-winget-{install,uninstall}-uninstall-previous-{ungranted,granted,forbidden}`, `eval-carriage-winget-{update,uninstall}-no-upgrade-{ungranted,granted,forbidden}`, with the controls `eval-carriage-winget-{install,update,uninstall}-plain`.
-- `Options.PreRelease` set to `true` carries nothing and leaves the version alone: `eval-carriage-<manager>-install-prerelease-flag`, 10 cases; those of managers that can pin a version go through an Allow rule with `Prerelease: Exclude`.
 
 ### §opt-in-evaluation
 
-- The granted neighbours: `eval-carriage-<manager>-<operation>-<opt-in>-granted`, 150 cases, and the 4 `Winget` `-granted` cases above.
+- The granted neighbours: `eval-carriage-<manager>-<operation>-<opt-in>-granted` with decision `AllowRules`, 43 cases, and the 4 `Winget` `-granted` cases above.
 - Several opt-ins all granted: `eval-carriage-combined-all-granted`.
 
 ### §rules
@@ -211,14 +218,15 @@ Each request is readable and passes every check above `DenyRule`; its `note` say
 
 ### §install-location
 
-- `Options.CustomInstallLocation` with a `..` segment, under a manager whose reading has no install location: `eval-carriage-<manager>-<operation>-location-not-plain`, 30 cases.
-  A grant pattern covers the text, so only the check denies it; each case's control is `eval-carriage-<manager>-<operation>-custom-install-location-granted`.
+- `OptIns.CustomInstallLocation.Path` with a `..` segment: `eval-carriage-<manager>-<operation>-location-not-plain`, 30 cases.
+  Under Cargo, Dotnet, PowerShell and PowerShell7 a grant pattern covers the text, so only the install location check denies it, and each case's control is `eval-carriage-<manager>-<operation>-custom-install-location-granted`; under the other managers the reading refuses the key, so the request is unreadable.
 
 ### §decision
 
-- Opt-ins named in the order of §opt-ins, not in the order the request writes them, for each check that names opt-ins: `eval-carriage-combined-ungranted-order`, `eval-carriage-combined-partly-granted-order`, `eval-carriage-combined-forbidden-order`, `eval-carriage-combined-default-deny-order`.
+- Opt-ins named in the order of §opt-ins, not in the order the request writes them, for each check that names opt-ins: `eval-carriage-combined-ungranted-order`, `eval-carriage-combined-partly-granted-order`, `eval-carriage-combined-forbidden-order`, `eval-carriage-combined-default-deny-order`, all through PowerShell, whose reading accepts every opt-in they use.
 
 ### Gaps
 
-- Every `PowerShell7` request here carries a version that §missing-version makes concrete; how `PowerShell7` reads a range or no version is checked by the `read-missing-version-powershell7-*` cases of the request reading part.
+- Every `PowerShell7` request here has a version that §missing-version makes concrete; how `PowerShell7` reads a range or no version is checked by the `read-missing-version-powershell7-*` cases of the request reading part.
 - The install location check is exercised with one form of non-plain path, a `..` segment, under each manager; the other forms are left to the install location cases of the request reading part.
+- `InstallerArguments` is accepted only by `Winget`; the other managers refuse it in `read-<manager>-installer-arguments-unreadable` of the request reading part, so it has no carriage cases here.

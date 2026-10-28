@@ -115,9 +115,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -144,9 +142,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -173,9 +169,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -185,136 +179,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-operation-outside-set",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Control: read-input-plain.",
-      "request": {
-        "Operation": "Repair",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-operation-wrong-case",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Closed-set values match only with their exact characters (§text-comparison). Control: read-input-plain.",
-      "request": {
-        "Operation": "install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-manager-outside-set",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Control: read-input-plain.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Conda",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-manager-wrong-case",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Closed-set values match only with their exact characters (§text-comparison). Control: read-input-plain.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-source-name-empty",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Source.Name is 1 to 128 bytes.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": ""
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -332,9 +196,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -361,9 +223,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -373,170 +233,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-source-name-129-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-source-name-128-bytes-multibyte",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "64 times U+00E9, 2 bytes each in UTF-8: 128 bytes, 64 code points.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-source-name-129-bytes-65-code-points",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Lengths count UTF-8 bytes: 129 bytes although only 65 code points.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9s"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-source-url-2048-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Bun accepts this Source.Url (§manager-bun); the URL is https://www.npmjs.com followed by '/' up to 2048 bytes, which equals https://www.npmjs.com once trailing '/' are removed.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Bun",
-        "Source": {
-          "Name": "Bun",
-          "Url": "https://www.npmjs.com///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////"
-        },
-        "Package": {
-          "Id": "left-pad",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-source-url-2049-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Same as read-input-source-url-2048-bytes with one more '/': 2049 bytes.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Bun",
-        "Source": {
-          "Name": "Bun",
-          "Url": "https://www.npmjs.com////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////"
-        },
-        "Package": {
-          "Id": "left-pad",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-id-empty",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -554,9 +250,7 @@
           "Id": "a",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -583,9 +277,7 @@
           "Id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -595,31 +287,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-id-257-chars",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -627,19 +294,17 @@
     {
       "name": "read-input-package-id-every-allowed-character",
       "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Uses every allowed character. An uninstall, because under the default reading the last '@' selects a version (§package-identity).",
+      "note": "Uses every character the request allows in Package.Id. A Dotnet Uninstall, whose reading refuses none of them; an Uninstall, because under the default reading the last '@' selects a version (§package-identity).",
       "request": {
         "Operation": "Uninstall",
-        "Manager": "Winget",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "winget"
+          "Name": "nuget.org"
         },
         "Package": {
           "Id": "Az09._+/:[],#$%{}-@x"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -649,213 +314,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-id-space",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "A character outside the Package.Id set. Control: read-input-plain.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-id-tilde",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "A character outside the Package.Id set. Control: read-input-plain.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso~Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-id-asterisk",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "A character outside the Package.Id set. Control: read-input-plain.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso*",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-id-backslash",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "A character outside the Package.Id set. Control: read-input-plain.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso\\Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-id-equals",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "A character outside the Package.Id set. Control: read-input-plain.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso=Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-id-non-ascii",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "A character outside the Package.Id set. Control: read-input-plain.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contos\u00f6.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-id-line-feed",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "A character outside the Package.Id set. Control: read-input-plain.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso\nTool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-version-empty",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": ""
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -873,9 +331,7 @@
           "Id": "Contoso.Tool",
           "Version": "1"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -903,9 +359,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.00"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -915,31 +369,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-package-version-129-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.000"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -958,9 +387,7 @@
           "Version": "1.2.3",
           "Architecture": "X64"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -970,232 +397,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-architecture-wrong-case",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Control: read-input-architecture-x64.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3",
-          "Architecture": "x64"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-architecture-outside-set",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Control: read-input-architecture-x64.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3",
-          "Architecture": "AMD64"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-channel-empty",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Package.Channel is 1 to 16 bytes.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3",
-          "Channel": ""
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-channel-1-byte",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Under Winget a channel makes no request unreadable (§managers).",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3",
-          "Channel": "b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-channel-16-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3",
-          "Channel": "bbbbbbbbbbbbbbbb"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-channel-17-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3",
-          "Channel": "bbbbbbbbbbbbbbbbb"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-channel-16-bytes-multibyte",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "8 times U+00E9: 16 bytes.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3",
-          "Channel": "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-channel-17-bytes-9-code-points",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "17 bytes although only 9 code points.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3",
-          "Channel": "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1213,12 +414,8 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "Scope": "Machine"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Scope": "Machine",
+        "Elevation": "Elevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1228,64 +425,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-scope-wrong-case",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Control: read-input-scope-machine.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "Scope": "machine"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-scope-outside-set",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Control: read-input-scope-machine.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "Scope": "Global"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1304,11 +443,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
         }
       },
       "expect": {
@@ -1319,34 +458,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-install-location-2049-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "CustomInstallLocation": "C:\\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1365,76 +476,76 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "p1",
-            "p2",
-            "p3",
-            "p4",
-            "p5",
-            "p6",
-            "p7",
-            "p8",
-            "p9",
-            "p10",
-            "p11",
-            "p12",
-            "p13",
-            "p14",
-            "p15",
-            "p16",
-            "p17",
-            "p18",
-            "p19",
-            "p20",
-            "p21",
-            "p22",
-            "p23",
-            "p24",
-            "p25",
-            "p26",
-            "p27",
-            "p28",
-            "p29",
-            "p30",
-            "p31",
-            "p32",
-            "p33",
-            "p34",
-            "p35",
-            "p36",
-            "p37",
-            "p38",
-            "p39",
-            "p40",
-            "p41",
-            "p42",
-            "p43",
-            "p44",
-            "p45",
-            "p46",
-            "p47",
-            "p48",
-            "p49",
-            "p50",
-            "p51",
-            "p52",
-            "p53",
-            "p54",
-            "p55",
-            "p56",
-            "p57",
-            "p58",
-            "p59",
-            "p60",
-            "p61",
-            "p62",
-            "p63",
-            "p64"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "p1",
+              "p2",
+              "p3",
+              "p4",
+              "p5",
+              "p6",
+              "p7",
+              "p8",
+              "p9",
+              "p10",
+              "p11",
+              "p12",
+              "p13",
+              "p14",
+              "p15",
+              "p16",
+              "p17",
+              "p18",
+              "p19",
+              "p20",
+              "p21",
+              "p22",
+              "p23",
+              "p24",
+              "p25",
+              "p26",
+              "p27",
+              "p28",
+              "p29",
+              "p30",
+              "p31",
+              "p32",
+              "p33",
+              "p34",
+              "p35",
+              "p36",
+              "p37",
+              "p38",
+              "p39",
+              "p40",
+              "p41",
+              "p42",
+              "p43",
+              "p44",
+              "p45",
+              "p46",
+              "p47",
+              "p48",
+              "p49",
+              "p50",
+              "p51",
+              "p52",
+              "p53",
+              "p54",
+              "p55",
+              "p56",
+              "p57",
+              "p58",
+              "p59",
+              "p60",
+              "p61",
+              "p62",
+              "p63",
+              "p64"
+            ]
+          }
         }
       },
       "expect": {
@@ -1445,100 +556,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-custom-parameters-65-elements",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "CustomParameters": [
-            "p1",
-            "p2",
-            "p3",
-            "p4",
-            "p5",
-            "p6",
-            "p7",
-            "p8",
-            "p9",
-            "p10",
-            "p11",
-            "p12",
-            "p13",
-            "p14",
-            "p15",
-            "p16",
-            "p17",
-            "p18",
-            "p19",
-            "p20",
-            "p21",
-            "p22",
-            "p23",
-            "p24",
-            "p25",
-            "p26",
-            "p27",
-            "p28",
-            "p29",
-            "p30",
-            "p31",
-            "p32",
-            "p33",
-            "p34",
-            "p35",
-            "p36",
-            "p37",
-            "p38",
-            "p39",
-            "p40",
-            "p41",
-            "p42",
-            "p43",
-            "p44",
-            "p45",
-            "p46",
-            "p47",
-            "p48",
-            "p49",
-            "p50",
-            "p51",
-            "p52",
-            "p53",
-            "p54",
-            "p55",
-            "p56",
-            "p57",
-            "p58",
-            "p59",
-            "p60",
-            "p61",
-            "p62",
-            "p63",
-            "p64",
-            "p65"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1556,13 +573,13 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp"
+            ]
+          }
         }
       },
       "expect": {
@@ -1573,36 +590,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-custom-parameter-513-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "CustomParameters": [
-            "ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1621,13 +608,13 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9"
+            ]
+          }
         }
       },
       "expect": {
@@ -1638,67 +625,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-custom-parameter-513-bytes-257-code-points",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "CustomParameters": [
-            "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9p"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-custom-parameter-empty",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Custom parameters are 1 to 512 bytes, and §reading also lists an empty one as unreadable. Control: read-input-custom-parameter-512-bytes.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "CustomParameters": [
-            ""
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1716,11 +642,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "PreOperationCommand": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "PrePostCommands": {
+            "Pre": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          }
         }
       },
       "expect": {
@@ -1731,34 +657,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-pre-command-2049-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "PreOperationCommand": "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1776,11 +674,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "PostOperationCommand": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "PrePostCommands": {
+            "Post": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+          }
         }
       },
       "expect": {
@@ -1791,34 +689,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-post-command-2049-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "PostOperationCommand": "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -1836,76 +706,76 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "KillBeforeOperation": [
-            "p1.exe",
-            "p2.exe",
-            "p3.exe",
-            "p4.exe",
-            "p5.exe",
-            "p6.exe",
-            "p7.exe",
-            "p8.exe",
-            "p9.exe",
-            "p10.exe",
-            "p11.exe",
-            "p12.exe",
-            "p13.exe",
-            "p14.exe",
-            "p15.exe",
-            "p16.exe",
-            "p17.exe",
-            "p18.exe",
-            "p19.exe",
-            "p20.exe",
-            "p21.exe",
-            "p22.exe",
-            "p23.exe",
-            "p24.exe",
-            "p25.exe",
-            "p26.exe",
-            "p27.exe",
-            "p28.exe",
-            "p29.exe",
-            "p30.exe",
-            "p31.exe",
-            "p32.exe",
-            "p33.exe",
-            "p34.exe",
-            "p35.exe",
-            "p36.exe",
-            "p37.exe",
-            "p38.exe",
-            "p39.exe",
-            "p40.exe",
-            "p41.exe",
-            "p42.exe",
-            "p43.exe",
-            "p44.exe",
-            "p45.exe",
-            "p46.exe",
-            "p47.exe",
-            "p48.exe",
-            "p49.exe",
-            "p50.exe",
-            "p51.exe",
-            "p52.exe",
-            "p53.exe",
-            "p54.exe",
-            "p55.exe",
-            "p56.exe",
-            "p57.exe",
-            "p58.exe",
-            "p59.exe",
-            "p60.exe",
-            "p61.exe",
-            "p62.exe",
-            "p63.exe",
-            "p64.exe"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "KillBeforeOperation": {
+            "Processes": [
+              "p1.exe",
+              "p2.exe",
+              "p3.exe",
+              "p4.exe",
+              "p5.exe",
+              "p6.exe",
+              "p7.exe",
+              "p8.exe",
+              "p9.exe",
+              "p10.exe",
+              "p11.exe",
+              "p12.exe",
+              "p13.exe",
+              "p14.exe",
+              "p15.exe",
+              "p16.exe",
+              "p17.exe",
+              "p18.exe",
+              "p19.exe",
+              "p20.exe",
+              "p21.exe",
+              "p22.exe",
+              "p23.exe",
+              "p24.exe",
+              "p25.exe",
+              "p26.exe",
+              "p27.exe",
+              "p28.exe",
+              "p29.exe",
+              "p30.exe",
+              "p31.exe",
+              "p32.exe",
+              "p33.exe",
+              "p34.exe",
+              "p35.exe",
+              "p36.exe",
+              "p37.exe",
+              "p38.exe",
+              "p39.exe",
+              "p40.exe",
+              "p41.exe",
+              "p42.exe",
+              "p43.exe",
+              "p44.exe",
+              "p45.exe",
+              "p46.exe",
+              "p47.exe",
+              "p48.exe",
+              "p49.exe",
+              "p50.exe",
+              "p51.exe",
+              "p52.exe",
+              "p53.exe",
+              "p54.exe",
+              "p55.exe",
+              "p56.exe",
+              "p57.exe",
+              "p58.exe",
+              "p59.exe",
+              "p60.exe",
+              "p61.exe",
+              "p62.exe",
+              "p63.exe",
+              "p64.exe"
+            ]
+          }
         }
       },
       "expect": {
@@ -1916,100 +786,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-kill-list-65-elements",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "KillBeforeOperation": [
-            "p1.exe",
-            "p2.exe",
-            "p3.exe",
-            "p4.exe",
-            "p5.exe",
-            "p6.exe",
-            "p7.exe",
-            "p8.exe",
-            "p9.exe",
-            "p10.exe",
-            "p11.exe",
-            "p12.exe",
-            "p13.exe",
-            "p14.exe",
-            "p15.exe",
-            "p16.exe",
-            "p17.exe",
-            "p18.exe",
-            "p19.exe",
-            "p20.exe",
-            "p21.exe",
-            "p22.exe",
-            "p23.exe",
-            "p24.exe",
-            "p25.exe",
-            "p26.exe",
-            "p27.exe",
-            "p28.exe",
-            "p29.exe",
-            "p30.exe",
-            "p31.exe",
-            "p32.exe",
-            "p33.exe",
-            "p34.exe",
-            "p35.exe",
-            "p36.exe",
-            "p37.exe",
-            "p38.exe",
-            "p39.exe",
-            "p40.exe",
-            "p41.exe",
-            "p42.exe",
-            "p43.exe",
-            "p44.exe",
-            "p45.exe",
-            "p46.exe",
-            "p47.exe",
-            "p48.exe",
-            "p49.exe",
-            "p50.exe",
-            "p51.exe",
-            "p52.exe",
-            "p53.exe",
-            "p54.exe",
-            "p55.exe",
-            "p56.exe",
-            "p57.exe",
-            "p58.exe",
-            "p59.exe",
-            "p60.exe",
-            "p61.exe",
-            "p62.exe",
-            "p63.exe",
-            "p64.exe",
-            "p65.exe"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -2027,13 +803,13 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "KillBeforeOperation": [
-            "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "KillBeforeOperation": {
+            "Processes": [
+              "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"
+            ]
+          }
         }
       },
       "expect": {
@@ -2044,67 +820,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-kill-element-129-bytes",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "KillBeforeOperation": [
-            "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-kill-element-empty",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Control: read-input-kill-element-128-bytes.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "KillBeforeOperation": [
-            ""
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -2122,9 +837,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Elevated"
-        }
+        "Elevation": "Elevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -2134,58 +847,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-requested-elevation-wrong-case",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Control: read-input-requested-elevation-elevated.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "elevated"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-input-requested-elevation-outside-set",
-      "oracle": "contract policies/CONTRACT.policy.md §request-input",
-      "note": "Control: read-input-requested-elevation-elevated.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Client": {
-          "RequestedElevation": "Admin"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "UnreadableRequest",
-        "rules": [],
         "optIns": [],
         "audited": false
       }

@@ -21,7 +21,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     },
@@ -44,7 +44,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -74,7 +74,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -113,8 +113,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"Interactive": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
       },
       "expect": {
         "outcome": "Deny",
@@ -147,7 +147,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -179,7 +179,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-all"}], "optIns": [], "audited": false}
     },
@@ -202,7 +202,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -232,8 +232,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"Interactive": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
       },
       "expect": {
         "outcome": "Deny",
@@ -265,7 +265,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-all"}], "optIns": [], "audited": false}
     },
@@ -292,8 +292,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"Interactive": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
       },
       "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-all"}], "optIns": [], "audited": false}
     },
@@ -325,7 +325,7 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -362,8 +362,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"Interactive": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
       },
       "expect": {
         "outcome": "Deny",
@@ -401,8 +401,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"SkipHashCheck": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
       },
       "expect": {
         "outcome": "Allow",

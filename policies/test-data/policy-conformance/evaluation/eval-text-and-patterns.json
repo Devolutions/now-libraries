@@ -28,8 +28,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["quiet"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["quiet"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -66,8 +66,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["loud"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["loud"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -104,8 +104,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u017f"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u017f"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -142,8 +142,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["s"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["s"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -180,8 +180,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u0131"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u0131"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -218,8 +218,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u0130"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u0130"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -256,8 +256,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u212a"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u212a"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -294,8 +294,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u00df"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u00df"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -332,8 +332,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u00df"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u00df"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -370,8 +370,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u03c2"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u03c2"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -408,8 +408,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u00b5"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u00b5"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -446,8 +446,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\ud801\udc28"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\ud801\udc28"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -484,8 +484,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["e\u0301"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["e\u0301"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -515,7 +515,7 @@
         "Manager": "Winget",
         "Source": {"Name": "WINGET"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -528,7 +528,7 @@
     {
       "name": "eval-text-source-name-dotless-i",
       "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
-      "note": "UnicodeData.txt 16.0.0 line '0131;...;0049;;0049': 'w\u0131nget' and 'winget' both map to 'WINGET'.",
+      "note": "UnicodeData.txt 16.0.0 line '0131;...;0049;;0049': the trusted source 'w\u0131nget' and the source 'winget' both map to 'WINGET'.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -537,15 +537,15 @@
           "Revision": 1,
           "PublishedAt": "2026-01-01T00:00:00Z"
         },
-        "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
+        "TrustedSources": [{"Manager": "Winget", "Source": "w\u0131nget"}],
         "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
       },
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "w\u0131nget"},
+        "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -558,7 +558,7 @@
     {
       "name": "eval-text-source-name-dotted-capital-i",
       "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
-      "note": "UnicodeData.txt 16.0.0 line '0130;...;;0069;' has no uppercase mapping, so 'w\u0130nget' differs from 'winget' and the source is not trusted.",
+      "note": "UnicodeData.txt 16.0.0 line '0130;...;;0069;' has no uppercase mapping, so the trusted source 'w\u0130nget' differs from 'winget' and does not trust it. Control: eval-text-source-name-dotless-i.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -567,15 +567,15 @@
           "Revision": 1,
           "PublishedAt": "2026-01-01T00:00:00Z"
         },
-        "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
+        "TrustedSources": [{"Manager": "Winget", "Source": "w\u0130nget"}],
         "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
       },
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "w\u0130nget"},
+        "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
@@ -606,8 +606,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "C:\\Apps\\\u017f"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\\u017f"}}
       },
       "expect": {
         "outcome": "Allow",
@@ -644,8 +644,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["quiet"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["quiet"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -681,8 +681,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["abcz"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["abcz"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -718,8 +718,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["very-quiet"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["very-quiet"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -755,8 +755,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["anything at all"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["anything at all"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -792,8 +792,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["quiet"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["quiet"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -830,8 +830,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["quietly"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["quietly"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -868,8 +868,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["unquiet"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["unquiet"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -905,8 +905,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["aXbYc"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["aXbYc"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -943,8 +943,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["acb"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["acb"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -981,8 +981,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["aab"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["aab"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -1019,8 +1019,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["a"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["a"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -1057,8 +1057,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["abc"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["abc"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -1094,8 +1094,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["a?c"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["a?c"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -1132,8 +1132,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["a"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["a"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -1169,8 +1169,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["[ab]"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["[ab]"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -1207,8 +1207,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["a*"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["a*"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -1245,8 +1245,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["a\\b"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["a\\b"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -1283,8 +1283,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u00df"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u00df"]}}
       },
       "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-params"}], "optIns": ["CustomParameters"], "audited": false}
     },
@@ -1315,8 +1315,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["ss"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["ss"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -1325,30 +1325,6 @@
         "optIns": [],
         "audited": false
       }
-    },
-    {
-      "name": "eval-text-source-name-sharp-s-not-ss",
-      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
-      "note": "The trusted source 'STRASSE' does not trust 'stra\u00dfe': UnicodeData.txt 16.0.0 line '00DF;LATIN SMALL LETTER SHARP S;Ll;0;L;;;;;N;;;;;' has no simple uppercase mapping, and the full uppercase 'SS' of SpecialCasing.txt 16.0.0 line '00DF; 00DF; 0053 0073; 0053 0053; # LATIN SMALL LETTER SHARP S' is not used. Control: eval-text-source-name-ss-equals-uppercase-ss.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Winget", "Source": "STRASSE"}],
-        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {"Name": "stra\u00dfe"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
-      },
-      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "eval-text-source-name-ss-equals-uppercase-ss",
@@ -1370,7 +1346,7 @@
         "Manager": "Winget",
         "Source": {"Name": "strasse"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -1383,7 +1359,7 @@
     {
       "name": "eval-text-source-name-selector-sharp-s-not-ss",
       "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
-      "note": "The trusted source 'stra\u00dfe' does not trust 'STRASSE', for the reason of eval-text-source-name-sharp-s-not-ss, with the U+00DF in the selector. Control: eval-text-source-name-selector-sharp-s-other-letters-case-ignored.",
+      "note": "UnicodeData.txt 16.0.0 line '00DF;...' has no simple uppercase mapping, so the trusted source 'stra\u00dfe' maps to 'STRA\u00dfE' and does not trust 'STRASSE'. Control: eval-text-source-name-ss-equals-uppercase-ss.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -1400,39 +1376,9 @@
         "Manager": "Winget",
         "Source": {"Name": "STRASSE"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
-    },
-    {
-      "name": "eval-text-source-name-selector-sharp-s-other-letters-case-ignored",
-      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
-      "note": "The trusted source 'stra\u00dfe' trusts 'STRA\u00dfE': U+00DF stays itself on both sides (UnicodeData.txt 16.0.0 line '00DF;LATIN SMALL LETTER SHARP S;Ll;0;L;;;;;N;;;;;') and the ASCII letters map to uppercase.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Winget", "Source": "stra\u00dfe"}],
-        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {"Name": "STRA\u00dfE"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Client": {"RequestedElevation": "Standard"}
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [{"id": "allow-all"}],
-        "optIns": [],
-        "audited": false
-      }
     },
     {
       "name": "eval-text-ligature-ff-not-full-uppercase-ff",
@@ -1461,8 +1407,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\ufb00"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\ufb00"]}}
       },
       "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-params"}], "optIns": ["CustomParameters"], "audited": false}
     },
@@ -1493,8 +1439,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["ff"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["ff"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -1531,8 +1477,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u0149"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u0149"]}}
       },
       "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-params"}], "optIns": ["CustomParameters"], "audited": false}
     },
@@ -1563,8 +1509,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u02bcn"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u02bcn"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -1601,8 +1547,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u1f80"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u1f80"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -1639,8 +1585,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u1f80"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u1f80"]}}
       },
       "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-params"}], "optIns": ["CustomParameters"], "audited": false}
     },
@@ -1671,8 +1617,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u1f88"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u1f88"]}}
       },
       "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-params"}], "optIns": ["CustomParameters"], "audited": false}
     },
@@ -1703,8 +1649,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["\u1f00\u03b9"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["\u1f00\u03b9"]}}
       },
       "expect": {
         "outcome": "Allow",

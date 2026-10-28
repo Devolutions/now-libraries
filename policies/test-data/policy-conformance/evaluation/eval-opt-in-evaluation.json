@@ -39,8 +39,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["--silent"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -88,8 +88,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["--silent", "--accept-source-agreements"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent", "--accept-source-agreements"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -137,8 +137,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["--silent"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent"]}}
       },
       "expect": {
         "outcome": "Allow",
@@ -185,8 +185,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["--silent", "--log"]},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent", "--log"]}}
       },
       "expect": {
         "outcome": "Deny",
@@ -234,8 +234,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "c:/windows/Temp"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "c:/windows/Temp"}}
       },
       "expect": {
         "outcome": "Deny",
@@ -282,8 +282,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "C:\\Apps"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps"}}
       },
       "expect": {
         "outcome": "Allow",
@@ -331,58 +331,14 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"Interactive": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
       },
       "expect": {
         "outcome": "Allow",
         "check": "AllowRules",
         "rules": [{"id": "allow-all"}],
         "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "eval-forbid-opt-in-from-parameter",
-      "oracle": "contract policies/CONTRACT.policy.md §opt-in-evaluation",
-      "note": "'--interactive' carries Interactive (§manager-winget), which the Deny rule forbids.",
-      "policy": {
-        "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
-        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
-        "Rules": [
-          {
-            "Id": "allow-all",
-            "Decision": "Allow",
-            "Select": {},
-            "Grants": {
-              "CustomParameters": {"Patterns": ["*"]},
-              "Interactive": {},
-              "SkipHashCheck": {},
-              "CustomInstallLocation": {"Patterns": ["C:\\*", "D:\\*"]}
-            }
-          },
-          {"Id": "deny-interactive", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}}}
-        ]
-      },
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {"Name": "winget"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomParameters": ["--interactive"]},
-        "Client": {"RequestedElevation": "Standard"}
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "DenyRule",
-        "rules": [{"id": "deny-interactive"}],
-        "optIns": ["Interactive"],
         "audited": false
       }
     },
@@ -423,8 +379,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"SkipHashCheck": true, "Interactive": true},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}, "SkipHashCheck": {}}
       },
       "expect": {
         "outcome": "Deny",
@@ -467,8 +423,8 @@
         "Manager": "Winget",
         "Source": {"Name": "winget"},
         "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
-        "Options": {"CustomInstallLocation": "D:\\Tools\\X"},
-        "Client": {"RequestedElevation": "Standard"}
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "D:\\Tools\\X"}}
       },
       "expect": {
         "outcome": "Allow",

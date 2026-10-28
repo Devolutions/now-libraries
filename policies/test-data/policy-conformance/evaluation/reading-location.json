@@ -113,11 +113,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\"
+          }
         }
       },
       "expect": {
@@ -146,11 +146,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:/"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:/"
+          }
         }
       },
       "expect": {
@@ -179,11 +179,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "c:\\"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "c:\\"
+          }
         }
       },
       "expect": {
@@ -212,11 +212,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "Z:\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "Z:\\Apps"
+          }
         }
       },
       "expect": {
@@ -245,11 +245,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps\\Tool"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\Tool"
+          }
         }
       },
       "expect": {
@@ -278,11 +278,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:/Apps/Tool"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:/Apps/Tool"
+          }
         }
       },
       "expect": {
@@ -311,11 +311,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps/Tool"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps/Tool"
+          }
         }
       },
       "expect": {
@@ -344,11 +344,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps\\"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\"
+          }
         }
       },
       "expect": {
@@ -377,11 +377,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps\\\\Tool"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\\\Tool"
+          }
         }
       },
       "expect": {
@@ -410,11 +410,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\My Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\My Apps"
+          }
         }
       },
       "expect": {
@@ -443,11 +443,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\.config"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\.config"
+          }
         }
       },
       "expect": {
@@ -476,11 +476,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a..b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a..b"
+          }
         }
       },
       "expect": {
@@ -509,11 +509,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\\u00e9t\u00e9"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\\u00e9t\u00e9"
+          }
         }
       },
       "expect": {
@@ -542,11 +542,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a\u00a0b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\u00a0b"
+          }
         }
       },
       "expect": {
@@ -575,11 +575,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a=b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a=b"
+          }
         }
       },
       "expect": {
@@ -590,35 +590,6 @@
             "id": "allow-all"
           }
         ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-location-not-plain-empty",
-      "oracle": "contract policies/CONTRACT.policy.md §install-location",
-      "note": "An empty Options.CustomInstallLocation still carries the opt-in (§opt-ins) and is no path. Control: read-location-plain-nested.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "CustomInstallLocation": ""
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "InstallLocation",
-        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -637,11 +608,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:"
+          }
         }
       },
       "expect": {
@@ -666,11 +637,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:Apps"
+          }
         }
       },
       "expect": {
@@ -695,11 +666,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "Apps\\Tool"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "Apps\\Tool"
+          }
         }
       },
       "expect": {
@@ -724,11 +695,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\\Apps"
+          }
         }
       },
       "expect": {
@@ -753,11 +724,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "/Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "/Apps"
+          }
         }
       },
       "expect": {
@@ -782,11 +753,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "\\\\server\\share"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\\\\server\\share"
+          }
         }
       },
       "expect": {
@@ -811,11 +782,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "//server/share"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "//server/share"
+          }
         }
       },
       "expect": {
@@ -840,11 +811,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "\\\\?\\C:\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\\\\?\\C:\\Apps"
+          }
         }
       },
       "expect": {
@@ -869,11 +840,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "\\\\.\\C:\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\\\\.\\C:\\Apps"
+          }
         }
       },
       "expect": {
@@ -898,11 +869,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "1:\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "1:\\Apps"
+          }
         }
       },
       "expect": {
@@ -927,11 +898,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "CD:\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "CD:\\Apps"
+          }
         }
       },
       "expect": {
@@ -956,11 +927,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "\u00e9:\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\u00e9:\\Apps"
+          }
         }
       },
       "expect": {
@@ -985,11 +956,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": " C:\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": " C:\\Apps"
+          }
         }
       },
       "expect": {
@@ -1014,11 +985,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps\\..\\Windows"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\..\\Windows"
+          }
         }
       },
       "expect": {
@@ -1043,11 +1014,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\.."
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\.."
+          }
         }
       },
       "expect": {
@@ -1072,11 +1043,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\.\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\.\\Apps"
+          }
         }
       },
       "expect": {
@@ -1101,11 +1072,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\ Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\ Apps"
+          }
         }
       },
       "expect": {
@@ -1130,11 +1101,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps "
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps "
+          }
         }
       },
       "expect": {
@@ -1159,11 +1130,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps."
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps."
+          }
         }
       },
       "expect": {
@@ -1188,11 +1159,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps\\x:y"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\x:y"
+          }
         }
       },
       "expect": {
@@ -1217,11 +1188,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a*"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a*"
+          }
         }
       },
       "expect": {
@@ -1246,11 +1217,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a?"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a?"
+          }
         }
       },
       "expect": {
@@ -1264,22 +1235,22 @@
     {
       "name": "read-location-not-plain-quote",
       "oracle": "contract policies/CONTRACT.policy.md §install-location",
-      "note": "Control: read-location-plain-nested.",
+      "note": "Through PowerShell, whose reading refuses no character of the path, since \" is a batch character that makes a WinGet request unreadable (§manager-winget). Control: read-location-plain-powershell.",
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "PowerShell",
         "Source": {
-          "Name": "winget"
+          "Name": "PSGallery"
         },
         "Package": {
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a\"b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\"b"
+          }
         }
       },
       "expect": {
@@ -1293,22 +1264,22 @@
     {
       "name": "read-location-not-plain-less-than",
       "oracle": "contract policies/CONTRACT.policy.md §install-location",
-      "note": "Control: read-location-plain-nested.",
+      "note": "Through PowerShell, whose reading refuses no character of the path, since < is a batch character that makes a WinGet request unreadable (§manager-winget). Control: read-location-plain-powershell.",
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "PowerShell",
         "Source": {
-          "Name": "winget"
+          "Name": "PSGallery"
         },
         "Package": {
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a<b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a<b"
+          }
         }
       },
       "expect": {
@@ -1322,22 +1293,22 @@
     {
       "name": "read-location-not-plain-greater-than",
       "oracle": "contract policies/CONTRACT.policy.md §install-location",
-      "note": "Control: read-location-plain-nested.",
+      "note": "Through PowerShell, whose reading refuses no character of the path, since > is a batch character that makes a WinGet request unreadable (§manager-winget). Control: read-location-plain-powershell.",
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "PowerShell",
         "Source": {
-          "Name": "winget"
+          "Name": "PSGallery"
         },
         "Package": {
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a>b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a>b"
+          }
         }
       },
       "expect": {
@@ -1351,22 +1322,22 @@
     {
       "name": "read-location-not-plain-pipe",
       "oracle": "contract policies/CONTRACT.policy.md §install-location",
-      "note": "Control: read-location-plain-nested.",
+      "note": "Through PowerShell, whose reading refuses no character of the path, since | is a batch character that makes a WinGet request unreadable (§manager-winget). Control: read-location-plain-powershell.",
       "request": {
         "Operation": "Install",
-        "Manager": "Winget",
+        "Manager": "PowerShell",
         "Source": {
-          "Name": "winget"
+          "Name": "PSGallery"
         },
         "Package": {
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a|b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a|b"
+          }
         }
       },
       "expect": {
@@ -1391,11 +1362,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a\u0001b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\u0001b"
+          }
         }
       },
       "expect": {
@@ -1420,11 +1391,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a\tb"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\tb"
+          }
         }
       },
       "expect": {
@@ -1449,11 +1420,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a\u007fb"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\u007fb"
+          }
         }
       },
       "expect": {
@@ -1478,11 +1449,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a\u0085b"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\u0085b"
+          }
         }
       },
       "expect": {
@@ -1507,11 +1478,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\a\u009fb"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\u009fb"
+          }
         }
       },
       "expect": {
@@ -1629,11 +1600,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "c:/Apps//Tool/"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "c:/Apps//Tool/"
+          }
         }
       },
       "expect": {
@@ -1755,11 +1726,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\APPS\\TOOL"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\APPS\\TOOL"
+          }
         }
       },
       "expect": {
@@ -1881,11 +1852,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps\\Tool\\\\"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\Tool\\\\"
+          }
         }
       },
       "expect": {
@@ -2007,11 +1978,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps"
+          }
         }
       },
       "expect": {
@@ -2135,11 +2106,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps\\Tool\\x"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\Tool\\x"
+          }
         }
       },
       "expect": {
@@ -2263,11 +2234,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps\\Tool"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\Tool"
+          }
         }
       },
       "expect": {
@@ -2388,11 +2359,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "D:\\Apps\\Tool"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "D:\\Apps\\Tool"
+          }
         }
       },
       "expect": {
@@ -2516,11 +2487,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "c:/"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "c:/"
+          }
         }
       },
       "expect": {
@@ -2641,11 +2612,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps"
+          }
         }
       },
       "expect": {
@@ -2769,11 +2740,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\\u00e9t\u00e9"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\\u00e9t\u00e9"
+          }
         }
       },
       "expect": {
@@ -2895,11 +2866,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\stra\u00dfe"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\stra\u00dfe"
+          }
         }
       },
       "expect": {
@@ -2918,8 +2889,8 @@
     },
     {
       "name": "read-location-one-from-parameter",
-      "oracle": "contract policies/CONTRACT.policy.md §install-location",
-      "note": "Exactly one location.",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--location' would ask for CustomInstallLocation, so the request is unreadable (§manager-winget). Control: read-location-plain-nested.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
@@ -2930,90 +2901,19 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomParameters": [
-            "--location",
-            "C:\\Apps"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--location",
+              "C:\\Apps"
+            ]
           }
-        ],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-location-field-and-parameter",
-      "oracle": "contract policies/CONTRACT.policy.md §install-location",
-      "note": "Two locations, even equal ones. Control: read-location-one-from-parameter.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps",
-          "CustomParameters": [
-            "--location",
-            "C:\\Apps"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
         }
       },
       "expect": {
         "outcome": "Deny",
-        "check": "InstallLocation",
-        "rules": [],
-        "optIns": [],
-        "audited": false
-      }
-    },
-    {
-      "name": "read-location-two-parameters",
-      "oracle": "contract policies/CONTRACT.policy.md §install-location",
-      "note": "Two locations. Control: read-location-one-from-parameter.",
-      "request": {
-        "Operation": "Install",
-        "Manager": "Winget",
-        "Source": {
-          "Name": "winget"
-        },
-        "Package": {
-          "Id": "Contoso.Tool",
-          "Version": "1.2.3"
-        },
-        "Options": {
-          "CustomParameters": [
-            "--location",
-            "C:\\Apps",
-            "-l",
-            "C:\\Apps"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
-      },
-      "expect": {
-        "outcome": "Deny",
-        "check": "InstallLocation",
+        "check": "UnreadableRequest",
         "rules": [],
         "optIns": [],
         "audited": false
@@ -3033,16 +2933,18 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "C:\\Apps",
-          "CustomParameters": [
-            "--",
-            "--location",
-            "C:\\Other"
-          ]
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps"
+          },
+          "CustomParameters": {
+            "Values": [
+              "--",
+              "--location",
+              "C:\\Other"
+            ]
+          }
         }
       },
       "expect": {
@@ -3151,11 +3053,11 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Options": {
-          "CustomInstallLocation": "\\\\server\\share"
-        },
-        "Client": {
-          "RequestedElevation": "Standard"
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\\\\server\\share"
+          }
         }
       },
       "expect": {
@@ -3180,9 +3082,7 @@
           "Id": "Contoso.Tool",
           "Version": "1.2.3"
         },
-        "Client": {
-          "RequestedElevation": "Standard"
-        }
+        "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
@@ -3200,28 +3100,28 @@
       "name": "read-location-plain-segment-leading-no-break-space",
       "oracle": "contract policies/CONTRACT.policy.md §install-location",
       "note": "The segment starts with U+00A0 NO-BREAK SPACE; only U+0020 is a space for the segment rules, and U+00A0 is outside the control ranges U+0000 to U+001F and U+007F to U+009F, so the path is plain; every location is granted. Control: read-location-not-plain-segment-leading-space.",
-      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C:\\\u00a0Apps"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\\u00a0Apps"}}},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
     },
     {
       "name": "read-location-plain-segment-trailing-no-break-space",
       "oracle": "contract policies/CONTRACT.policy.md §install-location",
       "note": "The segment ends with U+00A0 NO-BREAK SPACE, which is not the space U+0020; every location is granted. Control: read-location-not-plain-segment-trailing-space.",
-      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C:\\Apps\u00a0"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\u00a0"}}},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
     },
     {
       "name": "read-location-plain-segment-trailing-ideographic-space",
       "oracle": "contract policies/CONTRACT.policy.md §install-location",
       "note": "The segment ends with U+3000 IDEOGRAPHIC SPACE, which is not the space U+0020 and is outside the control ranges; every location is granted. Control: read-location-not-plain-segment-trailing-space.",
-      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C:\\Apps\u3000"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\u3000"}}},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
     },
     {
       "name": "read-location-plain-repeated-after-drive",
       "oracle": "contract policies/CONTRACT.policy.md §install-location",
       "note": "After the drive's ':' and separator, any sequence of separators and segments follows, so a second separator right after the drive keeps the path plain; every location is granted. Control: read-location-plain-nested.",
-      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C:\\\\Apps"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\\\Apps"}}},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
     },
     {
@@ -3229,7 +3129,7 @@
       "oracle": "contract policies/CONTRACT.policy.md §install-location",
       "note": "'C://Apps' is plain and normalizes to 'C:\\Apps', with the repeated separator collapsed; the grant pattern is 'C:\\Apps'. Control: read-location-normalized-separators.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps"]}}}]},
-      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C://Apps"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C://Apps"}}},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
     },
     {
@@ -3237,8 +3137,104 @@
       "oracle": "contract policies/CONTRACT.policy.md §install-location",
       "note": "'C:\\\\' is plain; collapsing the separators leaves the drive root, whose trailing separator follows ':' and is kept, so it normalizes to 'C:\\'; the grant pattern is 'C:\\'. Control: read-location-drive-root-normalized.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\"]}}}]},
-      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C:\\\\"}, "Client": {"RequestedElevation": "Standard"}},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\\\"}}},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-plain-powershell",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path through PowerShell; control for the read-location-not-plain cases through PowerShell.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\\b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-parameter-not-read",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The check reads only OptIns.CustomInstallLocation.Path: a Scoop custom parameter holding a relative path gives no install location, so the check does not apply. Control: read-location-not-plain-relative-powershell.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--dir=..\\x"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-relative-powershell",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A relative path in OptIns.CustomInstallLocation.Path fails the check.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "..\\x"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
     }
   ]
 }
