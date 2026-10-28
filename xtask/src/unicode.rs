@@ -1,178 +1,20 @@
-//! Generates the Unicode tables that the policy evaluators use from the published UCD files.
-//!
-//! The tables have a language-neutral shape, sorted code point pairs and sorted inclusive ranges, so the generator can emit them for another language.
-
-use core::fmt::Write as _;
-use std::path::Path;
-
-use sha2::{Digest as _, Sha256};
-
 use crate::prelude::*;
 
-const UCD_BASE_URL: &str = "https://www.unicode.org/Public/16.0.0/ucd/";
-const UNICODE_DATA: &str = "UnicodeData.txt";
-const PROP_LIST: &str = "PropList.txt";
-const DERIVED_CORE_PROPERTIES: &str = "DerivedCoreProperties.txt";
-
+const TOOL_MANIFEST: &str = "xtask/unicode-tables/Cargo.toml";
 const DOWNLOAD_DIR: &str = "target/ucd-16.0.0";
 const RUST_OUTPUT: &str = "policies/rust/now-policy-eval/src/unicode_tables.rs";
 
-struct Input {
-    url: String,
-    sha256: String,
-    text: String,
-}
-
-struct Tables {
-    simple_uppercase: Vec<(u32, u32)>,
-    white_space: Vec<(u32, u32)>,
-    default_ignorable: Vec<(u32, u32)>,
-}
-
+/// Runs the standalone `unicode-tables` tool, which is compiled only when this task runs.
+///
+/// The tool is outside the workspace so that its dependencies stay out of `xtask` and the workspace lock file.
 pub fn tables(sh: &Shell) -> anyhow::Result<()> {
     let _s = Section::new("UNICODE-TABLES");
 
-    sh.create_dir(DOWNLOAD_DIR)?;
-
-    let unicode_data = fetch(sh, UNICODE_DATA)?;
-    let prop_list = fetch(sh, PROP_LIST)?;
-    let derived_core_properties = fetch(sh, DERIVED_CORE_PROPERTIES)?;
-
-    let tables = Tables {
-        simple_uppercase: parse_simple_uppercase(&unicode_data.text)?,
-        white_space: parse_property(&prop_list.text, "White_Space")?,
-        default_ignorable: parse_property(&derived_core_properties.text, "Default_Ignorable_Code_Point")?,
-    };
-
-    let rust = emit_rust(&[&unicode_data, &prop_list, &derived_core_properties], &tables);
-    sh.write_file(RUST_OUTPUT, rust)?;
-
-    println!("Wrote {RUST_OUTPUT}");
+    cmd!(
+        sh,
+        "{CARGO} run --quiet --locked --manifest-path {TOOL_MANIFEST} -- {DOWNLOAD_DIR} {RUST_OUTPUT}"
+    )
+    .run()?;
 
     Ok(())
-}
-
-fn fetch(sh: &Shell, file_name: &str) -> anyhow::Result<Input> {
-    let url = format!("{UCD_BASE_URL}{file_name}");
-    let path = Path::new(DOWNLOAD_DIR).join(file_name);
-
-    if !sh.path_exists(&path) {
-        cmd!(sh, "curl --fail --silent --show-error --location --output {path} {url}").run()?;
-    }
-
-    let bytes = sh.read_binary_file(&path)?;
-    let sha256 = Sha256::digest(&bytes).iter().fold(String::new(), |mut hex, byte| {
-        let _ = write!(hex, "{byte:02x}");
-        hex
-    });
-    let text = String::from_utf8(bytes).with_context(|| format!("{file_name} is not UTF-8"))?;
-
-    Ok(Input { url, sha256, text })
-}
-
-/// Reads the simple uppercase mapping, field 12 of `UnicodeData.txt`, as sorted (code point, uppercase) pairs.
-fn parse_simple_uppercase(text: &str) -> anyhow::Result<Vec<(u32, u32)>> {
-    let mut pairs = Vec::new();
-
-    for line in text.lines().filter(|line| !line.is_empty()) {
-        let fields: Vec<&str> = line.split(';').collect();
-        anyhow::ensure!(fields.len() == 15, "unexpected UnicodeData.txt line: {line}");
-
-        if fields[12].is_empty() {
-            continue;
-        }
-
-        pairs.push((parse_code_point(fields[0])?, parse_code_point(fields[12])?));
-    }
-
-    pairs.sort_unstable();
-
-    Ok(pairs)
-}
-
-/// Reads the code points that have `property` as sorted, merged, inclusive ranges.
-fn parse_property(text: &str, property: &str) -> anyhow::Result<Vec<(u32, u32)>> {
-    let mut ranges = Vec::new();
-
-    for line in text.lines() {
-        let data = line.split('#').next().unwrap_or_default().trim();
-        let Some((code_points, name)) = data.split_once(';') else {
-            continue;
-        };
-
-        if name.trim() != property {
-            continue;
-        }
-
-        let code_points = code_points.trim();
-        let range = match code_points.split_once("..") {
-            Some((first, last)) => (parse_code_point(first)?, parse_code_point(last)?),
-            None => {
-                let code_point = parse_code_point(code_points)?;
-                (code_point, code_point)
-            }
-        };
-        ranges.push(range);
-    }
-
-    anyhow::ensure!(!ranges.is_empty(), "no code point has the property {property}");
-
-    ranges.sort_unstable();
-
-    let mut merged: Vec<(u32, u32)> = Vec::with_capacity(ranges.len());
-    for (first, last) in ranges {
-        match merged.last_mut() {
-            Some(previous) if first <= previous.1 + 1 => previous.1 = previous.1.max(last),
-            _ => merged.push((first, last)),
-        }
-    }
-
-    Ok(merged)
-}
-
-fn parse_code_point(text: &str) -> anyhow::Result<u32> {
-    u32::from_str_radix(text.trim(), 16).with_context(|| format!("invalid code point: {text}"))
-}
-
-fn emit_rust(inputs: &[&Input], tables: &Tables) -> String {
-    let mut out = String::new();
-
-    out.push_str("// Unicode 16.0.0 tables generated by `cargo xtask unicode tables`; do not edit.\n");
-    out.push_str("//\n");
-    out.push_str("// Inputs:\n");
-    for input in inputs {
-        let _ = writeln!(out, "// - {}", input.url);
-        let _ = writeln!(out, "//   SHA-256: {}", input.sha256);
-    }
-
-    emit_rust_table(
-        &mut out,
-        "Simple uppercase mappings from `UnicodeData.txt`, as (code point, uppercase) pairs sorted by code point.",
-        "SIMPLE_UPPERCASE",
-        &tables.simple_uppercase,
-    );
-    emit_rust_table(
-        &mut out,
-        "Code points with the `White_Space` property from `PropList.txt`, as sorted inclusive ranges.",
-        "WHITE_SPACE",
-        &tables.white_space,
-    );
-    emit_rust_table(
-        &mut out,
-        "Code points with the `Default_Ignorable_Code_Point` property from `DerivedCoreProperties.txt`, as sorted inclusive ranges.",
-        "DEFAULT_IGNORABLE_CODE_POINT",
-        &tables.default_ignorable,
-    );
-
-    out
-}
-
-fn emit_rust_table(out: &mut String, doc: &str, name: &str, entries: &[(u32, u32)]) {
-    let _ = writeln!(out);
-    let _ = writeln!(out, "/// {doc}");
-    let _ = writeln!(out, "pub(crate) static {name}: &[(u32, u32)] = &[");
-    for (first, second) in entries {
-        let _ = writeln!(out, "    (0x{first:04X}, 0x{second:04X}),");
-    }
-    let _ = writeln!(out, "];");
 }
