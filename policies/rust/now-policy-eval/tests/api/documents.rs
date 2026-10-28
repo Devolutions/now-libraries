@@ -115,6 +115,24 @@ fn paired_surrogate_escape_is_well_formed() {
     assert_eq!(errors(text.as_bytes()), []);
 }
 
+#[rstest]
+// oracle: spec RFC 8259 §7
+// oracle: contract policies/CONTRACT.policy.md §json
+// The key `k` followed by the escape names the same key as `k` followed by the `\uXXXX` escape of the decoded character.
+#[case::quotation_mark(r#"\""#, '"')]
+#[case::reverse_solidus(r"\\", '\\')]
+#[case::solidus(r"\/", '/')]
+#[case::backspace(r"\b", '\u{8}')]
+#[case::form_feed(r"\f", '\u{c}')]
+#[case::line_feed(r"\n", '\n')]
+#[case::carriage_return(r"\r", '\r')]
+#[case::tab(r"\t", '\t')]
+fn two_character_escapes_decode_to_their_character(#[case] escape: &str, #[case] decoded: char) {
+    let text = format!(r#"{{"k{escape}":1,"k\u{:04x}":2}}"#, u32::from(decoded));
+    let pointer = format!("/k{}", decoded.to_string().replace('~', "~0").replace('/', "~1"));
+    assert_eq!(errors(text.as_bytes()), error("DuplicateKey", &pointer));
+}
+
 #[test]
 fn malformed_document_hides_duplicate_keys() {
     // oracle: contract policies/CONTRACT.policy.md §errors
