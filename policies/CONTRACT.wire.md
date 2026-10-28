@@ -252,9 +252,12 @@ This table gives the value of each key.
 | `CustomParameters`      | an object with one member, `Values`, a list of 1 to 64 strings of 1 to 512 bytes        |
 | `InstallerArguments`    | an object with the members `Arguments`, a string of 1 to 2048 bytes, and `Mode`, `Append` or `Replace` |
 | `PrePostCommands`       | an object with the members `Pre` and `Post`, each optional and a string of 1 to 2048 bytes, at least one of them present |
-| `KillBeforeOperation`   | an object with one member, `Processes`, a list of 1 to 64 strings of 1 to 128 bytes     |
+| `KillBeforeOperation`   | an object with one member, `Processes`, a list of 1 to 64 image names, each a string of 1 to 128 bytes without `*` or `?` |
 | `UninstallPrevious`     | `{}`                                                                                    |
 | `NoUpgrade`             | `{}`                                                                                    |
+
+An image name, such as `notepad.exe`, is the file name of a process's executable, and the operation stops the processes with that image name as [`taskkill /F /IM`][taskkill] does.
+`*` is excluded because `taskkill` reads it as a wildcard, and `?` because no Windows file name contains it.
 
 Every key is well-formed with every manager; which managers accept a key is defined by [CONTRACT.policy.md §reading](CONTRACT.policy.md#reading), and what a value does by that contract's [§reading](CONTRACT.policy.md#reading), [§opt-ins](CONTRACT.policy.md#opt-ins), [§install-location](CONTRACT.policy.md#install-location) and [§managers](CONTRACT.policy.md#managers), and by [§operations](#operations) here.
 
@@ -573,4 +576,5 @@ A client that does not know the outcome of a replacement reads the policy manage
 [rfc6901]: https://www.rfc-editor.org/rfc/rfc6901
 [rfc8259]: https://www.rfc-editor.org/rfc/rfc8259
 [rfc9112]: https://www.rfc-editor.org/rfc/rfc9112
+[taskkill]: https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/taskkill
 [unicode16]: https://www.unicode.org/versions/Unicode16.0.0/
