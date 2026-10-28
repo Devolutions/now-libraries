@@ -1838,7 +1838,7 @@
     {
       "name": "read-missing-version-npm-alias-selects-update",
       "oracle": "contract policies/CONTRACT.policy.md §missing-version",
-      "note": "The alias's '@' selects the version (§manager-npm), so Package.Version is not concrete. Control: read-missing-version-npm-alias.",
+      "note": "The alias's '@' selects the version (§manager-npm), so Package.Version is not concrete. Control: read-missing-version-npm-alias-update.",
       "request": {
         "Operation": "Update",
         "Manager": "Npm",
@@ -1976,7 +1976,7 @@
     {
       "name": "read-missing-version-npm-hash-selects-update",
       "oracle": "contract policies/CONTRACT.policy.md §missing-version",
-      "note": "As read-missing-version-npm-hash-selects, on an Update. Control: read-missing-version-npm-git-specifier.",
+      "note": "As read-missing-version-npm-hash-selects, on an Update. Control: read-missing-version-npm-git-specifier-update.",
       "request": {
         "Operation": "Update",
         "Manager": "Npm",
@@ -2518,6 +2518,66 @@
         "Package": {
           "Id": "PSReadLine",
           "Version": "[2.0,3.0)"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-alias-update",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An alias of two registry names without '@version' selects no version, so Package.Version is concrete on an Update. Control for read-missing-version-npm-alias-selects-update.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "my-alias:left-pad",
+          "Version": "1.2.3"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-git-specifier-update",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'github:contoso/tool' contains no '#' and no part with '@' after its first character, so it selects no version and Package.Version is concrete on an Update; the file policy trusts any Npm source. Control for read-missing-version-npm-hash-selects-update.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "github:contoso/tool",
+          "Version": "1.2.3"
         },
         "Client": {
           "RequestedElevation": "Standard"

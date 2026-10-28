@@ -7863,7 +7863,7 @@
     {
       "name": "read-winget-location-value-terminator",
       "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
-      "note": "'--location' takes the next element '--' as its value, so the request carries the install location '--', which is not a plain local path (§install-location). Control: read-winget-location-ungranted, the same option with a plain path.",
+      "note": "'--location' takes the next element '--' as its value, so the request carries the install location '--', which is not a plain local path (§install-location). Control: read-winget-location-value-plain-path, which differs only in that value.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
@@ -7889,6 +7889,44 @@
         "check": "InstallLocation",
         "rules": [],
         "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-location-value-plain-path",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--location' takes 'C:\\Apps', a plain local path, so the request passes the install location check and uses CustomInstallLocation, which the file policy does not grant. Control for read-winget-location-value-terminator, which differs only in that value.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "CustomParameters": [
+            "--location",
+            "C:\\Apps"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "CustomInstallLocation"
+        ],
         "audited": false
       }
     }

@@ -746,7 +746,7 @@
     {
       "name": "eval-grants-location-pattern-repeated-separators",
       "oracle": "contract policies/CONTRACT.policy.md §grants",
-      "note": "In the pattern '*//Tool', each '/' becomes '\\' and repeated '\\' are collapsed, giving '*\\Tool', which covers 'C:\\Apps\\Tool'. Control: eval-grants-location-pattern-without-drive-not-covered.",
+      "note": "In the pattern '*//Tool', each '/' becomes '\\' and repeated '\\' are collapsed, giving '*\\Tool', which covers 'C:\\Apps\\Tool'. Control: eval-grants-location-pattern-repeated-separators-not-covered, which differs only in the location.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-location", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*//Tool"]}}}]},
       "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}, "Options": {"CustomInstallLocation": "C:\\Apps\\Tool"}},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-location"}], "optIns": [], "audited": false}
@@ -754,10 +754,26 @@
     {
       "name": "eval-grants-location-pattern-trailing-separator",
       "oracle": "contract policies/CONTRACT.policy.md §grants",
-      "note": "The pattern '*\\Tool\\' loses its trailing '\\', which does not follow a ':', giving '*\\Tool'; the normalized location 'C:\\Apps\\Tool' has no trailing separator, so only the normalized pattern covers it. Control: eval-grants-location-pattern-without-drive-not-covered.",
+      "note": "The pattern '*\\Tool\\' loses its trailing '\\', which does not follow a ':', giving '*\\Tool'; the normalized location 'C:\\Apps\\Tool' has no trailing separator, so only the normalized pattern covers it. Control: eval-grants-location-pattern-trailing-separator-not-covered, which differs only in the location.",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-location", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*\\Tool\\"]}}}]},
       "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}, "Options": {"CustomInstallLocation": "C:\\Apps\\Tool"}},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-location"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-grants-location-pattern-repeated-separators-not-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The pattern '*//Tool' normalizes to '*\\Tool', which does not cover 'C:\\Apps\\Other'. Control: eval-grants-location-pattern-repeated-separators, which differs only in the location.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-location", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*//Tool"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}, "Options": {"CustomInstallLocation": "C:\\Apps\\Other"}},
+      "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-location"}], "optIns": ["CustomInstallLocation"], "audited": false}
+    },
+    {
+      "name": "eval-grants-location-pattern-trailing-separator-not-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The pattern '*\\Tool\\' normalizes to '*\\Tool', which does not cover 'C:\\Apps\\Other'. Control: eval-grants-location-pattern-trailing-separator, which differs only in the location.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-location", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*\\Tool\\"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}, "Options": {"CustomInstallLocation": "C:\\Apps\\Other"}},
+      "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-location"}], "optIns": ["CustomInstallLocation"], "audited": false}
     }
   ]
 }

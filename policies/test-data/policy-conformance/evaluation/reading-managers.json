@@ -7079,16 +7079,86 @@
     {
       "name": "read-dotnet-url-nuget-under-chocolatey",
       "oracle": "contract policies/CONTRACT.policy.md §managers",
-      "note": "The URL Dotnet accepts makes a Chocolatey request unreadable. Control: read-dotnet-url-nuget.",
+      "note": "The URL Dotnet accepts makes a Chocolatey request unreadable. Control: read-chocolatey-plain; contrast read-dotnet-url-nuget.",
       "request": {"Operation": "Install", "Manager": "Chocolatey", "Source": {"Name": "chocolatey", "Url": "https://api.nuget.org/v3/index.json"}, "Package": {"Id": "git", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
     },
     {
       "name": "read-chocolatey-url-uninstall-unreadable",
       "oracle": "contract policies/CONTRACT.policy.md §managers",
-      "note": "Only Dotnet ignores Source.Url on an Uninstall; Chocolatey refuses it on every operation. Contrast: read-dotnet-url-uninstall-other.",
+      "note": "Only Dotnet ignores Source.Url on an Uninstall; Chocolatey refuses it on every operation. Control: read-chocolatey-uninstall-plain; contrast read-dotnet-url-uninstall-other.",
       "request": {"Operation": "Uninstall", "Manager": "Chocolatey", "Source": {"Name": "chocolatey", "Url": "https://example.test"}, "Package": {"Id": "git"}, "Client": {"RequestedElevation": "Standard"}},
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-bun-url-long-s",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
+      "note": "'http\u017f://www.npmjs.com' has U+017F in place of the 's' of 'https'. U+017F LATIN SMALL LETTER LONG S has the simple uppercase mapping U+0053 'S' (UnicodeData.txt 16.0.0 line 384: '017F;LATIN SMALL LETTER LONG S;Ll;0;L;<compat> 0073;;;;N;;;0053;;0053'), so it equals 's' ignoring case under §text-comparison but not ignoring ASCII case, which the URL rule uses. Control: read-bun-url-registry.",
+      "request": {"Operation": "Install", "Manager": "Bun", "Source": {"Name": "Bun", "Url": "http\u017f://www.npmjs.com"}, "Package": {"Id": "left-pad", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-cargo-url-dotless-i",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
+      "note": "'https://\u0131ndex.crates.io' has U+0131 in place of the 'i' of 'index'. U+0131 LATIN SMALL LETTER DOTLESS I has the simple uppercase mapping U+0049 'I' (UnicodeData.txt 16.0.0 line 306: '0131;LATIN SMALL LETTER DOTLESS I;Ll;0;L;;;;;N;;;0049;;0049'), so it equals 'i' ignoring case under §text-comparison but not ignoring ASCII case, which the URL rule uses. Control: read-cargo-url-index.",
+      "request": {"Operation": "Install", "Manager": "Cargo", "Source": {"Name": "crates.io", "Url": "https://\u0131ndex.crates.io"}, "Package": {"Id": "serde", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-dotnet-url-dotless-i",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-dotnet",
+      "note": "'https://api.nuget.org/v3/\u0131ndex.json' has U+0131 in place of the 'i' of 'index'. U+0131 LATIN SMALL LETTER DOTLESS I has the simple uppercase mapping U+0049 'I' (UnicodeData.txt 16.0.0 line 306: '0131;LATIN SMALL LETTER DOTLESS I;Ll;0;L;;;;;N;;;0049;;0049'), so it equals 'i' ignoring case under §text-comparison but not ignoring ASCII case, which the URL rule uses. Control: read-dotnet-url-nuget.",
+      "request": {"Operation": "Install", "Manager": "Dotnet", "Source": {"Name": "nuget.org", "Url": "https://api.nuget.org/v3/\u0131ndex.json"}, "Package": {"Id": "dotnet-ef", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-bun-url-uninstall-registry",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
+      "note": "The Bun URL rule covers every operation; https://www.npmjs.com is accepted on an Uninstall. Control for read-bun-url-uninstall-other-host.",
+      "request": {"Operation": "Uninstall", "Manager": "Bun", "Source": {"Name": "Bun", "Url": "https://www.npmjs.com"}, "Package": {"Id": "left-pad"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-bun-url-uninstall-other-host",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
+      "note": "Unlike Dotnet, Bun does not exempt an Uninstall from its URL rule, so another URL makes it unreadable. Control: read-bun-url-uninstall-registry.",
+      "request": {"Operation": "Uninstall", "Manager": "Bun", "Source": {"Name": "Bun", "Url": "https://registry.npmjs.org"}, "Package": {"Id": "left-pad"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-cargo-url-uninstall-index",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
+      "note": "The Cargo URL rule covers every operation; https://index.crates.io is accepted on an Uninstall. Control for read-cargo-url-uninstall-other-host.",
+      "request": {"Operation": "Uninstall", "Manager": "Cargo", "Source": {"Name": "crates.io", "Url": "https://index.crates.io"}, "Package": {"Id": "serde"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-cargo-url-uninstall-other-host",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-cargo",
+      "note": "Unlike Dotnet, Cargo does not exempt an Uninstall from its URL rule, so another URL makes it unreadable. Control: read-cargo-url-uninstall-index.",
+      "request": {"Operation": "Uninstall", "Manager": "Cargo", "Source": {"Name": "crates.io", "Url": "https://crates.io"}, "Package": {"Id": "serde"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-pip-update-plain",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "A readable Pip Update without a URL. Control for read-pip-url-update-unreadable.",
+      "request": {"Operation": "Update", "Manager": "Pip", "Source": {"Name": "pip"}, "Package": {"Id": "requests", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-pip-url-update-unreadable",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Pip's reading accepts no Source.Url on an Update either. Control: read-pip-update-plain.",
+      "request": {"Operation": "Update", "Manager": "Pip", "Source": {"Name": "pip", "Url": "https://pypi.org/simple"}, "Package": {"Id": "requests", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-chocolatey-uninstall-plain",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "A readable Chocolatey Uninstall without a URL. Control for read-chocolatey-url-uninstall-unreadable.",
+      "request": {"Operation": "Uninstall", "Manager": "Chocolatey", "Source": {"Name": "chocolatey"}, "Package": {"Id": "git"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
     }
   ]
 }
