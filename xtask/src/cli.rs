@@ -21,6 +21,7 @@ TASKS:
   rust fmt               Check formatting for Rust crates
   rust lints             Check lints
   rust tests [--no-run]  Compile Rust tests and, unless specified otherwise, run them
+  unicode tables         Download the Unicode data files and regenerate the policy evaluator tables
 ";
 
 pub fn print_help() {
@@ -45,6 +46,7 @@ pub enum Action {
     RustFmt,
     RustLints,
     RustTests { no_run: bool },
+    UnicodeTables,
     ShowHelp,
 }
 
@@ -77,6 +79,11 @@ pub fn parse_args() -> anyhow::Result<Args> {
                 Some("build") => Action::DotnetBuild,
                 Some("tests") => Action::DotnetTests,
                 Some(unknown) => anyhow::bail!("unknown check action: {unknown}"),
+                None => Action::ShowHelp,
+            },
+            Some("unicode") => match args.subcommand()?.as_deref() {
+                Some("tables") => Action::UnicodeTables,
+                Some(unknown) => anyhow::bail!("unknown unicode action: {unknown}"),
                 None => Action::ShowHelp,
             },
             Some("ci") => Action::Ci,
