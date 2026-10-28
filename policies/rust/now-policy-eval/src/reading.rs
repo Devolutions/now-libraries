@@ -244,7 +244,9 @@ fn check_manager_rules(request: &Request, operation: Operation, manager: Manager
         (None, _) => true,
         (Some(_), Manager::Winget | Manager::Scoop) => true,
         (Some(url), Manager::Bun) => url.trim_end_matches('/').eq_ignore_ascii_case("https://www.npmjs.com"),
-        (Some(url), Manager::Cargo) => url.trim_end_matches('/').eq_ignore_ascii_case("https://index.crates.io"),
+        (Some(url), Manager::Cargo) => url
+            .trim_end_matches('/')
+            .eq_ignore_ascii_case("https://index.crates.io"),
         (Some(_), Manager::Dotnet) if operation == Operation::Uninstall => true,
         (Some(url), Manager::Dotnet) => {
             url.eq_ignore_ascii_case("https://api.nuget.org/v3/index.json") || url.chars().all(is_white_space)
@@ -714,7 +716,8 @@ fn normalize_plain_local_path(text: &str) -> Option<String> {
 
 /// Normalizes a `CustomInstallLocation` pattern as an install location is normalized ([§grants]).
 ///
-/// Separators become `\`, repeated separators collapse, a trailing separator is dropped unless it follows a drive's `:`, and a drive letter is uppercase.
+/// Each `/` becomes `\`, repeated `\` collapse, and a trailing `\` is dropped unless it follows a `:`.
+/// The drive letter keeps its case, because patterns match ignoring case.
 ///
 /// [§grants]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#grants
 pub(crate) fn normalize_location_pattern(pattern: &str) -> String {
@@ -727,16 +730,8 @@ pub(crate) fn normalize_location_pattern(pattern: &str) -> String {
         normalized.push(c);
     }
 
-    let mut chars = normalized.chars();
-    let drive = chars.next().filter(char::is_ascii_alphabetic);
-    let has_drive = drive.is_some() && chars.next() == Some(':');
-
-    if normalized.ends_with('\\') && !(has_drive && normalized.len() == 3) {
+    if normalized.ends_with('\\') && !normalized.ends_with(":\\") {
         normalized.pop();
-    }
-
-    if let (true, Some(drive)) = (has_drive, drive) {
-        normalized.replace_range(..1, &drive.to_ascii_uppercase().to_string());
     }
 
     normalized
