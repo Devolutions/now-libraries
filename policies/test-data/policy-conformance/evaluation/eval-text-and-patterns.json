@@ -1,0 +1,1260 @@
+{
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "eval-text-ascii-case-ignored",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "Custom parameters compare ignoring case; also the covered control for the text cases below.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["QUIET"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["quiet"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-different-text-not-equal",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "Uncovered control for the text cases below.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["quiet"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["loud"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-long-s-equals-s",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '017F;LATIN SMALL LETTER LONG S;...;0053;;0053': U+017F maps to U+0053, the pattern's S.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["S"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u017f"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-s-equals-long-s-pattern",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '017F;...;0053;;0053' and '0073;LATIN SMALL LETTER S;...;0053;;0053': both map to U+0053.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u017f"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["s"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-dotless-i-equals-i",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '0131;LATIN SMALL LETTER DOTLESS I;...;0049;;0049' and '0069;LATIN SMALL LETTER I;...;0049;;0049': both map to U+0049.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["i"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u0131"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-dotted-capital-i-not-i",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '0130;LATIN CAPITAL LETTER I WITH DOT ABOVE;...;;0069;' has no simple uppercase mapping, so it stays U+0130, while 'i' maps to U+0049. A comparison through lowercase would equate them.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["i"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u0130"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-kelvin-sign-not-k",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '212A;KELVIN SIGN;...;;006B;' has no simple uppercase mapping, so it stays U+212A, while 'k' maps to U+004B. Case folding or lowercasing would equate them.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["k"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u212a"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-sharp-s-not-ss",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '00DF;LATIN SMALL LETTER SHARP S;Ll;...;;;;;' has no simple uppercase mapping; the full mapping to 'SS' is not used.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["ss"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u00df"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-sharp-s-not-capital-sharp-s",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '00DF;...;;;;;' has no uppercase mapping and '1E9E;LATIN CAPITAL LETTER SHARP S;...;;00DF;' has none either, so U+00DF and U+1E9E stay distinct. Lowercasing or simple case folding would equate them.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u1e9e"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u00df"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-final-sigma-equals-sigma",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '03C2;GREEK SMALL LETTER FINAL SIGMA;...;03A3;;03A3' and '03C3;GREEK SMALL LETTER SIGMA;...;03A3;;03A3': both map to U+03A3. A comparison through lowercase would keep them distinct.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u03c3"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u03c2"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-micro-sign-equals-mu",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '00B5;MICRO SIGN;...;039C;;039C' and '03BC;GREEK SMALL LETTER MU;...;039C;;039C': both map to U+039C.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u03bc"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u00b5"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-deseret-small-equals-capital",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '10428;DESERET SMALL LETTER LONG I;...;10400;;10400': U+10428 maps to U+10400, outside the Basic Multilingual Plane, so a comparison over UTF-16 code units would miss it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\ud801\udc00"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\ud801\udc28"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-no-normalization",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "U+00E9 against U+0065 U+0301: UnicodeData.txt 16.0.0 line '00E9;...;00C9;;00C9' maps to U+00C9, and U+0065 U+0301 map to U+0045 U+0301; the code points differ and no normalization applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u00e9"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["e\u0301"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-source-name-case-ignored",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "Source names compare ignoring case, so the trusted source 'winget' trusts 'WINGET'.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "WINGET"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-source-name-dotless-i",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '0131;...;0049;;0049': 'w\u0131nget' and 'winget' both map to 'WINGET'.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "w\u0131nget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-source-name-dotted-capital-i",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '0130;...;;0069;' has no uppercase mapping, so 'w\u0130nget' differs from 'winget' and the source is not trusted.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "w\u0130nget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-text-install-location-long-s",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "Install locations compare ignoring case; UnicodeData.txt 16.0.0 line '017F;...;0053;;0053' maps the location's last character to the pattern's S.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-location",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps\\S"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomInstallLocation": "C:\\Apps\\\u017f"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-location"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-star-matches-empty",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "'*' matches zero characters.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["quiet*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["quiet"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-star-matches-sequence",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["a*z"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["abcz"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-leading-star",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["*quiet"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["very-quiet"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-only-star",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["anything at all"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-star-ignores-case",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["QUI*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["quiet"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-whole-value-not-prefix",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "A pattern matches the whole value, not a prefix of it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["quiet"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["quietly"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-whole-value-not-suffix",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "A pattern matches the whole value, not a suffix of it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["quiet"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["unquiet"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-stars-in-order",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["a*b*c"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["aXbYc"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-stars-out-of-order",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "The literal characters must appear in the pattern's order.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["a*b*c"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["acb"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-star-backtracks",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "'*' matches 'a', then 'ab' matches; a matcher that commits to the first 'a' misses this.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["*ab"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["aab"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-literals-do-not-overlap",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "Each literal character matches its own character, so 'a*a' needs at least two characters.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["a*a"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["a"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-question-mark-is-literal",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "Only '*' is a wildcard; '?' matches only itself.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["a?c"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["abc"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-question-mark-matches-itself",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["a?c"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["a?c"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-brackets-are-literal",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "Brackets form no character class.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["[ab]"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["a"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-brackets-match-themselves",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["[ab]"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["[ab]"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-backslash-does-not-escape-star",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "With no escape character, 'a\\*' is 'a', a literal backslash, then '*'; the value has no backslash.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["a\\*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["a*"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-params"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-pattern-backslash-is-literal",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "With no escape character, 'a\\*' matches 'a', a backslash, then any sequence.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["a\\*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["a\\b"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}
