@@ -21,12 +21,12 @@
     {
       "name": "eval-audit-unreadable-request",
       "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading). Audit mode does not let this check through.",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading). Audit mode does not let this check through.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "winget", "Url": "https://example.test"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Client": {"RequestedElevation": "Standard"}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
@@ -159,12 +159,12 @@
     {
       "name": "eval-audit-unreadable-request-over-untrusted-source",
       "oracle": "contract policies/CONTRACT.policy.md §audit-mode",
-      "note": "UnreadableRequest: Source.Url under Winget makes the request unreadable (§reading); UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
+      "note": "UnreadableRequest: a 17-byte Package.Channel is outside its set of 1 to 16 bytes (§request-input), so the request is unreadable (§reading); UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision, and audit mode lets it through only if its own column says so.",
       "request": {
         "Operation": "Install",
         "Manager": "Winget",
-        "Source": {"Name": "msstore", "Url": "https://example.test"},
-        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Channel": "bbbbbbbbbbbbbbbbb"},
         "Client": {"RequestedElevation": "Standard"}
       },
       "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}

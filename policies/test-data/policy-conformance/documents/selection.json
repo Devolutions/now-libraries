@@ -38,28 +38,28 @@
     {
       "name": "doc-sel-operations-entry-wrong-type",
       "oracle": "contract policies/CONTRACT.policy.md §selection",
-      "note": "Each entry is a string. Control: doc-sel-every-condition-valid.",
+      "note": "Each entry is a string. Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": [1]}}]},
       "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Operations/0"}]}
     },
     {
       "name": "doc-sel-operations-install-case-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §request-properties",
-      "note": "'install' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "note": "'install' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["install"]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Operations/0"}]}
     },
     {
       "name": "doc-sel-operations-repair-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §request-properties",
-      "note": "'Repair' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "note": "'Repair' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Repair"]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Operations/0"}]}
     },
     {
       "name": "doc-sel-operations-uninstall-trailing-space-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §request-properties",
-      "note": "'Uninstall ' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "note": "'Uninstall ' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Uninstall "]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Operations/0"}]}
     },
@@ -80,21 +80,21 @@
     {
       "name": "doc-sel-scopes-entry-wrong-type",
       "oracle": "contract policies/CONTRACT.policy.md §selection",
-      "note": "Each entry is a string. Control: doc-sel-every-condition-valid.",
+      "note": "Each entry is a string. Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Scopes": [1]}}]},
       "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Scopes/0"}]}
     },
     {
       "name": "doc-sel-scopes-user-case-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §request-properties",
-      "note": "'user' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "note": "'user' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Scopes": ["user"]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Scopes/0"}]}
     },
     {
       "name": "doc-sel-scopes-global-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §request-properties",
-      "note": "'Global' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "note": "'Global' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Scopes": ["Global"]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Scopes/0"}]}
     },
@@ -115,35 +115,35 @@
     {
       "name": "doc-sel-architectures-entry-wrong-type",
       "oracle": "contract policies/CONTRACT.policy.md §selection",
-      "note": "Each entry is a string. Control: doc-sel-every-condition-valid.",
+      "note": "Each entry is a string. Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Architectures": [1]}}]},
       "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Architectures/0"}]}
     },
     {
       "name": "doc-sel-architectures-x64-case-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §request-properties",
-      "note": "'x64' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "note": "'x64' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Architectures": ["x64"]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Architectures/0"}]}
     },
     {
       "name": "doc-sel-architectures-arm64-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §request-properties",
-      "note": "'ARM64' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "note": "'ARM64' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Architectures": ["ARM64"]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Architectures/0"}]}
     },
     {
       "name": "doc-sel-architectures-amd64-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §request-properties",
-      "note": "'AMD64' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "note": "'AMD64' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Architectures": ["AMD64"]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Architectures/0"}]}
     },
     {
       "name": "doc-sel-operations-second-entry-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §selection",
-      "note": "The pointer is the entry outside the domain.",
+      "note": "The pointer is the entry outside the domain. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install", "Repair"]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Operations/1"}]}
     },
@@ -241,7 +241,7 @@
     {
       "name": "doc-sel-sources-entry-wrong-type",
       "oracle": "contract policies/CONTRACT.policy.md §selection",
-      "note": "An entry is a source selector object.",
+      "note": "An entry is a source selector object. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": ["winget"]}}]},
       "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Sources/0"}]}
     },
@@ -255,14 +255,14 @@
     {
       "name": "doc-sel-packages-empty-pattern-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §patterns",
-      "note": "A pattern is a non-empty string. Control: doc-sel-packages-unusual-patterns-valid.",
+      "note": "A pattern is a non-empty string. Control: doc-sel-packages-unusual-patterns-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Packages": [""]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Packages/0"}]}
     },
     {
       "name": "doc-sel-packages-second-pattern-empty-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §patterns",
-      "note": "A pattern is a non-empty string.",
+      "note": "A pattern is a non-empty string. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Packages": ["a", ""]}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Packages/1"}]}
     },
@@ -283,7 +283,7 @@
     {
       "name": "doc-sel-packages-entry-wrong-type",
       "oracle": "contract policies/CONTRACT.policy.md §selection",
-      "note": "Packages is a list of strings. Control: doc-sel-every-condition-valid.",
+      "note": "Packages is a list of strings. Control: doc-sel-every-condition-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Packages": [1]}}]},
       "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Packages/0"}]}
     },
@@ -318,7 +318,7 @@
     {
       "name": "doc-sel-except-operations-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §request-properties",
-      "note": "Control: doc-rule-except-valid.",
+      "note": "Control: doc-rule-except-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Remove"]}]}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Except/0/Operations/0"}]}
     },
@@ -926,6 +926,20 @@
       "note": "Minimum 1.0.0-alpha.18446744073709551616, Maximum 1.0.0-alpha.18446744073709551615: numeric pre-release identifiers compare numerically, and 2^64 > 2^64 - 1, so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-alpha.18446744073709551616", "Maximum": "1.0.0-alpha.18446744073709551615"}}}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-sel-sources-unreadable-name-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "A selector in a selection may name a source that no readable request carries: ' winget' starts with White_Space (§reading). §source-selector asks only for a non-empty string. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Winget", "Source": " winget"}]}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-sources-other-npm-name-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Npm's only source name is 'npm' (§manager-npm), so no readable request matches 'registry'. §source-selector asks only for a non-empty string. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Npm", "Source": "registry"}]}}]},
+      "expect": {"valid": true}
     }
   ]
 }

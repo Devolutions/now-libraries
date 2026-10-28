@@ -33,7 +33,7 @@ Every request is otherwise readable, in the validity window, passes the install 
 
 - The broker builds no command for the manager: `read-request-no-command-*`, control `read-request-built-manager`.
 - Custom parameters through a manager whose reading accepts none: `read-<manager>-custom-parameters-unreadable` in `reading-managers.json`, controls `read-<manager>-plain`.
-- `Source.Url` outside Bun: `read-request-source-url-*`; Bun's exception is under §manager-bun.
+- A `Source.Url` that the manager's reading does not accept: `read-request-source-url-*` and the `read-<manager>-url-*` cases under §managers, §manager-cargo and §manager-dotnet; Bun's URL is under §manager-bun.
 - A version through a manager that cannot pin one: `read-scoop-version-unreadable*`, `read-vcpkg-version-unreadable`.
 - An empty custom parameter: `read-input-custom-parameter-empty`, `read-scoop-empty-custom-parameter`.
 - U+0000, U+000A, U+000D in a custom parameter or `Source.Name`: `read-request-custom-parameter-{nul,line-feed,carriage-return}`, `read-request-source-name-{nul,line-feed,carriage-return}`, controls with U+0009; in `Package.Id`: `read-input-package-id-line-feed`.
@@ -55,7 +55,7 @@ Every request is otherwise readable, in the validity window, passes the install 
 ### §package-identity
 
 - Default reading, `name@version` split at the last `@` that is not first, canonical lowercase, pattern canonicalization: `read-identity-default-*`.
-- A match only when case is ignored is unknown, including a pattern with U+017F that matches only under simple uppercase: `read-identity-default-unicode-case-only-*`, `read-identity-npm-case-only-mismatch-*`.
+- A match only when case is ignored is unknown, as stated by "a name they would match ignoring case makes it unknown", including a pattern with U+017F that matches only under simple uppercase: `read-identity-default-unicode-case-only-*`, `read-identity-npm-case-only-mismatch-*`, `read-identity-bun-case-kept-*`.
 - Every name versus some names (`Packages` matches, is unknown, or does not match): `read-identity-npm-alias-*`.
 - Unknown identity, which even `*` does not match: `read-identity-npm-name-at-version-unknown-*`, `read-identity-npm-not-registry-*`, `read-identity-bun-alias-unknown-*`.
 
@@ -67,12 +67,15 @@ Every request is otherwise readable, in the validity window, passes the install 
 - Strings that are not versions give an unknown condition: `read-version-not-a-version-*`.
 - Pre-release precedence per Semantic Versioning 2.0.0, including ASCII order and numeric identifiers beyond 64 bits: `read-version-pre-release-*` with Npm requests.
 - Pre-release status, and none under Winget: `read-version-pre-release-excluded`, `read-version-release-not-excluded`, `read-version-build-metadata-not-pre-release`, `read-version-winget-never-pre-release`, `read-version-pre-release-satisfies-without-exclude`.
+- Comparisons use the pre-release under Winget too: `read-version-winget-pre-release-below-release`, `read-version-winget-release-above-pre-release`, `read-version-winget-pre-release-order`, control `read-version-winget-pre-release-equal`.
 
 ### §managers
 
 - Unbuilt managers: `read-request-no-command-*`.
 - Defaults: no custom parameters (`read-<manager>-custom-parameters-unreadable`), scope from `Options.Scope` and `User` when absent (`read-scope-default-*`), architecture from `Package.Architecture` and unknown when absent (`read-architecture-default-*`, `read-architecture-unknown-matches-deny`), a channel makes no request unreadable (`read-input-channel-1-byte`, `read-npm-channel-readable`, `read-pip-channel-readable`).
 - The only source name compared ignoring ASCII case, and not under full Unicode case: `read-{npm,bun,cargo,pip}-source-*`, including `read-cargo-source-long-s` and `read-pip-source-dotless-i`.
+- `Winget` and `Scoop` ignore `Source.Url`, and the source stays `Source.Name`: `read-winget-url-readable`, `read-winget-url-empty-readable`, `read-scoop-url-readable`, and the trust pairs `read-winget-url-not-source` and `read-winget-url-source-from-name`, `read-scoop-url-not-source` and `read-scoop-url-source-from-name`.
+- Every other manager without its own URL rule refuses any `Source.Url`: `read-{powershell,powershell7,chocolatey,pip,vcpkg}-url-unreadable`, `read-npm-url-cargo-index-unreadable`, `read-dotnet-url-nuget-under-chocolatey`, `read-chocolatey-url-uninstall-unreadable`, `read-request-source-url-*`, each against its manager's `read-<manager>-plain`.
 
 ### §manager-winget
 
@@ -82,6 +85,7 @@ Every request is otherwise readable, in the validity window, passes the install 
 - Long options ignore ASCII case and short options do not: the `-any-case` and `-wrong-case` cases.
 - Option names: `read-winget-long-option-*`, `read-winget-triple-hyphen`, `read-winget-single-hyphen`, `read-winget-short-o-not-listed`.
 - The `--` terminator: `read-winget-terminator-*`, `read-winget-location-after-terminator`, `read-winget-scope-terminator-stops-second`.
+- `--` taken as an option's value, which then ends nothing: `read-winget-override-value-terminator`, `read-winget-location-value-terminator`.
 - Short-option clusters: `read-winget-cluster-*`, `read-winget-location-in-cluster`, `read-winget-architecture-in-cluster*`.
 - Attached values with and without `"`, the first `=`, one quote, doubled quotes, an empty value: the `-attached*`, `-quoted`, `-first-equals`, `-one-quote*`, `-doubled-quotes`, `-empty*` cases.
 - A value taken from the next element, which is then not an option: `read-winget-override-value-not-option`, `read-winget-attached-value-frees-next`; quotes kept there: `-next-element-quoted`.
@@ -92,16 +96,22 @@ Every request is otherwise readable, in the validity window, passes the install 
 
 `reading-scoop.json`: the `--skip-hash-check` and `s` cluster row, the `--arch` and `a` cluster row, cluster shape, version and channel unreadable, and bucket, manifest URL and local path sources as known sources.
 
+- Option names in any ASCII case: `read-scoop-skip-hash-check-upper`, `read-scoop-short-upper-s`, `read-scoop-architecture-short-upper-a`, `read-scoop-architecture-arch-upper-attached`.
+- A name ends at the first `=`: `read-scoop-skip-hash-check-attached`, `read-scoop-architecture-arch-attached`, `read-scoop-cluster-s-after-equals`; longer names with the same prefix are not the option: `read-scoop-skip-hash-check-longer-name`, `read-scoop-architecture-longer-name`.
+- A cluster with a later `-` is still one cluster: `read-scoop-cluster-hyphen-inside`.
+- A version on an Uninstall: `read-scoop-version-unreadable-uninstall`, control `read-scoop-uninstall-plain`.
+
 ### §manager-vcpkg, §manager-npm, §manager-bun, §manager-cargo, §manager-pip, §manager-dotnet, §manager-chocolatey, §manager-powershell
 
 `reading-managers.json` and the manager cases of `reading-identity.json` and `reading-missing-version.json`.
 
-- Vcpkg: triplet architecture by prefix, ignoring ASCII case, `Package.Architecture` first; `port[features]:triplet`; version unreadable.
+- Vcpkg: triplet architecture by prefix, ignoring ASCII case, `Package.Architecture` first; version unreadable; the name is the text before the first `[` or `:`, with no `@` split: `read-identity-vcpkg-port-features-triplet-*`, `read-identity-vcpkg-triplet-only-*`, `read-identity-vcpkg-features-only-*`, `read-identity-vcpkg-at-not-split-*`, `read-identity-vcpkg-at-whole-name-*`.
 - Npm: registry names, aliases with and without version, other identifiers with unknown identity and source, case kept, `Neutral` architecture, version ranges.
-- Bun: aliases unread, source `Bun`, the `https://www.npmjs.com` URL rule, channel unreadable.
-- Cargo: `_` to `-`, source, channel unreadable, `Neutral` architecture.
+  Identifiers that select the version on Install and Update (`name@version`, `@scope/name@version`, alias with version, `#`): `read-missing-version-npm-{name-at-version,name-at-version-update,scoped-name-at-version,alias-selects,alias-selects-update,alias-scoped-target-selects,hash-selects,hash-selects-update}`, with controls `read-missing-version-npm-{three-components,update-three-components,scoped-name,alias,alias-scoped-target,git-specifier}`.
+- Bun: aliases unread, source `Bun`, the `https://www.npmjs.com` URL rule, channel unreadable; case kept in canonical form: `read-identity-bun-case-kept-*`, control `read-identity-bun-case-exact-*`; version selected as under Npm: `read-missing-version-bun-{name-at-version,name-at-version-update,alias-selects,hash-selects}`, controls `read-missing-version-bun-{three-components,update-three-components,alias,git-specifier}`.
+- Cargo: `_` to `-`, source, channel unreadable, `Neutral` architecture; `Source.Url` accepted only as `https://index.crates.io` after trailing `/` are dropped, ignoring ASCII case: `read-cargo-url-{index,trailing-slashes,any-case}`, near misses `read-cargo-url-{other-host,sparse-prefix,path,empty}`.
 - Pip: PEP 503 names, source, `Neutral` architecture, unknown uninstall scope.
-- Dotnet: `Neutral` makes the architecture unknown.
+- Dotnet: `Neutral` makes the architecture unknown; on Install and Update `Source.Url` is accepted only as `https://api.nuget.org/v3/index.json` ignoring ASCII case, or empty or `White_Space` only: `read-dotnet-url-{nuget,any-case,empty,white-space-only,update-nuget}`, near misses `read-dotnet-url-{trailing-slash,other,surrounding-space,zero-width-space,update-other}`; on Uninstall it has no effect: `read-dotnet-url-uninstall-{other,zero-width-space}`.
 - Chocolatey: `Machine` scope by default, `X64` makes the architecture unknown.
 - PowerShell and PowerShell7: source name characters, `Neutral` architecture always, unknown uninstall scope.
 
@@ -110,9 +120,15 @@ Every request is otherwise readable, in the validity window, passes the install 
 `reading-location.json`: the grammar (`read-location-plain-*`, `read-location-not-plain-*`), normalization and pattern normalization (`read-location-normalized-*`, `read-location-pattern-*`, `read-location-drive-root-*`), Unicode simple case (`read-location-unicode-*`), counting locations from the field and custom parameters (`read-location-one-from-parameter`, `read-location-field-and-*`, `read-location-two-parameters`), and the check applying whatever the rules say (`read-location-check-before-rules`).
 Winget's own location cases are in `reading-winget.json`.
 
+- A space is only U+0020, so other white space starts or ends a segment freely: `read-location-plain-segment-leading-no-break-space`, `read-location-plain-segment-trailing-no-break-space`, `read-location-plain-segment-trailing-ideographic-space`, against `read-location-not-plain-segment-leading-space` and `read-location-not-plain-segment-trailing-space`.
+- Repeated separators right after the drive: `read-location-plain-repeated-after-drive`, `read-location-normalized-repeated-after-drive`, `read-location-drive-root-repeated-separators`.
+
 ### §missing-version
 
 `reading-missing-version.json`: concrete and missing versions per manager, ranges under Npm, Bun, Cargo and Dotnet, versions selected by the identifier or a custom parameter, uninstalls never missing, Scoop and Vcpkg never missing with an unknown version, and the check applying whatever the rules say.
+
+- An Npm Update with a range and with three components: `read-missing-version-npm-update-range`, `read-missing-version-npm-update-three-components`.
+- PowerShell7 resolves anything but a version as a range: versions `read-missing-version-powershell7-{two-components,three-components,one-component,pre-release,update-concrete}`; a range, a wildcard or no version on Install and Update `read-missing-version-powershell7-{range,wildcard,absent,update-range,update-absent}`; an Uninstall never missing `read-missing-version-powershell7-uninstall-{absent,range}`.
 
 ## Verified by review only
 
@@ -127,42 +143,11 @@ Winget's own location cases are in `reading-winget.json`.
 
 ## Gaps
 
-Each gap is a clause whose result the contract leaves open, with the two readings; no case encodes either.
-
-- §manager-winget, `--` as an option's value, as in `--override -- --interactive`.
-  Reading A: the next element is the value and is not read as an option, so `--interactive` names an option.
-  Reading B: `--` ends the options first, so `--override` takes no value and `--interactive` is not an option.
-- §manager-npm and §manager-bun, an Install of `name@version`.
-  Reading A: the identifier selects the version, so the request is missing its version.
-  Reading B: only the default reading selects a version by `@`, which Npm overrides, so `Package.Version` stays concrete and the unknown source decides trust.
-- §manager-scoop with §text-comparison, `--SKIP-HASH-CHECK` or `-S`.
-  Reading A: the table's text matches exactly, so neither carries `SkipHashCheck`.
-  Reading B: custom parameters compare ignoring case, so both do.
-- §version-scheme under Winget, `1.0.0-beta` against the bound `1.0.0`.
-  Reading A: the comparison rule applies to the text, so it is lower.
-  Reading B: no Winget version is a pre-release, so the suffix does not lower it.
-- §manager-bun, the canonical form.
-  Reading A: "except for identifiers" covers only which identifiers name a package, so Npm's case-keeping form applies.
-  Reading B: it covers the canonical form too, so the default ASCII lowercase applies.
-- §manager-vcpkg, `zlib@1.3` and `zlib:x64-windows`.
-  Reading A: the default `@` split still names `zlib` while selecting no version, and a triplet without features still names the port.
-  Reading B: only the stated `port[features]:triplet` form is parsed, so the identifier names itself.
-- §missing-version, "`PowerShell7` needs a version".
-  Reading A: it restates the general rule for installs and updates.
-  Reading B: it adds a requirement elsewhere, such as on uninstalls, which the same section says are never missing their version.
-- §install-location, "does not start with a space" and "does not end with ... a space".
-  Reading A: U+0020 only, so `C:\a` followed by U+00A0 passes.
-  Reading B: any `White_Space` code point, so it fails.
-- §install-location, a repeated separator right after the drive, such as `C://Apps`.
-  Reading A: normalization collapses repeated separators, so it passes as `C:\Apps`.
-  Reading B: the grammar puts segments after the drive's one separator, and an empty segment is no segment, so it fails.
-- §manager-scoop, `--arch=64bit` and `-x-s`.
-  Reading A: `--arch=64bit` is the `--arch` row, and `-x-s` is a cluster containing `s`.
-  Reading B: only the exact element `--arch` is the row, and a cluster ends at a second `-`.
+None: the contract decides every clause of this part that a case could reach.
 
 ## Deliberately unchecked
 
-- Whether an `Options` field counts as its opt-in when the manager's command does not carry it awaits a decision, so `Interactive`, `SkipHashCheck`, `UninstallPrevious`, `NoUpgrade` and `CustomInstallLocation` appear only in Winget requests, `NoUpgrade` only with Install and `UninstallPrevious` only with Update.
+- That an `Options` field carries its opt-in whatever the manager and operation is checked by `evaluation/eval-carriage.json` (see `COVERAGE.evaluation.md`), so the cases here do not repeat it.
 - A boolean part with a value of another JSON type: the case format's request is typed JSON, and a runner may reject such a request before evaluation.
 - The full `White_Space` and `Default_Ignorable_Code_Point` sets: the cases sample code points that tell the Unicode 16.0.0 properties from common platform whitespace tests.
 - Each `Package.Id` character on its own: one case uses every allowed character, and several cases one character outside the set.

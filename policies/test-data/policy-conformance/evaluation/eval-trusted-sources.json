@@ -88,7 +88,7 @@
     {
       "name": "eval-untrusted-update",
       "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
-      "note": "The list governs updates as well as installs.",
+      "note": "The list governs updates as well as installs. Control: eval-trusted-update.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -360,6 +360,14 @@
         "optIns": [],
         "audited": false
       }
+    },
+    {
+      "name": "eval-trusted-update",
+      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
+      "note": "Control for eval-untrusted-update: the same policy and Update, from the trusted source 'winget'.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "winget"}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
+      "request": {"Operation": "Update", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
     }
   ]
 }

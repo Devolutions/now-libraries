@@ -7819,6 +7819,78 @@
         "optIns": [],
         "audited": false
       }
+    },
+    {
+      "name": "read-winget-override-value-terminator",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--override' takes the next element as its value even when it is '--', and that element is then only the value, so it does not end the options and '--interactive' names an option. CustomParameters is granted by the file policy. Controls: read-winget-terminator-before ('--' alone ends the options) and read-winget-override.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "CustomParameters": [
+            "--override",
+            "--",
+            "--interactive"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "Interactive",
+          "InstallerArguments"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-location-value-terminator",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--location' takes the next element '--' as its value, so the request carries the install location '--', which is not a plain local path (§install-location). Control: read-winget-location-ungranted, the same option with a plain path.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Options": {
+          "CustomParameters": [
+            "--location",
+            "--"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
     }
   ]
 }

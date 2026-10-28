@@ -3195,6 +3195,50 @@
         "optIns": [],
         "audited": false
       }
+    },
+    {
+      "name": "read-location-plain-segment-leading-no-break-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The segment starts with U+00A0 NO-BREAK SPACE; only U+0020 is a space for the segment rules, and U+00A0 is outside the control ranges U+0000 to U+001F and U+007F to U+009F, so the path is plain; every location is granted. Control: read-location-not-plain-segment-leading-space.",
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C:\\\u00a0Apps"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-plain-segment-trailing-no-break-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The segment ends with U+00A0 NO-BREAK SPACE, which is not the space U+0020; every location is granted. Control: read-location-not-plain-segment-trailing-space.",
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C:\\Apps\u00a0"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-plain-segment-trailing-ideographic-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The segment ends with U+3000 IDEOGRAPHIC SPACE, which is not the space U+0020 and is outside the control ranges; every location is granted. Control: read-location-not-plain-segment-trailing-space.",
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C:\\Apps\u3000"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-plain-repeated-after-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "After the drive's ':' and separator, any sequence of separators and segments follows, so a second separator right after the drive keeps the path plain; every location is granted. Control: read-location-plain-nested.",
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C:\\\\Apps"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-normalized-repeated-after-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "'C://Apps' is plain and normalizes to 'C:\\Apps', with the repeated separator collapsed; the grant pattern is 'C:\\Apps'. Control: read-location-normalized-separators.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C://Apps"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-drive-root-repeated-separators",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "'C:\\\\' is plain; collapsing the separators leaves the drive root, whose trailing separator follows ':' and is kept, so it normalizes to 'C:\\'; the grant pattern is 'C:\\'. Control: read-location-drive-root-normalized.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Options": {"CustomInstallLocation": "C:\\\\"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
     }
   ]
 }

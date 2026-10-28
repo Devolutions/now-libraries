@@ -152,6 +152,7 @@
     {
       "name": "read-scoop-version-unreadable-uninstall",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "Package.Version through Scoop is unreadable on an Uninstall too. Control: read-scoop-uninstall-plain.",
       "request": {
         "Operation": "Uninstall",
         "Manager": "Scoop",
@@ -2103,6 +2104,910 @@
         "Manager": "Scoop",
         "Source": {
           "Name": "https://example.test/git.json"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-skip-hash-check-upper",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "An option name matches ignoring ASCII case. Control: read-scoop-skip-hash-check.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Options": {
+          "CustomParameters": [
+            "--SKIP-HASH-CHECK"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "SkipHashCheck"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-short-upper-s",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-S' is a short cluster containing 's', since names match ignoring ASCII case. Control: read-scoop-short-s.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Options": {
+          "CustomParameters": [
+            "-S"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "SkipHashCheck"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-skip-hash-check-attached",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "An option name ends at the element's first '=', so '--skip-hash-check=true' is '--skip-hash-check'. Control: read-scoop-skip-hash-check-longer-name.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Options": {
+          "CustomParameters": [
+            "--skip-hash-check=true"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "SkipHashCheck"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-skip-hash-check-longer-name",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--skip-hash-checks' is a longer name with '--skip-hash-check' as its prefix, not that option. Control: read-scoop-skip-hash-check-attached.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Options": {
+          "CustomParameters": [
+            "--skip-hash-checks"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-cluster-hyphen-inside",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-x-s' starts with one '-' followed by a character other than '-', so the whole element is one short cluster, and it contains 's'. Control: read-scoop-cluster-without-s.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Options": {
+          "CustomParameters": [
+            "-x-s"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "SkipHashCheck"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-cluster-s-after-equals",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "An option name ends at the element's first '=', so the cluster '-k=s' names only 'k'. Control: read-scoop-cluster-containing-s ('-ks').",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Options": {
+          "CustomParameters": [
+            "-k=s"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-architecture-arch-attached",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--arch=64bit' is '--arch', because an option name ends at the element's first '='. Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Control: read-scoop-architecture-longer-name.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              },
+              "SkipHashCheck": {}
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git",
+          "Architecture": "X64"
+        },
+        "Options": {
+          "CustomParameters": [
+            "--arch=64bit"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-architecture-arch-upper-attached",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--ARCH=64bit' is '--arch': the name ends at the first '=' and matches ignoring ASCII case. Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Control: read-scoop-architecture-longer-name.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              },
+              "SkipHashCheck": {}
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git",
+          "Architecture": "X64"
+        },
+        "Options": {
+          "CustomParameters": [
+            "--ARCH=64bit"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-architecture-longer-name",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'--architecture=64bit' names '--architecture', a longer name with '--arch' as its prefix, which has no effect, so the architecture stays X64. Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              },
+              "SkipHashCheck": {}
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git",
+          "Architecture": "X64"
+        },
+        "Options": {
+          "CustomParameters": [
+            "--architecture=64bit"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-x64"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-architecture-short-upper-a",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-A' is a short cluster containing 'a', since names match ignoring ASCII case. Package.Architecture is X64. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Control: read-scoop-architecture-field.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              },
+              "SkipHashCheck": {}
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git",
+          "Architecture": "X64"
+        },
+        "Options": {
+          "CustomParameters": [
+            "-A"
+          ]
+        },
+        "Client": {
+          "RequestedElevation": "Standard"
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-uninstall-plain",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A readable Scoop Uninstall without a version; an Uninstall is never missing its version (§missing-version). Control for read-scoop-version-unreadable-uninstall, which adds Package.Version.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
         },
         "Package": {
           "Id": "git"

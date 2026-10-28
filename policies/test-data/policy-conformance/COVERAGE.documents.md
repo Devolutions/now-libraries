@@ -49,6 +49,7 @@ Every expected value comes from the cited anchor or a published source named in 
 ### §trusted-sources and §source-selector
 
 - `doc-trust-*` for selectors in `TrustedSources`.
+- Any non-empty string is a valid `Source`, including names no readable request carries: `doc-trust-source-{129-bytes,leading-space,space-only,line-feed,nul,zero-width-space,powershell-wildcard,npm-other-name}-valid` and, in a selection, `doc-sel-sources-unreadable-name-valid` and `doc-sel-sources-other-npm-name-valid`; the rejected neighbour is `doc-trust-source-empty-invalid`.
 - `doc-sel-sources-*` and `doc-sel-except-sources-missing-source` for selectors in a selection.
 - `doc-trust-every-manager-valid` and `doc-trust-manager-*-invalid` check the manager identifiers of §managers.
 
@@ -92,13 +93,12 @@ Every expected value comes from the cited anchor or a published source named in 
 - Pointer rules: the member for `DuplicateKey`, `UnknownKey` and `ConflictingKeys` (`doc-err-duplicate-key-*`, `doc-err-pointer-*`, `doc-trust-source-and-any-source-conflict`); the absent member for `MissingKey` (`doc-trust-neither-source-key-missing`, `doc-vercond-without-operations-missing`); the value for `WrongType`, `InvalidValue` and `UnsupportedFormatVersion`; the later rule's `Id` (`doc-rule-duplicate-id-not-adjacent`); the empty pointer for the whole document.
 - RFC 6901 escaping: `doc-err-pointer-slash`, `doc-err-pointer-tilde`, `doc-err-pointer-tilde-one-literal`, `doc-err-pointer-empty-key`, `doc-err-pointer-escaped-solidus-key`, `doc-err-pointer-nested-escapes`, `doc-err-duplicate-key-over-unknown-key`.
 - Array indexes: `doc-trust-second-entry-pointer`, `doc-rule-second-rule-pointer`, `doc-sel-operations-second-entry-invalid`.
+- A defect in one entry of a list is reported at that entry, as "the value, which is the entry when the defect is in one entry of a list" states: every `WrongType` or `InvalidValue` case whose pointer ends in an index, such as `doc-sel-operations-second-entry-invalid`, `doc-rule-except-empty-selection-invalid`, `doc-grant-params-empty-pattern-invalid` and `doc-trust-entry-string-wrong-type`, each citing that text in `note`; a list that is empty is reported at the list, as in `doc-sel-sources-empty-invalid`.
 - Precedence: `doc-err-too-large-over-*`, `doc-err-malformed-*`, `doc-err-duplicate-key-over-*`, `doc-err-duplicate-format-version-*`, `doc-err-duplicate-key-inside-unknown-value`, `doc-err-unsupported-*`, `doc-err-missing-format-version-over-other-errors`, `doc-err-empty-object-reports-format-version-only`, and `doc-json-unpaired-surrogate-in-key-malformed`.
 - Several defects without precedence, as `someOf`: `doc-err-several-*`, `doc-err-unknown-key-and-invalid-decision`, `doc-err-selector-conflict-and-false`, `doc-err-grants-on-deny-and-empty-except`, `doc-err-version-without-operations-and-invalid-minimum`, `doc-err-duplicate-rule-id-and-invalid-decision`, `doc-err-two-duplicate-keys`, `doc-rule-three-equal-ids`.
 
 ## Readings these cases rely on
 
-- An entry of a list that is outside its domain or of the wrong type is reported at the entry, such as `/Rules/0/Select/Operations/0`, not at the list.
-  §errors puts the pointer at "the value", and §rules reports an `Except` entry that is `{}` at the entry; a list that is empty is reported at the list.
 - The 64-level boundary cannot be reached by a valid document, because no valid structure nests that deep.
   The depth-64 cases are therefore documents whose one defect is an unknown key holding the nested value.
 - A timestamp's year is constrained as written, so `0001-01-01T00:00:00+01:00` is valid although its instant falls in year 0000.
@@ -110,11 +110,13 @@ Every expected value comes from the cited anchor or a published source named in 
 - §format-version: the reason a reader refuses an unknown version rather than reading part of it.
 - §errors: the list of codes is closed; every case's expected errors use only listed codes, so a runner comparing exactly also rejects other codes.
 
+## Met by the suite as a whole
+
+- §agreement, for documents: both implementations passing these cases, which fix validity and, for one defect, the exact error and pointer, is the evidence that they agree.
+
 ## Left unchecked
 
 - The meaning of a valid document belongs to the evaluation cases: the validity window at an evaluation time, trusted-source matching, rule applicability, grants and forbids, audit mode, and pre-release under `Winget`.
-- A source name in a selector beyond being non-empty is not checked, such as one longer than 128 bytes, one with leading white space, one PowerShell would refuse, or one other than `npm` under `Npm`.
-  §source-selector asks for "a non-empty source name"; one reading accepts any non-empty string, the other makes a name no request through that manager can carry `InvalidValue`.
 - `Grants` or `Forbids` on a rule whose `Decision` is missing or invalid is not checked.
   One reading reports only the `Decision` error, since §rules ties the conflict to a `Decision` of `Deny` or `Allow`; the other also reports `ConflictingKeys`, since no decision permits the key.
 - A key repeated three times in one object is not checked, because §errors does not say whether that is one `DuplicateKey` error or two.

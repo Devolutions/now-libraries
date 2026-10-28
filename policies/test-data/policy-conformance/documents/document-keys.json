@@ -189,7 +189,7 @@
     },
     {
       "name": "doc-format-version-escaped-valid",
-      "oracle": "contract policies/CONTRACT.policy.md §format-version; RFC 8259 §7",
+      "oracle": "contract policies/CONTRACT.policy.md §format-version",
       "note": "The string value \\u0032.0.0 decodes to 2.0.0 under RFC 8259 §7, so it is the supported version.",
       "document": {"PolicyFormatVersion": "\u0032.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
       "expect": {"valid": true}

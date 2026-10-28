@@ -342,14 +342,14 @@
     {
       "name": "doc-rule-except-empty-selection-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "An Except entry that is {} would except every request. Control: doc-rule-except-valid.",
+      "note": "An Except entry that is {} would except every request. Control: doc-rule-except-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{}]}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Except/0"}]}
     },
     {
       "name": "doc-rule-except-second-entry-empty-invalid",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "The {} entry is the second one, on a Deny rule.",
+      "note": "The {} entry is the second one, on a Deny rule. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Except": [{"Operations": ["Install"]}, {}]}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Except/1"}]}
     },
@@ -377,7 +377,7 @@
     {
       "name": "doc-rule-except-entry-wrong-type",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "An Except entry is a selection object. Control: doc-rule-except-valid.",
+      "note": "An Except entry is a selection object. Control: doc-rule-except-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": ["Install"]}]},
       "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Except/0"}]}
     },
@@ -459,28 +459,28 @@
     {
       "name": "doc-rule-entry-string-wrong-type",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "A Rules entry is a rule object. Control: doc-rule-allow-minimal-valid.",
+      "note": "A Rules entry is a rule object. Control: doc-rule-allow-minimal-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": ["r1"]},
       "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0"}]}
     },
     {
       "name": "doc-rule-entry-null-wrong-type",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "A Rules entry is a rule object. Control: doc-rule-allow-minimal-valid.",
+      "note": "A Rules entry is a rule object. Control: doc-rule-allow-minimal-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [null]},
       "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0"}]}
     },
     {
       "name": "doc-rule-entry-array-wrong-type",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "A Rules entry is a rule object. Control: doc-rule-allow-minimal-valid.",
+      "note": "A Rules entry is a rule object. Control: doc-rule-allow-minimal-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [[]]},
       "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0"}]}
     },
     {
       "name": "doc-rule-disabled-still-validated",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "A disabled rule is never applicable, but it is still an object the contract defines, so its defects are errors. Control: doc-rule-except-valid.",
+      "note": "A disabled rule is never applicable, but it is still an object the contract defines, so its defects are errors. Control: doc-rule-except-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Enabled": false, "Except": [{}]}]},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Except/0"}]}
     },

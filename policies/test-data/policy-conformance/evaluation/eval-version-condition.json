@@ -869,6 +869,14 @@
         "optIns": [],
         "audited": false
       }
+    },
+    {
+      "name": "eval-version-winget-prerelease-below-minimum",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Under Winget no version is a pre-release, but comparisons use the pre-release under every manager (§version-scheme), so '1.2.3-beta' is lower than the Minimum '1.2.3'. Control: eval-version-minimum-inclusive.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-version", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.2.3"}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3-beta"}, "Client": {"RequestedElevation": "Standard"}},
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
     }
   ]
 }
