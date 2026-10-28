@@ -500,9 +500,12 @@ A custom parameter makes the request unreadable when:
 So `--globalx`, `-`, `-q` and `-q=s` make no request unreadable, while `-qa`, `-G`, `-q=abcg` and `--ARCH=x` do.
 
 A Scoop source is a bucket, named by the bucket's name, or a manifest URL or local path.
-A source name that contains `...` or `:\`, or starts with `http://` or `https://` ignoring ASCII case, is a manifest URL or local path, and it is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
-A request whose `Source.Name` or `Package.Id` is a manifest URL or local path by that test is unreadable unless the two are equal with exact characters, because with a manifest source the broker passes `Package.Id` alone, and an identifier that is a manifest would fetch from outside the named source.
-A local path with `:\` is never readable, because `Package.Id` cannot contain `\` and so cannot equal it.
+A source name or identifier is a manifest URL or local path when it contains `...`, `:\` or `\\`, or when, after its leading `/` characters are removed, it starts with `http://`, `https://`, `ftp://` or `ftps://` ignoring ASCII case.
+A manifest URL or local path is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
+A request whose `Source.Name` or `Package.Id` is a manifest URL or local path is unreadable unless the two are equal with exact characters, because with a manifest source the broker passes `Package.Id` alone, and an identifier that is a manifest would fetch from outside the named source.
+A local or UNC path, with `:\` or `\\`, is never readable, because `Package.Id` cannot contain `\` and so cannot equal it.
+Any other source name is a bucket name, and a request through it is unreadable unless the bucket name and `Package.Id` are each one or more ASCII letters, digits, `-`, `_` and `.`, and `Package.Id` does not end with `.json` ignoring ASCII case, so that `<bucket>/<id>` names exactly one app in that bucket: no version after `@`, no path inside the bucket and no local manifest file.
+Such a request is also unreadable when its bucket name or `Package.Id` is made only of `.` characters, because that would name a directory rather than a bucket or an app.
 The broker cannot pin a version through Scoop.
 
 <a id="manager-vcpkg"></a>
