@@ -381,7 +381,8 @@ Lengths count bytes in UTF-8.
 ### Reading a request
 
 Each property is the value that the manager's reading ([§managers](#managers)) assigns to the request, which is the value the manager acts on when the broker runs the command, so a change to how the broker builds commands is a change to this contract.
-A value the client sends that the command does not carry has no effect on any property or opt-in; in particular `Options.PreRelease` has none.
+A value the client sends that the command does not carry has no effect on any property; in particular `Options.PreRelease` has none.
+A part in a row of [§opt-ins](#opt-ins) carries that opt-in even when the command does not carry the part, so a decision depends only on the policy and the request, never on what a broker version does with them.
 A request is unreadable when:
 
 - a part has a value outside its set in [§request-input](#request-input);
