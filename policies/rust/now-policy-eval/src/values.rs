@@ -2,7 +2,7 @@
 //!
 //! Every value matches only with its exact characters ([§text-comparison]).
 //!
-//! [§text-comparison]: ../../../CONTRACT.policy.md#text-comparison
+//! [§text-comparison]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#text-comparison
 
 macro_rules! closed_set {
     ($(#[$meta:meta])* $vis:vis enum $name:ident { $($variant:ident),+ $(,)? }) => {
@@ -88,7 +88,7 @@ closed_set! {
     ///
     /// The order of the variants is the order in which a decision names opt-ins.
     ///
-    /// [§opt-ins]: ../../../CONTRACT.policy.md#opt-ins
+    /// [§opt-ins]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#opt-ins
     pub enum OptIn {
         Interactive,
         SkipHashCheck,
@@ -110,7 +110,7 @@ impl OptIn {
 
     /// Returns whether a grant or forbid of this opt-in has `Patterns` and `Except` ([§grants]).
     ///
-    /// [§grants]: ../../../CONTRACT.policy.md#grants
+    /// [§grants]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#grants
     pub(crate) fn has_patterns(self) -> bool {
         matches!(self, Self::CustomParameters | Self::CustomInstallLocation)
     }
