@@ -437,7 +437,7 @@ Each pre-release identifier is non-empty, and one made only of digits has no lea
 Release components compare numerically, whatever their length or leading zeros, and missing trailing components count as zero, so `1.2` equals `1.2.0`.
 A version with a pre-release is lower than the same release without one, and pre-releases compare by [Semantic Versioning 2.0.0][semver] precedence.
 Build metadata never affects a comparison.
-A version is a pre-release when it has a pre-release, except under `Winget`, where no version is a pre-release.
+A version is a pre-release when it has a pre-release, except under `Winget`, where no version is a pre-release; comparisons use the pre-release under every manager.
 
 <a id="managers"></a>
 ### Managers
@@ -462,7 +462,7 @@ An element that is exactly `--` ends the options: no later element names an opti
 Before it, an element that starts with `--` names a long option by its text after `--` and before its first `=`, and a long option matches a name in the table ignoring ASCII case.
 Any other element that starts with `-` and has another character names one short option for each character after `-` and before its first `=`, and a short option matches a name in the table with its exact characters, so `-ei` names `-e` and `-i`.
 An option the table lists with a value takes one only when it is a long option or the only short option its element names.
-It then takes the text after the element's first `=` when the element has one, without a leading and a trailing `"` when the text has both and at least two characters, and otherwise the next element, which is then not read as an option.
+It then takes the text after the element's first `=` when the element has one, without a leading and a trailing `"` when the text has both and at least two characters, and otherwise the next element, which is then only that value, even when it is `--` or starts with `-`.
 An option that takes no value, because its element names other short options or no element follows, still has its effect: `--location` gives no install location, so the request fails the install location check ([§install-location](#install-location)), and `--scope` or `--architecture` makes its property unknown.
 
 | Custom parameter                  | Effect                                                                     |
@@ -485,6 +485,7 @@ The scope is unknown when neither `Options.Scope` nor `--scope` sets it.
 
 The reading accepts custom parameters.
 A short cluster is an element that starts with one `-` followed by at least one character other than `-`.
+An option name ends at the element's first `=` and matches ignoring ASCII case, so `--ARCH=64bit` is `--arch` and `-S` is a short cluster containing `s`.
 
 | Custom parameter                                     | Effect                                    |
 | ---------------------------------------------------- | ----------------------------------------- |
@@ -500,7 +501,7 @@ The broker cannot pin a version through Scoop, and a `Package.Channel` makes the
 #### Vcpkg
 
 The source name is a triplet.
-An identifier `port[features]:triplet` names `port`, and no identifier selects the version.
+An identifier names its text before its first `[` or `:`, so `port[features]:triplet` names `port`, and no identifier selects the version.
 The architecture is `Package.Architecture`; when it is absent, it is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise.
 The broker cannot pin a version through Vcpkg.
 
@@ -513,13 +514,14 @@ A registry name is `name` or `@scope/name`, where `scope` and `name` are one or 
 An identifier that is a registry name names itself.
 An alias `alias:target`, split at its first `:`, names `alias` and `target` when both are registry names, and `alias:target@version`, where that `@` is the last `@` after the `:` and is not the first character after it, also selects the version.
 Any other identifier, such as `name@version` or a Git, URL or path specifier, has an unknown package identity and an unknown source, because it may fetch from outside the named source.
+Such an identifier selects the version when it contains `#`, or when a part of it between `:` characters contains `@` after that part's first character.
 The architecture is `Neutral` when `Package.Architecture` is absent.
 
 <a id="manager-bun"></a>
 #### Bun
 
 The reading is that of [§manager-npm](#manager-npm), except for identifiers, sources and channels.
-An identifier that is a registry name names itself, and any other identifier has an unknown package identity and an unknown source.
+An identifier that is a registry name names itself, keeping its case in canonical form, and any other identifier has an unknown package identity and an unknown source and selects the version as under [§manager-npm](#manager-npm).
 The only source name is `Bun`, and a request with another source name is unreadable.
 A request carrying `Source.Url` is readable only when that URL, without its trailing `/` characters, equals `https://www.npmjs.com` ignoring ASCII case.
 A `Package.Channel` makes the request unreadable.
@@ -559,8 +561,8 @@ The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
 A request that uses `CustomInstallLocation` passes the install location check when it carries exactly one install location, from `Options.CustomInstallLocation` and its custom parameters together, and that location is a plain local path.
 Each field or option that sets a location counts as one, even when two of them set the same location.
-A plain local path is an ASCII letter followed by `:` and a separator, optionally followed by segments, where a separator is `\` or `/`.
-A segment is not `.` or `..`, does not start with a space, does not end with `.` or a space, and contains no control character (Unicode general category Cc, U+0000 to U+001F and U+007F to U+009F), and none of `: * ? " < > |`.
+A plain local path is an ASCII letter followed by `:` and a separator, then any sequence of separators and segments, where a separator is `\` or `/` and a segment is a maximal run of other characters.
+A segment is not `.` or `..`, does not start with a space (U+0020), does not end with `.` or a space, and contains no control character (Unicode general category Cc, U+0000 to U+001F and U+007F to U+009F), and none of `: * ? " < > |`.
 The normalized location has an uppercase drive letter and uses `\` as its only separator, with repeated separators collapsed and a trailing separator dropped unless it follows the drive's `:`, so the normalized drive root is `C:\`; grant and forbid patterns match it.
 The check reads only the path's text and does not ask the operating system what a drive letter refers to, so both implementations give the same result on any machine.
 A network path, a device path or a relative path would give an elevated installer a target that no rule can describe, so the check applies whatever the policy says.
@@ -594,7 +596,7 @@ An `Except` list matches when one of its entries matches, otherwise is unknown w
 Unknown resolves toward denial, which keeps every rule fail-closed:
 
 - an enabled Allow rule is applicable when its `Select` matches and its `Except` neither matches nor is unknown;
-- an enabled Deny rule is applicable when its `Select` matches or is unknown and its `Except` does not match.
+- an enabled Deny rule is applicable when its `Select` matches or is unknown and its `Except` does not match, an unknown `Except` counting as not matching.
 
 Whether a rule is applicable never depends on the opt-ins a request uses, so an Allow rule cannot require an opt-in.
 An exception narrows only the rule, grant or forbid it is written in.
