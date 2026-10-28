@@ -1,0 +1,931 @@
+{
+  "cases": [
+    {
+      "name": "doc-sel-every-condition-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Every condition with valid values; the control for the condition cases below.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install", "Update"], "Sources": [{"Manager": "Winget", "Source": "winget"}, {"Manager": "Scoop", "AnySource": true}], "Packages": ["Contoso.*", "*"], "Version": {"Minimum": "1.0", "Maximum": "2.0", "Prerelease": "Exclude"}, "Scopes": ["User", "Machine"], "Architectures": ["X86", "X64", "Arm64", "Neutral"], "Elevation": "Elevated"}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-every-condition-deny-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Uninstall in Operations without Version; NonElevated; a source the trusted list does not name.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Operations": ["Uninstall"], "Sources": [{"Manager": "Apt", "Source": "main"}], "Packages": ["vim"], "Scopes": ["Machine"], "Architectures": ["Neutral"], "Elevation": "NonElevated"}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-repeated-entries-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "A list other than Rules may repeat an entry.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install", "Install"], "Packages": ["a", "a"], "Scopes": ["User", "User"]}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-operations-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Operations is a non-empty list. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": []}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-sel-operations-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Operations is a list, not a single value. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": "Install"}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-sel-operations-entry-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Each entry is a string. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": [1]}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Operations/0"}]}
+    },
+    {
+      "name": "doc-sel-operations-install-case-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "'install' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["install"]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Operations/0"}]}
+    },
+    {
+      "name": "doc-sel-operations-repair-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "'Repair' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Repair"]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Operations/0"}]}
+    },
+    {
+      "name": "doc-sel-operations-uninstall-trailing-space-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "'Uninstall ' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Uninstall "]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Operations/0"}]}
+    },
+    {
+      "name": "doc-sel-scopes-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Scopes is a non-empty list. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Scopes": []}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Scopes"}]}
+    },
+    {
+      "name": "doc-sel-scopes-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Scopes is a list, not a single value. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Scopes": "User"}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Scopes"}]}
+    },
+    {
+      "name": "doc-sel-scopes-entry-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Each entry is a string. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Scopes": [1]}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Scopes/0"}]}
+    },
+    {
+      "name": "doc-sel-scopes-user-case-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "'user' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Scopes": ["user"]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Scopes/0"}]}
+    },
+    {
+      "name": "doc-sel-scopes-global-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "'Global' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Scopes": ["Global"]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Scopes/0"}]}
+    },
+    {
+      "name": "doc-sel-architectures-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Architectures is a non-empty list. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Architectures": []}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Architectures"}]}
+    },
+    {
+      "name": "doc-sel-architectures-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Architectures is a list, not a single value. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Architectures": "X64"}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Architectures"}]}
+    },
+    {
+      "name": "doc-sel-architectures-entry-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Each entry is a string. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Architectures": [1]}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Architectures/0"}]}
+    },
+    {
+      "name": "doc-sel-architectures-x64-case-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "'x64' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Architectures": ["x64"]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Architectures/0"}]}
+    },
+    {
+      "name": "doc-sel-architectures-arm64-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "'ARM64' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Architectures": ["ARM64"]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Architectures/0"}]}
+    },
+    {
+      "name": "doc-sel-architectures-amd64-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "'AMD64' is not a value of §request-properties; values match only with their exact characters (§text-comparison). Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Architectures": ["AMD64"]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Architectures/0"}]}
+    },
+    {
+      "name": "doc-sel-operations-second-entry-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "The pointer is the entry outside the domain.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install", "Repair"]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Operations/1"}]}
+    },
+    {
+      "name": "doc-sel-elevation-standard-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "Standard is a Client.RequestedElevation value, not an elevation; elevations are NonElevated and Elevated.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Elevation": "Standard"}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Elevation"}]}
+    },
+    {
+      "name": "doc-sel-elevation-lowercase-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "Closed-set values match only with their exact characters.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Elevation": "elevated"}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Elevation"}]}
+    },
+    {
+      "name": "doc-sel-elevation-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Elevation is one elevation string. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Elevation": ["Elevated"]}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Elevation"}]}
+    },
+    {
+      "name": "doc-sel-elevation-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Elevation is one elevation string. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Elevation": null}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Elevation"}]}
+    },
+    {
+      "name": "doc-sel-elevation-boolean-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Elevation is one elevation string. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Elevation": true}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Elevation"}]}
+    },
+    {
+      "name": "doc-sel-sources-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Sources is a non-empty list. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": []}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Sources"}]}
+    },
+    {
+      "name": "doc-sel-sources-object-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Sources is a list of selectors.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": {"Manager": "Winget", "Source": "winget"}}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Sources"}]}
+    },
+    {
+      "name": "doc-sel-sources-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget", "AnySource": true}]}}]},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Select/Sources/0/AnySource"}]}
+    },
+    {
+      "name": "doc-sel-sources-missing-source",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget"}, {"Manager": "Npm"}]}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Sources/1/Source"}]}
+    },
+    {
+      "name": "doc-sel-sources-any-source-false-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Scoop", "AnySource": false}]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Sources/0/AnySource"}]}
+    },
+    {
+      "name": "doc-sel-sources-manager-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "Manager identifiers match with exact characters.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "scoop", "AnySource": true}]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Sources/0/Manager"}]}
+    },
+    {
+      "name": "doc-sel-sources-manager-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"AnySource": true}]}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Sources/0/Manager"}]}
+    },
+    {
+      "name": "doc-sel-sources-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "Source": "winget", "Name": "winget"}]}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Select/Sources/0/Name"}]}
+    },
+    {
+      "name": "doc-sel-sources-entry-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "An entry is a source selector object.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Sources": ["winget"]}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Sources/0"}]}
+    },
+    {
+      "name": "doc-sel-packages-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Packages is a non-empty list. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Packages": []}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Packages"}]}
+    },
+    {
+      "name": "doc-sel-packages-empty-pattern-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "A pattern is a non-empty string. Control: doc-sel-packages-unusual-patterns-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Packages": [""]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Packages/0"}]}
+    },
+    {
+      "name": "doc-sel-packages-second-pattern-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "A pattern is a non-empty string.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Packages": ["a", ""]}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Packages/1"}]}
+    },
+    {
+      "name": "doc-sel-packages-unusual-patterns-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "Any non-empty string is a pattern, including one made of '*', a space, or characters no package id holds.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Packages": ["*", "**", " ", "Contoso Tool*", "名前"]}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-sel-packages-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Packages is a list of strings. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Packages": "Contoso.*"}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Packages"}]}
+    },
+    {
+      "name": "doc-sel-packages-entry-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Packages is a list of strings. Control: doc-sel-every-condition-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Packages": [1]}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Packages/0"}]}
+    },
+    {
+      "name": "doc-sel-unknown-condition",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Managers is not a condition; a selection names managers through Sources.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Managers": ["Winget"]}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Select/Managers"}]}
+    },
+    {
+      "name": "doc-sel-singular-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "The condition is Sources; Source is unknown at a selection.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Source": "winget"}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Select/Source"}]}
+    },
+    {
+      "name": "doc-sel-null-condition-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "null is a value of the wrong type wherever it appears; an absent condition and a null one differ.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Scopes": null}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Scopes"}]}
+    },
+    {
+      "name": "doc-sel-except-unknown-condition",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "An Except entry is a selection with the same conditions. Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{"Package": "a"}]}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Except/0/Package"}]}
+    },
+    {
+      "name": "doc-sel-except-operations-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §request-properties",
+      "note": "Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Remove"]}]}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Except/0/Operations/0"}]}
+    },
+    {
+      "name": "doc-sel-except-scopes-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{"Scopes": "User"}]}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Except/0/Scopes"}]}
+    },
+    {
+      "name": "doc-sel-except-sources-missing-source",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-rule-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{"Sources": [{"Manager": "Winget"}]}]}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Except/0/Sources/0/Source"}]}
+    },
+    {
+      "name": "doc-vercond-minimum-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-vercond-maximum-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Maximum": "1.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-vercond-prerelease-only-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "A condition with only Prerelease constrains the version, so it is not empty.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Prerelease": "Exclude"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-vercond-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "A version condition with none of its keys constrains nothing. Controls: doc-vercond-minimum-valid, doc-vercond-prerelease-only-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version"}]}
+    },
+    {
+      "name": "doc-vercond-prerelease-lowercase-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Prerelease has the one value Exclude, with exact characters. Control: doc-vercond-prerelease-only-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Prerelease": "exclude"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Prerelease"}]}
+    },
+    {
+      "name": "doc-vercond-prerelease-include-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Prerelease has the one value Exclude, with exact characters. Control: doc-vercond-prerelease-only-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Prerelease": "Include"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Prerelease"}]}
+    },
+    {
+      "name": "doc-vercond-prerelease-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Prerelease has the one value Exclude, with exact characters. Control: doc-vercond-prerelease-only-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Prerelease": ""}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Prerelease"}]}
+    },
+    {
+      "name": "doc-vercond-prerelease-boolean-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Prerelease is a string. Control: doc-vercond-prerelease-only-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Prerelease": true}}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Version/Prerelease"}]}
+    },
+    {
+      "name": "doc-vercond-minimum-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "A version is a string. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": 1}}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-vercond-maximum-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Control: doc-vercond-maximum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Maximum": null}}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-vercond-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0", "Exact": "1.0"}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Select/Version/Exact"}]}
+    },
+    {
+      "name": "doc-vercond-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Version is a version condition object. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": "1.0"}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Version"}]}
+    },
+    {
+      "name": "doc-vercond-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Version is a version condition object. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": null}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Version"}]}
+    },
+    {
+      "name": "doc-vercond-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Version is a version condition object. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": ["1.0"]}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Select/Version"}]}
+    },
+    {
+      "name": "doc-vercond-without-operations-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "A selection with Version also has Operations. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Version": {"Minimum": "1.0"}}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-vercond-without-operations-deny-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "The rule binds Deny rules too.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {"Version": {"Maximum": "1.0"}}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}]}
+    },
+    {
+      "name": "doc-vercond-uninstall-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Operations listing Uninstall conflicts with Version; the pointer is Version. Control: doc-vercond-install-update-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Uninstall"], "Version": {"Minimum": "1.0"}}}]},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Select/Version"}]}
+    },
+    {
+      "name": "doc-vercond-install-and-uninstall-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Uninstall anywhere in Operations conflicts. Control: doc-vercond-install-update-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install", "Uninstall"], "Version": {"Minimum": "1.0"}}}]},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Select/Version"}]}
+    },
+    {
+      "name": "doc-vercond-install-update-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install", "Update"], "Version": {"Minimum": "1.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-vercond-except-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install", "Update"]}, "Except": [{"Operations": ["Update"], "Version": {"Maximum": "1.0"}}]}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-vercond-except-without-operations-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "An Except entry with Version needs its own Operations, even when the rule's Select lists operations. Control: doc-vercond-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"]}, "Except": [{"Version": {"Maximum": "1.0"}}]}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Except/0/Operations"}]}
+    },
+    {
+      "name": "doc-vercond-except-uninstall-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Control: doc-vercond-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Uninstall"], "Version": {"Maximum": "1.0"}}]}]},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Except/0/Version"}]}
+    },
+    {
+      "name": "doc-version-one-component-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-five-components-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.2.3.4.5' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.2.3.4.5"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-leading-zeros-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'01.002' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "01.002"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-lowercase-v-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'v1.0' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "v1.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-uppercase-v-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'V1.0' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "V1.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-pre-release-zero-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0-0' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-pre-release-zeros-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0-0.0' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-0.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-alphanumeric-leading-zero-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0-01a' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-01a"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-pre-release-hyphen-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0-alpha-beta' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-alpha-beta"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-pre-release-only-hyphen-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0--' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0--"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-empty-build-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0+' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0+"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-build-dots-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0+..' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0+.."}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-build-leading-zeros-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0+001' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0+001"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-pre-release-and-build-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0-rc.1+build.5' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-rc.1+build.5"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-one-component-pre-release-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1-a' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1-a"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-huge-component-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'99999999999999999999999999.0' is a version under the §version-scheme grammar.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "99999999999999999999999999.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'' is not a version: it has no release component. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": ""}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-letters-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'abc' is not a version: it has no release component. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "abc"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-v-only-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'v' is not a version: it has no release component. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "v"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-double-v-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'vv1' is not a version: only one v precedes the release. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "vv1"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-trailing-dot-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.' is not a version: a release component follows each '.'. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1."}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-leading-dot-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'.1' is not a version: a release component precedes each '.'. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": ".1"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-empty-component-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1..2' is not a version: a release component follows each '.'. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1..2"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-empty-pre-release-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0-' is not a version: a pre-release follows '-'. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0-"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-pre-release-trailing-dot-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0-a.' is not a version: each pre-release identifier is non-empty. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0-a."}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-empty-pre-release-identifier-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0-a..b' is not a version: each pre-release identifier is non-empty. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0-a..b"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-pre-release-leading-zero-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0-01' is not a version: a numeric pre-release identifier has no leading zero (SemVer 2.0.0 item 9). Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-01"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-pre-release-zeros-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0-rc.00' is not a version: a numeric pre-release identifier has no leading zero. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-rc.00"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-pre-release-underscore-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0-a_b' is not a version: a pre-release identifier holds ASCII letters, digits and '-' only. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-a_b"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-second-plus-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0+a+b' is not a version: build metadata holds ASCII letters, digits, '-' and '.' only. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0+a+b"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-build-underscore-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0+a_b' is not a version: build metadata holds ASCII letters, digits, '-' and '.' only. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0+a_b"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-build-only-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'+1' is not a version: a release component comes first. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "+1"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-trailing-space-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0 ' is not a version: no other character is allowed. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0 "}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-leading-space-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "' 1.0' is not a version: no other character is allowed. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": " 1.0"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-trailing-v-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0v' is not a version: v may only lead. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0v"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-comma-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1,0' is not a version: components are separated by '.'. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1,0"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-non-ascii-pre-release-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.0.0-α' is not a version: U+03B1 is not an ASCII letter. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-α"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-non-ascii-digits-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'١.٠' is not a version: U+0661 and U+0660 are not ASCII digits. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "١.٠"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-wildcard-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'1.x' is not a version: x is not a digit. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.x"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-range-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'>=1.0' is not a version: a version has no comparison operator. Control: doc-vercond-minimum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": ">=1.0"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-maximum-not-version-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Maximum is checked like Minimum. Control: doc-vercond-maximum-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Maximum": "latest"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-version-minimum-not-version-with-maximum",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Minimum is not a version, so it cannot be higher than Maximum; the one defect is at Minimum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "latest", "Maximum": "1.0"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-version-order-numeric-components-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.9, Maximum 1.10: 9 < 10 numerically, though '1.9' sorts after '1.10' as text, so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.9", "Maximum": "1.10"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-numeric-components-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.10, Maximum 1.9: 10 > 9 numerically, so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.10", "Maximum": "1.9"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-version-order-trailing-zero-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.2.0, Maximum 1.2: missing trailing components count as zero, so they are equal, so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.2.0", "Maximum": "1.2"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-trailing-zeros-equal-reversed-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.2, Maximum 1.2.0.0: missing trailing components count as zero, so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.2", "Maximum": "1.2.0.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-missing-component-zero-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.2.1, Maximum 1.2: 1.2 is 1.2.0, lower than 1.2.1, so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.2.1", "Maximum": "1.2"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-version-order-leading-zero-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 01.2, Maximum 1.2: components compare numerically whatever their leading zeros, so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "01.2", "Maximum": "1.2"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-v-prefix-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum v2, Maximum 1.5: v2 is 2, higher than 1.5, so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "v2", "Maximum": "1.5"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-version-order-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0, Maximum 1.0.0: equal bounds, so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0", "Maximum": "1.0.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-pre-release-below-release-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0-rc.1, Maximum 1.0.0: a pre-release is lower than the same release, so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-rc.1", "Maximum": "1.0.0"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-pre-release-below-release-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0, Maximum 1.0.0-rc.1: a pre-release is lower than the same release, so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0", "Maximum": "1.0.0-rc.1"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-version-order-pre-release-numeric-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0-alpha.9, Maximum 1.0.0-alpha.10: numeric identifiers compare numerically (SemVer 2.0.0 item 11), so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-alpha.9", "Maximum": "1.0.0-alpha.10"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-pre-release-numeric-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0-alpha.10, Maximum 1.0.0-alpha.9: alpha.10 > alpha.9 numerically (SemVer 2.0.0 item 11), so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-alpha.10", "Maximum": "1.0.0-alpha.9"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-version-order-pre-release-more-fields-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0-alpha.1, Maximum 1.0.0-alpha: a larger set of identifiers has higher precedence when the preceding ones are equal (SemVer 2.0.0 item 11), so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-alpha.1", "Maximum": "1.0.0-alpha"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-version-order-pre-release-numeric-below-alphanumeric-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0-a, Maximum 1.0.0-1: a numeric identifier is lower than an alphanumeric one (SemVer 2.0.0 item 11), so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-a", "Maximum": "1.0.0-1"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-version-order-pre-release-ascii-order-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0-B, Maximum 1.0.0-a: alphanumeric identifiers compare in ASCII order, and 'B' (0x42) < 'a' (0x61), so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-B", "Maximum": "1.0.0-a"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-pre-release-ascii-order-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0-a, Maximum 1.0.0-B: 'a' (0x61) > 'B' (0x42) in ASCII order, so a case-insensitive comparison gets this wrong, so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-a", "Maximum": "1.0.0-B"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-version-order-build-ignored-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0+2, Maximum 1.0.0+1: build metadata never affects a comparison, so they are equal, so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0+2", "Maximum": "1.0.0+1"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-build-ignored-pre-release-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0-rc.1+b, Maximum 1.0.0-rc.1: build metadata never affects a comparison, so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-rc.1+b", "Maximum": "1.0.0-rc.1"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-pre-release-trailing-zero-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.2.0-rc, Maximum 1.2-rc: equal releases (1.2 is 1.2.0) and equal pre-releases, so the Minimum is not higher than the Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.2.0-rc", "Maximum": "1.2-rc"}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-version-order-beyond-u64-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 18446744073709551616, Maximum 18446744073709551615: 2^64 > 2^64 - 1 numerically; a 64-bit parse overflows, so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "18446744073709551616", "Maximum": "18446744073709551615"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    },
+    {
+      "name": "doc-version-order-pre-release-beyond-u64-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Minimum 1.0.0-alpha.18446744073709551616, Maximum 1.0.0-alpha.18446744073709551615: numeric pre-release identifiers compare numerically, and 2^64 > 2^64 - 1, so the Minimum is higher than the Maximum; §version-condition puts the error at Maximum.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0.0-alpha.18446744073709551616", "Maximum": "1.0.0-alpha.18446744073709551615"}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Maximum"}]}
+    }
+  ]
+}

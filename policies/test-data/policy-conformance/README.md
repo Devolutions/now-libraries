@@ -8,7 +8,7 @@ Every expected value comes from the contract or a published source that the case
 
 - `documents/*.json`: validation cases; a document is either valid or has the listed errors.
 - `evaluation/*.json`: decision cases; a valid policy, a request and an evaluation time give one decision.
-- `COVERAGE.md`: which cases check each contract section, and what is deliberately left unchecked.
+- `COVERAGE.*.md`: which cases check each contract section, and what is deliberately left unchecked, one file per part of the suite.
 
 A runner loads every `*.json` file of both directories, so new files need no registration.
 
