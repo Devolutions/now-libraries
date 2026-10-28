@@ -371,7 +371,7 @@ A request is unreadable when:
 - a custom parameter would ask for an opt-in other than `CustomParameters`, as its manager's reading states, so that every opt-in the command asks for is a key of its `OptIns`;
 - its scope property is `Machine`, its `Scope` member is absent or `User`, and its `Elevation` is `NonElevated`, whatever its operation, because it would install, update or uninstall machine-wide without saying so in `Scope`;
 - a custom parameter makes its scope unknown, such as a scope option without a valid value or a scope set twice, and its `Elevation` is `NonElevated`, because it may then act machine-wide without saying so in `Scope`; a scope that its manager's reading leaves unknown without a custom parameter, such as WinGet's without `Scope` and `--scope`, keeps the request readable;
-- it carries a version through a manager that cannot pin one ([§managers](#managers));
+- its `Package.Version` is present and its manager cannot pin a version ([§managers](#managers));
 - it is through `Winget` or `Dotnet` and its `Package.Id` starts with `-`, so that the manager never reads the id as an option;
 - a custom parameter, `OptIns.InstallerArguments.Arguments`, `Package.Id` or `Source.Name` contains U+0000, U+000A or U+000D, which the broker cannot pass to a manager;
 - `Source.Name` starts or ends with a code point that has the `White_Space` property in `PropList.txt` of [Unicode 16.0.0][unicode16-ucd], or contains a code point that has the `Default_Ignorable_Code_Point` property in `DerivedCoreProperties.txt` of [Unicode 16.0.0][unicode16-ucd], because such a name looks like another;
@@ -444,17 +444,18 @@ The batch characters are `"`, `%`, `!`, `^`, `&`, `|`, `<` and `>`, which the br
 
 The broker builds no WinGet command, so a request is unreadable, when:
 
-- its `Package.Id`, `OptIns.CustomInstallLocation.Path`, `OptIns.InstallerArguments.Arguments` or a custom parameter contains a batch character;
+- its `Package.Id`, `OptIns.CustomInstallLocation.Path` or a custom parameter contains a batch character;
 - its `Source.Name` is not a plain source name.
 
 The reading accepts custom parameters and installer arguments.
 On an Install or Update, the broker passes `--custom` when the `Mode` of `OptIns.InstallerArguments` is `Append`, or `--override` when it is `Replace`, then its `Arguments`, as two elements before the custom parameters, so that no custom parameter takes them as its value or moves them after a `--`.
 On an Uninstall the broker passes neither, and the request still uses `InstallerArguments` ([§reading](#reading)).
+A request whose `OptIns.InstallerArguments.Arguments` contains a batch character is unreadable whatever its operation.
 An element that is exactly `--` ends the options: no later element names an option.
 Before it, an element that starts with `--` names a long option by its text after `--` and before its first `=`, and a long option matches a name in the table ignoring ASCII case.
 Any other element that starts with `-` and has another character names one short option for each character after `-` and before its first `=`, and a short option matches a name in the table with its exact characters, so `-ei` names `-e` and `-i`.
 An option the table lists with a value takes one only when it is a long option or the only short option its element names.
-It then takes the text after the element's first `=` when the element has one, without a leading and a trailing `"` when the text has both and at least two characters, and otherwise the next element, which is then only that value, even when it is `--` or starts with `-`.
+It then takes the text after the element's first `=` when the element has one, and otherwise the next element, which is then only that value, even when it is `--` or starts with `-`.
 An option that takes no value, because its element names other short options or no element follows, still has its effect: `--scope` or `--architecture` makes its property unknown.
 
 | Custom parameter                  | Effect                                                                     |
@@ -485,7 +486,7 @@ The broker builds no Scoop command, so a request is unreadable, when:
 - its `Package.Id` contains `[` or `]`, or starts with `-`.
 
 The reading accepts custom parameters.
-A short cluster is an element that starts with one `-` followed by at least one character other than `-`.
+A short cluster is an element whose first character is `-` and whose second character exists and is not `-`.
 An option name ends at the element's first `=` and matches ignoring ASCII case, so `--ARCH=64bit` is `--arch` and `-S` is a short cluster containing `s`.
 A custom parameter makes the request unreadable when:
 
@@ -501,7 +502,7 @@ So `--globalx`, `-`, `-q` and `-q=s` make no request unreadable, while `-qa`, `-
 A Scoop source is a bucket, named by the bucket's name, or a manifest URL or local path.
 A source name that contains `...` or `:\`, or starts with `http://` or `https://` ignoring ASCII case, is a manifest URL or local path, and it is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
 A request whose `Source.Name` or `Package.Id` is a manifest URL or local path by that test is unreadable unless the two are equal with exact characters, because with a manifest source the broker passes `Package.Id` alone, and an identifier that is a manifest would fetch from outside the named source.
-A source name that contains `\`, as a local path with `:\` does, is outside the `Package.Id` character set, so a request from such a source is never readable.
+A local path with `:\` is never readable, because `Package.Id` cannot contain `\` and so cannot equal it.
 The broker cannot pin a version through Scoop.
 
 <a id="manager-vcpkg"></a>
@@ -587,7 +588,7 @@ The architecture is `Neutral` when `Package.Architecture` is absent, and the sco
 <a id="manager-dotnet"></a>
 #### Dotnet
 
-The only source name of an Install or Update is `nuget.org`, and an Install or Update with another source name is unreadable.
+The only source name of an Install or Update is `nuget.org`, compared ignoring ASCII case, and an Install or Update with another source name is unreadable.
 The source of an Uninstall is unknown, because the broker does not pass it, so a `Source` selector is unknown for it and an `AnySource` selector matches it ([§source-selector](#source-selector)).
 The broker builds no Dotnet command, so a request is unreadable, when:
 
