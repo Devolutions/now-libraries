@@ -619,7 +619,19 @@ impl Validator {
             ..Selection::default()
         };
 
+        // A condition on a property that an uninstall leaves unknown requires `Operations` without `Uninstall`.
+        // Each entry is the pointer at which a conflict with `Uninstall` is reported.
+        let mut without_uninstall = Vec::new();
+
         if let Some((value, pointer)) = object.get("Sources") {
+            if let Value::Array(entries) = value
+                && entries.iter().any(
+                    |entry| matches!(entry, Value::Object(members) if members.iter().any(|(key, _)| key == "Source")),
+                )
+            {
+                without_uninstall.push(pointer.clone());
+            }
+
             let mut sources = Vec::new();
             for (element, element_pointer) in self.list(value, pointer, true).unwrap_or_default() {
                 if let Some(selector) = self.source_selector(element, element_pointer) {
@@ -634,8 +646,11 @@ impl Validator {
             .map(|(value, pointer)| self.patterns(value, pointer));
 
         if let Some((value, pointer)) = object.get("Version") {
-            selection.version = self.version_condition(value, pointer.clone());
+            without_uninstall.push(pointer.clone());
+            selection.version = self.version_condition(value, pointer);
+        }
 
+        if !without_uninstall.is_empty() {
             if !object.has("Operations") {
                 self.error(ErrorCode::MissingKey, object.member_pointer("Operations"));
             } else if selection
@@ -643,7 +658,9 @@ impl Validator {
                 .as_ref()
                 .is_some_and(|operations| operations.contains(&Operation::Uninstall))
             {
-                self.error(ErrorCode::ConflictingKeys, pointer);
+                for pointer in without_uninstall {
+                    self.error(ErrorCode::ConflictingKeys, pointer);
+                }
             }
         }
 
