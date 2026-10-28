@@ -464,15 +464,27 @@ The scope is unknown when neither `Scope` nor `--scope` sets it.
 <a id="manager-scoop"></a>
 #### Scoop
 
+The broker builds no Scoop command, so a request is unreadable, when:
+
+- its `Elevation` is `Elevated`;
+- it has `OptIns.Interactive`, `OptIns.CustomInstallLocation`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
+- it is an Uninstall with `OptIns.SkipHashCheck`;
+- it is an Update or an Uninstall with `Package.Architecture`;
+- its `Package.Id` contains `[` or `]`, or starts with `-`.
+
 The reading accepts custom parameters.
 A short cluster is an element that starts with one `-` followed by at least one character other than `-`.
 An option name ends at the element's first `=` and matches ignoring ASCII case, so `--ARCH=64bit` is `--arch` and `-S` is a short cluster containing `s`.
+A custom parameter makes the request unreadable when:
 
-| Custom parameter                                     | Effect                                    |
-| ---------------------------------------------------- | ----------------------------------------- |
-| `--skip-hash-check`, or a short cluster containing `s` | would ask for `SkipHashCheck`, so the request is unreadable |
-| `--arch`, or a short cluster containing `a`          | makes the architecture unknown            |
-| an element not starting with `-` that contains `@`   | makes the version unknown                 |
+- it is exactly `--`;
+- it does not start with `-`, so an option takes a value only after `=` in its own element;
+- it contains a code point that has the `White_Space` property in `PropList.txt` of [Unicode 16.0.0][unicode16-ucd];
+- it names the option `--global`, `--all` or `--arch`;
+- it starts with `-` but not `--`, and its text after that `-`, including any text after `=`, contains `g` or `a` ignoring ASCII case;
+- it names the option `--skip-hash-check`, or is a short cluster containing `s`, because it would ask for `SkipHashCheck`.
+
+So `--globalx`, `-` and `-q` make no request unreadable, while `-qa`, `-G`, `-q=abcg` and `--ARCH=x` do.
 
 A Scoop source is a bucket, named by the bucket's name, or a manifest URL or local path.
 A source name that contains `...` or `:\`, or starts with `http://` or `https://` ignoring ASCII case, is a manifest URL or local path, and it is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
