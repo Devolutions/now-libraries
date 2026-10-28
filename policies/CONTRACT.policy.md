@@ -595,7 +595,7 @@ An allowed request whose command the broker cannot build runs nothing; that refu
 
 A condition, a selection and an `Except` list each match, do not match, or are unknown.
 A condition is unknown when the property it tests is unknown, as [§source-selector](#source-selector), [§version-condition](#version-condition) and [§package-identity](#package-identity) refine.
-A list condition matches when one of its entries matches, otherwise is unknown when one of its entries is unknown or the property is unknown, and otherwise does not match.
+A list condition matches when one of its entries matches, otherwise is unknown when one of its entries is unknown, and otherwise does not match.
 A selection does not match when one of its conditions does not match, otherwise is unknown when one of its conditions is unknown, and otherwise matches.
 An `Except` list matches when one of its entries matches, otherwise is unknown when one of its entries is unknown, and otherwise does not match; an absent `Except` does not match.
 Unknown resolves toward denial, which keeps every rule fail-closed:
