@@ -106,6 +106,12 @@ When scope or architecture is unknown, a Deny rule's selection matches and an Al
 Uninstalls carry no version a policy can check, so a selection that tests the version applies to installs and updates only, and says so by listing its operations.
 Rules that silently never match uninstalls, and versioned Allow rules that implicitly allow uninstalls, are rejected.
 
+<a id="broker-limits"></a>
+## Broker limits
+
+The broker never runs pre/post commands for a request that runs elevated, whatever the policy grants and even in audit mode, because such a command is an arbitrary command run as administrator.
+An allowed request that asks for one runs nothing, and that refusal is not a decision.
+
 <a id="warnings"></a>
 ## Warnings
 

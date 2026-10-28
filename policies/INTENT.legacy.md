@@ -15,4 +15,5 @@ The intention is not to author policies for Devolutions Agents that cannot recei
 <a id="wire-1"></a>
 ## Earlier request encoding
 
-The broker may parse requests sent on the named pipe in the earlier encoding until a future release drops it.
+The broker serves the earlier encoding on its earlier paths and answers with the earlier response, in its own code path, until a future release drops it.
+That handling is best effort: it may refuse a request whose conversion is hard, and the code path documents each such choice.
