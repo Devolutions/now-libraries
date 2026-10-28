@@ -43,7 +43,7 @@ The evaluator reads a request the way the broker will execute it ([§reading](#r
 ### Opt-in
 
 An opt-in is something a request asks for beyond a plain request; [§opt-ins](#opt-ins) lists every opt-in.
-Example: which WinGet arguments carry `InstallerArguments` rather than `CustomParameters` is in [§manager-winget](#manager-winget).
+Example: WinGet `--override` and `--custom` pass installer arguments, which a request asks for with `InstallerArguments` rather than as custom parameters ([§manager-winget](#manager-winget)).
 *Avoid:* option, modifier, characteristic, flag, extra.
 
 <a id="def-plain-request"></a>
@@ -277,7 +277,7 @@ The condition is unknown when the request's version is unknown or is not a versi
 A selection with `Version`, in `Select` or in an `Except` entry, also has `Operations` without `Uninstall`, because an uninstall carries no version a policy can check: the manager removes whichever version is installed.
 Such a selection without `Operations` is `MissingKey` at `Operations`, and one whose `Operations` lists `Uninstall` is `ConflictingKeys` at `Version`.
 So no version condition applies to an uninstall, and a rule that tests the version says so by listing its operations rather than silently never matching uninstalls.
-`Prerelease` is checked against the version the command installs, never against a pre-release indication the client sends.
+`Prerelease` is checked against the version the command installs.
 
 <a id="grants"></a>
 ### Grants and Forbids
@@ -299,21 +299,20 @@ A grant's or forbid's `Except` narrows only that grant or forbid, never another 
 ### Opt-ins
 
 This table is the closed set of opt-ins, and its order is the order in which a decision names them.
-A request uses an opt-in when one of the parts of the request ([§request-input](#request-input)) in its row carries it, and the opt-ins a request uses are never unknown.
-An optional string part carries its opt-in whenever it is present, even when it is empty.
-A custom parameter carries an opt-in when its manager's reading ([§managers](#managers)) assigns it to that opt-in, and it then needs both that opt-in's grant and a `CustomParameters` grant.
+A request uses an opt-in exactly when the opt-in's key is present in its `OptIns` ([CONTRACT.wire.md §opt-ins](CONTRACT.wire.md#opt-ins)), and the opt-ins a request uses are never unknown.
+No custom parameter makes a request use an opt-in; one that would ask for another opt-in makes the request unreadable ([§reading](#reading)).
 
-| Opt-in                  | Meaning                                                              | Carried by                                                                  |
-| ----------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `Interactive`           | the installer shows its user interface                               | `Options.Interactive` set to `true`, or a custom parameter                  |
-| `SkipHashCheck`         | the manager skips its check of the installer's hash                  | `Options.SkipHashCheck` set to `true`, or a custom parameter                |
-| `CustomInstallLocation` | the request sets where the package is installed                      | `Options.CustomInstallLocation`, or a custom parameter                      |
-| `CustomParameters`      | the manager receives custom parameters ([§reading](#reading))        | at least one custom parameter                                               |
-| `InstallerArguments`    | the installer itself receives arguments                              | a custom parameter                                                          |
-| `PrePostCommands`       | the broker runs a command before or after the operation              | `Options.PreOperationCommand` or `Options.PostOperationCommand`             |
-| `KillBeforeOperation`   | the broker stops processes before the operation                      | a non-empty `Options.KillBeforeOperation`                                   |
-| `UninstallPrevious`     | the manager uninstalls the installed version before installing another | `Options.UninstallPrevious` set to `true`, or a custom parameter          |
-| `NoUpgrade`             | the manager does not upgrade a package that is already installed     | `Options.NoUpgrade` set to `true`, or a custom parameter                    |
+| Opt-in                  | Meaning                                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| `Interactive`           | the installer shows its user interface                                                   |
+| `SkipHashCheck`         | the manager skips its check of the installer's hash                                      |
+| `CustomInstallLocation` | the request sets where the package is installed                                          |
+| `CustomParameters`      | the manager receives custom parameters ([§reading](#reading))                            |
+| `InstallerArguments`    | the installer itself receives arguments                                                  |
+| `PrePostCommands`       | the broker runs the `Pre` command before the manager process and the `Post` command after it |
+| `KillBeforeOperation`   | the broker stops the processes that `Processes` names before the operation               |
+| `UninstallPrevious`     | the manager uninstalls the installed version before installing another                   |
+| `NoUpgrade`             | the manager does not upgrade a package that is already installed                         |
 
 <a id="errors"></a>
 ### Validation errors
@@ -356,50 +355,30 @@ A document with several defects reports a non-empty subset of the errors that ap
 <a id="request-input"></a>
 ### Request input
 
-The evaluator's input is the request as the client sends it to the broker, with these parts.
-Lengths count bytes in UTF-8.
-
-| Part                                                          | Value                                                                    |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `Operation`                                                   | `Install`, `Update` or `Uninstall`                                       |
-| `Manager`                                                     | a manager identifier ([§managers](#managers))                            |
-| `Source.Name`                                                 | a string of 1 to 128 bytes                                               |
-| `Source.Url`                                                  | an optional string of at most 2048 bytes                                 |
-| `Package.Id`                                                  | a string of 1 to 256 ASCII letters, digits and `.`, `_`, `+`, `@`, `/`, `:`, `[`, `]`, `,`, `#`, `$`, `%`, `{`, `}` and `-` |
-| `Package.Version`                                             | an optional string of 1 to 128 bytes                                     |
-| `Package.Architecture`                                        | an optional architecture ([§request-properties](#request-properties))    |
-| `Package.Channel`                                             | an optional string of 1 to 16 bytes                                      |
-| `Options.Scope`                                               | an optional scope ([§request-properties](#request-properties))           |
-| `Options.Interactive`, `Options.SkipHashCheck`, `Options.PreRelease`, `Options.UninstallPrevious`, `Options.NoUpgrade` | booleans |
-| `Options.CustomInstallLocation`                               | an optional string of at most 2048 bytes                                 |
-| `Options.CustomParameters`                                    | a list of at most 64 strings of 1 to 512 bytes                           |
-| `Options.PreOperationCommand`, `Options.PostOperationCommand` | optional strings of at most 2048 bytes                                   |
-| `Options.KillBeforeOperation`                                 | a list of at most 64 strings of 1 to 128 bytes                           |
-| `Client.RequestedElevation`                                   | `Standard` or `Elevated`                                                 |
+The evaluator's input is a well-formed package request ([CONTRACT.wire.md §package-request](CONTRACT.wire.md#package-request)) without its `RequestId`.
 
 <a id="reading"></a>
 ### Reading a request
 
 Each property is the value that the manager's reading ([§managers](#managers)) assigns to the request, which is the value the manager acts on when the broker runs the command, so a change to how the broker builds commands is a change to this contract.
-A value the client sends that the command does not carry has no effect on any property; in particular `Options.PreRelease` has none.
-A part in a row of [§opt-ins](#opt-ins) carries that opt-in even when the command does not carry the part, so a decision depends only on the policy and the request, never on what a broker version does with them.
+A value the client sends that the command does not carry has no effect on any property.
+An `OptIns` key makes the request use its opt-in even when the command does not carry the key, so a decision depends only on the policy and the request, never on what a broker version does with the key.
 A request is unreadable when:
 
-- a part has a value outside its set in [§request-input](#request-input);
 - the broker builds no command for its manager ([§managers](#managers));
 - it carries custom parameters through a manager whose reading accepts none;
-- it carries a `Source.Url` that its manager's reading does not accept ([§managers](#managers));
+- it has `OptIns.InstallerArguments` through a manager other than `Winget` ([§manager-winget](#manager-winget));
+- a custom parameter would ask for an opt-in other than `CustomParameters`, as its manager's reading states, so that every opt-in the request uses is a key of its `OptIns`;
+- its scope is `Machine` while its `Scope` is not `Machine`, and its `Elevation` is `NonElevated`, because it would install machine-wide without saying so;
 - it carries a version through a manager that cannot pin one ([§missing-version](#missing-version));
-- a custom parameter is empty;
 - a custom parameter, `Package.Id` or `Source.Name` contains U+0000, U+000A or U+000D, which the broker cannot pass to a manager;
 - `Source.Name` starts or ends with a code point that has the `White_Space` property in `PropList.txt` of [Unicode 16.0.0][unicode16-ucd], or contains a code point that has the `Default_Ignorable_Code_Point` property in `DerivedCoreProperties.txt` of [Unicode 16.0.0][unicode16-ucd], because such a name looks like another;
 - its manager's reading states another case.
 
-Custom parameters are the elements of `Options.CustomParameters`, which the broker passes to the manager as they are, neither splitting nor joining them.
+Custom parameters are the elements of `OptIns.CustomParameters.Values`, which the broker passes to the manager as they are and in their order, repeated elements included, neither splitting nor joining them.
 Every element is a custom parameter, including an option's value, and a pattern is matched against one element.
-A custom parameter that has the effect of another opt-in also makes the request use that opt-in, so a `CustomParameters` pattern never grants that opt-in.
 A custom parameter that sets or affects a property affects it as its manager's reading states.
-When a property is set both by a field and by a custom parameter, or by two custom parameters, it is unknown, except the install location, where more than one location fails the install location check ([§install-location](#install-location)).
+When a property is set both by a field and by a custom parameter, or by two custom parameters, it is unknown.
 The broker runs the command whose reading it evaluated, so the version a decision checked is the version the manager installs.
 
 <a id="request-properties"></a>
@@ -416,7 +395,7 @@ This table is the only list of the values of request properties.
 | Version      | a version string                       | [§missing-version](#missing-version)                                        |
 | Scope        | `User`, `Machine`                      | the manager's reading                                                       |
 | Architecture | `X86`, `X64`, `Arm64`, `Neutral`       | the manager's reading                                                       |
-| Elevation    | `NonElevated`, `Elevated`              | `Elevated` when `Options.Scope` is `Machine` or `Client.RequestedElevation` is `Elevated`, `NonElevated` otherwise; never unknown |
+| Elevation    | `NonElevated`, `Elevated`              | `Elevation`; never unknown                                                  |
 
 <a id="package-identity"></a>
 ### Package identity
@@ -449,39 +428,37 @@ Unless a manager's reading below states otherwise:
 
 - the reading accepts no custom parameters;
 - the broker can pin a version;
-- the scope is `Options.Scope`, and `User` when it is absent;
-- the architecture is `Package.Architecture`, and unknown when it is absent;
-- `Package.Channel` makes no request unreadable;
-- a request carrying `Source.Url` is unreadable.
+- the scope is `Scope`, and `User` when it is absent;
+- the architecture is `Package.Architecture`, and unknown when it is absent.
 
-`Winget` and `Scoop` take the source from `Source.Name` alone, so `Source.Url` has no effect on them.
 A reading below that names the only source name of its manager compares `Source.Name` with it ignoring ASCII case.
 
 <a id="manager-winget"></a>
 #### Winget
 
-The reading accepts custom parameters.
+The reading accepts custom parameters and installer arguments.
+The broker passes `OptIns.InstallerArguments.Arguments` as the value of `--custom` when its `Mode` is `Append`, and of `--override` when its `Mode` is `Replace`.
 An element that is exactly `--` ends the options: no later element names an option.
 Before it, an element that starts with `--` names a long option by its text after `--` and before its first `=`, and a long option matches a name in the table ignoring ASCII case.
 Any other element that starts with `-` and has another character names one short option for each character after `-` and before its first `=`, and a short option matches a name in the table with its exact characters, so `-ei` names `-e` and `-i`.
 An option the table lists with a value takes one only when it is a long option or the only short option its element names.
 It then takes the text after the element's first `=` when the element has one, without a leading and a trailing `"` when the text has both and at least two characters, and otherwise the next element, which is then only that value, even when it is `--` or starts with `-`.
-An option that takes no value, because its element names other short options or no element follows, still has its effect: `--location` gives no install location, so the request fails the install location check ([§install-location](#install-location)), and `--scope` or `--architecture` makes its property unknown.
+An option that takes no value, because its element names other short options or no element follows, still has its effect: `--scope` or `--architecture` makes its property unknown.
 
 | Custom parameter                  | Effect                                                                     |
 | --------------------------------- | -------------------------------------------------------------------------- |
-| `--location`, `-l` and its value  | carries `CustomInstallLocation` with that value                            |
+| `--location`, `-l` and its value  | would ask for `CustomInstallLocation`, so the request is unreadable        |
 | `--scope` and its value           | sets the scope                                                             |
 | `--architecture`, `-a` and its value | sets the architecture                                                   |
-| `--interactive`, `-i`             | carries `Interactive`                                                      |
-| `--override`, `--custom` and its value | carries `InstallerArguments`                                          |
-| `--ignore-security-hash`, `--force` | carries `SkipHashCheck`                                                  |
-| `--no-upgrade`                    | carries `NoUpgrade`                                                        |
-| `--uninstall-previous`            | carries `UninstallPrevious`                                                |
+| `--interactive`, `-i`             | would ask for `Interactive`, so the request is unreadable                  |
+| `--override`, `--custom` and its value | would ask for `InstallerArguments`, so the request is unreadable      |
+| `--ignore-security-hash`, `--force` | would ask for `SkipHashCheck`, so the request is unreadable              |
+| `--no-upgrade`                    | would ask for `NoUpgrade`, so the request is unreadable                    |
+| `--uninstall-previous`            | would ask for `UninstallPrevious`, so the request is unreadable            |
 | `--version`, `-v` and its value   | makes the version unknown and not concrete                                 |
 
 `--scope` with `user` or `machine`, and `--architecture` with `x86`, `x64`, `arm64` or `neutral`, compared ignoring ASCII case, set the matching value; any other value makes the property unknown.
-The scope is unknown when neither `Options.Scope` nor `--scope` sets it.
+The scope is unknown when neither `Scope` nor `--scope` sets it.
 
 <a id="manager-scoop"></a>
 #### Scoop
@@ -492,13 +469,13 @@ An option name ends at the element's first `=` and matches ignoring ASCII case, 
 
 | Custom parameter                                     | Effect                                    |
 | ---------------------------------------------------- | ----------------------------------------- |
-| `--skip-hash-check`, or a short cluster containing `s` | carries `SkipHashCheck`                 |
+| `--skip-hash-check`, or a short cluster containing `s` | would ask for `SkipHashCheck`, so the request is unreadable |
 | `--arch`, or a short cluster containing `a`          | makes the architecture unknown            |
 | an element not starting with `-` that contains `@`   | makes the version unknown                 |
 
 A Scoop source is a bucket, named by the bucket's name, or a manifest URL or local path.
 A source name that contains `...` or `:\`, or starts with `http://` or `https://` ignoring ASCII case, is a manifest URL or local path, and it is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
-The broker cannot pin a version through Scoop, and a `Package.Channel` makes the request unreadable.
+The broker cannot pin a version through Scoop.
 
 <a id="manager-vcpkg"></a>
 #### Vcpkg
@@ -523,19 +500,16 @@ The architecture is `Neutral` when `Package.Architecture` is absent.
 <a id="manager-bun"></a>
 #### Bun
 
-The reading is that of [§manager-npm](#manager-npm), except for identifiers, sources and channels.
+The reading is that of [§manager-npm](#manager-npm), except for identifiers and sources.
 An identifier that is a registry name names itself, keeping its case in canonical form, and any other identifier has an unknown package identity and an unknown source and selects the version as under [§manager-npm](#manager-npm).
 The only source name is `Bun`, and a request with another source name is unreadable.
-A request carrying `Source.Url` is readable only when that URL, without its trailing `/` characters, equals `https://www.npmjs.com` ignoring ASCII case.
-A `Package.Channel` makes the request unreadable.
 
 <a id="manager-cargo"></a>
 #### Cargo
 
 The only source name is `crates.io`, and a request with another source name is unreadable.
 The canonical form maps ASCII letters to lowercase and `_` to `-`.
-The architecture is `Neutral` when `Package.Architecture` is absent, and a `Package.Channel` makes the request unreadable.
-A request carrying `Source.Url` is readable only when that URL, without its trailing `/` characters, equals `https://index.crates.io` ignoring ASCII case.
+The architecture is `Neutral` when `Package.Architecture` is absent.
 
 <a id="manager-pip"></a>
 #### Pip
@@ -548,12 +522,11 @@ The architecture is `Neutral` when `Package.Architecture` is absent, and the sco
 #### Dotnet
 
 A requested architecture of `Neutral` makes the architecture unknown.
-An Install or Update carrying `Source.Url` is readable only when that URL equals `https://api.nuget.org/v3/index.json` ignoring ASCII case, or is empty or consists only of code points that have the `White_Space` property in `PropList.txt` of [Unicode 16.0.0][unicode16-ucd]; `Source.Url` has no effect on an Uninstall.
 
 <a id="manager-chocolatey"></a>
 #### Chocolatey
 
-The scope is `Machine` when `Options.Scope` is absent, and a requested architecture of `X64` makes the architecture unknown.
+The scope is `Machine` when `Scope` is absent, and a requested architecture of `X64` makes the architecture unknown.
 
 <a id="manager-powershell"></a>
 #### PowerShell and PowerShell7
@@ -564,8 +537,7 @@ The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 <a id="install-location"></a>
 ### Install location check
 
-A request that uses `CustomInstallLocation` passes the install location check when it carries exactly one install location, from `Options.CustomInstallLocation` and its custom parameters together, and that location is a plain local path.
-Each field or option that sets a location counts as one, even when two of them set the same location.
+A request that uses `CustomInstallLocation` passes the install location check when its install location, `OptIns.CustomInstallLocation.Path`, is a plain local path.
 A plain local path is an ASCII letter followed by `:` and a separator, then any sequence of separators and segments, where a separator is `\` or `/` and a segment is a maximal run of other characters.
 A segment is not `.` or `..`, does not start with a space (U+0020), does not end with `.` or a space, and contains no control character (Unicode general category Cc, U+0000 to U+001F and U+007F to U+009F), and none of `: * ? " < > |`.
 The normalized location has an uppercase drive letter and uses `\` as its only separator, with repeated separators collapsed and a trailing separator dropped unless it follows the drive's `:`, so the normalized drive root is `C:\`; grant and forbid patterns match it.
@@ -704,7 +676,7 @@ A pattern `*` means a pattern made only of `*` characters.
 | a grant of `InstallerArguments`                             | High   | installer arguments can change what an installer runs, where it reads files from and where it writes them |
 | a grant of `SkipHashCheck`                                  | High   | the installer runs without the manager's integrity check                                              |
 | a grant of `Interactive`                                    | High   | the dialogs of an elevated installer can start other programs with administrator rights              |
-| a `CustomParameters` grant with the pattern `*`             | High   | every custom parameter passes, and only the opt-ins they carry still need their own grants           |
+| a `CustomParameters` grant with the pattern `*`             | High   | every custom parameter passes                                                                         |
 | a `CustomParameters` grant with other patterns              | Medium | a pattern can match more arguments than its author meant                                              |
 | a grant of `CustomInstallLocation`                          | Medium | an elevated install can place files where other programs load code from                              |
 | a grant of `KillBeforeOperation`                            | Medium | the user can stop any process, including security software                                            |
