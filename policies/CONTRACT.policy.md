@@ -388,7 +388,7 @@ A request is unreadable when:
 - a part has a value outside its set in [§request-input](#request-input);
 - the broker builds no command for its manager ([§managers](#managers));
 - it carries custom parameters through a manager whose reading accepts none;
-- it carries `Source.Url`, except as [§manager-bun](#manager-bun) allows;
+- it carries a `Source.Url` that its manager's reading does not accept ([§managers](#managers));
 - it carries a version through a manager that cannot pin one ([§missing-version](#missing-version));
 - a custom parameter is empty;
 - a custom parameter, `Package.Id` or `Source.Name` contains U+0000, U+000A or U+000D, which the broker cannot pass to a manager;
@@ -451,8 +451,10 @@ Unless a manager's reading below states otherwise:
 - the broker can pin a version;
 - the scope is `Options.Scope`, and `User` when it is absent;
 - the architecture is `Package.Architecture`, and unknown when it is absent;
-- `Package.Channel` makes no request unreadable.
+- `Package.Channel` makes no request unreadable;
+- a request carrying `Source.Url` is unreadable.
 
+`Winget` and `Scoop` take the source from `Source.Name` alone, so `Source.Url` has no effect on them.
 A reading below that names the only source name of its manager compares `Source.Name` with it ignoring ASCII case.
 
 <a id="manager-winget"></a>
@@ -533,6 +535,7 @@ A `Package.Channel` makes the request unreadable.
 The only source name is `crates.io`, and a request with another source name is unreadable.
 The canonical form maps ASCII letters to lowercase and `_` to `-`.
 The architecture is `Neutral` when `Package.Architecture` is absent, and a `Package.Channel` makes the request unreadable.
+A request carrying `Source.Url` is readable only when that URL, without its trailing `/` characters, equals `https://index.crates.io` ignoring ASCII case.
 
 <a id="manager-pip"></a>
 #### Pip
@@ -545,6 +548,7 @@ The architecture is `Neutral` when `Package.Architecture` is absent, and the sco
 #### Dotnet
 
 A requested architecture of `Neutral` makes the architecture unknown.
+An Install or Update carrying `Source.Url` is readable only when that URL equals `https://api.nuget.org/v3/index.json` ignoring ASCII case, or is empty or consists only of code points that have the `White_Space` property in `PropList.txt` of [Unicode 16.0.0][unicode16-ucd]; `Source.Url` has no effect on an Uninstall.
 
 <a id="manager-chocolatey"></a>
 #### Chocolatey
