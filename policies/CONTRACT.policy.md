@@ -201,7 +201,8 @@ The source of an Install or Update request is trusted when a selector in the lis
 An Install or Update request whose source is not trusted is denied whatever the rules say ([§precedence](#precedence)).
 A manager with no selector in the list therefore cannot install or update anything.
 A rule may name a source the list does not trust.
-The source of every Uninstall, and of an Update through a manager whose reading says so, is unknown ([§managers](#managers)), so a `Source` selector of the request's manager is unknown for the request ([§source-selector](#source-selector)), and, in `Select` or in an `Except` entry, the selector never keeps a Deny rule from being applicable to that request and never makes an Allow rule applicable to it ([§applicability](#applicability)).
+The source of an Update through a manager whose reading says so is unknown, so a `Source` selector of the request's manager is unknown for that Update ([§source-selector](#source-selector)), and, in `Select` or in an `Except` entry, the selector never keeps a Deny rule from being applicable to it and never makes an Allow rule applicable to it ([§applicability](#applicability)).
+The source of every Uninstall is unknown too ([§managers](#managers)), and [§selection](#selection) keeps `Source` selectors away from uninstalls.
 For installs and updates, a rule only narrows which trusted sources it applies to.
 
 <a id="source-selector"></a>
@@ -260,11 +261,11 @@ The values of operations, scopes, architectures and elevations are those of [§r
 | `Architectures` | a non-empty list of architectures                                           | architecture is in the list         |
 | `Elevation`     | one elevation                                                               | elevation is that elevation         |
 
-`Packages` tests package names whatever the manager, so a rule meant for one manager's package should also name that manager in `Sources`, with `AnySource` when the rule is to apply to that manager's uninstalls.
-A selection whose `Sources` has a selector with `Source`, in `Select` or in an `Except` entry, also has `Operations` without `Uninstall`, because the source of an uninstall is unknown ([§managers](#managers)).
-Such a selection without `Operations` is `MissingKey` at `Operations`, and one whose `Operations` lists `Uninstall` is `ConflictingKeys` at `Sources`.
-So a selection whose `Sources` names a source, even beside an `AnySource` selector, selects installs and updates only, and a rule says so by listing its operations rather than letting the unknown source of an uninstall silently decide whether the rule applies.
-When this rule and that of [§version-condition](#version-condition) both require `Operations` of a selection that lacks it, the selection has one error, `MissingKey` at `Operations`.
+`Packages` tests package names whatever the manager, so a rule meant for one manager's package should also name that manager in `Sources`, with `AnySource` when the rule is to apply to that manager's uninstalls; under `Vcpkg`, `Packages` is unknown for every uninstall ([§manager-vcpkg](#manager-vcpkg)).
+A selection with a `Sources` entry that has the key `Source`, whatever its value and other keys, in `Select` or in an `Except` entry, also has `Operations` without `Uninstall`, because the source of an uninstall is unknown ([§managers](#managers)).
+Such a selection without `Operations` is `MissingKey` at `Operations`, and one whose `Operations` is a list containing `Uninstall` is `ConflictingKeys` at `Sources`.
+So a selection with a `Sources` entry that has the key `Source`, even beside an `AnySource` selector, selects installs and updates only, and a rule says so by listing its operations rather than letting the unknown source of an uninstall silently decide whether the rule applies.
+When this rule and that of [§version-condition](#version-condition) both require `Operations` of a selection that lacks it, the selection has one error, `MissingKey` at `Operations`; when both find `Uninstall` in `Operations`, it has two errors, `ConflictingKeys` at `Version` and `ConflictingKeys` at `Sources`.
 
 <a id="version-condition"></a>
 ### Version condition
@@ -281,7 +282,7 @@ A version satisfies the condition when it is not lower than `Minimum`, is not hi
 Without `Prerelease`, a pre-release satisfies the condition like any other version.
 The condition is unknown when the request's version is unknown or is not a version.
 A selection with `Version`, in `Select` or in an `Except` entry, also has `Operations` without `Uninstall`, because an uninstall carries no version a policy can check: the manager removes whichever version is installed.
-Such a selection without `Operations` is `MissingKey` at `Operations`, and one whose `Operations` lists `Uninstall` is `ConflictingKeys` at `Version`.
+Such a selection without `Operations` is `MissingKey` at `Operations`, and one whose `Operations` is a list containing `Uninstall` is `ConflictingKeys` at `Version`.
 So no version condition applies to an uninstall, and a rule that tests the version says so by listing its operations rather than silently never matching uninstalls.
 `Prerelease` is checked against the version the command installs.
 
@@ -367,7 +368,8 @@ The evaluator's input is a well-formed package request ([CONTRACT.wire.md §pack
 ### Reading a request
 
 Each property is the value that the manager's reading ([§managers](#managers)) assigns to the request, which is the value the manager acts on when the broker runs the command, so a change to how the broker builds commands is a change to this contract.
-A manager's reading may leave a property unknown even though the command fixes it, which only resolves that property toward denial ([§applicability](#applicability)).
+A manager's reading may leave a property other than the scope unknown even though the command fixes it, which only resolves that property toward denial ([§applicability](#applicability)).
+A reading never leaves unknown a scope the command fixes, because an unknown scope can keep readable a request that a `Machine` scope with `NonElevated` makes unreadable.
 A value the client sends that the command does not carry has no effect on any property.
 An `OptIns` key makes the request use its opt-in even when the command does not carry what the key asks for, so a decision depends only on the policy and the request, never on what a broker version does with the key.
 A request is unreadable when:
@@ -443,7 +445,7 @@ Unless a manager's reading below states otherwise:
 - the scope is `Scope`, and `User` when it is absent;
 - the architecture is `Package.Architecture`, and unknown when it is absent.
 
-The source of an Uninstall is unknown under every manager ([§source-selector](#source-selector)), because no command the broker builds limits an uninstall to packages installed from `Source.Name`, even where it passes `Source.Name` to the manager, as WinGet `--source`, PowerShell `-Repository` and a Scoop `<bucket>/<app>` do, and a Vcpkg uninstall also removes ports of other triplets ([§manager-vcpkg](#manager-vcpkg)).
+The source of an Uninstall is unknown under every manager ([§source-selector](#source-selector)), because no command the broker builds limits an uninstall to packages installed from `Source.Name`, even where it passes `Source.Name` to the manager, as WinGet `--source`, PowerShell `-Repository`, a Scoop `<bucket>/<app>` and a Vcpkg `<port>:<triplet>` do, and a Vcpkg uninstall may also remove ports of other triplets ([§manager-vcpkg](#manager-vcpkg)).
 A reading below that names the only source name of its manager, or of some of its operations, compares `Source.Name` with it ignoring ASCII case.
 A plain source name starts with an ASCII letter or digit and contains only ASCII letters, digits, `.`, `-`, `_` and spaces.
 The batch characters are `"`, `%`, `!`, `^`, `&`, `|`, `<` and `>`, which the broker cannot pass to a manager that it runs through a batch file.
@@ -642,7 +644,7 @@ The scope is `Machine` when `Scope` is absent, and a requested architecture of `
 
 A source name that is not a plain source name, or a `Package.Id` that contains `[` or `]`, makes the request unreadable, because PowerShell reads other characters as wildcards or matches them by its own rules.
 An identifier names itself and selects no version, because the broker passes it whole as the value of `-Name`.
-The source of an Update is unknown ([§source-selector](#source-selector)), because `Update-Module` updates the module from the repository it was installed from; under `PowerShell7`, `Update-PSResource` searches only `Source.Name`, but the module the Update replaces may have been installed from another repository, so `Source.Name` does not fix the source of the package the command acts on.
+The source of an Update is unknown ([§source-selector](#source-selector)), because `Update-Module` updates the module from the repository it was installed from; a `PowerShell7` Update is read the same way, although `Update-PSResource` searches only `Source.Name` ([§reading](#reading)).
 Under `PowerShell7`, a `Package.Version` may also contain `[`, `]`, `(`, `)`, `,`, `*` and spaces.
 The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
