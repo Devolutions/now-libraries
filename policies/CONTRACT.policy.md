@@ -444,7 +444,7 @@ The batch characters are `"`, `%`, `!`, `^`, `&`, `|`, `<` and `>`, which the br
 
 The broker builds no WinGet command, so a request is unreadable, when:
 
-- its `Package.Id`, `OptIns.CustomInstallLocation.Path` or a custom parameter contains a batch character;
+- its `Package.Id`, `OptIns.CustomInstallLocation.Path`, `OptIns.InstallerArguments.Arguments` or a custom parameter contains a batch character;
 - its `Source.Name` is not a plain source name.
 
 The reading accepts custom parameters and installer arguments.
