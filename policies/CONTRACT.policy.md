@@ -370,7 +370,8 @@ A request is unreadable when:
 - it has `OptIns.InstallerArguments` through a manager whose reading accepts none;
 - a custom parameter would ask for an opt-in other than `CustomParameters`, as its manager's reading states, so that every opt-in the command asks for is a key of its `OptIns`;
 - its scope property is `Machine`, its `Scope` member is absent or `User`, and its `Elevation` is `NonElevated`, because it would act machine-wide without saying so in `Scope`;
-- it carries a version through a manager that cannot pin one ([§missing-version](#missing-version));
+- it carries a version through a manager that cannot pin one ([§managers](#managers));
+- it is through `Winget` or `Dotnet` and its `Package.Id` starts with `-`, so that the manager never reads the id as an option;
 - a custom parameter, `OptIns.InstallerArguments.Arguments`, `Package.Id` or `Source.Name` contains U+0000, U+000A or U+000D, which the broker cannot pass to a manager;
 - `Source.Name` starts or ends with a code point that has the `White_Space` property in `PropList.txt` of [Unicode 16.0.0][unicode16-ucd], or contains a code point that has the `Default_Ignorable_Code_Point` property in `DerivedCoreProperties.txt` of [Unicode 16.0.0][unicode16-ucd], because such a name looks like another;
 - its manager's reading states another case.
@@ -442,7 +443,6 @@ The batch characters are `"`, `%`, `!`, `^`, `&`, `|`, `<` and `>`, which the br
 
 The broker builds no WinGet command, so a request is unreadable, when:
 
-- its `Package.Id` starts with `-`, which WinGet could read as an option;
 - its `Package.Id`, `OptIns.CustomInstallLocation.Path` or a custom parameter contains a batch character;
 - its `Source.Name` is not a plain source name.
 
@@ -491,9 +491,9 @@ A custom parameter makes the request unreadable when:
 - it contains a code point that has the `White_Space` property in `PropList.txt` of [Unicode 16.0.0][unicode16-ucd];
 - it names the option `--global`, `--all` or `--arch`;
 - it starts with `-` but not `--`, and its text after that `-`, including any text after `=`, contains `g` or `a` ignoring ASCII case;
-- it names the option `--skip-hash-check`, or is a short cluster containing `s`, because it would ask for `SkipHashCheck`.
+- it names the option `--skip-hash-check`, or is a short cluster whose option names before its first `=` include `s`, because it would ask for `SkipHashCheck`.
 
-So `--globalx`, `-` and `-q` make no request unreadable, while `-qa`, `-G`, `-q=abcg` and `--ARCH=x` do.
+So `--globalx`, `-`, `-q` and `-q=s` make no request unreadable, while `-qa`, `-G`, `-q=abcg` and `--ARCH=x` do.
 
 A Scoop source is a bucket, named by the bucket's name, or a manifest URL or local path.
 A source name that contains `...` or `:\`, or starts with `http://` or `https://` ignoring ASCII case, is a manifest URL or local path, and it is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
@@ -570,7 +570,7 @@ The broker builds no Pip command, so a request is unreadable, when:
 - its `Elevation` is `Elevated`;
 - it has `OptIns.Interactive`, `OptIns.SkipHashCheck`, `OptIns.CustomInstallLocation`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
 - its `Package.Architecture` is `X86`, `X64` or `Arm64`;
-- its `Package.Id` does not start and end with an ASCII letter or digit, or contains a character other than ASCII letters, digits, `.`, `_` and `-`;
+- its `Package.Id` starts or ends with a character other than an ASCII letter or digit, or contains a character other than ASCII letters, digits, `.`, `_` and `-`;
 - its `Package.Version` contains a character other than ASCII letters, digits, `.`, `!`, `+`, `-` and `_`;
 - it is an Uninstall with `Package.Version`.
 
@@ -587,8 +587,7 @@ The broker builds no Dotnet command, so a request is unreadable, when:
 
 - its `Scope` is `Machine`;
 - it has `OptIns.Interactive`, `OptIns.SkipHashCheck`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
-- it is an Uninstall with `Package.Architecture`;
-- its `Package.Id` starts with `-`, which `dotnet` could read as an option.
+- it is an Uninstall with `Package.Architecture`.
 
 A `Package.Version` may also contain `[`, `]`, `(`, `)`, `,` and `*`.
 A requested architecture of `Neutral` makes the architecture unknown.
@@ -630,8 +629,8 @@ A network path, a device path or a relative path would give an elevated installe
 The version is `Package.Version` when it is concrete, and unknown otherwise.
 A version is concrete when it is present, neither a custom parameter nor the identifier ([§package-identity](#package-identity)) selects the version, and the manager does not resolve it as a range.
 `Npm`, `Bun`, `Cargo` and `Dotnet` resolve a version as a range unless it is a version ([§version-scheme](#version-scheme)) with at least three release components, and `PowerShell7` resolves one as a range unless it is a version, because its `-Version` accepts NuGet version ranges.
-The broker cannot pin a version through `Scoop` or `Vcpkg`; a request carrying `Package.Version` through them is unreadable, and their version is unknown.
-An Install or Update request through any other manager is missing its version when its version is not concrete, and is denied whatever the policy says, so that rule matching always has the version.
+A manager whose reading cannot pin a version has an unknown version.
+An Install or Update request through a manager that can pin a version is missing its version when its version is not concrete, and is denied whatever the policy says, so that rule matching always has the version.
 An Uninstall request is never missing its version, because no version condition applies to it ([§version-condition](#version-condition)).
 
 <a id="evaluation"></a>
@@ -640,7 +639,7 @@ An Uninstall request is never missing its version, because no version condition 
 The broker evaluates each request once, before running it, against the one policy it holds, at its current time, which is the evaluation time.
 A decision depends only on the policy, the request and the evaluation time.
 The broker accepts every valid document, refuses every invalid document whose `PolicyFormatVersion` is `"2.0.0"` and reports its errors, and runs no request while it holds no accepted policy.
-An allowed request whose command the broker cannot build runs nothing; that refusal comes after the decision and is not one, so `Allow` does not promise that a request runs.
+An allowed request may still run nothing, such as when the broker will not run its `Pre` or `Post` command ([CONTRACT.wire.md §not-runnable](CONTRACT.wire.md#not-runnable)) or cannot launch the manager process ([CONTRACT.wire.md §operations](CONTRACT.wire.md#operations)); that refusal comes after the decision and is not one, so `Allow` does not promise that a request runs.
 
 <a id="applicability"></a>
 ### Matching and applicability
