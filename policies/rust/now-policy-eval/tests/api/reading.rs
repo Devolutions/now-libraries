@@ -431,6 +431,9 @@ fn install_location_check_reads_only_the_install_location() {
 #[case::powershell7_version(install("PowerShell7", "PSGallery", "Pester", "5.3.3"), Check::AllowRules)]
 #[case::powershell7_two_components(install("PowerShell7", "PSGallery", "Pester", "5.3"), Check::AllowRules)]
 #[case::powershell7_prerelease(install("PowerShell7", "PSGallery", "Pester", "5.4.0-rc1"), Check::AllowRules)]
+#[case::pip_trailing_dot(install("Pip", "pip", "requests", "2."), Check::MissingVersion)]
+#[case::pip_empty_component(install("Pip", "pip", "requests", "2..31"), Check::MissingVersion)]
+#[case::pip_leading_dot(install("Pip", "pip", "requests", ".31"), Check::MissingVersion)]
 // oracle: contract policies/CONTRACT.policy.md §manager-npm
 #[case::npm_alias_suffix_selects_no_version(
     install("Npm", "npm", "my-react:react@18.2.0", "18.2.0"),
