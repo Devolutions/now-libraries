@@ -1,7 +1,7 @@
 # Policy conformance suite
 
 Language-neutral cases for the 2.x policy format defined in `policies/CONTRACT.policy.md`.
-The Rust and C# implementations run the same files, so passing both shows they agree on every case here.
+Every implementation of the contract runs the same files, so implementations that pass agree on every case here.
 Every expected value comes from the contract or a published source that the case cites, never from an implementation.
 
 ## Layout
