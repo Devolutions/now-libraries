@@ -70,7 +70,7 @@ fn conformance_suite() {
     }
 
     if !failures.is_empty() {
-        let mut report = format!("{} of {count} conformance cases failed:\n", failures.len());
+        let mut report = format!("{} conformance failures ({count} cases run):\n", failures.len());
         for failure in &failures {
             let _ = writeln!(report, "- {failure}");
         }
