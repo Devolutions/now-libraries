@@ -27,22 +27,22 @@ bitflags! {
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_UNICODE_CONSOLE
         const UNICODE_CONSOLE = 0x0004;
-        /// Execute the command with elevated privileges. The elevation mechanism is chosen by the
-        /// host and advertised in `execCapset`; a host that cannot elevate fails the request
-        /// instead of silently executing without elevation.
-        ///
-        /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_ELEVATED
-        const ELEVATED = 0x0008;
         /// Keeps the command interpreter running after the batch file completes (`cmd /K`
         /// rather than `/C`). MUST be ignored when the session redirects stdio, where the hidden
         /// interpreter would never exit.
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_NO_EXIT
-        const NO_EXIT = 0x0010;
+        const NO_EXIT = 0x0008;
         /// Enable stdio (stdout, stderr, stdin) redirection.
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_IO_REDIRECTION
         const IO_REDIRECTION = 0x1000;
+        /// Execute the command with elevated privileges. The elevation mechanism is chosen by the
+        /// host and advertised in `execCapset`; a host that cannot elevate fails the request
+        /// instead of silently executing without elevation.
+        ///
+        /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_ELEVATED
+        const ELEVATED = 0x4000;
         /// Detached mode: the batch is started without tracking execution or sending back output.
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_DETACHED

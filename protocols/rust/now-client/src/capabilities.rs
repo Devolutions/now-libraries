@@ -83,10 +83,10 @@ impl NowCapabilities {
     /// Returns whether elevated execution is available.
     ///
     /// Elevation is gated on the capability rather than the version alone, because a 1.7 peer
-    /// that cannot elevate (for example, one that has not shipped the host-side change) must
+    /// that cannot elevate (for example, one where elevation is disabled or unsupported) must
     /// answer `false`.
-    /// Under this capability the host may prompt the interactive user for consent, and an
-    /// elevated session has no stdio redirection.
+    /// Under this capability the host may prompt the interactive user for consent, and stdio
+    /// redirection is best-effort depending on the host's elevation mechanism.
     pub fn supports_elevation(&self) -> bool {
         self.has(NowExecCapsetFlags::ELEVATION) && self.at_least(1, 7)
     }

@@ -103,14 +103,6 @@ namespace Devolutions.NowProto.Messages
             UnicodeConsole = 0x0400,
 
             /// <summary>
-            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
-            /// the host and advertised in execCapset.
-            ///
-            /// NOW-PROTO: NOW_EXEC_FLAG_PS_ELEVATED
-            /// </summary>
-            Elevated = 0x0800,
-
-            /// <summary>
             /// Enable stdio (stdout, stderr, stdin) redirection.
             ///
             /// NOW-PROTO: NOW_EXEC_FLAG_PS_IO_REDIRECTION
@@ -123,6 +115,14 @@ namespace Devolutions.NowProto.Messages
             /// NOW-PROTO: NOW_EXEC_FLAG_PS_SERVER_MODE
             /// </summary>
             ServerMode = 0x2000,
+
+            /// <summary>
+            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
+            /// the host and advertised in execCapset.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_PS_ELEVATED
+            /// </summary>
+            Elevated = 0x4000,
 
             /// <summary>
             /// Detached mode: PowerShell is started without tracking execution or sending back output.

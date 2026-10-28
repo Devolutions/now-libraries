@@ -21,7 +21,7 @@ bitflags! {
         /// instead of silently executing without elevation.
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_RUN_ELEVATED
-        const ELEVATED = 0x0002;
+        const ELEVATED = 0x4000;
     }
 }
 

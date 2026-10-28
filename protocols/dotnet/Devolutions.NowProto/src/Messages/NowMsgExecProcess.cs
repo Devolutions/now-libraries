@@ -92,19 +92,19 @@ namespace Devolutions.NowProto.Messages
             EncodingUtf8 = 0x0004,
 
             /// <summary>
-            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
-            /// the host and advertised in execCapset.
-            ///
-            /// NOW-PROTO: NOW_EXEC_FLAG_PROCESS_ELEVATED
-            /// </summary>
-            Elevated = 0x0008,
-
-            /// <summary>
             /// Enable stdio (stdout, stderr, stdin) redirection.
             ///
             /// NOW-PROTO: NOW_EXEC_FLAG_PROCESS_IO_REDIRECTION
             /// </summary>
             IoRedirection = 0x1000,
+
+            /// <summary>
+            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
+            /// the host and advertised in execCapset.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_PROCESS_ELEVATED
+            /// </summary>
+            Elevated = 0x4000,
 
             /// <summary>
             /// Detached mode: the process is started without tracking execution or sending back output.

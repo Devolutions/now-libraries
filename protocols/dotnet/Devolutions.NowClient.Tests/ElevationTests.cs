@@ -30,22 +30,24 @@ public sealed class ElevationTests
     }
 
     [Fact]
-    public void ElevatedBatchReachesThePeerWithElevatedAndNoExitButWithoutIoRedirection()
+    public void ElevatedBatchReachesThePeerAndTracksNoIoRedirectionFromStarted()
     {
         TestDriver.Run(() =>
         {
             using var peer = new ClientPeer();
             var client = peer.Connect();
-            var session = TestDriver.Success(client.ExecBatch(new ExecBatchParams("whoami").Elevated().NoExit()));
+            var session = TestDriver.Success(client.ExecBatch(new ExecBatchParams("whoami").Elevated().NoExit().IoRedirection()));
 
             var request = peer.Wire.Receive<NowMsgExecBatch>();
             Assert.Equal(session.SessionId, request.SessionId);
             Assert.True(request.Elevated);
             Assert.True(request.NoExit);
-            Assert.False(request.IoRedirection);
+            Assert.True(request.IoRedirection);
 
+            peer.Wire.Send(new NowMsgExecStarted(session.SessionId, noIoRedirection: true));
             peer.Wire.Send(NowMsgExecResult.Success(session.SessionId, 42));
             Assert.Equal(42u, TestDriver.Success(session.GetResult()));
+            Assert.True(session.NoIoRedirection);
             TestDriver.Success(client.StopAsync());
             peer.AssertStopped();
         });

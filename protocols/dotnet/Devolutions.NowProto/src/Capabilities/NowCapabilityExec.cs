@@ -64,7 +64,8 @@
 
         /// <summary>
         /// Set if host can run elevated exec sessions. Elevation may prompt the interactive user
-        /// for consent, and stdio is not redirected for elevated sessions.
+        /// for consent, and stdio redirection may be unavailable depending on the host's elevation
+        /// mechanism.
         ///
         /// NOW-PROTO: NOW_CAP_EXEC_ELEVATION
         /// </summary>

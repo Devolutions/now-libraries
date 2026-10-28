@@ -92,20 +92,12 @@ namespace Devolutions.NowProto.Messages
             UnicodeConsole = 0x0004,
 
             /// <summary>
-            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
-            /// the host and advertised in execCapset.
-            ///
-            /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_ELEVATED
-            /// </summary>
-            Elevated = 0x0008,
-
-            /// <summary>
             /// Keeps the command interpreter running after the batch file completes (cmd /K rather
             /// than /C). Ignored when the session redirects stdio.
             ///
             /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_NO_EXIT
             /// </summary>
-            NoExit = 0x0010,
+            NoExit = 0x0008,
 
             /// <summary>
             /// Enable stdio (stdout, stderr, stdin) redirection.
@@ -113,6 +105,14 @@ namespace Devolutions.NowProto.Messages
             /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_IO_REDIRECTION
             /// </summary>
             IoRedirection = 0x1000,
+
+            /// <summary>
+            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
+            /// the host and advertised in execCapset.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_ELEVATED
+            /// </summary>
+            Elevated = 0x4000,
 
             /// <summary>
             /// Detached mode: the batch is started without tracking execution or sending back output.

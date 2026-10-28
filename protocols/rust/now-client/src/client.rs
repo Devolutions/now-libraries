@@ -499,6 +499,11 @@ where
             }
             NowMessage::Exec(NowExecMessage::Started(message)) => {
                 let session_id = message.session_id();
+                if message.is_no_io_redirection() {
+                    if let Some(operation) = self.operations.get_mut(&session_id) {
+                        operation.stdin_closed = true;
+                    }
+                }
                 if !self.discarded_run_sessions.contains(&session_id) {
                     self.emit_event(session_id, ExecutionEvent::Started)?;
                 }
@@ -1505,8 +1510,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn elevated_request_omits_io_redirection_and_tracks_the_result() {
+    async fn elevated_request_preserves_io_redirection_and_tracks_the_result() {
         let (client_stream, mut peer_stream) = tokio::io::duplex(4096);
+        let (result_sender, result_receiver) = tokio::sync::oneshot::channel();
         let peer = tokio::spawn(async move {
             let _ = read_message(&mut peer_stream).await;
             write_message(
@@ -1522,13 +1528,18 @@ mod tests {
             let session_id = match read_message(&mut peer_stream).await {
                 NowMessage::Exec(NowExecMessage::Process(message)) => {
                     assert!(message.is_elevated());
-                    assert!(!message.is_with_io_redirection());
+                    assert!(message.is_with_io_redirection());
                     assert!(!message.is_detached());
                     message.session_id()
                 }
                 message => panic!("expected elevated Process request, got {message:?}"),
             };
-            write_message(&mut peer_stream, NowExecStartedMsg::new(session_id)).await;
+            write_message(
+                &mut peer_stream,
+                NowExecStartedMsg::new(session_id).with_no_io_redirection(),
+            )
+            .await;
+            let _ = result_receiver.await;
             write_message(&mut peer_stream, NowExecResultMsg::new_success(session_id, 42)).await;
         });
 
@@ -1537,23 +1548,24 @@ mod tests {
             Err(error) => panic!("handshake must succeed: {error}"),
         };
         assert!(handle.capabilities().supports_elevation());
-        match handle
+        let mut execution = match handle
             .process(
                 ProcessRequest::new("process.exe")
                     .with_elevated()
-                    .with_timeout(Duration::from_secs(1)),
+                    .with_timeout(Duration::from_secs(5)),
             )
             .await
         {
-            Err(NowClientError::InvalidRequest(_)) => {}
-            Err(error) => panic!("unexpected error: {error}"),
-            Ok(_) => panic!("elevated request must reject a timeout it cannot enforce"),
-        }
-        let mut execution = match handle.process(ProcessRequest::new("process.exe").with_elevated()).await {
             Ok(execution) => execution,
             Err(error) => panic!("elevated Process request must start: {error}"),
         };
         assert_eq!(execution.next_event().await, Some(ExecutionEvent::Started));
+        match execution.send_stdin(b"input".to_vec(), true).await {
+            Err(NowClientError::InvalidRequest(_)) => {}
+            Err(error) => panic!("unexpected error when sending stdin after NO_IO_REDIRECTION: {error}"),
+            Ok(()) => panic!("stdin must be closed when Started reports NO_IO_REDIRECTION"),
+        }
+        let _ = result_sender.send(());
         match execution.wait().await {
             Ok(ExecutionStatus::Completed { exit_code: 42 }) => {}
             Ok(status) => panic!("unexpected terminal status: {status:?}"),

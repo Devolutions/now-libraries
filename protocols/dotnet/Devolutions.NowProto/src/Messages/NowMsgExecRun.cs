@@ -100,7 +100,7 @@ namespace Devolutions.NowProto.Messages
             ///
             /// NOW-PROTO: NOW_EXEC_FLAG_RUN_ELEVATED
             /// </summary>
-            Elevated = 0x0002,
+            Elevated = 0x4000,
         }
 
         private const uint FixedPartSize = 4; // u32 SessionId

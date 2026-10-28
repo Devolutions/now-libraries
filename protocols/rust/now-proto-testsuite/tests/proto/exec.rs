@@ -212,6 +212,22 @@ fn roundtrip_exec_started() {
     };
 
     assert_eq!(actual.session_id(), 0x12345678);
+    assert!(!actual.is_no_io_redirection());
+}
+
+#[test]
+fn roundtrip_exec_started_no_io_redirection() {
+    let msg = NowExecStartedMsg::new(0x12345678).with_no_io_redirection();
+
+    let decoded = now_msg_roundtrip(msg, expect!["[04, 00, 00, 00, 13, 06, 01, 00, 78, 56, 34, 12]"]);
+
+    let actual = match decoded {
+        NowMessage::Exec(NowExecMessage::Started(msg)) => msg,
+        _ => panic!("Expected NowExecStartedMsg"),
+    };
+
+    assert_eq!(actual.session_id(), 0x12345678);
+    assert!(actual.is_no_io_redirection());
 }
 
 #[test]
@@ -495,7 +511,7 @@ fn roundtrip_exec_pwsh_simple() {
 }
 
 // Elevation flag round-trips for every exec style. The encoded flags field must carry the
-// per-message ELEVATED bit and nothing else, so a host cannot mistake it for another option.
+// uniform 0x4000 ELEVATED bit and nothing else, so a host cannot mistake it for another option.
 
 #[test]
 fn roundtrip_exec_run_elevated() {
@@ -503,7 +519,7 @@ fn roundtrip_exec_run_elevated() {
 
     let decoded = now_msg_roundtrip(
         msg,
-        expect!["[09, 00, 00, 00, 13, 10, 02, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
+        expect!["[09, 00, 00, 00, 13, 10, 00, 40, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
     );
 
     let actual = match decoded {
@@ -520,7 +536,7 @@ fn roundtrip_exec_process_elevated() {
 
     let decoded = now_msg_roundtrip(
         msg,
-        expect!["[0B, 00, 00, 00, 13, 11, 08, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00]"],
+        expect!["[0B, 00, 00, 00, 13, 11, 00, 40, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00]"],
     );
 
     let actual = match decoded {
@@ -537,7 +553,7 @@ fn roundtrip_exec_shell_elevated() {
 
     let decoded = now_msg_roundtrip(
         msg,
-        expect!["[0B, 00, 00, 00, 13, 12, 08, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00]"],
+        expect!["[0B, 00, 00, 00, 13, 12, 00, 40, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00]"],
     );
 
     let actual = match decoded {
@@ -557,7 +573,7 @@ fn roundtrip_exec_batch_elevated_no_exit() {
 
     let decoded = now_msg_roundtrip(
         msg,
-        expect!["[09, 00, 00, 00, 13, 13, 18, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
+        expect!["[09, 00, 00, 00, 13, 13, 08, 40, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
     );
 
     let actual = match decoded {
@@ -575,7 +591,7 @@ fn roundtrip_exec_winps_elevated() {
 
     let decoded = now_msg_roundtrip(
         msg,
-        expect!["[0D, 00, 00, 00, 13, 14, 00, 08, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00, 00, 00]"],
+        expect!["[0D, 00, 00, 00, 13, 14, 00, 40, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00, 00, 00]"],
     );
 
     let actual = match decoded {
@@ -592,7 +608,7 @@ fn roundtrip_exec_pwsh_elevated() {
 
     let decoded = now_msg_roundtrip(
         msg,
-        expect!["[0D, 00, 00, 00, 13, 15, 00, 08, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00, 00, 00]"],
+        expect!["[0D, 00, 00, 00, 13, 15, 00, 40, 78, 56, 34, 12, 01, 61, 00, 00, 00, 00, 00, 00, 00]"],
     );
 
     let actual = match decoded {
@@ -603,7 +619,7 @@ fn roundtrip_exec_pwsh_elevated() {
     assert!(actual.is_elevated());
 }
 
-// ELEVATED and NO_EXIT are asserted independently as well as together: the combined 0x0018 mask
+// ELEVATED and NO_EXIT are asserted independently as well as together: the combined 0x4008 mask
 // alone would stay green if the two constants were swapped.
 
 #[test]
@@ -612,7 +628,7 @@ fn roundtrip_exec_batch_elevated_only() {
 
     let decoded = now_msg_roundtrip(
         msg,
-        expect!["[09, 00, 00, 00, 13, 13, 08, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
+        expect!["[09, 00, 00, 00, 13, 13, 00, 40, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
     );
 
     let actual = match decoded {
@@ -630,7 +646,7 @@ fn roundtrip_exec_batch_no_exit_only() {
 
     let decoded = now_msg_roundtrip(
         msg,
-        expect!["[09, 00, 00, 00, 13, 13, 10, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
+        expect!["[09, 00, 00, 00, 13, 13, 08, 00, 78, 56, 34, 12, 01, 61, 00, 00, 00]"],
     );
 
     let actual = match decoded {

@@ -85,13 +85,15 @@ pub enum NowProtoError {
     ///
     /// NOW-PROTO: NOW_CODE_PROTOCOL_VERSION
     ProtocolVersion,
-    /// Elevation was requested and refused: the interactive user declined consent, the consent
-    /// prompt expired, or policy denies elevation for the account.
+    /// Elevation was requested and refused for this session: the interactive user declined
+    /// consent, the consent prompt expired, or a host policy/rule denied elevation for the
+    /// request.
     ///
     /// NOW-PROTO: NOW_CODE_ELEVATION_DENIED
     ElevationDenied,
     /// Elevation was requested and is not possible for this request: the account has no elevated
-    /// token, or the server cannot elevate the requested execution style.
+    /// token, elevation is disabled on the host, or the server cannot elevate the requested
+    /// execution style.
     ///
     /// NOW-PROTO: NOW_CODE_ELEVATION_UNAVAILABLE
     ElevationUnavailable,

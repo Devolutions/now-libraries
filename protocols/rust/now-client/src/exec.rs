@@ -120,8 +120,8 @@ impl ProcessRequest {
     /// Requests elevated privileges.
     ///
     /// Requires [`NowCapabilities::supports_elevation`].
-    /// An elevated session has no stdio and cannot be cancelled, so it rejects inline stdin and
-    /// a timeout; the peer may prompt the interactive user for consent before the process starts.
+    /// The peer may prompt the interactive user for consent before the process starts, and stdio
+    /// redirection is best-effort depending on the host's elevation mechanism.
     #[must_use]
     pub fn with_elevated(mut self) -> Self {
         self.elevated = true;
@@ -167,8 +167,8 @@ impl BatchRequest {
     /// Requests elevated privileges.
     ///
     /// Requires [`NowCapabilities::supports_elevation`].
-    /// An elevated session has no stdio and cannot be cancelled, so it rejects inline stdin and
-    /// a timeout; the peer may prompt the interactive user for consent before the process starts.
+    /// The peer may prompt the interactive user for consent before the process starts, and stdio
+    /// redirection is best-effort depending on the host's elevation mechanism.
     #[must_use]
     pub fn with_elevated(mut self) -> Self {
         self.common.elevated = true;
@@ -232,8 +232,8 @@ impl PowerShellRequest {
     /// Requests elevated privileges.
     ///
     /// Requires [`NowCapabilities::supports_elevation`].
-    /// An elevated session has no stdio and cannot be cancelled, so it rejects inline stdin and
-    /// a timeout; the peer may prompt the interactive user for consent before the process starts.
+    /// The peer may prompt the interactive user for consent before the process starts, and stdio
+    /// redirection is best-effort depending on the host's elevation mechanism.
     #[must_use]
     pub fn with_elevated(mut self) -> Self {
         self.common.elevated = true;
@@ -320,7 +320,7 @@ impl RequestSpec {
                 }
                 if detached {
                     message = message.with_detached();
-                } else if !request.elevated {
+                } else if capabilities.supports_io_redirection() {
                     message = message.with_io_redirection();
                 }
                 Ok(EncodedRequest {
@@ -342,7 +342,7 @@ impl RequestSpec {
                 }
                 if detached {
                     message = message.with_detached();
-                } else if !common.elevated {
+                } else if capabilities.supports_io_redirection() {
                     message = message.with_io_redirection();
                 }
                 Ok(EncodedRequest {
@@ -369,8 +369,8 @@ impl RequestSpec {
                 validate_optional(&request.parameters, "parameters")?;
                 validate_directory(request.directory.as_deref())?;
                 validate_elevation(capabilities, request.elevated)?;
-                validate_common(detached, request.elevated, request.stdin.as_deref(), request.timeout)?;
-                validate_tracking(capabilities, detached, request.elevated)?;
+                validate_common(detached, request.stdin.as_deref(), request.timeout)?;
+                validate_tracking(capabilities, detached, request.elevated, request.stdin.is_some())?;
             }
             Self::Batch(request) => {
                 require(capabilities.supports_batch(), "Batch")?;
@@ -405,7 +405,7 @@ macro_rules! apply_power_shell_options {
         }
         if $detached {
             $message = $message.with_detached();
-        } else if !$common.elevated {
+        } else if $capabilities.supports_io_redirection() {
             $message = $message.with_io_redirection();
         }
     };
@@ -444,8 +444,8 @@ fn validate_common_request(
     validate_command(&request.command)?;
     validate_directory(request.directory.as_deref())?;
     validate_elevation(capabilities, request.elevated)?;
-    validate_common(detached, request.elevated, request.stdin.as_deref(), request.timeout)?;
-    validate_tracking(capabilities, detached, request.elevated)
+    validate_common(detached, request.stdin.as_deref(), request.timeout)?;
+    validate_tracking(capabilities, detached, request.elevated, request.stdin.is_some())
 }
 
 /// Refuses an elevated request the peer cannot honour.
@@ -459,12 +459,7 @@ fn validate_elevation(capabilities: &NowCapabilities, elevated: bool) -> Result<
     Ok(())
 }
 
-fn validate_common(
-    detached: bool,
-    elevated: bool,
-    stdin: Option<&[u8]>,
-    timeout: Option<Duration>,
-) -> Result<(), NowClientError> {
+fn validate_common(detached: bool, stdin: Option<&[u8]>, timeout: Option<Duration>) -> Result<(), NowClientError> {
     if detached && stdin.is_some() {
         return Err(NowClientError::InvalidRequest(
             "detached execution cannot include inline stdin".to_owned(),
@@ -475,18 +470,6 @@ fn validate_common(
             "detached execution cannot include a timeout".to_owned(),
         ));
     }
-    // An elevated session has no stdio, and its cancellation may fail, so a timeout could not be
-    // enforced.
-    if elevated && stdin.is_some() {
-        return Err(NowClientError::InvalidRequest(
-            "elevated execution cannot include inline stdin".to_owned(),
-        ));
-    }
-    if elevated && timeout.is_some() {
-        return Err(NowClientError::InvalidRequest(
-            "elevated execution cannot include a timeout".to_owned(),
-        ));
-    }
     if timeout.is_some_and(|timeout| timeout.is_zero()) {
         return Err(NowClientError::InvalidRequest(
             "execution timeout must not be zero".to_owned(),
@@ -495,12 +478,17 @@ fn validate_common(
     Ok(())
 }
 
-fn validate_tracking(capabilities: &NowCapabilities, detached: bool, elevated: bool) -> Result<(), NowClientError> {
+fn validate_tracking(
+    capabilities: &NowCapabilities,
+    detached: bool,
+    elevated: bool,
+    has_stdin: bool,
+) -> Result<(), NowClientError> {
     if detached {
         require(capabilities.supports_detached(), "detached execution")
-    } else if elevated {
-        // Tracked elevated sessions report their result without stdio, so they do not need
-        // I/O redirection; `validate_elevation` already required the elevation capability.
+    } else if elevated && !has_stdin {
+        // Tracked elevated sessions report their result even when the peer does not redirect
+        // stdio; when the peer does support I/O redirection, `IO_REDIRECTION` is set as usual.
         Ok(())
     } else {
         require(capabilities.supports_io_redirection(), "I/O redirection")

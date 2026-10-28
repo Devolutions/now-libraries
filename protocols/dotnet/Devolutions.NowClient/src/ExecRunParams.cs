@@ -20,8 +20,7 @@ namespace Devolutions.NowClient
 
         /// <summary>
         /// Execute with elevated privileges. Requires the host to advertise the elevation
-        /// capability. The host may prompt the interactive user for consent, and the session has
-        /// no IO redirection: output stays on the host.
+        /// capability. The host may prompt the interactive user for consent.
         /// </summary>
         public ExecRunParams Elevated(bool enable = true)
         {

@@ -220,6 +220,24 @@
             var decoded = NowTest.MessageRoundtrip(msg, encoded);
 
             Assert.Equal(msg.SessionId, decoded.SessionId);
+            Assert.False(decoded.NoIoRedirection);
+        }
+
+        [Fact]
+        public void StartedNoIoRedirection()
+        {
+            var msg = new NowMsgExecStarted(0x12345678, noIoRedirection: true);
+
+            var encoded = new byte[]
+            {
+                0x04, 0x00, 0x00, 0x00, 0x13, 0x06, 0x01, 0x00, 0x78, 0x56,
+                0x34, 0x12,
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.Equal(msg.SessionId, decoded.SessionId);
+            Assert.True(decoded.NoIoRedirection);
         }
     }
 }

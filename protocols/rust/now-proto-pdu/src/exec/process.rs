@@ -29,17 +29,17 @@ bitflags! {
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_PROCESS_ENCODING_UTF8
         const ENCODING_UTF8 = 0x0004;
+        /// Enable stdio (stdout, stderr, stdin) redirection.
+        ///
+        /// NOW-PROTO: NOW_EXEC_FLAG_PROCESS_IO_REDIRECTION
+        const IO_REDIRECTION = 0x1000;
+
         /// Execute the command with elevated privileges. The elevation mechanism is chosen by the
         /// host and advertised in `execCapset`; a host that cannot elevate fails the request
         /// instead of silently executing without elevation.
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_PROCESS_ELEVATED
-        const ELEVATED = 0x0008;
-
-        /// Enable stdio (stdout, stderr, stdin) redirection.
-        ///
-        /// NOW-PROTO: NOW_EXEC_FLAG_PROCESS_IO_REDIRECTION
-        const IO_REDIRECTION = 0x1000;
+        const ELEVATED = 0x4000;
 
         /// Detached mode: the process is started without tracking execution or sending back output.
         ///
