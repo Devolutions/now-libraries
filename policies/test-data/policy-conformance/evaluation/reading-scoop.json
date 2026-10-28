@@ -2155,7 +2155,7 @@
     {
       "name": "read-scoop-cluster-s-after-equals",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "An option name ends at the element's first '=', so the cluster '-k=s' names only 'k'. Control: read-scoop-cluster-containing-s ('-ks').",
+      "note": "Every character of a short cluster after its '-', including '=' and what follows it, is an option name, so '-k=s' includes 's' and the request is unreadable. Control: read-scoop-parameter-short-q-value-x.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -2175,13 +2175,9 @@
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -4999,7 +4995,7 @@
     {
       "name": "read-scoop-parameter-single-hyphen",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "'-' is not a short cluster, and its text after '-' is empty, so the request is readable.",
+      "note": "'-' is exactly '-', which Scoop reads as another app, so the request is unreadable. Control: read-scoop-parameter-short-q.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -5019,13 +5015,9 @@
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -5067,7 +5059,7 @@
     {
       "name": "read-scoop-parameter-short-q-value-s",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "'-q=s' names only 'q' before its '=', and its text after '-' contains no 'g' or 'a', so the request is readable.",
+      "note": "'-q=s' is an example the section gives: its option names are 'q', '=' and 's', so it would ask for SkipHashCheck and the request is unreadable. Control: read-scoop-parameter-short-q-value-x.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -5087,13 +5079,9 @@
         }
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [
-          {
-            "id": "allow-all"
-          }
-        ],
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -5195,7 +5183,7 @@
     {
       "name": "read-scoop-parameter-non-ascii-after-equals",
       "oracle": "contract policies/CONTRACT.policy.md §reading",
-      "note": "The option name ends at the first '=', and an element starting with '--' is not a short cluster, so U+212A after '=' leaves the request readable. Contrast read-scoop-parameter-non-ascii-option-name and read-scoop-parameter-short-non-ascii-after-equals.",
+      "note": "A long option's name ends at the first '=', and an element starting with '--' is not a short cluster, so U+212A after '=' leaves the request readable. Contrast read-scoop-parameter-non-ascii-option-name and read-scoop-parameter-short-non-ascii-after-equals.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -5229,7 +5217,7 @@
     {
       "name": "read-scoop-parameter-short-non-ascii-after-equals",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "A short cluster containing a code point above U+007F is unreadable even after '=': '-q=' followed by U+212A. Control: read-scoop-parameter-short-q-value-s.",
+      "note": "A short cluster that contains a code point above U+007F is unreadable, even after '=': '-q=' followed by U+212A. Control: read-scoop-parameter-short-q-value-x.",
       "request": {
         "Operation": "Install",
         "Manager": "Scoop",
@@ -6292,7 +6280,7 @@
     },
     {
       "name": "read-scoop-uninstall-source-selector-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
       "note": "The source of a Scoop Uninstall is unknown, so a Source selector naming Source.Name is unknown and the Allow rule fails closed. Control: read-scoop-install-source-selector-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
@@ -6408,7 +6396,7 @@
     },
     {
       "name": "read-scoop-uninstall-source-selector-deny",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
       "note": "The source of a Scoop Uninstall is unknown, so a Deny rule naming another source still applies. Control: read-scoop-install-source-selector-deny.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
@@ -6533,7 +6521,7 @@
     },
     {
       "name": "read-scoop-uninstall-any-source-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
       "note": "An AnySource selector matches the unknown source of a Scoop Uninstall.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
@@ -6645,6 +6633,134 @@
         "rules": [
           {
             "id": "allow-src"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-short-q-value-a",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-q=a' has the option names 'q', '=' and 'a', and a short cluster naming 'a' is unreadable. Control: read-scoop-parameter-short-q-value-x.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-q=a"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-short-q-value-g",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-q=g' has the option names 'q', '=' and 'g', and a short cluster naming 'g' is unreadable. Control: read-scoop-parameter-short-q-value-x.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-q=g"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-short-q-value-x",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'-q=x' has the option names 'q', '=' and 'x', none of which the section refuses, so the request is readable. Contrast read-scoop-parameter-short-q-value-s.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-q=x"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-parameter-long-value-s",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A long option's name ends at the first '=', so '--q=s' names '--q' only and the request is readable. Contrast read-scoop-parameter-short-q-value-s.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--q=s"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
           }
         ],
         "optIns": [],

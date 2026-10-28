@@ -10827,6 +10827,614 @@
         "optIns": [],
         "audited": false
       }
+    },
+    {
+      "name": "read-winget-install-source-selector-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a Winget Install is Source.Name, so a Source selector naming it matches. Contrast read-winget-uninstall-source-selector-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-src",
+            "Decision": "Allow",
+            "Select": {
+              "Sources": [
+                {
+                  "Manager": "Winget",
+                  "Source": "winget"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-src"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-install-source-selector-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a Winget Install is Source.Name, so a Deny rule naming another source does not apply. Contrast read-winget-uninstall-source-selector-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-src",
+            "Decision": "Deny",
+            "Select": {
+              "Sources": [
+                {
+                  "Manager": "Winget",
+                  "Source": "other"
+                }
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-uninstall-source-selector-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a Winget Uninstall is unknown, so a Source selector naming Source.Name is unknown and the Allow rule fails closed. Control: read-winget-install-source-selector-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-src",
+            "Decision": "Allow",
+            "Select": {
+              "Sources": [
+                {
+                  "Manager": "Winget",
+                  "Source": "winget"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-uninstall-source-selector-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a Winget Uninstall is unknown, so a Deny rule naming another source still applies. Control: read-winget-install-source-selector-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-src",
+            "Decision": "Deny",
+            "Select": {
+              "Sources": [
+                {
+                  "Manager": "Winget",
+                  "Source": "other"
+                }
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-src"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-uninstall-any-source-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "An AnySource selector matches the unknown source of a Winget Uninstall. Contrast read-winget-uninstall-source-selector-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-src",
+            "Decision": "Allow",
+            "Select": {
+              "Sources": [
+                {
+                  "Manager": "Winget",
+                  "AnySource": true
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-src"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
     }
   ]
 }

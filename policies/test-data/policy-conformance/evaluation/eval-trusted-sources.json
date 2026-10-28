@@ -214,7 +214,7 @@
     {
       "name": "eval-trusted-uninstall-from-source-only-rule-names",
       "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
-      "note": "A rule may name a source the list does not trust, which governs uninstalls from it.",
+      "note": "The list governs installs and updates only, so this Uninstall is not denied as untrusted; its source is unknown (§managers), so the Allow rule naming msstore is not applicable and the request falls to the default decision. Control: eval-untrusted-install-from-source-only-rule-names.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -240,9 +240,9 @@
         "Elevation": "NonElevated"
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [{"id": "allow-msstore"}],
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -314,6 +314,36 @@
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "winget"}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Update", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-trusted-uninstall-deny-from-source-only-rule-names",
+      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
+      "note": "A rule may name a source the list does not trust; a Deny rule naming it applies to an Uninstall, whose source is unknown (§managers), and the list does not apply to the Uninstall. Contrast eval-trusted-uninstall-from-source-only-rule-names.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
+        "Rules": [{"Id": "deny-msstore", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Winget", "Source": "msstore"}]}}, {"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-msstore"}],
+        "optIns": [],
+        "audited": false
+      }
     }
   ]
 }

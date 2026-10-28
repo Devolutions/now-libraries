@@ -510,7 +510,7 @@
     {
       "name": "eval-applicability-list-unknown-entry",
       "oracle": "contract policies/CONTRACT.policy.md §applicability",
-      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). The only selector is unknown, so the Sources condition is unknown and the Allow rule is not applicable.",
+      "note": "A Dotnet Uninstall has an unknown source, because no command shows which source the installed package came from (§managers). The only selector is unknown, so the Sources condition is unknown and the Allow rule is not applicable.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
@@ -529,7 +529,7 @@
     {
       "name": "eval-applicability-list-match-over-unknown",
       "oracle": "contract policies/CONTRACT.policy.md §applicability",
-      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). One selector is unknown and AnySource matches, so the Sources condition matches.",
+      "note": "A Dotnet Uninstall has an unknown source, because no command shows which source the installed package came from (§managers). One selector is unknown and AnySource matches, so the Sources condition matches.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
@@ -554,7 +554,7 @@
     {
       "name": "eval-applicability-deny-list-unknown",
       "oracle": "contract policies/CONTRACT.policy.md §applicability",
-      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). The Deny rule's Sources condition is unknown, so it applies.",
+      "note": "A Dotnet Uninstall has an unknown source, because no command shows which source the installed package came from (§managers). The Deny rule's Sources condition is unknown, so it applies.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
@@ -573,7 +573,7 @@
     {
       "name": "eval-applicability-other-manager-selector-unknown-source",
       "oracle": "contract policies/CONTRACT.policy.md §source-selector",
-      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). A Winget selector does not match a Dotnet request, even one whose source is unknown, so the Deny rule does not apply.",
+      "note": "A Dotnet Uninstall has an unknown source, because no command shows which source the installed package came from (§managers). A Winget selector does not match a Dotnet request, even one whose source is unknown, so the Deny rule does not apply.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
