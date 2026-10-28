@@ -260,7 +260,11 @@ The values of operations, scopes, architectures and elevations are those of [§r
 | `Architectures` | a non-empty list of architectures                                           | architecture is in the list         |
 | `Elevation`     | one elevation                                                               | elevation is that elevation         |
 
-`Packages` tests package names whatever the manager, so a rule meant for one manager's package should also name that manager in `Sources`, with `AnySource` when the rule is to apply to that manager's uninstalls, whose source is unknown ([§managers](#managers)).
+`Packages` tests package names whatever the manager, so a rule meant for one manager's package should also name that manager in `Sources`, with `AnySource` when the rule is to apply to that manager's uninstalls.
+A selection whose `Sources` has a selector with `Source`, in `Select` or in an `Except` entry, also has `Operations` without `Uninstall`, because the source of an uninstall is unknown ([§managers](#managers)).
+Such a selection without `Operations` is `MissingKey` at `Operations`, and one whose `Operations` lists `Uninstall` is `ConflictingKeys` at `Sources`.
+So a selection whose `Sources` names a source, even beside an `AnySource` selector, selects installs and updates only, and a rule says so by listing its operations rather than letting the unknown source of an uninstall silently decide whether the rule applies.
+When this rule and that of [§version-condition](#version-condition) both require `Operations` of a selection that lacks it, the selection has one error, `MissingKey` at `Operations`.
 
 <a id="version-condition"></a>
 ### Version condition
