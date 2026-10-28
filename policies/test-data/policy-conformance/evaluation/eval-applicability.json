@@ -510,18 +510,18 @@
     {
       "name": "eval-applicability-list-unknown-entry",
       "oracle": "contract policies/CONTRACT.policy.md §applicability",
-      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). The only selector is unknown, so the Sources condition is unknown and the Allow rule is not applicable.",
+      "note": "A PowerShell Update has an unknown source (§manager-powershell). The only selector is unknown, so the Sources condition is unknown and the Allow rule is not applicable.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
-        "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}],
-        "Rules": [{"Id": "allow-dotnet", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Dotnet", "Source": "nuget.org"}]}}]
+        "TrustedSources": [{"Manager": "PowerShell", "AnySource": true}],
+        "Rules": [{"Id": "allow-powershell", "Decision": "Allow", "Select": {"Operations": ["Update"], "Sources": [{"Manager": "PowerShell", "Source": "PSGallery"}]}}]
       },
       "request": {
-        "Operation": "Uninstall",
-        "Manager": "Dotnet",
-        "Source": {"Name": "nuget.org"},
-        "Package": {"Id": "Contoso.Tool"},
+        "Operation": "Update",
+        "Manager": "PowerShell",
+        "Source": {"Name": "PSGallery"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
         "Elevation": "NonElevated"
       },
       "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
@@ -529,24 +529,24 @@
     {
       "name": "eval-applicability-list-match-over-unknown",
       "oracle": "contract policies/CONTRACT.policy.md §applicability",
-      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). One selector is unknown and AnySource matches, so the Sources condition matches.",
+      "note": "A PowerShell Update has an unknown source (§manager-powershell). One selector is unknown and AnySource matches, so the Sources condition matches.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
-        "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}],
-        "Rules": [{"Id": "allow-dotnet", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Dotnet", "Source": "nuget.org"}, {"Manager": "Dotnet", "AnySource": true}]}}]
+        "TrustedSources": [{"Manager": "PowerShell", "AnySource": true}],
+        "Rules": [{"Id": "allow-powershell", "Decision": "Allow", "Select": {"Operations": ["Update"], "Sources": [{"Manager": "PowerShell", "Source": "PSGallery"}, {"Manager": "PowerShell", "AnySource": true}]}}]
       },
       "request": {
-        "Operation": "Uninstall",
-        "Manager": "Dotnet",
-        "Source": {"Name": "nuget.org"},
-        "Package": {"Id": "Contoso.Tool"},
+        "Operation": "Update",
+        "Manager": "PowerShell",
+        "Source": {"Name": "PSGallery"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
         "Elevation": "NonElevated"
       },
       "expect": {
         "outcome": "Allow",
         "check": "AllowRules",
-        "rules": [{"id": "allow-dotnet"}],
+        "rules": [{"id": "allow-powershell"}],
         "optIns": [],
         "audited": false
       }
@@ -554,26 +554,26 @@
     {
       "name": "eval-applicability-deny-list-unknown",
       "oracle": "contract policies/CONTRACT.policy.md §applicability",
-      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). The Deny rule's Sources condition is unknown, so it applies.",
+      "note": "A PowerShell Update has an unknown source (§manager-powershell). The Deny rule's Sources condition is unknown, so it applies.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
-        "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}],
-        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}, {"Id": "deny-dotnet", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Dotnet", "Source": "nuget.org"}]}}]
+        "TrustedSources": [{"Manager": "PowerShell", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}, {"Id": "deny-powershell", "Decision": "Deny", "Select": {"Operations": ["Update"], "Sources": [{"Manager": "PowerShell", "Source": "PSGallery"}]}}]
       },
       "request": {
-        "Operation": "Uninstall",
-        "Manager": "Dotnet",
-        "Source": {"Name": "nuget.org"},
-        "Package": {"Id": "Contoso.Tool"},
+        "Operation": "Update",
+        "Manager": "PowerShell",
+        "Source": {"Name": "PSGallery"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
         "Elevation": "NonElevated"
       },
-      "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-dotnet"}], "optIns": [], "audited": false}
+      "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-powershell"}], "optIns": [], "audited": false}
     },
     {
       "name": "eval-applicability-other-manager-selector-unknown-source",
       "oracle": "contract policies/CONTRACT.policy.md §source-selector",
-      "note": "A Dotnet Uninstall has an unknown source, because the broker does not pass it (§manager-dotnet). A Winget selector does not match a Dotnet request, even one whose source is unknown, so the Deny rule does not apply.",
+      "note": "A Dotnet Uninstall has an unknown source, because no command shows which source the installed package came from (§managers). A Winget selector does not match a Dotnet request, even one whose source is unknown, so the Deny rule does not apply.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
@@ -657,6 +657,54 @@
         "optIns": [],
         "audited": false
       }
+    },
+    {
+      "name": "eval-applicability-except-named-source-install",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "The Except entry names Install and the source 'winget', and matches the WinGet Install, so the Allow rule is excepted. Control: eval-applicability-except-named-source-uninstall.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-but-winget-install", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}]}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-applicability-except-named-source-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "The Except entry lists only Install, so it does not match the WinGet Uninstall, and the Allow rule applies. Contrast eval-applicability-except-named-source-install.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-but-winget-install", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}]}]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-but-winget-install"}], "optIns": [], "audited": false}
     }
   ]
 }

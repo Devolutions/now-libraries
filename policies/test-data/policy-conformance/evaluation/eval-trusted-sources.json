@@ -214,23 +214,12 @@
     {
       "name": "eval-trusted-uninstall-from-source-only-rule-names",
       "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
-      "note": "A rule may name a source the list does not trust, which governs uninstalls from it.",
+      "note": "The list governs installs and updates only, so this Uninstall is not denied as untrusted. A rule naming a source lists Install and Update (§selection), so it does not select the Uninstall, and the request falls to the default decision. Control: eval-untrusted-install-from-source-only-rule-names.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
         "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
-        "Rules": [
-          {
-            "Id": "allow-msstore",
-            "Decision": "Allow",
-            "Select": {"Sources": [{"Manager": "Winget", "Source": "msstore"}]}
-          }
-        ]
+        "Rules": [{"Id": "allow-msstore", "Decision": "Allow", "Select": {"Operations": ["Install", "Update"], "Sources": [{"Manager": "Winget", "Source": "msstore"}]}}]
       },
       "request": {
         "Operation": "Uninstall",
@@ -240,9 +229,9 @@
         "Elevation": "NonElevated"
       },
       "expect": {
-        "outcome": "Allow",
-        "check": "AllowRules",
-        "rules": [{"id": "allow-msstore"}],
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
         "optIns": [],
         "audited": false
       }
@@ -253,20 +242,9 @@
       "note": "For installs a rule only narrows the trusted sources. Control: eval-trusted-uninstall-from-source-only-rule-names.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
-        "Metadata": {
-          "Id": "conformance-eval",
-          "Publisher": "Conformance suite",
-          "Revision": 1,
-          "PublishedAt": "2026-01-01T00:00:00Z"
-        },
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
         "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
-        "Rules": [
-          {
-            "Id": "allow-msstore",
-            "Decision": "Allow",
-            "Select": {"Sources": [{"Manager": "Winget", "Source": "msstore"}]}
-          }
-        ]
+        "Rules": [{"Id": "allow-msstore", "Decision": "Allow", "Select": {"Operations": ["Install", "Update"], "Sources": [{"Manager": "Winget", "Source": "msstore"}]}}]
       },
       "request": {
         "Operation": "Install",

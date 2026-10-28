@@ -4,7 +4,7 @@
     {
       "name": "eval-carriage-powershell-install-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "PowerShell", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Install", "Manager": "PowerShell", "Source": {"Name": "PSGallery"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -140,7 +140,7 @@
     {
       "name": "eval-carriage-powershell-update-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "PowerShell", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Update", "Manager": "PowerShell", "Source": {"Name": "PSGallery"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -276,7 +276,7 @@
     {
       "name": "eval-carriage-powershell-uninstall-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "PowerShell", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Uninstall", "Manager": "PowerShell", "Source": {"Name": "PSGallery"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -412,7 +412,7 @@
     {
       "name": "eval-carriage-powershell7-install-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "PowerShell7", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Install", "Manager": "PowerShell7", "Source": {"Name": "PSGallery"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -548,7 +548,7 @@
     {
       "name": "eval-carriage-powershell7-update-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "PowerShell7", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Update", "Manager": "PowerShell7", "Source": {"Name": "PSGallery"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -684,7 +684,7 @@
     {
       "name": "eval-carriage-powershell7-uninstall-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "PowerShell7", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Uninstall", "Manager": "PowerShell7", "Source": {"Name": "PSGallery"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -820,7 +820,7 @@
     {
       "name": "eval-carriage-bun-install-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Bun", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Install", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "left-pad", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -876,7 +876,7 @@
     {
       "name": "eval-carriage-bun-update-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Bun", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Update", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "left-pad", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -932,7 +932,7 @@
     {
       "name": "eval-carriage-bun-uninstall-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Bun", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Uninstall", "Manager": "Bun", "Source": {"Name": "Bun"}, "Package": {"Id": "left-pad", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -988,7 +988,7 @@
     {
       "name": "eval-carriage-cargo-install-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Cargo", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Install", "Manager": "Cargo", "Source": {"Name": "crates.io"}, "Package": {"Id": "serde", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1060,7 +1060,7 @@
     {
       "name": "eval-carriage-cargo-update-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Cargo", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Update", "Manager": "Cargo", "Source": {"Name": "crates.io"}, "Package": {"Id": "serde", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1204,7 +1204,7 @@
     {
       "name": "eval-carriage-chocolatey-install-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Install", "Manager": "Chocolatey", "Source": {"Name": "chocolatey"}, "Package": {"Id": "contoso-tool", "Version": "1.2.3"}, "Elevation": "Elevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1292,7 +1292,7 @@
     {
       "name": "eval-carriage-chocolatey-update-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Update", "Manager": "Chocolatey", "Source": {"Name": "chocolatey"}, "Package": {"Id": "contoso-tool", "Version": "1.2.3"}, "Elevation": "Elevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1380,7 +1380,7 @@
     {
       "name": "eval-carriage-chocolatey-uninstall-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Chocolatey", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Uninstall", "Manager": "Chocolatey", "Source": {"Name": "chocolatey"}, "Package": {"Id": "contoso-tool", "Version": "1.2.3"}, "Elevation": "Elevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1452,7 +1452,7 @@
     {
       "name": "eval-carriage-dotnet-install-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Install", "Manager": "Dotnet", "Source": {"Name": "nuget.org"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1524,7 +1524,7 @@
     {
       "name": "eval-carriage-dotnet-update-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Update", "Manager": "Dotnet", "Source": {"Name": "nuget.org"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1596,7 +1596,7 @@
     {
       "name": "eval-carriage-dotnet-uninstall-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Uninstall", "Manager": "Dotnet", "Source": {"Name": "nuget.org"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1668,7 +1668,7 @@
     {
       "name": "eval-carriage-npm-install-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Npm", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Install", "Manager": "Npm", "Source": {"Name": "npm"}, "Package": {"Id": "left-pad", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1724,7 +1724,7 @@
     {
       "name": "eval-carriage-npm-update-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Npm", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Update", "Manager": "Npm", "Source": {"Name": "npm"}, "Package": {"Id": "left-pad", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1780,7 +1780,7 @@
     {
       "name": "eval-carriage-npm-uninstall-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Npm", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Uninstall", "Manager": "Npm", "Source": {"Name": "npm"}, "Package": {"Id": "left-pad", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1836,7 +1836,7 @@
     {
       "name": "eval-carriage-pip-install-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Pip", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Install", "Manager": "Pip", "Source": {"Name": "pip"}, "Package": {"Id": "requests", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
@@ -1892,7 +1892,7 @@
     {
       "name": "eval-carriage-pip-update-plain",
       "oracle": "contract policies/CONTRACT.policy.md §rules",
-      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 has three release components, so it is concrete under every manager (§missing-version).",
+      "note": "Plain request: control for the ungranted cases with this manager and operation. An Allow rule without Grants permits plain requests. Version 1.2.3 is concrete under every manager that can pin a version (§missing-version).",
       "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Pip", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]},
       "request": {"Operation": "Update", "Manager": "Pip", "Source": {"Name": "pip"}, "Package": {"Id": "requests", "Version": "1.2.3"}, "Elevation": "NonElevated"},
       "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}

@@ -3509,7 +3509,7 @@
     {
       "name": "read-version-pre-release-alpha",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-alpha' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-alpha' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -3642,7 +3642,7 @@
     {
       "name": "read-version-pre-release-alpha-numeric",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-alpha.1' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-alpha.1' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -3775,7 +3775,7 @@
     {
       "name": "read-version-pre-release-fewer-identifiers",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-beta' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-beta' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -3908,7 +3908,7 @@
     {
       "name": "read-version-pre-release-numeric-below-alphanumeric",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-1' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-1' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -4041,7 +4041,7 @@
     {
       "name": "read-version-pre-release-ascii-uppercase-first",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-Beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-Beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -4174,7 +4174,7 @@
     {
       "name": "read-version-pre-release-equal",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -4310,7 +4310,7 @@
     {
       "name": "read-version-pre-release-equal-build",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-beta.2+exp.sha.5114f85' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-beta.2+exp.sha.5114f85' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -4446,7 +4446,7 @@
     {
       "name": "read-version-pre-release-equal-v-prefix",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request 'v1.0.0-beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request 'v1.0.0-beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Dotnet reads a version with at least three release components as exactly that version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -4554,12 +4554,12 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Npm",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "npm"
+          "Name": "nuget.org"
         },
         "Package": {
-          "Id": "left-pad",
+          "Id": "dotnet-ef",
           "Version": "v1.0.0-beta.2"
         },
         "Elevation": "NonElevated"
@@ -4582,7 +4582,7 @@
     {
       "name": "read-version-pre-release-equal-fourth-zero",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0.0-beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0.0-beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Dotnet reads a version with at least three release components as exactly that version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -4690,12 +4690,12 @@
       },
       "request": {
         "Operation": "Install",
-        "Manager": "Npm",
+        "Manager": "Dotnet",
         "Source": {
-          "Name": "npm"
+          "Name": "nuget.org"
         },
         "Package": {
-          "Id": "left-pad",
+          "Id": "dotnet-ef",
           "Version": "1.0.0.0-beta.2"
         },
         "Elevation": "NonElevated"
@@ -4718,7 +4718,7 @@
     {
       "name": "read-version-pre-release-numeric-not-lexical",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-beta.11' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-beta.11' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -4851,7 +4851,7 @@
     {
       "name": "read-version-pre-release-numeric-beyond-64-bits",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-beta.18446744073709551616' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-beta.18446744073709551616' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -4984,7 +4984,7 @@
     {
       "name": "read-version-pre-release-more-identifiers",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-beta.2.0' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-beta.2.0' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -5117,7 +5117,7 @@
     {
       "name": "read-version-pre-release-alphanumeric-above-numeric",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-beta.a' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-beta.a' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -5250,7 +5250,7 @@
     {
       "name": "read-version-pre-release-rc",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0-rc.1' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0-rc.1' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -5383,7 +5383,7 @@
     {
       "name": "read-version-pre-release-release",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.0' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.0' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -5516,7 +5516,7 @@
     {
       "name": "read-version-pre-release-higher-release",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '1.0.1-alpha' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '1.0.1-alpha' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -5649,7 +5649,7 @@
     {
       "name": "read-version-pre-release-lower-release",
       "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
-      "note": "Request '0.9.9' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Npm needs three release components for a concrete version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "note": "Request '0.9.9' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -7205,7 +7205,7 @@
     {
       "name": "read-version-characters-tilde-npm",
       "oracle": "contract policies/CONTRACT.policy.md §missing-version",
-      "note": "Npm adds '~' to the version characters; '~1.2.3' is not a version, so Npm resolves it as a range and the version is missing.",
+      "note": "Npm adds '~' to the version characters; '~1.2.3' is not a Semantic Versioning 2.0.0 version, so Npm reads it as a range and the version is missing.",
       "request": {
         "Operation": "Install",
         "Manager": "Npm",

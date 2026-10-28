@@ -10201,6 +10201,1005 @@
         "optIns": [],
         "audited": false
       }
+    },
+    {
+      "name": "read-winget-non-ascii-option-name",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "'--\\u0131nteractive' has U+0131 LATIN SMALL LETTER DOTLESS I in its option name, a code point above U+007F, so the request is unreadable. Control: read-winget-ascii-unlisted-option.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--ınteractive"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-ascii-unlisted-option",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "'--xnteractive' has only ASCII in its option name and names no option in the WinGet table, so the request is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--xnteractive"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-non-ascii-after-equals",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The option name ends at the first '=', so U+00E9 after it is not in the option name and the request is readable. Contrast read-winget-non-ascii-option-name.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--locale=fr-é"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-non-ascii-not-option",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "'caf\\u00e9' does not start with '-', so it has no option name and the request is readable. Contrast read-winget-non-ascii-option-name.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "café"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-dependency-source",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--dependency-source' changes the source dependencies come from, so the request is unreadable. Control: read-winget-dependency-sources-not-listed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--dependency-source",
+              "msstore"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-dependency-source-any-case",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--DEPENDENCY-SOURCE' is '--dependency-source' ignoring ASCII case, so the request is unreadable. Control: read-winget-dependency-sources-not-listed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--DEPENDENCY-SOURCE",
+              "msstore"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-dependency-source-attached",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--dependency-source=msstore' takes its value after '=', so the request is unreadable. Control: read-winget-dependency-sources-not-listed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--dependency-source=msstore"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-dependency-source-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "The '--dependency-source' row names no operation and applies to an Uninstall, so the request is unreadable. Control: read-winget-dependency-sources-not-listed.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--dependency-source",
+              "msstore"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-dependency-sources-not-listed",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--dependency-sources' is a longer name, not '--dependency-source', so the request is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--dependency-sources=msstore"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-all-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--all' on an Update upgrades every installed package that has an update, so the request is unreadable. Control: read-winget-all-install.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--all"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-recurse-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--recurse' on an Update upgrades every installed package that has an update, so the request is unreadable. Control: read-winget-recurse-install.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--recurse"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-short-r-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'-r' on an Update upgrades every installed package that has an update, so the request is unreadable. Control: read-winget-short-r-install.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-r"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-cluster-r-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'-er' names '-e' and '-r', and '-r' is refused on an Update, so the request is unreadable. Control: read-winget-short-r-wrong-case-update.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-er"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-all-any-case-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--ALL' is '--all' ignoring ASCII case, so the request is unreadable. Control: read-winget-all-install.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--ALL"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-short-r-wrong-case-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'-R' is not '-r', because a short option matches with its exact characters, so the request is readable.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-R"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-all-install",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "The '--all' row applies only to an Update, so the request is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--all"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-recurse-install",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "The '--recurse' row applies only to an Update, so the request is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--recurse"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-short-r-install",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "The '-r' row applies only to an Update, so the request is readable.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-r"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-all-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "The '--all' row applies only to an Update, so the request is readable.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--all"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-install-source-selector-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a Winget Install is Source.Name, so a Source selector naming it matches.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-src",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Sources": [
+                {
+                  "Manager": "Winget",
+                  "Source": "winget"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-src"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-install-source-selector-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a Winget Install is Source.Name, so a Deny rule naming another source does not apply.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-src",
+            "Decision": "Deny",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Sources": [
+                {
+                  "Manager": "Winget",
+                  "Source": "other"
+                }
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-winget-uninstall-any-source-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "An AnySource selector matches the unknown source of a Winget Uninstall.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-src",
+            "Decision": "Allow",
+            "Select": {
+              "Sources": [
+                {
+                  "Manager": "Winget",
+                  "AnySource": true
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-src"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
     }
   ]
 }
