@@ -54,7 +54,7 @@ impl Version {
             for identifier in pre_release_text.split('.') {
                 let valid = !identifier.is_empty()
                     && identifier.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-')
-                    && !(is_numeric(identifier) && identifier.len() > 1 && identifier.starts_with('0'));
+                    && !(is_numeric(identifier) && 1 < identifier.len() && identifier.starts_with('0'));
                 if !valid {
                     return None;
                 }
