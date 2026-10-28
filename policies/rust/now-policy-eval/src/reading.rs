@@ -680,6 +680,9 @@ fn read_architecture(
 /// Returns the normalized form of `text` when it is a plain local path ([§install-location]).
 ///
 /// [§install-location]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#install-location
+// UNTESTED: this function reads only the text of the path and never asks the operating system what a drive or path refers to.
+// Both implementations must give the same result on any machine, and the suite cannot run on every drive layout and environment.
+// When changing it, check that no file-system, environment or operating-system API is called on this path.
 fn normalize_plain_local_path(text: &str) -> Option<String> {
     let mut chars = text.chars();
     let drive = chars.next().filter(char::is_ascii_alphabetic)?;
