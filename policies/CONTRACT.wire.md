@@ -256,7 +256,7 @@ This table gives the value of each key.
 | `UninstallPrevious`     | `{}`                                                                                    |
 | `NoUpgrade`             | `{}`                                                                                    |
 
-Every key is well-formed with every manager; which managers accept a key is defined by [CONTRACT.policy.md §reading](CONTRACT.policy.md#reading), and what a value does by that contract's [§opt-ins](CONTRACT.policy.md#opt-ins), [§install-location](CONTRACT.policy.md#install-location) and [§managers](CONTRACT.policy.md#managers), and by [§operations](#operations) here.
+Every key is well-formed with every manager; which managers accept a key is defined by [CONTRACT.policy.md §reading](CONTRACT.policy.md#reading), and what a value does by that contract's [§reading](CONTRACT.policy.md#reading), [§opt-ins](CONTRACT.policy.md#opt-ins), [§install-location](CONTRACT.policy.md#install-location) and [§managers](CONTRACT.policy.md#managers), and by [§operations](#operations) here.
 
 <a id="equal-requests"></a>
 ### Equal package requests
