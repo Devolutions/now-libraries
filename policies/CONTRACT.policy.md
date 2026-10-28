@@ -271,7 +271,7 @@ The values of operations, scopes, architectures and elevations are those of [§r
 | `Prerelease` | no       | `Exclude`                                                  |
 
 A version condition with none of these keys is `InvalidValue`, because it would constrain nothing.
-A `Minimum` or `Maximum` that is not a version, or a `Minimum` higher than the `Maximum`, is `InvalidValue`.
+A `Minimum` or `Maximum` that is not a version is `InvalidValue`, and a `Minimum` higher than the `Maximum` is `InvalidValue` at `Maximum`.
 A version satisfies the condition when it is not lower than `Minimum`, is not higher than `Maximum`, and, when `Prerelease` is present, is not a pre-release; an absent bound places no constraint.
 Without `Prerelease`, a pre-release satisfies the condition like any other version.
 The condition is unknown when the request's version is unknown or is not a version.
@@ -362,8 +362,8 @@ The evaluator's input is the request as the client sends it to the broker, with 
 | --------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `Operation`                                               | `Install`, `Update` or `Uninstall`                                     |
 | `Manager`                                                 | a manager identifier ([§managers](#managers))                          |
-| `Source.Name`, `Source.Url`                               | a name of 1 to 128 characters, and an optional URL                     |
-| `Package.Id`, `Package.Version`, `Package.Architecture`, `Package.Channel` | an identifier, and an optional version, architecture and channel |
+| `Source.Name`, `Source.Url`                               | a name of 1 to 128 bytes in UTF-8, and an optional URL                 |
+| `Package.Id`, `Package.Version`, `Package.Architecture`, `Package.Channel` | a non-empty identifier, and an optional version, architecture and channel |
 | `Options.Scope`                                           | an optional scope                                                      |
 | `Options.Interactive`, `Options.SkipHashCheck`, `Options.PreRelease`, `Options.UninstallPrevious`, `Options.NoUpgrade` | booleans |
 | `Options.CustomInstallLocation`                           | an optional string                                                     |
@@ -448,7 +448,10 @@ Unless a manager's reading below states otherwise:
 #### Winget
 
 The reading accepts custom parameters.
-A long name such as `--location` matches ignoring ASCII case, and a value is attached with `=` or is the next element.
+An element that starts with `--` names a long option by its text after `--` and before its first `=`, and a long option matches a name in the table ignoring ASCII case.
+Any other element that starts with `-` names a short option by its text after `-` and before its first `=`, and a short option matches a name in the table with its exact characters.
+An option the table lists with a value takes the text after its first `=` when the element has one, and otherwise the next element, which is then not read as an option.
+When no element follows, the option still has its effect without a value: `--location` gives no install location, so the request fails the install location check ([§install-location](#install-location)), and `--scope` or `--architecture` makes its property unknown.
 
 | Custom parameter                  | Effect                                                                     |
 | --------------------------------- | -------------------------------------------------------------------------- |
@@ -494,15 +497,18 @@ The broker cannot pin a version through Vcpkg.
 
 The only source name is `npm`, and a request with another source name is unreadable.
 Package names keep their case in canonical form.
-An identifier `name@version` names `name`, and an alias `alias@npm:target` or `alias@npm:target@version` names `alias` and `target`.
-A Git, URL or path specifier has an unknown package identity and an unknown source, because it fetches from outside the named source.
+A registry name is `name` or `@scope/name`, where `scope` and `name` are one or more ASCII letters, digits, `-`, `.`, `_` and `~` and do not start with `-`, `.` or `_`; a registry name is at most 214 bytes and does not end with `.tgz`, `.tar` or `.tar.gz` ignoring ASCII case.
+A registry name names itself.
+An identifier `name@version` names `name`, and an alias `alias@npm:target` or `alias@npm:target@version` names `alias` and `target`, when `name`, `alias` and `target` are registry names and each `version` is non-empty, contains none of `:`, `/`, `\` and `#`, does not start with `.`, and does not end with `.tgz`, `.tar` or `.tar.gz` ignoring ASCII case.
+Any other identifier, such as a Git, URL or path specifier, has an unknown package identity and an unknown source, because it may fetch from outside the named source.
 The architecture is `Neutral` when `Package.Architecture` is absent.
 
 <a id="manager-bun"></a>
 #### Bun
 
 The reading is that of [§manager-npm](#manager-npm), except for sources and channels.
-The source is the Bun default registry, and a request carrying `Source.Url` is readable only when that URL is the Bun default registry URL.
+The only source name is `Bun`, and a request with another source name is unreadable.
+A request carrying `Source.Url` is readable only when that URL, without its trailing `/` characters, equals `https://www.npmjs.com` ignoring ASCII case.
 A `Package.Channel` makes the request unreadable.
 
 <a id="manager-cargo"></a>
@@ -533,14 +539,15 @@ The scope is `Machine` when `Options.Scope` is absent, and a requested architect
 <a id="manager-powershell"></a>
 #### PowerShell and PowerShell7
 
-Source names are put in [Unicode normalization form C][uax15] and then compare ignoring case.
-A source name containing `*`, `?`, `[`, `]` or `` ` ``, or a default-ignorable code point, makes the request unreadable.
+Source names are put in [Unicode normalization form C][uax15], with the data of [Unicode 16.0.0][unicode16-ucd], and then compare ignoring case.
+A source name containing `*`, `?`, `[`, `]` or `` ` ``, or a code point with the `Default_Ignorable_Code_Point` property in `DerivedCoreProperties.txt` of [Unicode 16.0.0][unicode16-ucd], makes the request unreadable.
 The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
 <a id="install-location"></a>
 ### Install location check
 
 A request that uses `CustomInstallLocation` passes the install location check when it carries exactly one install location, from `Options.CustomInstallLocation` and its custom parameters together, and that location is a plain local path.
+Each field or option that sets a location counts as one, even when two of them set the same location.
 A plain local path is an ASCII letter followed by `:` and a separator, optionally followed by segments, where a separator is `\` or `/`.
 A segment is not `.` or `..`, does not start with a space, does not end with `.` or a space, and contains no control character (Unicode general category Cc, U+0000 to U+001F and U+007F to U+009F), and none of `: * ? " < > |`.
 The normalized location has an uppercase drive letter and uses `\` as its only separator, with repeated separators collapsed and a trailing separator dropped unless it follows the drive's `:`, so the normalized drive root is `C:\`; grant and forbid patterns match it.
@@ -698,3 +705,4 @@ A pattern `*` means a pattern made only of `*` characters.
 [semver]: https://semver.org/spec/v2.0.0.html
 [uax15]: https://www.unicode.org/reports/tr15/
 [unicode16]: https://www.unicode.org/Public/16.0.0/ucd/UnicodeData.txt
+[unicode16-ucd]: https://www.unicode.org/Public/16.0.0/ucd/
