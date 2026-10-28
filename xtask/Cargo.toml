@@ -11,7 +11,7 @@ test = false
 [dependencies]
 anyhow = "1"
 pico-args = "0.5"
-sha2 = "0.10"
+sha2 = "0.11"
 xshell = "0.2"
 
 [lints]
