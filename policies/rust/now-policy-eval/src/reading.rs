@@ -24,8 +24,8 @@ pub(crate) struct ReadRequest {
     ///
     /// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
     pub(crate) manifest_source: bool,
-    /// The package names in their manager's canonical form.
-    pub(crate) package_names: Vec<String>,
+    /// The package names in their manager's canonical form, or `None` when the manager's reading makes the package identity unknown.
+    pub(crate) package_names: Option<Vec<String>>,
     pub(crate) canonical_form: CanonicalForm,
     /// The concrete version.
     pub(crate) version: Option<String>,
@@ -79,7 +79,7 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
     }
 
     let parameters = match manager {
-        Manager::Winget => read_winget_parameters(custom_parameters)?,
+        Manager::Winget => read_winget_parameters(operation, custom_parameters)?,
         Manager::Scoop
             if custom_parameters
                 .iter()
@@ -94,10 +94,17 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
     let identity = read_identity(manager, &request.package.id);
     let canonical_form = canonical_form(manager, manifest_source);
 
-    let source = match (manager, operation) {
-        (Manager::Chocolatey | Manager::Dotnet, Operation::Uninstall) => None,
-        _ => Some(request.source.name.clone()),
-    };
+    // The command of an Uninstall is not limited to packages from the source, and an Update acts on the source the package was installed from under these managers.
+    let source_is_unknown = operation == Operation::Uninstall
+        || (operation == Operation::Update
+            && matches!(
+                manager,
+                Manager::PowerShell | Manager::PowerShell7 | Manager::Scoop | Manager::Vcpkg
+            ));
+    let source = (!source_is_unknown).then(|| request.source.name.clone());
+
+    // The commands that update or remove a Vcpkg port also change the ports that depend on it, whichever triplet they are built for.
+    let vcpkg_port_is_unspecific = manager == Manager::Vcpkg && operation != Operation::Install;
 
     let version = concrete_version(manager, request.package.version.as_deref(), &identity, &parameters);
     let missing_version = matches!(operation, Operation::Install | Operation::Update)
@@ -105,7 +112,13 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
         && version.is_none();
 
     let scope = read_scope(manager, operation, request.scope, &parameters);
-    let architecture = read_architecture(manager, request.package.architecture, &request.source.name, &parameters);
+    let architecture = read_architecture(
+        manager,
+        operation,
+        request.package.architecture,
+        &request.source.name,
+        &parameters,
+    );
 
     // A request that may act machine-wide without saying so in `Scope` is unreadable when it runs non-elevated.
     let scope_unknown_by_parameter = !parameters.scopes.is_empty() && scope.is_none();
@@ -125,7 +138,8 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
         manager,
         source,
         manifest_source,
-        package_names: identity.names.iter().map(|name| canonical_form.apply(name)).collect(),
+        package_names: (!vcpkg_port_is_unspecific)
+            .then(|| identity.names.iter().map(|name| canonical_form.apply(name)).collect()),
         canonical_form,
         version,
         missing_version,
@@ -199,6 +213,9 @@ fn command_is_built(request: &Request, used: OptInSet, custom_parameters: &[Stri
     let common = !unpassable(source)
         && !unpassable(id)
         && !custom_parameters.iter().any(|parameter| unpassable(parameter))
+        && !custom_parameters
+            .iter()
+            .any(|parameter| has_non_ascii_option_name(parameter))
         && !installer_arguments.is_some_and(unpassable)
         && source_distinct
         && (matches!(manager, Manager::Winget | Manager::Scoop) || !used.contains(OptIn::CustomParameters))
@@ -230,7 +247,7 @@ fn command_is_built(request: &Request, used: OptInSet, custom_parameters: &[Stri
                 && !(request.operation == Operation::Install && architecture == Some(Architecture::Neutral))
                 && !id.contains(['[', ']'])
                 && !id.starts_with('-')
-                && scoop_sources_are_readable(source, id)
+                && scoop_sources_are_readable(request.operation, source, id)
         }
         Manager::Vcpkg => {
             !elevated
@@ -414,8 +431,10 @@ enum WingetOption {
     /// Would ask for `UninstallPrevious`.
     UninstallPrevious,
     Version,
-    /// Would change the source.
+    /// Would change the source, or the source of the package's dependencies.
     Source,
+    /// Upgrades every installed package that has an update when the operation is an Update.
+    UpgradeAll,
 }
 
 impl WingetOption {
@@ -434,6 +453,9 @@ impl WingetOption {
             ("version", WingetOption::Version),
             ("source", WingetOption::Source),
             ("manifest", WingetOption::Source),
+            ("dependency-source", WingetOption::Source),
+            ("all", WingetOption::UpgradeAll),
+            ("recurse", WingetOption::UpgradeAll),
         ];
 
         LONG.iter()
@@ -448,6 +470,7 @@ impl WingetOption {
             'i' => Some(Self::Interactive),
             'v' => Some(Self::Version),
             's' | 'm' => Some(Self::Source),
+            'r' => Some(Self::UpgradeAll),
             _ => None,
         }
     }
@@ -460,10 +483,10 @@ impl WingetOption {
     }
 }
 
-/// Reads WinGet custom parameters, or fails when one would ask for an opt-in or change the source ([§manager-winget]).
+/// Reads WinGet custom parameters, or fails when one would ask for an opt-in, change the source or upgrade every package ([§manager-winget]).
 ///
 /// [§manager-winget]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-winget
-fn read_winget_parameters(parameters: &[String]) -> Result<ParameterEffects, Unreadable> {
+fn read_winget_parameters(operation: Operation, parameters: &[String]) -> Result<ParameterEffects, Unreadable> {
     let mut effects = ParameterEffects::default();
     let mut idx = 0;
 
@@ -511,6 +534,8 @@ fn read_winget_parameters(parameters: &[String]) -> Result<ParameterEffects, Unr
                 | WingetOption::NoUpgrade
                 | WingetOption::UninstallPrevious
                 | WingetOption::Source => return Err(Unreadable),
+                WingetOption::UpgradeAll if operation == Operation::Update => return Err(Unreadable),
+                WingetOption::UpgradeAll => {}
                 WingetOption::Scope => effects.scopes.push(value.and_then(|value| {
                     Scope::ALL
                         .iter()
@@ -535,20 +560,34 @@ fn read_winget_parameters(parameters: &[String]) -> Result<ParameterEffects, Unr
 ///
 /// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
 fn scoop_parameter_is_refused(parameter: &str) -> bool {
-    // An option name ends at the element's first `=` and matches ignoring ASCII case.
-    let name = parameter.split('=').next().unwrap_or_default().to_ascii_lowercase();
-    let short_cluster = name
-        .strip_prefix('-')
-        .and_then(|rest| rest.chars().next())
-        .is_some_and(|second| second != '-');
-    let single_hyphen = parameter.starts_with('-') && !parameter.starts_with("--");
+    if matches!(parameter, "-" | "--" | "--%") || !parameter.starts_with('-') || parameter.chars().any(is_white_space) {
+        return true;
+    }
 
-    parameter == "--"
-        || !parameter.starts_with('-')
-        || parameter.chars().any(is_white_space)
-        || matches!(name.as_str(), "--global" | "--all" | "--arch" | "--skip-hash-check")
-        || (single_hyphen && parameter.to_ascii_lowercase().contains(['g', 'a']))
-        || (short_cluster && name.contains('s'))
+    match parameter.strip_prefix("--") {
+        // A long option's name ends at the element's first `=` and matches ignoring ASCII case.
+        Some(long) => {
+            let name = long.split('=').next().unwrap_or_default().to_ascii_lowercase();
+            matches!(name.as_str(), "global" | "all" | "arch" | "skip-hash-check")
+        }
+        // Every character of a short cluster after its `-`, including `=` and what follows, names an option.
+        None => {
+            let names = parameter.to_ascii_lowercase();
+            !parameter.is_ascii() || names.contains(['g', 'a', 's'])
+        }
+    }
+}
+
+/// Returns whether a custom parameter is an option whose name has a code point above U+007F ([§reading]).
+///
+/// A manager that compares option names ignoring case may read such a name as an ASCII option.
+///
+/// [§reading]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#reading
+fn has_non_ascii_option_name(parameter: &str) -> bool {
+    parameter.strip_prefix('-').is_some_and(|rest| {
+        let name = rest.trim_start_matches('-').split('=').next().unwrap_or_default();
+        !name.is_ascii()
+    })
 }
 
 /// Returns whether `text` is a Scoop manifest URL or local path ([§manager-scoop]).
@@ -569,10 +608,10 @@ fn starts_with_ignore_ascii_case(text: &str, prefix: &str) -> bool {
         .is_some_and(|head| head.eq_ignore_ascii_case(prefix))
 }
 
-/// Returns whether the request's source name and identifier name exactly one Scoop manifest or app ([§manager-scoop]).
+/// Returns whether the request's source name and identifier name exactly one Scoop manifest to install or one app ([§manager-scoop]).
 ///
 /// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
-fn scoop_sources_are_readable(source: &str, id: &str) -> bool {
+fn scoop_sources_are_readable(operation: Operation, source: &str, id: &str) -> bool {
     let is_word = |text: &str| {
         !text.is_empty()
             && text
@@ -581,7 +620,11 @@ fn scoop_sources_are_readable(source: &str, id: &str) -> bool {
     };
 
     let names_one_entry = if is_scoop_manifest(source) || is_scoop_manifest(id) {
-        id == source && (starts_with_ignore_ascii_case(id, "http://") || starts_with_ignore_ascii_case(id, "https://"))
+        // Scoop acts on an installed app it derives from the URL of an Update or Uninstall, which the request does not name, and may split the text after an `@` off the URL as a version.
+        operation == Operation::Install
+            && id == source
+            && (starts_with_ignore_ascii_case(id, "http://") || starts_with_ignore_ascii_case(id, "https://"))
+            && !id.contains('@')
     } else {
         is_word(source) && is_word(id) && !id.to_ascii_lowercase().ends_with(".json")
     };
@@ -616,8 +659,8 @@ fn read_identity(manager: Manager, id: &str) -> Identity {
                 .collect(),
             selects_version: false,
         },
-        // A bucket's app names contain no `@`, and a manifest URL or path is fetched as given.
-        Manager::Bun | Manager::Scoop => Identity {
+        // WinGet and PowerShell receive the identifier whole, a bucket's app names contain no `@`, and a manifest URL or path is fetched as given.
+        Manager::Bun | Manager::Scoop | Manager::Winget | Manager::PowerShell | Manager::PowerShell7 => Identity {
             names: vec![id.to_owned()],
             selects_version: false,
         },
@@ -732,7 +775,7 @@ pub(crate) enum CanonicalForm {
 
 fn canonical_form(manager: Manager, manifest_source: bool) -> CanonicalForm {
     match manager {
-        Manager::Npm | Manager::Bun => CanonicalForm::Exact,
+        Manager::Npm | Manager::Bun | Manager::Winget => CanonicalForm::Exact,
         Manager::Scoop if manifest_source => CanonicalForm::Exact,
         Manager::Cargo => CanonicalForm::Cargo,
         Manager::Pip => CanonicalForm::Pip,
@@ -782,10 +825,12 @@ fn concrete_version(
 
     let resolved_exactly = match manager {
         Manager::Scoop | Manager::Vcpkg => false,
-        Manager::Npm | Manager::Bun | Manager::Cargo | Manager::Dotnet => {
-            Version::parse(version).is_some_and(|version| 3 <= version.release_count())
-        }
+        Manager::Npm | Manager::Bun => is_semantic_version(version),
+        Manager::Cargo | Manager::Dotnet => Version::parse(version).is_some_and(|version| 3 <= version.release_count()),
         Manager::PowerShell7 => Version::parse(version).is_some(),
+        Manager::Pip => version
+            .split('.')
+            .all(|component| !component.is_empty() && component.bytes().all(|b| b.is_ascii_digit())),
         _ => true,
     };
 
@@ -816,6 +861,7 @@ fn read_scope(
 /// Returns the architecture, or `None` when it is unknown.
 fn read_architecture(
     manager: Manager,
+    operation: Operation,
     requested: Option<Architecture>,
     source_name: &str,
     parameters: &ParameterEffects,
@@ -831,6 +877,7 @@ fn read_architecture(
                 _ => None,
             }
         }
+        Manager::Vcpkg if operation != Operation::Install => None,
         Manager::Vcpkg => {
             let triplet = source_name.to_ascii_lowercase();
             [

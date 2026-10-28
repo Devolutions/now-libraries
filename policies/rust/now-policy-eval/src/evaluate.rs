@@ -329,7 +329,9 @@ fn selector_matches(selector: &SourceSelector, request: &ReadRequest) -> Match {
 ///
 /// [§package-identity]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#package-identity
 fn packages_match(patterns: &[String], request: &ReadRequest) -> Match {
-    let names = &request.package_names;
+    let Some(names) = &request.package_names else {
+        return Match::Unknown;
+    };
     let patterns: Vec<String> = patterns
         .iter()
         .map(|pattern| map_pattern_segments(pattern, |segment| request.canonical_form.apply(segment)))
