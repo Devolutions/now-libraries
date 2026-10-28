@@ -13,12 +13,26 @@ use std::{fs, io};
 
 use sha2::{Digest as _, Sha256};
 
-type Result<T> = core::result::Result<T, Box<dyn Error>>;
-
 const UCD_BASE_URL: &str = "https://www.unicode.org/Public/16.0.0/ucd/";
-const UNICODE_DATA: &str = "UnicodeData.txt";
-const PROP_LIST: &str = "PropList.txt";
-const DERIVED_CORE_PROPERTIES: &str = "DerivedCoreProperties.txt";
+
+/// A published file and the SHA-256 it must have, so that a stale or altered cache cannot change the tables unnoticed.
+struct PinnedFile {
+    name: &'static str,
+    sha256: &'static str,
+}
+
+const UNICODE_DATA: PinnedFile = PinnedFile {
+    name: "UnicodeData.txt",
+    sha256: "ff58e5823bd095166564a006e47d111130813dcf8bf234ef79fa51a870edb48f",
+};
+const PROP_LIST: PinnedFile = PinnedFile {
+    name: "PropList.txt",
+    sha256: "53d614508e2a0b2305a8aa21cd60d993de9326cdf65993660dfcce4503548583",
+};
+const DERIVED_CORE_PROPERTIES: PinnedFile = PinnedFile {
+    name: "DerivedCoreProperties.txt",
+    sha256: "39d35161f2954497f69e08bdb9e701493f476a3d30222de20028feda36c1dabd",
+};
 
 struct Input {
     url: String,
@@ -32,7 +46,7 @@ struct Tables {
     default_ignorable: Vec<(u32, u32)>,
 }
 
-fn main() -> Result<()> {
+fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let [download_dir, rust_output] = args.as_slice() else {
         return Err("usage: unicode-tables <download-dir> <rust-output>".into());
@@ -42,9 +56,9 @@ fn main() -> Result<()> {
 
     fs::create_dir_all(download_dir)?;
 
-    let unicode_data = fetch(download_dir, UNICODE_DATA)?;
-    let prop_list = fetch(download_dir, PROP_LIST)?;
-    let derived_core_properties = fetch(download_dir, DERIVED_CORE_PROPERTIES)?;
+    let unicode_data = fetch(download_dir, &UNICODE_DATA)?;
+    let prop_list = fetch(download_dir, &PROP_LIST)?;
+    let derived_core_properties = fetch(download_dir, &DERIVED_CORE_PROPERTIES)?;
 
     let tables = Tables {
         simple_uppercase: parse_simple_uppercase(&unicode_data.text)?,
@@ -60,7 +74,8 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn fetch(download_dir: &Path, file_name: &str) -> Result<Input> {
+fn fetch(download_dir: &Path, file: &PinnedFile) -> Result<Input, Box<dyn Error>> {
+    let file_name = file.name;
     let url = format!("{UCD_BASE_URL}{file_name}");
     let path = download_dir.join(file_name);
 
@@ -81,13 +96,22 @@ fn fetch(download_dir: &Path, file_name: &str) -> Result<Input> {
         let _ = write!(hex, "{byte:02x}");
         hex
     });
+    if sha256 != file.sha256 {
+        return Err(format!(
+            "{} has SHA-256 {sha256} but Unicode 16.0.0 requires {}; delete it to download it again",
+            path.display(),
+            file.sha256,
+        )
+        .into());
+    }
+
     let text = String::from_utf8(bytes).map_err(|_| format!("{file_name} is not UTF-8"))?;
 
     Ok(Input { url, sha256, text })
 }
 
 /// Reads the simple uppercase mapping, field 12 of `UnicodeData.txt`, as sorted (code point, uppercase) pairs.
-fn parse_simple_uppercase(text: &str) -> Result<Vec<(u32, u32)>> {
+fn parse_simple_uppercase(text: &str) -> Result<Vec<(u32, u32)>, Box<dyn Error>> {
     let mut pairs = Vec::new();
 
     for line in text.lines().filter(|line| !line.is_empty()) {
@@ -110,7 +134,7 @@ fn parse_simple_uppercase(text: &str) -> Result<Vec<(u32, u32)>> {
 }
 
 /// Reads the code points that have `property` as sorted, merged, inclusive ranges.
-fn parse_property(text: &str, property: &str) -> Result<Vec<(u32, u32)>> {
+fn parse_property(text: &str, property: &str) -> Result<Vec<(u32, u32)>, Box<dyn Error>> {
     let mut ranges = Vec::new();
 
     for line in text.lines() {
@@ -151,7 +175,7 @@ fn parse_property(text: &str, property: &str) -> Result<Vec<(u32, u32)>> {
     Ok(merged)
 }
 
-fn parse_code_point(text: &str) -> Result<u32> {
+fn parse_code_point(text: &str) -> Result<u32, Box<dyn Error>> {
     u32::from_str_radix(text.trim(), 16).map_err(|_| format!("invalid code point: {text}").into())
 }
 
