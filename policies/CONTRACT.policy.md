@@ -111,7 +111,7 @@ These rules apply throughout this contract and are not repeated.
 
 Two strings are equal ignoring case when they have the same code points after each code point is replaced by its simple uppercase mapping in `UnicodeData.txt` of [Unicode 16.0.0][unicode16]; no other normalization applies.
 Implementations use that table rather than their platform's casing, so they agree.
-Custom parameters, install locations, source names and the patterns that match them compare ignoring case.
+Custom parameters, install locations, source names and the patterns that match them compare ignoring case, except a Scoop manifest source ([§manager-scoop](#manager-scoop)).
 Package ids compare in their manager's canonical form ([§package-identity](#package-identity)).
 Rule ids, and values from a closed set this contract defines, such as `Allow` or `Winget`, match only with their exact characters.
 
@@ -217,7 +217,7 @@ A selector with both `Source` and `AnySource` is `ConflictingKeys` at `AnySource
 `AnySource` with the value `false` is `InvalidValue`, because such a selector would name no source.
 A selector does not match a request through another manager.
 For a request through its manager, a selector with `AnySource` matches whatever the source, including an unknown one.
-For a request through its manager, a selector with `Source` matches a known source equal to it ignoring case ([§text-comparison](#text-comparison)), does not match a different known source, and is unknown for an unknown source.
+For a request through its manager, a selector with `Source` matches a known source equal to it ignoring case ([§text-comparison](#text-comparison)), does not match a different known source, and is unknown for an unknown source; a Scoop manifest source compares as [§manager-scoop](#manager-scoop) states.
 
 <a id="rules"></a>
 ### Rules
@@ -435,7 +435,7 @@ Unless a manager's reading below states otherwise:
 - the scope is `Scope`, and `User` when it is absent;
 - the architecture is `Package.Architecture`, and unknown when it is absent.
 
-A reading below that names the only source name of its manager compares `Source.Name` with it ignoring ASCII case.
+A reading below that names the only source name of its manager, or of some of its operations, compares `Source.Name` with it ignoring ASCII case.
 A plain source name starts with an ASCII letter or digit and contains only ASCII letters, digits, `.`, `-`, `_` and spaces.
 The batch characters are `"`, `%`, `!`, `^`, `&`, `|`, `<` and `>`, which the broker cannot pass to a manager that it runs through a batch file.
 
@@ -483,7 +483,8 @@ The broker builds no Scoop command, so a request is unreadable, when:
 - it has `OptIns.Interactive`, `OptIns.CustomInstallLocation`, `OptIns.NoUpgrade` or `OptIns.UninstallPrevious`;
 - it is an Uninstall with `OptIns.SkipHashCheck`;
 - it is an Update or an Uninstall with `Package.Architecture`, or an Install whose `Package.Architecture` is `Neutral`;
-- its `Package.Id` contains `[` or `]`, or starts with `-`.
+- its `Package.Id` contains `[` or `]`, or starts with `-`;
+- its `Source.Name` or `Package.Id` ends with `.`, because Windows drops trailing `.` from a path segment, so the name would reach the same bucket or app directory as the name without them.
 
 The reading accepts custom parameters.
 A short cluster is an element whose first character is `-` and whose second character exists and is not `-`.
@@ -502,10 +503,9 @@ So `--globalx`, `-`, `-q` and `-q=s` make no request unreadable, while `-qa`, `-
 A Scoop source is a bucket, named by the bucket's name, or a manifest URL or local path.
 A source name or identifier is a manifest URL or local path when it contains `...`, `:\` or `\\`, or when, after its leading `/` characters are removed, it starts with `http://`, `https://`, `ftp://` or `ftps://` ignoring ASCII case.
 A manifest URL or local path is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
-A request whose `Source.Name` or `Package.Id` is a manifest URL or local path is unreadable unless the two are equal with exact characters, because with a manifest source the broker passes `Package.Id` alone, and an identifier that is a manifest would fetch from outside the named source.
-A local or UNC path, with `:\` or `\\`, is never readable, because `Package.Id` cannot contain `\` and so cannot equal it.
+A request whose `Source.Name` or `Package.Id` is a manifest URL or local path is readable only when `Package.Id` equals `Source.Name` with exact characters and starts with `http://` or `https://` ignoring ASCII case, because only then does the broker pass `Package.Id` alone and Scoop fetch exactly that URL; otherwise the broker passes `Source.Name`, `/` and `Package.Id`, or Scoop looks the identifier up in every bucket or on a relative path.
+A `Source` selector matches a Scoop source that is a manifest URL or local path when the two are equal with exact characters, is unknown for it when they are equal only ignoring case ([§text-comparison](#text-comparison)), and does not match it otherwise, so a Deny rule that names the URL in another case still applies and an Allow rule fails closed.
 Any other source name is a bucket name, and a request through it is unreadable unless the bucket name and `Package.Id` are each one or more ASCII letters, digits, `-`, `_` and `.`, and `Package.Id` does not end with `.json` ignoring ASCII case, so that `<bucket>/<id>` names exactly one app in that bucket: no version after `@`, no path inside the bucket and no local manifest file.
-Such a request is also unreadable when its bucket name or `Package.Id` is made only of `.` characters, because that would name a directory rather than a bucket or an app.
 The broker cannot pin a version through Scoop.
 
 <a id="manager-vcpkg"></a>
@@ -591,7 +591,7 @@ The architecture is `Neutral` when `Package.Architecture` is absent, and the sco
 <a id="manager-dotnet"></a>
 #### Dotnet
 
-The only source name of an Install or Update is `nuget.org`, compared ignoring ASCII case, and an Install or Update with another source name is unreadable.
+The only source name of an Install or Update is `nuget.org`, and an Install or Update with another source name is unreadable.
 The source of an Uninstall is unknown, because the broker does not pass it, so a `Source` selector is unknown for it and an `AnySource` selector matches it ([§source-selector](#source-selector)).
 The broker builds no Dotnet command, so a request is unreadable, when:
 
