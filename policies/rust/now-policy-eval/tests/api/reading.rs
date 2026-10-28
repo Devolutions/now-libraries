@@ -1,8 +1,8 @@
 //! Reading requests: unreadable requests, properties, opt-ins, install locations and missing versions.
 
 use now_policy_eval::{
-    Architecture, Check, Elevation, InstallerArguments, InstallerArgumentsMode, KillBeforeOperation, PrePostCommands,
-    Request, Scope,
+    Architecture, Check, CustomParameters, Elevation, InstallerArguments, InstallerArgumentsMode, KillBeforeOperation,
+    PrePostCommands, Request, Scope,
 };
 use rstest::rstest;
 
@@ -90,7 +90,7 @@ fn unreadable_requests_by_characters(#[case] subject: Request) {
 #[case::variation_selector("nuget\u{FE0F}")]
 #[case::tag_character("nu\u{E0041}get")]
 fn source_names_that_look_like_another_are_unreadable(#[case] name: &str) {
-    // The source of a Dotnet Uninstall is not passed to the manager, so only the generic rule applies to its name.
+    // Dotnet's reading has no source rule for an Uninstall, so only the generic rule applies to its name.
     assert_eq!(
         check_of(GRANT_ALL, &request("Uninstall", "Dotnet", name, "dotnet-ef")),
         Check::UnreadableRequest
@@ -127,10 +127,9 @@ fn input_bounds_at_their_maximum_are_readable() {
     let mut request = with_location(winget_install(), &format!("C:\\{}", "a".repeat(2045)));
     request.source.name = "s".repeat(128);
     request.package.version = Some("1".repeat(128));
-    request.opt_ins.custom_parameters = with_parameters(winget_install(), &["x"]).opt_ins.custom_parameters;
-    if let Some(parameters) = request.opt_ins.custom_parameters.as_mut() {
-        parameters.values = vec!["p".repeat(512); 64];
-    }
+    request.opt_ins.custom_parameters = Some(CustomParameters {
+        values: vec!["p".repeat(512); 64],
+    });
     request.opt_ins.installer_arguments = Some(installer_arguments(&"a".repeat(2048)));
     request.opt_ins.pre_post_commands = Some(PrePostCommands {
         pre: Some("c".repeat(2048)),

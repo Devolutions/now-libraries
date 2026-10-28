@@ -93,9 +93,10 @@ closed_set! {
 }
 
 closed_set! {
-    /// How the installer arguments of a request combine with the installer's own ([§opt-ins]).
+    /// Whether WinGet receives the installer arguments of a request through `--custom` (`Append`) or `--override` (`Replace`) ([§opt-ins], [§manager-winget]).
     ///
     /// [§opt-ins]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.wire.md#opt-ins
+    /// [§manager-winget]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-winget
     pub enum InstallerArgumentsMode { Append, Replace }
 }
 

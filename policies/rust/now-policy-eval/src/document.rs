@@ -619,7 +619,7 @@ impl Validator {
             ..Selection::default()
         };
 
-        // A condition on a property that an uninstall leaves unknown requires `Operations` without `Uninstall`.
+        // A named source and a version condition each require `Operations` without `Uninstall`, because an uninstall has no source or version a policy can check.
         // Each entry is the pointer at which a conflict with `Uninstall` is reported.
         let mut without_uninstall = Vec::new();
 

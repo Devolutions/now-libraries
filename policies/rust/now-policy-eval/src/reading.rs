@@ -98,7 +98,7 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
     // An Update is read with an unknown source under PowerShell, PowerShell7, Scoop and Vcpkg, as each manager's reading states.
     // UNTESTED: the source of an Uninstall is unknown.
     // A valid policy names a source only in a selection without `Uninstall` and never consults `TrustedSources` for an uninstall, so no evaluation shows this value.
-    // Keep it unknown when changing this code: a known source would make a later rule that reaches uninstalls through a source fail open.
+    // Keep it unknown when changing this code: a known source would let a rule that names a source match an uninstall if validation ever allowed one.
     let source_is_unknown = operation == Operation::Uninstall
         || (operation == Operation::Update
             && matches!(
