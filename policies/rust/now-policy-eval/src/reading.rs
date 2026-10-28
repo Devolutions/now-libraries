@@ -61,7 +61,7 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
     let requested_scope = optional(request.options.scope.as_deref(), Scope::from_name)?;
 
     check_input_bounds(request)?;
-    check_manager_rules(request, manager)?;
+    check_manager_rules(request, operation, manager)?;
 
     let options = &request.options;
     let parameters = match manager {
@@ -219,7 +219,7 @@ fn check_input_bounds(request: &Request) -> Result<(), Unreadable> {
 /// Checks the rules of [§managers] and each manager's reading that make a request unreadable.
 ///
 /// [§managers]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#managers
-fn check_manager_rules(request: &Request, manager: Manager) -> Result<(), Unreadable> {
+fn check_manager_rules(request: &Request, operation: Operation, manager: Manager) -> Result<(), Unreadable> {
     let source_name = request.source.name.as_str();
     let has_channel = request.package.channel.is_some();
 
@@ -242,7 +242,13 @@ fn check_manager_rules(request: &Request, manager: Manager) -> Result<(), Unread
 
     let source_url_allowed = match (&request.source.url, manager) {
         (None, _) => true,
+        (Some(_), Manager::Winget | Manager::Scoop) => true,
         (Some(url), Manager::Bun) => url.trim_end_matches('/').eq_ignore_ascii_case("https://www.npmjs.com"),
+        (Some(url), Manager::Cargo) => url.trim_end_matches('/').eq_ignore_ascii_case("https://index.crates.io"),
+        (Some(_), Manager::Dotnet) if operation == Operation::Uninstall => true,
+        (Some(url), Manager::Dotnet) => {
+            url.eq_ignore_ascii_case("https://api.nuget.org/v3/index.json") || url.chars().all(is_white_space)
+        }
         (Some(_), _) => false,
     };
 
@@ -435,16 +441,18 @@ fn read_scoop_parameters(parameters: &[String]) -> ParameterEffects {
     let mut effects = ParameterEffects::default();
 
     for element in parameters {
-        let short_cluster = element
+        // An option name ends at the element's first `=` and matches ignoring ASCII case.
+        let name = element.split('=').next().unwrap_or_default().to_ascii_lowercase();
+        let short_cluster = name
             .strip_prefix('-')
             .and_then(|rest| rest.chars().next())
             .is_some_and(|second| second != '-');
 
-        if element == "--skip-hash-check" || (short_cluster && element.contains('s')) {
+        if name == "--skip-hash-check" || (short_cluster && name.contains('s')) {
             effects.opt_ins.insert(OptIn::SkipHashCheck);
         }
 
-        if element == "--arch" || (short_cluster && element.contains('a')) {
+        if name == "--arch" || (short_cluster && name.contains('a')) {
             effects.architecture_unknown = true;
         }
 

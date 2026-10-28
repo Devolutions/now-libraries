@@ -71,8 +71,6 @@ const GRANT_ALL: &str = r#"[{"Id":"all","Decision":"Allow","Select":{},"Grants":
 #[case::custom_parameter_with_nul(|r: &mut Request| r.options.custom_parameters = vec!["/a\0b".to_owned()])]
 #[case::source_name_with_nul(|r: &mut Request| r.source.name = "win\0get".to_owned())]
 #[case::source_name_with_line_feed(|r: &mut Request| r.source.name = "win\nget".to_owned())]
-#[case::source_url_through_winget(|r: &mut Request| r.source.url = Some("https://cdn.winget.microsoft.com/cache".to_owned()))]
-#[case::empty_source_url_through_winget(|r: &mut Request| r.source.url = Some(String::new()))]
 fn unreadable_winget_requests(#[case] change: fn(&mut Request)) {
     assert_eq!(
         check_of(GRANT_ALL, &with(winget_install(), change)),
@@ -157,6 +155,9 @@ fn input_bounds_at_their_maximum_are_readable() {
 #[case::npm_source_with_non_ascii_case(install("Npm", "\u{1E3F}pm", "react", "1.0.0"))]
 #[case::source_url_through_npm(with(install("Npm", "npm", "react", "1.0.0"), |r| r.source.url = Some("https://www.npmjs.com".to_owned())))]
 #[case::other_source_url_through_bun(with(install("Bun", "Bun", "react", "1.0.0"), |r| r.source.url = Some("https://registry.npmjs.org".to_owned())))]
+#[case::source_url_through_pip(with(install("Pip", "pip", "requests", "2.31"), |r| r.source.url = Some("https://pypi.org/simple".to_owned())))]
+#[case::other_source_url_through_cargo(with(install("Cargo", "crates.io", "serde", "1.0.0"), |r| r.source.url = Some("https://crates.io".to_owned())))]
+#[case::other_source_url_through_dotnet(with(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), |r| r.source.url = Some("https://example.test/index.json".to_owned())))]
 #[case::bun_source_url_with_path(with(install("Bun", "Bun", "react", "1.0.0"), |r| r.source.url = Some("https://www.npmjs.com/x".to_owned())))]
 #[case::powershell_wildcard_source(install("PowerShell", "PS*Gallery", "Pester", "1.0"))]
 #[case::powershell_source_starting_with_dot(install("PowerShell", ".PSGallery", "Pester", "1.0"))]
@@ -173,6 +174,10 @@ fn unreadable_requests_through_managers(#[case] subject: Request) {
 #[case::cargo_source_in_mixed_case(install("Cargo", "Crates.IO", "serde", "1.0.0"))]
 #[case::pip_source_in_upper_case(install("Pip", "PIP", "requests", "2.31"))]
 #[case::bun_npmjs_url_with_trailing_slashes(with(install("Bun", "Bun", "react", "1.0.0"), |r| r.source.url = Some("HTTPS://WWW.NPMJS.COM//".to_owned())))]
+#[case::source_url_through_winget(with(winget_install(), |r| r.source.url = Some("https://cdn.winget.microsoft.com/cache".to_owned())))]
+#[case::empty_source_url_through_scoop(with(request("Install", "Scoop", "main", "git"), |r| r.source.url = Some(String::new())))]
+#[case::cargo_index_url(with(install("Cargo", "crates.io", "serde", "1.0.0"), |r| r.source.url = Some("https://index.crates.io//".to_owned())))]
+#[case::dotnet_other_url_on_uninstall(with(request("Uninstall", "Dotnet", "nuget.org", "dotnet-ef"), |r| r.source.url = Some("https://example.test/index.json".to_owned())))]
 #[case::npm_channel(with(install("Npm", "npm", "react", "1.0.0"), |r| r.package.channel = Some("next".to_owned())))]
 #[case::chocolatey_channel(with(install("Chocolatey", "chocolatey", "git", "2.0"), |r| r.package.channel = Some("beta".to_owned())))]
 #[case::powershell_source_with_space_dot_dash_underscore(install("PowerShell", "My Repo_1.2-x", "Pester", "5.0"))]
