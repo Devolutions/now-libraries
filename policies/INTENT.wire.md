@@ -14,7 +14,7 @@ A denial names an opt-in by the key the request used.
 Scope and elevation are request fields side by side, outside the opt-ins, because elevation is a targeting choice.
 The elevation values are `NonElevated` and `Elevated`, and a user-scope request may run elevated.
 A request whose `Scope` is `Machine` and that asks to run non-elevated contradicts itself and is refused as a bad request rather than silently elevated.
-A request that installs machine-wide without saying so in `Scope`, through its manager's default or a custom parameter, and asks to run non-elevated is unreadable, so that the wire needs no knowledge of managers.
+A request that installs, updates or uninstalls machine-wide without saying so in `Scope`, through its manager's default or a custom parameter, and asks to run non-elevated is unreadable, so that the wire needs no knowledge of managers.
 
 <a id="fields"></a>
 ## Fields
