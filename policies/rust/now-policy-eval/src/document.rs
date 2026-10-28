@@ -780,7 +780,7 @@ fn is_revision(spelling: &str) -> bool {
     if spelling.starts_with('-') || !spelling.bytes().all(|b| b.is_ascii_digit()) {
         return false;
     }
-    // INVARIANT: the reader accepts no leading zero in a number other than `0`, so a longer spelling is a larger number.
+    // The reader accepts no leading zero in a number other than `0`, so a longer spelling is a larger number.
     spelling.len() <= 10
         && spelling
             .parse::<u64>()
