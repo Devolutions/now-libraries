@@ -200,7 +200,7 @@ The list governs installs and updates only, because uninstalls download nothing;
 The source of an Install or Update request is trusted when a selector in the list matches it ([§source-selector](#source-selector)); a selector that is unknown for the request does not trust it.
 An Install or Update request whose source is not trusted is denied whatever the rules say ([§precedence](#precedence)).
 A manager with no selector in the list therefore cannot install or update anything.
-A rule may name a source the list does not trust, which governs uninstalls of packages from that source where the manager's reading knows the source of an Uninstall.
+A rule may name a source the list does not trust, which governs uninstalls that the manager's reading resolves through that source.
 Where a manager's reading leaves the source of an Update or Uninstall unknown, a `Source` selector of that manager is unknown for it ([§source-selector](#source-selector)), so, in `Select` or in an `Except` entry, the selector never keeps a Deny rule from being applicable to that request and never makes an Allow rule applicable to it ([§applicability](#applicability)).
 For installs and updates, a rule only narrows which trusted sources it applies to.
 
@@ -440,6 +440,7 @@ Unless a manager's reading below states otherwise:
 - the source of an Uninstall is unknown ([§source-selector](#source-selector)), because the command removes the installed package whatever source it came from.
 
 A reading below that names the only source name of its manager, or of some of its operations, compares `Source.Name` with it ignoring ASCII case.
+Such a name only decides which `Source.Name` keeps a request readable, so the source of an Uninstall through that manager is still unknown unless its reading states what that source is.
 A plain source name starts with an ASCII letter or digit and contains only ASCII letters, digits, `.`, `-`, `_` and spaces.
 The batch characters are `"`, `%`, `!`, `^`, `&`, `|`, `<` and `>`, which the broker cannot pass to a manager that it runs through a batch file.
 
@@ -452,7 +453,7 @@ The broker builds no WinGet command, so a request is unreadable, when:
 - its `Source.Name` is not a plain source name.
 
 An identifier names itself, keeping its case in canonical form, and selects no version, because the broker passes it whole as the value of `--id`, with `--exact`, under which WinGet compares ids with their exact characters.
-The source of an Uninstall is `Source.Name`, because the broker passes it with `--source`, so WinGet looks the package up in that source.
+The source of an Uninstall is `Source.Name`, because the broker passes it with `--source`, so WinGet removes only an installed package it matches to a package of that source, wherever the installed package came from.
 The reading accepts custom parameters and installer arguments.
 On an Install or Update, the broker passes `--custom` when the `Mode` of `OptIns.InstallerArguments` is `Append`, or `--override` when it is `Replace`, then its `Arguments`, as two elements before the custom parameters, so that no custom parameter takes them as its value or moves them after a `--`.
 On an Uninstall the broker passes neither, and the request still uses `InstallerArguments` ([§reading](#reading)).
@@ -496,7 +497,7 @@ The broker builds no Scoop command, so a request is unreadable, when:
 
 The reading accepts custom parameters.
 A short cluster is an element whose first character is `-` and whose second character exists and is not `-`.
-A long option's name ends at the element's first `=`; every character of a short cluster after its `-`, including `=` and what follows it, is one of its option names.
+An element that starts with `--` is a long option, whose name is its text after `--` and before its first `=`; every character of a short cluster after its `-`, including `=` and what follows it, is one of its option names.
 Option names match ignoring ASCII case, so `--ARCH=64bit` is `--arch` and `-S` is a short cluster containing `s`.
 A custom parameter makes the request unreadable when:
 
@@ -520,7 +521,8 @@ The `Package.Id` of a readable Install through a manifest source names itself, k
 A `Source` selector matches a manifest source when the two are equal with exact characters, is unknown for it when they are equal only ignoring case ([§text-comparison](#text-comparison)), and does not match it otherwise, so a Deny rule that names the URL in another case still applies and an Allow rule fails closed.
 Any other source name is a bucket name, and a request through it is unreadable unless the bucket name and `Package.Id` are each one or more ASCII letters, digits, `-`, `_` and `.`, and `Package.Id` does not end with `.json` ignoring ASCII case, so that `<bucket>/<id>` names exactly one app in that bucket: no version after `@`, no path inside the bucket and no local manifest file.
 A request whose `Source.Name` or `Package.Id` ends with `.` is unreadable, because Windows drops trailing `.` from a path segment, so a bucket or app name would reach the same directory as the name without it, and `.` or `..` would name a directory outside the bucket.
-The source of an Update or Uninstall is unknown ([§source-selector](#source-selector)), because Scoop acts on the installed app's own record whatever bucket the request names; the rules above on `Source.Name` and `Package.Id` still decide whether it is readable.
+The source of an Update is unknown ([§source-selector](#source-selector)), because Scoop acts on the installed app's own record whatever bucket the request names.
+The rules above on `Source.Name` and `Package.Id` still decide whether an Update or Uninstall is readable, although its source is unknown.
 The broker cannot pin a version through Scoop.
 
 <a id="manager-vcpkg"></a>
@@ -540,7 +542,6 @@ The broker builds no Vcpkg command, so a request is unreadable, when:
 An Install's identifier names its port, so `port[features]:triplet` names `port`, and no identifier selects the version.
 The package identity of an Update or Uninstall is unknown, so `Packages` is unknown for it ([§package-identity](#package-identity)), because the broker runs `upgrade --no-dry-run`, which also rebuilds the ports that depend on the named one, and `remove --recurse`, which also removes them, so the command changes installed ports the request does not name.
 The architecture is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise.
-The source of an Uninstall is `Source.Name`, because the command removes only ports built for that triplet.
 The broker cannot pin a version through Vcpkg.
 
 <a id="manager-npm"></a>
@@ -637,7 +638,8 @@ The scope is `Machine` when `Scope` is absent, and a requested architecture of `
 
 A source name that is not a plain source name, or a `Package.Id` that contains `[` or `]`, makes the request unreadable, because PowerShell reads other characters as wildcards or matches them by its own rules.
 An identifier names itself and selects no version, because the broker passes it whole as the value of `-Name`.
-The source of an Update is unknown ([§source-selector](#source-selector)), because `Update-Module` acts on the installed module whatever repository it came from; a `PowerShell7` Update is read the same way, so its source is unknown too.
+The source of an Update is unknown ([§source-selector](#source-selector)), because the module the command updates may have been installed from another repository than the one the request names.
+The source of an Uninstall is unknown although the broker passes `-Repository`, because the command removes the installed module whatever repository it came from.
 Under `PowerShell7`, a `Package.Version` may also contain `[`, `]`, `(`, `)`, `,`, `*` and spaces.
 The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
