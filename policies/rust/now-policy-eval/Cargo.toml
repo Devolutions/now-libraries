@@ -14,7 +14,12 @@ publish = false
 
 [lib]
 doctest = false
+test = false
 
 [lints]
 workspace = true
 
+[dev-dependencies]
+proptest = "1"
+rstest = "0.27"
+serde_json = { version = "1", features = ["raw_value"] }
