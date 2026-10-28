@@ -47,7 +47,7 @@ Requests that are not well-formed are not cases, since a runner rejects them (RE
 
 - Elevation, read from `Elevation` and never unknown: `read-elevation-*`.
 - Operation: `read-operation-*`.
-- Source: `read-scoop-*` trust cases and `read-identity-npm-*-source-*`; an unknown source on an Update: `read-{scoop,powershell,powershell7,vcpkg}-update-*`; on an Uninstall: `read-{winget,pip,npm,bun,cargo,vcpkg,chocolatey,dotnet,scoop,powershell,powershell7}-uninstall-any-source-allow`.
+- Source: `read-scoop-*` trust cases and `read-identity-npm-*-source-*`; an unknown source on an Update: `read-{scoop,powershell,powershell7,vcpkg}-update-*`; an Uninstall, which `AnySource` selects under every manager: `read-{winget,pip,npm,bun,cargo,vcpkg,chocolatey,dotnet,scoop,powershell,powershell7}-uninstall-any-source-allow`.
 - Scope and architecture: see §managers.
 
 ### §package-identity
@@ -74,7 +74,7 @@ Requests that are not well-formed are not cases, since a runner rejects them (RE
 - Defaults: no custom parameters (`read-<manager>-custom-parameters-unreadable`), no installer arguments (`read-<manager>-installer-arguments-unreadable`), scope from `Scope` and `User` when absent (`read-scope-default-*`), architecture from `Package.Architecture` and unknown when absent (`read-architecture-default-*`, `read-architecture-unknown-matches-deny`).
 - Default version characters on Install and Update, not Uninstall: `read-version-characters-{leading-hyphen,slash,update,uninstall,allowed}`; characters a reading adds, each against a reading that does not add it: `read-version-characters-{tilde-npm,tilde-winget,equals-cargo,equals-npm,range-dotnet,range-powershell7,range-powershell}`.
 - The only source name compared ignoring ASCII case, and not under full Unicode case: `read-{npm,bun,cargo,pip,dotnet}-source-*`, including `read-cargo-source-long-s` and `read-pip-source-dotless-i`.
-- The source of an Uninstall is unknown under every manager, WinGet included; a valid selection naming a source lists operations without `Uninstall` (§selection), so only `AnySource` can meet an Uninstall: `read-{winget,pip,npm,bun,cargo,vcpkg,chocolatey,dotnet,scoop,powershell,powershell7}-uninstall-any-source-allow`; the known Install sources: `read-{winget,pip,npm,bun,cargo,vcpkg,scoop,powershell,powershell7}-install-source-selector-{allow,deny}`, `read-{chocolatey,dotnet}-install-source-selector-deny`.
+- The source of an Uninstall is unknown under every manager, WinGet included; a valid selection naming a source lists operations without `Uninstall` (§selection), so only `AnySource`, which also meets a known source, can meet an Uninstall, and no case observes the unknown source (see Deliberately unchecked); an `AnySource` Allow rule allows an Uninstall under every manager: `read-{winget,pip,npm,bun,cargo,vcpkg,chocolatey,dotnet,scoop,powershell,powershell7}-uninstall-any-source-allow`; the known Install sources: `read-{winget,pip,npm,bun,cargo,vcpkg,scoop,powershell,powershell7}-install-source-selector-{allow,deny}`, `read-{chocolatey,dotnet}-install-source-selector-deny`.
 - Plain source names: `read-winget-source-name-*` and `read-powershell*-source-*`; `read-winget-source-name-not-plain-uninstall` and `read-chocolatey-uninstall-source-not-plain` show the rule on an Uninstall.
 - Batch characters, each of the eight: `read-winget-custom-parameter-batch-*`, `read-winget-location-batch-*`, `read-winget-installer-arguments-batch-*` (and `-batch-uninstall`), `read-winget-id-batch-percent`, `read-cargo-location-batch-percent`, controls `read-winget-location-plain-path` and `read-cargo-location-plain`.
 
@@ -110,7 +110,7 @@ Requests that are not well-formed are not cases, since a runner rejects them (RE
 - A manifest id names itself, keeps its case and selects no version: `read-scoop-manifest-packages-*`; a bucket app name is lowercase: `read-scoop-bucket-app-case-folded`.
 - A manifest id containing `@` is unreadable, after a path or in the userinfo: `read-scoop-manifest-id-at-version`, `read-scoop-manifest-id-at-userinfo`, control `read-scoop-manifest-id-without-at`.
 - An Update or Uninstall whose source or id is a manifest source is unreadable: `read-scoop-manifest-{update,uninstall}-unreadable`, `read-scoop-manifest-id-only-{update,uninstall}-unreadable`.
-- The source of an Update is unknown, so a `Source` selector fails an Allow rule and applies a Deny rule, while `AnySource` matches: `read-scoop-update-source-selector-{allow,deny}`, `read-scoop-{update,uninstall}-any-source-allow`, `read-scoop-update-trusted-named-source`, controls `read-scoop-install-*`.
+- The source of an Update is unknown, so a `Source` selector fails an Allow rule and applies a Deny rule, while `AnySource` matches: `read-scoop-update-source-selector-{allow,deny}`, `read-scoop-update-any-source-allow`, `read-scoop-update-trusted-named-source`, controls `read-scoop-install-*`.
 - A custom parameter that is exactly `-`: `read-scoop-parameter-single-hyphen`, control `read-scoop-parameter-short-q`.
 
 ### §manager-vcpkg, §manager-npm, §manager-bun, §manager-cargo, §manager-pip, §manager-dotnet, §manager-chocolatey, §manager-powershell
@@ -126,7 +126,7 @@ Each bullet the section lists under "builds no command" has a case and a readabl
 - Pip: PEP 503 names and the Pip id and version rules, source, `Neutral` architecture, an Uninstall version, unknown uninstall scope: `read-pip-*`, `read-identity-pip-*`.
 - Dotnet: `Machine` scope, an Uninstall architecture, the only Install source `nuget.org`: `read-dotnet-*`; the default identifier reading: `read-identity-default-*`, `read-missing-version-dotnet-identifier-selects*`.
 - Chocolatey: `Machine` scope by default, architecture, id length and characters, `.config` and `.nupkg` suffixes, `all`, a source that is not plain on Install only: `read-chocolatey-*`.
-- Unknown Uninstall sources (§managers) under Chocolatey and Dotnet, which only `AnySource` meets: `read-{chocolatey,dotnet}-uninstall-any-source-allow`, controls `read-{chocolatey,dotnet}-install-source-selector-deny`.
+- Chocolatey and Dotnet: an `AnySource` Allow rule allows an Uninstall, `read-{chocolatey,dotnet}-uninstall-any-source-allow`, and a `Source` selector meets the known source of an Install, `read-{chocolatey,dotnet}-install-source-selector-deny`.
 - PowerShell and PowerShell7: source name characters, `[` and `]` in an id, `Neutral` architecture always, unknown uninstall scope; an identifier names itself and selects no version: `read-identity-{powershell,powershell7}-at-*`, `read-missing-version-{powershell,powershell7}-at-id-concrete`.
 - Unknown Update sources under PowerShell and PowerShell7, and Uninstall sources by §managers: `read-{powershell,powershell7}-update-source-selector-{allow,deny}`, `read-{powershell,powershell7}-{update,uninstall}-any-source-allow`, `read-{powershell,powershell7}-update-trusted-named-source`, controls `read-{powershell,powershell7}-install-*`.
 
