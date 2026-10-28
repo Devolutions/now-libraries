@@ -1,7 +1,8 @@
 //! Runs the language-neutral policy conformance suite in `policies/test-data/policy-conformance`.
 //!
 //! The case format is defined by that directory's `README.md`.
-//! Every failing case is reported by its `name`, and the test passes when the suite has no cases.
+//! Every failing case is reported by its `name`.
+//! The test fails when `documents` or `evaluation` is missing, unreadable or has no case, and when a file or case carries a key the README does not define.
 
 use core::fmt::Write as _;
 use std::collections::{BTreeSet, HashMap};
@@ -14,6 +15,33 @@ use {proptest as _, rstest as _};
 
 type RawObject = HashMap<String, Box<RawValue>>;
 
+/// The keys every case may carry.
+const COMMON_CASE_KEYS: [&str; 3] = ["name", "oracle", "note"];
+
+/// One directory of the suite and what its files and cases may contain.
+struct Kind {
+    dir: &'static str,
+    file_keys: &'static [&'static str],
+    /// The keys a case may carry besides the common ones.
+    case_keys: &'static [&'static str],
+    run_case: fn(&RawObject, &RawObject) -> Result<(), String>,
+}
+
+const KINDS: [Kind; 2] = [
+    Kind {
+        dir: "documents",
+        file_keys: &["cases"],
+        case_keys: &["document", "text", "base64", "padTo", "expect"],
+        run_case: run_document_case,
+    },
+    Kind {
+        dir: "evaluation",
+        file_keys: &["cases", "policy", "time"],
+        case_keys: &["policy", "time", "request", "expect"],
+        run_case: run_evaluation_case,
+    },
+];
+
 #[test]
 fn conformance_suite() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../test-data/policy-conformance");
@@ -22,51 +50,23 @@ fn conformance_suite() {
     let mut failures = Vec::new();
     let mut count = 0;
 
-    for (kind, run_case) in [
-        (
-            "documents",
-            run_document_case as fn(&RawObject, &RawObject) -> Result<(), String>,
-        ),
-        ("evaluation", run_evaluation_case),
-    ] {
-        for path in json_files(&root.join(kind)) {
-            let file_name = path.display().to_string();
-            let file = match read_file(&path) {
-                Ok(file) => file,
-                Err(error) => {
-                    failures.push(format!("{file_name}: {error}"));
-                    continue;
-                }
-            };
+    for kind in &KINDS {
+        let dir = root.join(kind.dir);
+        let mut kind_count = 0;
 
-            let cases = match file
-                .get("cases")
-                .map(|cases| serde_json::from_str::<Vec<RawObject>>(cases.get()))
-            {
-                Some(Ok(cases)) => cases,
-                Some(Err(error)) => {
-                    failures.push(format!("{file_name}: `cases` is not a list of objects: {error}"));
-                    continue;
-                }
-                None => {
-                    failures.push(format!("{file_name}: no `cases`"));
-                    continue;
-                }
-            };
-
-            for (idx, case) in cases.iter().enumerate() {
-                count += 1;
-                let name = match string_field(case, "name") {
-                    Ok(Some(name)) => name,
-                    _ => format!("{file_name} case {idx} (no name)"),
-                };
-
-                let result = check_common_fields(case, &mut names).and_then(|()| run_case(&file, case));
-                if let Err(error) = result {
-                    failures.push(format!("{name}: {error}"));
+        match json_files(&dir) {
+            Ok(paths) => {
+                for path in paths {
+                    kind_count += run_file(kind, &path, &mut names, &mut failures);
                 }
             }
+            Err(error) => failures.push(format!("{}: {error}", dir.display())),
         }
+
+        if kind_count == 0 {
+            failures.push(format!("{}: the suite has no case", dir.display()));
+        }
+        count += kind_count;
     }
 
     if !failures.is_empty() {
@@ -78,18 +78,76 @@ fn conformance_suite() {
     }
 }
 
-/// Returns the `*.json` files of `dir`, sorted, or none when `dir` does not exist.
-fn json_files(dir: &Path) -> Vec<PathBuf> {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return Vec::new();
+/// Runs every case of the file at `path`, recording failures, and returns the number of cases it holds.
+fn run_file(kind: &Kind, path: &Path, names: &mut BTreeSet<String>, failures: &mut Vec<String>) -> usize {
+    let file_name = path.display().to_string();
+    let file = match read_file(path) {
+        Ok(file) => file,
+        Err(error) => {
+            failures.push(format!("{file_name}: {error}"));
+            return 0;
+        }
     };
 
-    let mut files: Vec<PathBuf> = entries
-        .filter_map(|entry| entry.ok().map(|entry| entry.path()))
-        .filter(|path| path.extension().is_some_and(|extension| extension == "json"))
-        .collect();
+    if let Err(error) = reject_unknown_keys(&file, "the file", kind.file_keys) {
+        failures.push(format!("{file_name}: {error}"));
+    }
+
+    let cases = match file
+        .get("cases")
+        .map(|cases| serde_json::from_str::<Vec<RawObject>>(cases.get()))
+    {
+        Some(Ok(cases)) => cases,
+        Some(Err(error)) => {
+            failures.push(format!("{file_name}: `cases` is not a list of objects: {error}"));
+            return 0;
+        }
+        None => {
+            failures.push(format!("{file_name}: no `cases`"));
+            return 0;
+        }
+    };
+
+    for (idx, case) in cases.iter().enumerate() {
+        let name = match string_field(case, "name") {
+            Ok(Some(name)) => name,
+            _ => format!("{file_name} case {idx} (no name)"),
+        };
+
+        let result = reject_unknown_keys(case, "the case", &[&COMMON_CASE_KEYS[..], kind.case_keys].concat())
+            .and_then(|()| check_common_fields(case, names))
+            .and_then(|()| (kind.run_case)(&file, case));
+        if let Err(error) = result {
+            failures.push(format!("{name}: {error}"));
+        }
+    }
+
+    cases.len()
+}
+
+/// Returns the `*.json` files of `dir`, sorted, or an error when `dir` cannot be listed.
+fn json_files(dir: &Path) -> Result<Vec<PathBuf>, String> {
+    let entries = std::fs::read_dir(dir).map_err(|error| format!("cannot list: {error}"))?;
+
+    let mut files = Vec::new();
+    for entry in entries {
+        let path = entry.map_err(|error| format!("cannot list: {error}"))?.path();
+        if path.extension().is_some_and(|extension| extension == "json") {
+            files.push(path);
+        }
+    }
     files.sort();
-    files
+    Ok(files)
+}
+
+/// Fails on the first key of `object`, in sorted order, that the README does not define for `part`.
+fn reject_unknown_keys(object: &RawObject, part: &str, known: &[&str]) -> Result<(), String> {
+    let mut unknown: Vec<&String> = object.keys().filter(|key| !known.contains(&key.as_str())).collect();
+    unknown.sort();
+    match unknown.first() {
+        Some(key) => Err(format!("unknown key `{key}` in {part}")),
+        None => Ok(()),
+    }
 }
 
 fn read_file(path: &Path) -> Result<RawObject, String> {
