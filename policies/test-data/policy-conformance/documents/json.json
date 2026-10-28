@@ -446,6 +446,90 @@
       "note": "Keys match after JSON escapes are decoded, so Publishe\\u0072 is Publisher and \\u0052ules is Rules.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publishe\u0072": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "\u0052ules": []},
       "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-surrogate-pair-first-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description is \"\\uD800\\uDC00\", a paired escape for U+10000, the lowest supplementary code point, with both halves at the bottom of their ranges (RFC 8259 §7, decoded as RFC 2781 §2.2 states); RFC 8259 §7 allows uppercase hex digits in an escape. Control for the unpaired surrogate cases, like doc-json-surrogate-pair-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\uD800\\uDC00\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-surrogate-pair-first-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level key \"\\uD800\\uDC00\" decodes to U+10000, an unknown key; the pointer holds that one code point. The control of doc-json-surrogate-pair-first-key-duplicate.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"\\uD800\\uDC00\": 1}",
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/\ud800\udc00"}]}
+    },
+    {
+      "name": "doc-json-surrogate-pair-first-key-duplicate",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level object has two keys, the escape \"\\uD800\\uDC00\", then U+10000 written literally in UTF-8 (F0 90 80 80); keys match after escapes are decoded, so the key repeats, and only DuplicateKey is reported though the key is also unknown (§errors). Control: doc-json-surrogate-pair-first-key-unknown.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"\\uD800\\uDC00\": 1, \"\ud800\udc00\": 2}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/\ud800\udc00"}]}
+    },
+    {
+      "name": "doc-json-surrogate-pair-low-dfff-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description is \"\\uD800\\uDFFF\", a paired escape for U+103FF, the low half at the top of its range (RFC 8259 §7, decoded as RFC 2781 §2.2 states); RFC 8259 §7 allows uppercase hex digits in an escape. Control for the unpaired surrogate cases, like doc-json-surrogate-pair-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\uD800\\uDFFF\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-surrogate-pair-low-dfff-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level key \"\\uD800\\uDFFF\" decodes to U+103FF, an unknown key; the pointer holds that one code point. The control of doc-json-surrogate-pair-low-dfff-key-duplicate.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"\\uD800\\uDFFF\": 1}",
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/\ud800\udfff"}]}
+    },
+    {
+      "name": "doc-json-surrogate-pair-low-dfff-key-duplicate",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level object has two keys, the escape \"\\uD800\\uDFFF\", then U+103FF written literally in UTF-8 (F0 90 8F BF); keys match after escapes are decoded, so the key repeats, and only DuplicateKey is reported though the key is also unknown (§errors). Control: doc-json-surrogate-pair-low-dfff-key-unknown.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"\\uD800\\uDFFF\": 1, \"\ud800\udfff\": 2}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/\ud800\udfff"}]}
+    },
+    {
+      "name": "doc-json-surrogate-pair-high-dbff-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description is \"\\uDBFF\\uDC00\", a paired escape for U+10FC00, the high half at the top of its range (RFC 8259 §7, decoded as RFC 2781 §2.2 states); RFC 8259 §7 allows uppercase hex digits in an escape. Control for the unpaired surrogate cases, like doc-json-surrogate-pair-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\uDBFF\\uDC00\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-surrogate-pair-high-dbff-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level key \"\\uDBFF\\uDC00\" decodes to U+10FC00, an unknown key; the pointer holds that one code point. The control of doc-json-surrogate-pair-high-dbff-key-duplicate.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"\\uDBFF\\uDC00\": 1}",
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/\udbff\udc00"}]}
+    },
+    {
+      "name": "doc-json-surrogate-pair-high-dbff-key-duplicate",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level object has two keys, U+10FC00 written literally in UTF-8 (F4 8F B0 80), then as the escape \"\\uDBFF\\uDC00\"; keys match after escapes are decoded, so the key repeats, and only DuplicateKey is reported though the key is also unknown (§errors). Control: doc-json-surrogate-pair-high-dbff-key-unknown.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"\udbff\udc00\": 1, \"\\uDBFF\\uDC00\": 2}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/\udbff\udc00"}]}
+    },
+    {
+      "name": "doc-json-surrogate-pair-last-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "Description is \"\\uDBFF\\uDFFF\", a paired escape for U+10FFFF, the highest code point, with both halves at the top of their ranges (RFC 8259 §7, decoded as RFC 2781 §2.2 states); RFC 8259 §7 allows uppercase hex digits in an escape. Control for the unpaired surrogate cases, like doc-json-surrogate-pair-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\", \"Description\": \"\\uDBFF\\uDFFF\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-json-surrogate-pair-last-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level key \"\\uDBFF\\uDFFF\" decodes to U+10FFFF, an unknown key; the pointer holds that one code point. The control of doc-json-surrogate-pair-last-key-duplicate.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"\\uDBFF\\uDFFF\": 1}",
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/\udbff\udfff"}]}
+    },
+    {
+      "name": "doc-json-surrogate-pair-last-key-duplicate",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "The top-level object has two keys, the escape \"\\uDBFF\\uDFFF\", then U+10FFFF written literally in UTF-8 (F4 8F BF BF); keys match after escapes are decoded, so the key repeats, and only DuplicateKey is reported though the key is also unknown (§errors). Control: doc-json-surrogate-pair-last-key-unknown.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"\\uDBFF\\uDFFF\": 1, \"\udbff\udfff\": 2}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/\udbff\udfff"}]}
     }
   ]
 }

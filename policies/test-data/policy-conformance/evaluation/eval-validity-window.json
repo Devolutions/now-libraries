@@ -478,6 +478,470 @@
         "Client": {"RequestedElevation": "Standard"}
       },
       "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-window-offset-minutes-plus-from-at",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidFrom 2026-06-01T12:00:00+05:30 is 2026-06-01T06:30:00Z, the evaluation time; applying only the hours of the offset would put ValidFrom at 07:00:00Z and deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidFrom": "2026-06-01T12:00:00+05:30"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T06:30:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-window-offset-minutes-plus-from-before",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "One nanosecond before ValidFrom 2026-06-01T12:00:00+05:30, which is 2026-06-01T06:30:00Z. Control: eval-window-offset-minutes-plus-from-at.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidFrom": "2026-06-01T12:00:00+05:30"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T06:29:59.999999999Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-window-offset-minutes-plus-until-at",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil 2026-06-01T12:00:00+05:30 is 2026-06-01T06:30:00Z, the evaluation time.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidUntil": "2026-06-01T12:00:00+05:30"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T06:30:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-window-offset-minutes-plus-until-after",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "One nanosecond after ValidUntil 2026-06-01T12:00:00+05:30, which is 2026-06-01T06:30:00Z; applying only the hours of the offset would put ValidUntil at 07:00:00Z and allow. Control: eval-window-offset-minutes-plus-until-at.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidUntil": "2026-06-01T12:00:00+05:30"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T06:30:00.000000001Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-window-offset-minutes-minus-from-at",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidFrom 2026-05-31T21:00:00-09:30 is 2026-06-01T06:30:00Z, the evaluation time.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidFrom": "2026-05-31T21:00:00-09:30"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T06:30:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-window-offset-minutes-minus-from-before",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "One nanosecond before ValidFrom 2026-05-31T21:00:00-09:30, which is 2026-06-01T06:30:00Z; reading the offset as -09:00 (06:00:00Z) or as -08:30 (05:30:00Z) would allow. Control: eval-window-offset-minutes-minus-from-at.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidFrom": "2026-05-31T21:00:00-09:30"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T06:29:59.999999999Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-window-offset-minutes-minus-until-at",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil 2026-05-31T21:00:00-09:30 is 2026-06-01T06:30:00Z, the evaluation time; reading the offset as -09:00 (06:00:00Z) or as -08:30 (05:30:00Z) would deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidUntil": "2026-05-31T21:00:00-09:30"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T06:30:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-window-offset-minutes-minus-until-after",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "One nanosecond after ValidUntil 2026-05-31T21:00:00-09:30, which is 2026-06-01T06:30:00Z. Control: eval-window-offset-minutes-minus-until-at.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidUntil": "2026-05-31T21:00:00-09:30"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T06:30:00.000000001Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-window-offset-minutes-plus-time-at-until",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The evaluation time 2026-06-01T12:00:00+05:45 is 2026-06-01T06:15:00Z, which is ValidUntil; applying only the hours of the offset would make it 07:00:00Z and deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidUntil": "2026-06-01T06:15:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T12:00:00+05:45",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-window-offset-minutes-plus-time-after-until",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The evaluation time 2026-06-01T12:00:00.000000001+05:45 is 2026-06-01T06:15:00.000000001Z, one nanosecond after ValidUntil. Control: eval-window-offset-minutes-plus-time-at-until.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidUntil": "2026-06-01T06:15:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T12:00:00.000000001+05:45",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-window-offset-minutes-minus-time-at-from",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The evaluation time 2026-05-31T20:45:00-09:30 is 2026-06-01T06:15:00Z, which is ValidFrom; reading the offset as -09:00 (05:45:00Z) or as -08:30 (05:15:00Z) would deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidFrom": "2026-06-01T06:15:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-05-31T20:45:00-09:30",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-window-offset-minutes-minus-time-before-from",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "The evaluation time 2026-05-31T20:44:59.999999999-09:30 is one nanosecond before ValidFrom 2026-06-01T06:15:00Z. Control: eval-window-offset-minutes-minus-time-at-from.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidFrom": "2026-06-01T06:15:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-05-31T20:44:59.999999999-09:30",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-window-offset-minutes-minus-zero-hours-until-at",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil 2026-06-01T00:00:00-00:30 is 2026-06-01T00:30:00Z, the evaluation time; the sign applies to the minutes even when the hours are 00, and reading the offset as +00:30 (2026-05-31T23:30:00Z) or as zero would deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidUntil": "2026-06-01T00:00:00-00:30"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T00:30:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-window-offset-minutes-minus-zero-hours-until-after",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "One nanosecond after ValidUntil 2026-06-01T00:00:00-00:30, which is 2026-06-01T00:30:00Z. Control: eval-window-offset-minutes-minus-zero-hours-until-at.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidUntil": "2026-06-01T00:00:00-00:30"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T00:30:00.000000001Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-window-offset-minutes-largest-from-at",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidFrom 2026-06-02T00:00:00+23:59 is 2026-06-01T00:01:00Z, the evaluation time; applying only the hours of the offset would put ValidFrom at 01:00:00Z and deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidFrom": "2026-06-02T00:00:00+23:59"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T00:01:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-window-offset-minutes-largest-from-before",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "One nanosecond before ValidFrom 2026-06-02T00:00:00+23:59, which is 2026-06-01T00:01:00Z. Control: eval-window-offset-minutes-largest-from-at.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z",
+          "ValidFrom": "2026-06-02T00:00:00+23:59"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "time": "2026-06-01T00:00:59.999999999Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
     }
   ]
 }

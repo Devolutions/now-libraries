@@ -361,6 +361,76 @@
       "note": "ValidUntil is 0000-12-31T23:00:00Z as an instant, one hour before ValidFrom. Control: doc-window-year-boundary-offsets-valid.",
       "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "0001-01-01T00:00:00Z", "ValidUntil": "0001-01-01T00:00:00+01:00"}, "TrustedSources": [], "Rules": []},
       "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-window-offset-minutes-plus-from-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidFrom 2026-06-01T12:00:00+05:30 is 2026-06-01T06:30:00Z, equal to ValidUntil, so not later; applying only the hours of the offset would make it 07:00:00Z and later.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-06-01T12:00:00+05:30", "ValidUntil": "2026-06-01T06:30:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-offset-minutes-plus-from-later-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidFrom is 2026-06-01T06:30:00.000000001Z, one nanosecond later than ValidUntil. Control: doc-window-offset-minutes-plus-from-equal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-06-01T12:00:00.000000001+05:30", "ValidUntil": "2026-06-01T06:30:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-window-offset-minutes-plus-until-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil 2026-06-01T12:00:00+05:30 is 2026-06-01T06:30:00Z, equal to ValidFrom.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-06-01T06:30:00Z", "ValidUntil": "2026-06-01T12:00:00+05:30"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-offset-minutes-plus-until-later-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil 2026-06-01T12:00:00+05:30 is 2026-06-01T06:30:00Z, one nanosecond before ValidFrom; applying only the hours of the offset would make it 07:00:00Z and the document valid. Control: doc-window-offset-minutes-plus-until-equal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-06-01T06:30:00.000000001Z", "ValidUntil": "2026-06-01T12:00:00+05:30"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-window-offset-minutes-minus-from-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidFrom 2026-05-31T21:00:00-09:30 is 2026-06-01T06:30:00Z, equal to ValidUntil.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-05-31T21:00:00-09:30", "ValidUntil": "2026-06-01T06:30:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-offset-minutes-minus-from-later-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidFrom 2026-05-31T21:00:00.000000001-09:30 is 2026-06-01T06:30:00.000000001Z, one nanosecond later than ValidUntil; reading the offset as -09:00 or as -08:30 would make it earlier than ValidUntil and the document valid. Control: doc-window-offset-minutes-minus-from-equal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-05-31T21:00:00.000000001-09:30", "ValidUntil": "2026-06-01T06:30:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-window-offset-minutes-minus-until-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil 2026-05-31T21:00:00-09:30 is 2026-06-01T06:30:00Z, equal to ValidFrom; reading the offset as -09:00 (06:00:00Z) or as -08:30 (05:30:00Z) would make it earlier and the document invalid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-06-01T06:30:00Z", "ValidUntil": "2026-05-31T21:00:00-09:30"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-offset-minutes-minus-until-later-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil 2026-05-31T21:00:00-09:30 is 2026-06-01T06:30:00Z, one nanosecond before ValidFrom. Control: doc-window-offset-minutes-minus-until-equal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-06-01T06:30:00.000000001Z", "ValidUntil": "2026-05-31T21:00:00-09:30"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
+    },
+    {
+      "name": "doc-window-offset-minutes-minus-zero-hours-until-equal-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil 2026-06-01T00:00:00-00:30 is 2026-06-01T00:30:00Z, equal to ValidFrom; the sign applies to the minutes even when the hours are 00, and reading the offset as +00:30 (2026-05-31T23:30:00Z) or as zero would make it earlier.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-06-01T00:30:00Z", "ValidUntil": "2026-06-01T00:00:00-00:30"}, "TrustedSources": [], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-window-offset-minutes-minus-zero-hours-until-later-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §timestamps",
+      "note": "ValidUntil 2026-06-01T00:00:00-00:30 is 2026-06-01T00:30:00Z, one nanosecond before ValidFrom. Control: doc-window-offset-minutes-minus-zero-hours-until-equal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "ValidFrom": "2026-06-01T00:30:00.000000001Z", "ValidUntil": "2026-06-01T00:00:00-00:30"}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Metadata/ValidUntil"}]}
     }
   ]
 }

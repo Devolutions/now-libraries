@@ -14,8 +14,11 @@ Every Unicode case cites its `UnicodeData.txt` 16.0.0 line in `note`.
 - ASCII case and control: `eval-text-ascii-case-ignored`, `eval-text-different-text-not-equal`.
 - Simple uppercase mappings that equate: `eval-text-long-s-equals-s` (U+017F), `eval-text-s-equals-long-s-pattern`, `eval-text-dotless-i-equals-i` (U+0131), `eval-text-final-sigma-equals-sigma` (U+03C2), `eval-text-micro-sign-equals-mu` (U+00B5), `eval-text-deseret-small-equals-capital` (U+10428).
 - Code points without a simple uppercase mapping, which lowercasing or case folding would equate: `eval-text-dotted-capital-i-not-i` (U+0130), `eval-text-kelvin-sign-not-k` (U+212A), `eval-text-sharp-s-not-ss` (U+00DF), `eval-text-sharp-s-not-capital-sharp-s` (U+00DF and U+1E9E).
+- Code points whose full uppercase in `SpecialCasing.txt` 16.0.0 differs from their simple one, which do not equal their full uppercase, each citing both lines: `eval-text-sharp-s-not-full-uppercase-ss` (U+00DF), `eval-text-ligature-ff-not-full-uppercase-ff` (U+FB00), `eval-text-n-apostrophe-not-full-uppercase` (U+0149), `eval-text-alpha-ypogegrammeni-not-full-uppercase` (U+1F80), `eval-text-alpha-prosgegrammeni-not-full-uppercase` (U+1F88).
+  Controls: `eval-text-ss-equals-uppercase-ss`, `eval-text-ff-equals-uppercase-ff`, `eval-text-apostrophe-n-equals-uppercase`, `eval-text-alpha-psili-iota-equals-uppercase`, and `eval-text-alpha-ypogegrammeni-equals-simple-uppercase`, where the simple mapping of U+1F80 applies.
 - No normalization: `eval-text-no-normalization`.
 - Source names: `eval-text-source-name-case-ignored`, `eval-text-source-name-dotless-i`, `eval-text-source-name-dotted-capital-i`.
+- Source names with U+00DF against `SS`, on either side: `eval-text-source-name-sharp-s-not-ss`, `eval-text-source-name-selector-sharp-s-not-ss`, with controls `eval-text-source-name-ss-equals-uppercase-ss` and `eval-text-source-name-selector-sharp-s-other-letters-case-ignored`.
 - Install locations: `eval-text-install-location-long-s`.
 
 ### §patterns
@@ -35,6 +38,8 @@ File `eval-validity-window.json`.
 - Open ends: `eval-window-open-start`, `eval-window-open-end`.
 - Instants across offsets, where text order and instant order disagree: `eval-window-offset-same-instant`, `eval-window-offset-later-instant-earlier-text`, `eval-window-offset-earlier-instant-later-text`, `eval-window-negative-offset-until-inside`, `eval-window-negative-offset-until-after`.
 - Nanosecond precision, which 100 ns ticks lose: `eval-window-nanosecond-until-equal`, `eval-window-nanosecond-until-after`, `eval-window-nanosecond-before-from`, `eval-window-fraction-digits-differ`.
+- Offsets with non-zero minutes, on `ValidFrom`, `ValidUntil` and the evaluation time, positive and negative, including `-00:30` and `+23:59`: `eval-window-offset-minutes-*`, in pairs of an `-at` case and a neighbour one nanosecond out.
+  In each pair, one case's decision changes when an implementation drops an offset's minutes or adds them with the wrong sign, as in reading `-09:30` as `-08:30` or `-00:30` as `+00:30`.
 - Offsets that move an instant outside years 0001 to 9999: `eval-window-offset-before-year-one`, `eval-window-offset-after-year-9999`.
 
 ### §trusted-sources

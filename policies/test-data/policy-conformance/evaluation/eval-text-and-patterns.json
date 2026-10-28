@@ -1255,6 +1255,464 @@
         "optIns": [],
         "audited": false
       }
+    },
+    {
+      "name": "eval-text-sharp-s-not-full-uppercase-ss",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '00DF;LATIN SMALL LETTER SHARP S;Ll;0;L;;;;;N;;;;;' has no simple uppercase mapping, so U+00DF stays itself and differs from 'SS'; SpecialCasing.txt 16.0.0 line '00DF; 00DF; 0053 0073; 0053 0053; # LATIN SMALL LETTER SHARP S' gives the full uppercase 'SS', which the comparison does not use. Control: eval-text-ss-equals-uppercase-ss.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["SS"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u00df"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-params"}], "optIns": ["CustomParameters"], "audited": false}
+    },
+    {
+      "name": "eval-text-ss-equals-uppercase-ss",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '0073;LATIN SMALL LETTER S;...;0053;;0053' maps each 's' to 'S'.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["SS"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["ss"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-source-name-sharp-s-not-ss",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "The trusted source 'STRASSE' does not trust 'stra\u00dfe': UnicodeData.txt 16.0.0 line '00DF;LATIN SMALL LETTER SHARP S;Ll;0;L;;;;;N;;;;;' has no simple uppercase mapping, and the full uppercase 'SS' of SpecialCasing.txt 16.0.0 line '00DF; 00DF; 0053 0073; 0053 0053; # LATIN SMALL LETTER SHARP S' is not used. Control: eval-text-source-name-ss-equals-uppercase-ss.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "Source": "STRASSE"}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "stra\u00dfe"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-text-source-name-ss-equals-uppercase-ss",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "The trusted source 'STRASSE' trusts 'strasse', which differs from 'stra\u00dfe' only in 'ss'.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "Source": "STRASSE"}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "strasse"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-source-name-selector-sharp-s-not-ss",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "The trusted source 'stra\u00dfe' does not trust 'STRASSE', for the reason of eval-text-source-name-sharp-s-not-ss, with the U+00DF in the selector. Control: eval-text-source-name-selector-sharp-s-other-letters-case-ignored.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "Source": "stra\u00dfe"}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "STRASSE"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-text-source-name-selector-sharp-s-other-letters-case-ignored",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "The trusted source 'stra\u00dfe' trusts 'STRA\u00dfE': U+00DF stays itself on both sides (UnicodeData.txt 16.0.0 line '00DF;LATIN SMALL LETTER SHARP S;Ll;0;L;;;;;N;;;;;') and the ASCII letters map to uppercase.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "Source": "stra\u00dfe"}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "STRA\u00dfE"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-ligature-ff-not-full-uppercase-ff",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line 'FB00;LATIN SMALL LIGATURE FF;Ll;0;L;<compat> 0066 0066;;;;N;;;;;' has no simple uppercase mapping, so U+FB00 differs from 'FF'; SpecialCasing.txt 16.0.0 line 'FB00; FB00; 0046 0066; 0046 0046; # LATIN SMALL LIGATURE FF' gives the full uppercase 'FF', which the comparison does not use, and compatibility normalization would also equate them. Control: eval-text-ff-equals-uppercase-ff.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["FF"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\ufb00"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-params"}], "optIns": ["CustomParameters"], "audited": false}
+    },
+    {
+      "name": "eval-text-ff-equals-uppercase-ff",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '0066;LATIN SMALL LETTER F;...;0046;;0046' maps each 'f' to 'F'.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["FF"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["ff"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-n-apostrophe-not-full-uppercase",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '0149;LATIN SMALL LETTER N PRECEDED BY APOSTROPHE;Ll;...;;;;' has no simple uppercase mapping, so U+0149 differs from U+02BC U+004E; SpecialCasing.txt 16.0.0 line '0149; 0149; 02BC 004E; 02BC 004E; # LATIN SMALL LETTER N PRECEDED BY APOSTROPHE' gives that full uppercase, which the comparison does not use. Control: eval-text-apostrophe-n-equals-uppercase.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u02bcN"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u0149"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-params"}], "optIns": ["CustomParameters"], "audited": false}
+    },
+    {
+      "name": "eval-text-apostrophe-n-equals-uppercase",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "U+02BC U+006E against U+02BC U+004E: UnicodeData.txt 16.0.0 line '02BC;MODIFIER LETTER APOSTROPHE;Lm;0;L;;;;;N;;;;;' has no uppercase mapping and UnicodeData.txt 16.0.0 line '006E;LATIN SMALL LETTER N;...;004E;;004E' maps 'n' to 'N'.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u02bcN"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u02bcn"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-alpha-ypogegrammeni-equals-simple-uppercase",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '1F80;GREEK SMALL LETTER ALPHA WITH PSILI AND YPOGEGRAMMENI;Ll;...;1F88;;1F88' maps U+1F80 to U+1F88, the pattern, which UnicodeData.txt 16.0.0 line '1F88;GREEK CAPITAL LETTER ALPHA WITH PSILI AND PROSGEGRAMMENI;Lt;...;;1F80;' leaves as itself. The simple mapping applies even where SpecialCasing.txt gives a different full one.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u1f88"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u1f80"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-text-alpha-ypogegrammeni-not-full-uppercase",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '1F80;...;1F88;;1F88' maps U+1F80 to U+1F88, which differs from the pattern U+1F08 U+0399; SpecialCasing.txt 16.0.0 line '1F80; 1F80; 1F88; 1F08 0399; # GREEK SMALL LETTER ALPHA WITH PSILI AND YPOGEGRAMMENI' gives that pair as the full uppercase, which the comparison does not use. Control: eval-text-alpha-psili-iota-equals-uppercase.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u1f08\u0399"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u1f80"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-params"}], "optIns": ["CustomParameters"], "audited": false}
+    },
+    {
+      "name": "eval-text-alpha-prosgegrammeni-not-full-uppercase",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "UnicodeData.txt 16.0.0 line '1F88;...;Lt;...;;1F80;' has no simple uppercase mapping, so U+1F88 stays itself and differs from the pattern U+1F08 U+0399; SpecialCasing.txt 16.0.0 line '1F88; 1F80; 1F88; 1F08 0399; # GREEK CAPITAL LETTER ALPHA WITH PSILI AND PROSGEGRAMMENI' gives that pair as the full uppercase, which the comparison does not use. Control: eval-text-alpha-psili-iota-equals-uppercase.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u1f08\u0399"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u1f88"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-params"}], "optIns": ["CustomParameters"], "audited": false}
+    },
+    {
+      "name": "eval-text-alpha-psili-iota-equals-uppercase",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "U+1F00 U+03B9 against U+1F08 U+0399: UnicodeData.txt 16.0.0 line '1F00;GREEK SMALL LETTER ALPHA WITH PSILI;...;1F08;;1F08' and UnicodeData.txt 16.0.0 line '03B9;GREEK SMALL LETTER IOTA;...;0399;;0399' map the parameter to the pattern.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-params",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["\u1f08\u0399"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Options": {"CustomParameters": ["\u1f00\u03b9"]},
+        "Client": {"RequestedElevation": "Standard"}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-params"}],
+        "optIns": [],
+        "audited": false
+      }
     }
   ]
 }
