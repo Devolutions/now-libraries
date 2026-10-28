@@ -515,23 +515,20 @@ fn read_identity(manager: Manager, id: &str) -> Identity {
     }
 }
 
-/// The identity of an Npm or Bun identifier that is neither a registry name nor an alias of registry names.
+/// The identity of an Npm or Bun identifier that is neither a registry name nor an alias of registry names ([§manager-npm]).
 ///
-/// UNTESTED: whether such an identifier selects the version is not stated by the contract, which only makes its identity and source unknown.
-/// This reading applies the default `name@version` rule, so that `name@1.2.3` is missing its version rather than checked against a version the command does not install.
-/// When changing it, check the missing version check for such identifiers.
+/// [§manager-npm]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-npm
 fn unknown_npm_identity(id: &str) -> Identity {
+    let at_after_first_character = |part: &str| part.chars().skip(1).any(|c| c == '@');
+
     Identity {
         names: None,
-        selects_version: id.rfind('@').is_some_and(|at| 0 < at),
+        selects_version: id.contains('#') || id.split(':').any(at_after_first_character),
         unknown_source: true,
     }
 }
 
 /// Returns the port a Vcpkg identifier `port[features]:triplet` names ([§manager-vcpkg]).
-///
-/// UNTESTED: the contract shows only the full form, and this reading takes `[features]` and `:triplet` as optional, so `zlib:x64-windows` and `zlib[core]` name `zlib`.
-/// When changing it, check the package identity of Vcpkg identifiers without features or a triplet.
 ///
 /// [§manager-vcpkg]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-vcpkg
 fn vcpkg_port(id: &str) -> &str {
@@ -612,19 +609,11 @@ fn concrete_version(
         Manager::Npm | Manager::Bun | Manager::Cargo | Manager::Dotnet => {
             Version::parse(version).is_some_and(|version| 3 <= version.release_count())
         }
-        Manager::PowerShell7 => powershell7_resolves_exactly(version),
+        Manager::PowerShell7 => Version::parse(version).is_some(),
         _ => true,
     };
 
     resolved_exactly.then(|| version.to_owned())
-}
-
-/// Returns whether PowerShell7 installs exactly `version` rather than resolving it.
-///
-/// UNTESTED: the contract says that `PowerShell7` needs a version, and this reading takes it as requiring a version of the contract's version scheme, so a range such as `[1.0,2.0]` is not concrete.
-/// When changing it, check the missing version check for PowerShell7 requests.
-fn powershell7_resolves_exactly(version: &str) -> bool {
-    Version::parse(version).is_some()
 }
 
 /// Returns the scope, or `None` when it is unknown.
