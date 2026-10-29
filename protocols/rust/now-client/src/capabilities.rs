@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use now_proto_pdu::{NowChannelCapsetMsg, NowExecCapsetFlags, NowProtoVersion};
+use now_proto_pdu::{NowChannelCapsetMsg, NowExecCapsetFlags, NowProtoVersion, NowSessionCapsetFlags};
 
 use crate::NowClientError;
 
@@ -78,6 +78,16 @@ impl NowCapabilities {
     /// Returns whether UTF-8 and Unicode-console encoding controls are available.
     pub fn supports_unicode_console(&self) -> bool {
         self.has(NowExecCapsetFlags::UNICODE_CONSOLE) && self.version().supports_exec_unicode_console()
+    }
+
+    /// Returns whether the peer accepts session lock requests.
+    pub fn supports_session_lock(&self) -> bool {
+        self.capset.session_capset().contains(NowSessionCapsetFlags::LOCK)
+    }
+
+    /// Returns whether the peer accepts session logoff requests.
+    pub fn supports_session_logoff(&self) -> bool {
+        self.capset.session_capset().contains(NowSessionCapsetFlags::LOGOFF)
     }
 
     pub(crate) fn supports_detached(&self) -> bool {

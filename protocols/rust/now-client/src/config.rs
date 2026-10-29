@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use now_proto_pdu::{NowChannelCapsetMsg, NowExecCapsetFlags};
+use now_proto_pdu::{NowChannelCapsetMsg, NowExecCapsetFlags, NowSessionCapsetFlags};
 
 use crate::NowClientError;
 
@@ -32,7 +32,9 @@ impl Default for NowClientConfig {
             | NowExecCapsetFlags::STYLE_PWSH
             | NowExecCapsetFlags::IO_REDIRECTION
             | NowExecCapsetFlags::UNICODE_CONSOLE;
-        let capset = NowChannelCapsetMsg::default().with_exec_capset(exec_capset);
+        let capset = NowChannelCapsetMsg::default()
+            .with_session_capset(NowSessionCapsetFlags::LOCK | NowSessionCapsetFlags::LOGOFF)
+            .with_exec_capset(exec_capset);
         let client_capset = match capset.with_heartbeat_interval(Duration::from_secs(60)) {
             Ok(capset) => capset,
             Err(_) => unreachable!("the fixed default heartbeat interval is valid"),

@@ -12,6 +12,11 @@ queues, and permits **one tracked execution at a time per stream**. Tracked oper
 expose raw `Vec<u8>` stdout/stderr chunks, stdin forwarding, normal cancellation, and
 terminal status.
 
+`session_lock` and `session_logoff` ask the peer to lock or log off the user session that
+hosts it. They require the matching negotiated session capability and have no response:
+they complete once the request is written, so callers confirm a logoff by observing the
+end of the session that carries the channel.
+
 Run and detached requests are submission-only. Gateway may emit an immediate
 Started/Data/Result sequence for Run; the client records and discards those matching
 frames so they cannot affect the next tracked operation. This recent-session quarantine
