@@ -24,8 +24,8 @@ pub(crate) struct ReadRequest {
     ///
     /// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
     pub(crate) manifest_source: bool,
-    /// The package names in their manager's canonical form, or `None` when the manager's reading makes the package identity unknown.
-    pub(crate) package_names: Option<Vec<String>>,
+    /// The package names in their manager's canonical form.
+    pub(crate) package_names: Vec<String>,
     pub(crate) canonical_form: CanonicalForm,
     /// The concrete version.
     pub(crate) version: Option<String>,
@@ -89,20 +89,10 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
     let canonical_form = canonical_form(manager, manifest_source);
 
     // No uninstall command is limited to packages installed from the source.
-    // An Update is read with an unknown source under PowerShell, PowerShell7, Scoop and Vcpkg, as each manager's reading states.
     // UNTESTED: the source of an Uninstall is unknown.
     // A valid policy names a source only in a selection without `Uninstall` and never consults `TrustedSources` for an uninstall, so no evaluation shows this value.
     // Keep it unknown when changing this code: a known source would let a rule that names a source match an uninstall if validation ever allowed one.
-    let source_is_unknown = operation == Operation::Uninstall
-        || (operation == Operation::Update
-            && matches!(
-                manager,
-                Manager::PowerShell | Manager::PowerShell7 | Manager::Scoop | Manager::Vcpkg
-            ));
-    let source = (!source_is_unknown).then(|| request.source.name.clone());
-
-    // The commands that update or remove a Vcpkg port also change the ports that depend on it, whichever triplet they are built for.
-    let vcpkg_port_is_unspecific = manager == Manager::Vcpkg && operation != Operation::Install;
+    let source = (operation != Operation::Uninstall).then(|| request.source.name.clone());
 
     let version = concrete_version(manager, request.package.version.as_deref(), &identity, &parameters);
     let missing_version = matches!(operation, Operation::Install | Operation::Update)
@@ -110,13 +100,7 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
         && version.is_none();
 
     let scope = read_scope(manager, operation, request.scope, &parameters);
-    let architecture = read_architecture(
-        manager,
-        operation,
-        request.package.architecture,
-        &request.source.name,
-        &parameters,
-    );
+    let architecture = read_architecture(manager, request.package.architecture, &request.source.name, &parameters);
 
     // A request that may act machine-wide without saying so in `Scope` is unreadable when it runs non-elevated.
     let scope_unknown_by_parameter = !parameters.scopes.is_empty() && scope.is_none();
@@ -136,8 +120,7 @@ pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
         manager,
         source,
         manifest_source,
-        package_names: (!vcpkg_port_is_unspecific)
-            .then(|| identity.names.iter().map(|name| canonical_form.apply(name)).collect()),
+        package_names: identity.names.iter().map(|name| canonical_form.apply(name)).collect(),
         canonical_form,
         version,
         missing_version,
@@ -886,7 +869,6 @@ fn read_scope(
 /// Returns the architecture, or `None` when it is unknown.
 fn read_architecture(
     manager: Manager,
-    operation: Operation,
     requested: Option<Architecture>,
     source_name: &str,
     parameters: &ParameterEffects,
@@ -902,7 +884,6 @@ fn read_architecture(
                 _ => None,
             }
         }
-        Manager::Vcpkg if operation != Operation::Install => None,
         Manager::Vcpkg => {
             let triplet = source_name.to_ascii_lowercase();
             [

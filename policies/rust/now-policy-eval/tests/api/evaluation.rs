@@ -108,6 +108,74 @@ fn untrusted_source_is_denied_whatever_the_rules_say() {
     );
 }
 
+#[rstest]
+// oracle: contract policies/CONTRACT.policy.md §trusted-sources
+// oracle: contract policies/CONTRACT.policy.md §managers
+#[case::powershell_trusted(
+    "PowerShell",
+    "PSGallery",
+    "Pester",
+    r#"[{"Manager":"PowerShell","Source":"PSGallery"}]"#,
+    "AllowRules"
+)]
+#[case::powershell_other_source(
+    "PowerShell",
+    "PSGallery",
+    "Pester",
+    r#"[{"Manager":"PowerShell","Source":"Other"}]"#,
+    "UntrustedSource"
+)]
+#[case::powershell7_trusted(
+    "PowerShell7",
+    "PSGallery",
+    "Pester",
+    r#"[{"Manager":"PowerShell7","Source":"PSGallery"}]"#,
+    "AllowRules"
+)]
+#[case::powershell7_other_source(
+    "PowerShell7",
+    "PSGallery",
+    "Pester",
+    r#"[{"Manager":"PowerShell7","Source":"Other"}]"#,
+    "UntrustedSource"
+)]
+#[case::scoop_trusted("Scoop", "main", "git", r#"[{"Manager":"Scoop","Source":"main"}]"#, "AllowRules")]
+#[case::scoop_other_bucket(
+    "Scoop",
+    "main",
+    "git",
+    r#"[{"Manager":"Scoop","Source":"extras"}]"#,
+    "UntrustedSource"
+)]
+#[case::vcpkg_trusted(
+    "Vcpkg",
+    "x64-windows",
+    "zlib",
+    r#"[{"Manager":"Vcpkg","Source":"x64-windows"}]"#,
+    "AllowRules"
+)]
+#[case::vcpkg_other_triplet(
+    "Vcpkg",
+    "x64-windows",
+    "zlib",
+    r#"[{"Manager":"Vcpkg","Source":"x86-windows"}]"#,
+    "UntrustedSource"
+)]
+fn trusted_sources_govern_updates_by_the_named_source(
+    #[case] manager: &str,
+    #[case] source: &str,
+    #[case] id: &str,
+    #[case] trusted_sources: &str,
+    #[case] check: &str,
+) {
+    let mut subject = request("Update", manager, source, id);
+    subject.package.version = (manager.starts_with("PowerShell")).then(|| "5.0.0".to_owned());
+    assert_eq!(
+        evaluate(&document(trusted_sources, ALLOW_ALL), &subject).check.as_str(),
+        check
+    );
+}
+
 #[test]
 fn trusted_sources_do_not_govern_uninstalls() {
     // oracle: contract policies/CONTRACT.policy.md §trusted-sources
@@ -354,6 +422,24 @@ fn unknown_properties_resolve_toward_denial(#[case] rules: &str, #[case] check: 
     "zlib",
     "AllowRules",
     "DenyRule"
+)]
+#[case::vcpkg_update_names_its_port(
+    request("Update", "Vcpkg", "x64-windows", "zlib[core]:x64-windows"),
+    "zlib",
+    "AllowRules",
+    "DenyRule"
+)]
+#[case::vcpkg_uninstall_names_its_port(
+    request("Uninstall", "Vcpkg", "x64-windows", "zlib"),
+    "zlib",
+    "AllowRules",
+    "DenyRule"
+)]
+#[case::vcpkg_update_of_another_port(
+    request("Update", "Vcpkg", "x64-windows", "zlib"),
+    "openssl",
+    "DefaultDeny",
+    "AllowRules"
 )]
 #[case::non_ascii_case_difference_is_unknown(
     install("Winget", "winget", "Contoso.Tool", "1.0"),

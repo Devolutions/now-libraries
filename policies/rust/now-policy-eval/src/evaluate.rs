@@ -38,7 +38,7 @@ impl Outcome {
 /// [§precedence]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#precedence
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Check {
-    /// The request is well-formed, and a case of the reading of requests holds for it ([§unreadable]), such as the broker building no command for it.
+    /// The request is well-formed, and a case of the reading of requests holds for it ([§unreadable]).
     ///
     /// An unreadable request gets a `Deny` decision, not an error.
     ///
@@ -86,10 +86,10 @@ pub struct DecisionRule {
     pub reason: Option<String>,
 }
 
-/// The result of evaluating one well-formed request: an outcome, and the check, rules and opt-ins that produced it ([§decision]).
+/// The result of evaluating one well-formed request against a policy at an evaluation time: an outcome, the check, rules and opt-ins that produced it, and whether audit mode let a denied request run ([§decision]).
 ///
 /// Evaluating a well-formed request always gives a decision, an unreadable request's included.
-/// An error reports no outcome and carries no decision ([§error]).
+/// An error is a result that is not a decision ([§error]).
 ///
 /// [§decision]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-decision
 /// [§error]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-error
@@ -353,9 +353,6 @@ fn selector_matches(selector: &SourceSelector, request: &ReadRequest) -> Match {
 ///
 /// [§package-identity]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#package-identity
 fn packages_match(patterns: &[String], request: &ReadRequest) -> Match {
-    let Some(names) = &request.package_names else {
-        return Match::Unknown;
-    };
     let patterns: Vec<String> = patterns
         .iter()
         .map(|pattern| map_pattern_segments(pattern, |segment| request.canonical_form.apply(segment)))
@@ -363,7 +360,7 @@ fn packages_match(patterns: &[String], request: &ReadRequest) -> Match {
 
     let mut all_match = true;
     let mut none_match = true;
-    for name in names {
+    for name in &request.package_names {
         let name_match = if patterns.iter().any(|pattern| pattern_matches_exact(pattern, name)) {
             Match::Yes
         } else if patterns

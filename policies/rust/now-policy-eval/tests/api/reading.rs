@@ -2,7 +2,7 @@
 
 use now_policy_eval::{
     Architecture, Check, CustomParameters, Elevation, InstallerArguments, InstallerArgumentsMode, KillBeforeOperation,
-    PrePostCommands, Request, Scope,
+    Operation, PrePostCommands, Request, Scope,
 };
 use rstest::rstest;
 
@@ -548,10 +548,37 @@ fn missing_versions(#[case] subject: Request, #[case] expected: Check) {
     assert_eq!(check_of(GRANT_ALL, &subject), expected);
 }
 
+/// An Update through `manager` of `id` from `source` at a version PowerShell accepts.
+fn install_as_update(manager: &str, source: &str, id: &str) -> Request {
+    let mut subject = install(manager, source, id, "5.0.0");
+    subject.operation = Operation::Update;
+    subject
+}
+
 /// Returns the check of `request` under an Allow rule selecting `condition`, with every opt-in granted.
 fn check_selecting(condition: &str, request: &Request) -> Check {
     let rules = GRANT_ALL.replace(r#""Select":{}"#, &format!(r#""Select":{{{condition}}}"#));
     check_of(&rules, request)
+}
+
+#[rstest]
+// oracle: contract policies/CONTRACT.policy.md §managers
+// oracle: contract policies/CONTRACT.policy.md §source-selector
+#[case::scoop(request("Update", "Scoop", "main", "git"), "Scoop", "main")]
+#[case::vcpkg(request("Update", "Vcpkg", "x64-windows", "zlib"), "Vcpkg", "x64-windows")]
+#[case::powershell(install_as_update("PowerShell", "PSGallery", "Pester"), "PowerShell", "PSGallery")]
+#[case::powershell7(install_as_update("PowerShell7", "PSGallery", "Pester"), "PowerShell7", "PSGallery")]
+fn source_of_an_update_is_the_name_it_carries(#[case] subject: Request, #[case] manager: &str, #[case] source: &str) {
+    let selecting = |source: &str| {
+        check_selecting(
+            &format!(r#""Operations":["Update"],"Sources":[{{"Manager":"{manager}","Source":"{source}"}}]"#),
+            &subject,
+        )
+    };
+    assert_eq!(
+        (selecting(source), selecting("elsewhere")),
+        (Check::AllowRules, Check::DefaultDeny)
+    );
 }
 
 #[rstest]
@@ -611,6 +638,8 @@ fn scope_that_may_be_machine_without_elevation_is_unreadable(#[case] subject: Re
 #[case::scoop_field(with(request("Install", "Scoop", "main", "git"), |r| r.package.architecture = Some(Architecture::X64)), "X64")]
 #[case::vcpkg_triplet(request("Install", "Vcpkg", "x64-windows", "zlib"), "X64")]
 #[case::vcpkg_triplet_ignoring_ascii_case(request("Install", "Vcpkg", "ARM64-Linux", "zlib"), "Arm64")]
+#[case::vcpkg_update_triplet(request("Update", "Vcpkg", "x86-windows", "zlib"), "X86")]
+#[case::vcpkg_uninstall_triplet(request("Uninstall", "Vcpkg", "arm64-windows", "zlib"), "Arm64")]
 #[case::npm_default(install("Npm", "npm", "react", "18.2.0"), "Neutral")]
 #[case::bun_default(install("Bun", "Bun", "react", "18.2.0"), "Neutral")]
 #[case::cargo_default(install("Cargo", "crates.io", "serde", "1.0.0"), "Neutral")]
@@ -633,6 +662,8 @@ fn known_architectures(#[case] subject: Request, #[case] architecture: &str) {
 #[case::winget_option_with_other_value(with_parameters(winget_install(), &["--architecture", "amd64"]))]
 #[case::winget_option_sharing_its_element(with_parameters(winget_install(), &["-ea", "x64"]))]
 #[case::vcpkg_other_triplet(request("Install", "Vcpkg", "wasm32-emscripten", "zlib"))]
+#[case::vcpkg_update_other_triplet(request("Update", "Vcpkg", "wasm32-emscripten", "zlib"))]
+#[case::vcpkg_uninstall_other_triplet(request("Uninstall", "Vcpkg", "wasm32-emscripten", "zlib"))]
 #[case::dotnet_neutral(with(install("Dotnet", "nuget.org", "dotnet-ef", "8.0.0"), |r| r.package.architecture = Some(Architecture::Neutral)))]
 #[case::chocolatey_x64(elevated(with(install("Chocolatey", "chocolatey", "git", "2.4"), |r| r.package.architecture = Some(Architecture::X64))))]
 #[case::chocolatey_without_architecture(elevated(install("Chocolatey", "chocolatey", "git", "2.4")))]
