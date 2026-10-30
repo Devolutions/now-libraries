@@ -116,7 +116,11 @@ impl fmt::Display for ErrorCode {
     }
 }
 
-/// A validation error: its code and an RFC 6901 JSON Pointer to where it is, `""` for the whole document.
+/// A validation error of a policy document: its code and an RFC 6901 JSON Pointer to where it is, `""` for the whole document.
+///
+/// It is an error ([§error]), not a decision: a document with validation errors has no policy to decide with.
+///
+/// [§error]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-error
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ValidationError {
     pub code: ErrorCode,

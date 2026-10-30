@@ -29,7 +29,12 @@ pub struct Request {
     pub opt_ins: OptIns,
 }
 
-/// The request is not well-formed under the wire contract.
+/// The request is not well-formed under the wire contract ([§request-input]), so it gets no decision.
+///
+/// This is an error ([§error]), not a decision.
+///
+/// [§request-input]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#request-input
+/// [§error]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-error
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BadRequest;
 

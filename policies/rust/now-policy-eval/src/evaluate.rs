@@ -10,7 +10,9 @@ use crate::timestamp::Timestamp;
 use crate::values::{Manager, Operation, OptIn, OptInSet, RuleDecision};
 use crate::version::Version;
 
-/// Whether the broker runs the request.
+/// Whether the broker runs the request, `Allow` or `Deny` ([§decision]).
+///
+/// [§decision]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-decision
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Outcome {
     Allow,
@@ -34,6 +36,11 @@ impl Outcome {
 /// [§precedence]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#precedence
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Check {
+    /// The request is well-formed, but the evaluator cannot tell what the broker would run for it ([§unreadable]).
+    ///
+    /// An unreadable request gets a `Deny` decision, not an error.
+    ///
+    /// [§unreadable]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-unreadable
     UnreadableRequest,
     ValidityWindow,
     InstallLocation,
@@ -77,9 +84,13 @@ pub struct DecisionRule {
     pub reason: Option<String>,
 }
 
-/// The result of evaluating one request ([§decision]).
+/// The result of evaluating one well-formed request: an outcome, and the check, rules and opt-ins that produced it ([§decision]).
 ///
-/// [§decision]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#decision
+/// Every well-formed request gets a decision, an unreadable one included.
+/// A result that has no decision is an error ([§error]).
+///
+/// [§decision]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-decision
+/// [§error]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-error
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Decision {
     pub outcome: Outcome,
@@ -94,7 +105,10 @@ pub struct Decision {
 
 /// Evaluates `request` against `policy` at the evaluation time `time`.
 ///
-/// Returns [`BadRequest`] when `request` is not well-formed under the wire contract ([`Request`]), whatever the policy says.
+/// A request that is not well-formed gets an error and no decision ([§request-input]): this returns [`BadRequest`], whatever the policy says.
+/// An unreadable request is well-formed and gets a `Deny` decision with the check `UnreadableRequest`.
+///
+/// [§request-input]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#request-input
 pub fn evaluate(policy: &Policy, request: &Request, time: Timestamp) -> Result<Decision, BadRequest> {
     if !request.is_well_formed() {
         return Err(BadRequest);
