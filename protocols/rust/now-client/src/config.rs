@@ -10,7 +10,7 @@ pub struct NowClientConfig {
     /// Capabilities sent to the peer during the initial handshake.
     ///
     /// Only capabilities advertised here can be negotiated. The default advertises every
-    /// execution style this client implements and the session lock and logoff commands;
+    /// execution capability this client implements and the session lock and logoff commands;
     /// a custom capset that omits a flag disables the matching request.
     pub client_capset: NowChannelCapsetMsg,
     /// Largest accepted PDU body, excluding the eight-byte NOW header.
@@ -35,7 +35,8 @@ impl Default for NowClientConfig {
             | NowExecCapsetFlags::STYLE_WINPS
             | NowExecCapsetFlags::STYLE_PWSH
             | NowExecCapsetFlags::IO_REDIRECTION
-            | NowExecCapsetFlags::UNICODE_CONSOLE;
+            | NowExecCapsetFlags::UNICODE_CONSOLE
+            | NowExecCapsetFlags::ELEVATION;
         let capset = NowChannelCapsetMsg::default()
             .with_session_capset(NowSessionCapsetFlags::LOCK | NowSessionCapsetFlags::LOGOFF)
             .with_exec_capset(exec_capset);

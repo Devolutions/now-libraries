@@ -128,6 +128,17 @@ namespace Devolutions.NowClient
             return this;
         }
 
+        /// <summary>
+        /// Execute with elevated privileges. Requires the host to advertise the elevation
+        /// capability. The host may prompt the interactive user for consent, and stdio redirection
+        /// is best-effort depending on the host's elevation mechanism.
+        /// </summary>
+        public ExecWinPsParams Elevated(bool enable = true)
+        {
+            IsElevated = enable;
+            return this;
+        }
+
         internal NowMsgExecWinPs ToNowMessage(uint sessionId)
         {
             var builder = _serverMode
@@ -192,6 +203,11 @@ namespace Devolutions.NowClient
             if (_unicodeConsole)
             {
                 builder.EnableUnicodeConsole();
+            }
+
+            if (IsElevated)
+            {
+                builder.EnableElevated();
             }
 
             return builder.Build();

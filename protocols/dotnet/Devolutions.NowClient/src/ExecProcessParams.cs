@@ -1,4 +1,4 @@
-using Devolutions.NowProto.Messages;
+﻿using Devolutions.NowProto.Messages;
 
 namespace Devolutions.NowClient
 {
@@ -54,6 +54,17 @@ namespace Devolutions.NowClient
             return this;
         }
 
+        /// <summary>
+        /// Execute with elevated privileges. Requires the host to advertise the elevation
+        /// capability. The host may prompt the interactive user for consent, and stdio redirection
+        /// is best-effort depending on the host's elevation mechanism.
+        /// </summary>
+        public ExecProcessParams Elevated(bool enable = true)
+        {
+            IsElevated = enable;
+            return this;
+        }
+
         internal NowMsgExecProcess ToNowMessage(uint sessionId)
         {
             var builder = new NowMsgExecProcess.Builder(sessionId, filename);
@@ -81,6 +92,11 @@ namespace Devolutions.NowClient
             if (_encodingUtf8)
             {
                 builder.EnableEncodingUtf8();
+            }
+
+            if (IsElevated)
+            {
+                builder.EnableElevated();
             }
 
             return builder.Build();

@@ -1,4 +1,6 @@
-﻿namespace Devolutions.NowProto.Messages
+﻿using System;
+
+namespace Devolutions.NowProto.Messages
 {
     /// <summary>
     /// The NOW_EXEC_STARTED_MSG message is sent by the server after the execution session has been
@@ -6,7 +8,7 @@
     ///
     /// NOW-PROTO: NOW_EXEC_STARTED_MSG
     /// </summary>
-    public class NowMsgExecStarted(uint sessionId) : INowSerialize, INowDeserialize<NowMsgExecStarted>
+    public class NowMsgExecStarted(uint sessionId, bool noIoRedirection = false) : INowSerialize, INowDeserialize<NowMsgExecStarted>
     {
         // -- INowMessage --
 
@@ -18,7 +20,7 @@
 
         // -- INowSerialize --
 
-        ushort INowSerialize.Flags => 0;
+        ushort INowSerialize.Flags => (ushort)(NoIoRedirection ? MsgFlags.NoIoRedirection : MsgFlags.None);
         uint INowSerialize.BodySize => FixedPartSize;
 
         void INowSerialize.SerializeBody(NowWriteCursor cursor)
@@ -34,15 +36,31 @@
         )
         {
             cursor.EnsureEnoughBytes(FixedPartSize);
+            var msgFlags = (MsgFlags)flags;
             var sessionId = cursor.ReadUInt32Le();
 
-            return new NowMsgExecStarted(sessionId);
+            return new NowMsgExecStarted(sessionId, msgFlags.HasFlag(MsgFlags.NoIoRedirection));
         }
 
         // -- impl --
 
+        [Flags]
+        private enum MsgFlags : ushort
+        {
+            None = 0x0000,
+
+            /// <summary>
+            /// Set when NOW_EXEC_FLAG_*_IO_REDIRECTION was requested, but the server could not
+            /// redirect standard streams for this session.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_STARTED_NO_IO_REDIRECTION
+            /// </summary>
+            NoIoRedirection = 0x0001,
+        }
+
         private const uint FixedPartSize = 4 /* u32 sessionId */;
 
         public uint SessionId { get; } = sessionId;
+        public bool NoIoRedirection { get; } = noIoRedirection;
     }
 }

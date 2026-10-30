@@ -117,6 +117,14 @@ namespace Devolutions.NowProto.Messages
             ServerMode = 0x2000,
 
             /// <summary>
+            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
+            /// the host and advertised in execCapset.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_PS_ELEVATED
+            /// </summary>
+            Elevated = 0x4000,
+
+            /// <summary>
             /// Detached mode: PowerShell is started without tracking execution or sending back output.
             ///
             /// NOW-PROTO: NOW_EXEC_FLAG_PS_DETACHED
@@ -217,6 +225,12 @@ namespace Devolutions.NowProto.Messages
             public Builder EnableUnicodeConsole()
             {
                 _flags |= MsgFlags.UnicodeConsole;
+                return this;
+            }
+
+            public Builder EnableElevated()
+            {
+                _flags |= MsgFlags.Elevated;
                 return this;
             }
 
@@ -331,6 +345,7 @@ namespace Devolutions.NowProto.Messages
         public bool IoRedirection => _flags.HasFlag(MsgFlags.IoRedirection);
         public bool RawEncoding => _flags.HasFlag(MsgFlags.RawEncoding);
         public bool UnicodeConsole => _flags.HasFlag(MsgFlags.UnicodeConsole);
+        public bool Elevated => _flags.HasFlag(MsgFlags.Elevated);
         public bool ServerMode => _flags.HasFlag(MsgFlags.ServerMode);
         public bool Detached => _flags.HasFlag(MsgFlags.Detached);
 

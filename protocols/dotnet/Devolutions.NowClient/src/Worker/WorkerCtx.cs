@@ -296,7 +296,7 @@ namespace Devolutions.NowClient.Worker
                         var decoded = message.Deserialize<NowMsgExecStarted>();
                         if (ctx.ExecSessionHandlers.TryGetValue(decoded.SessionId, out IExecSessionHandler? handler))
                         {
-                            handler.HandleStarted();
+                            handler.HandleStarted(decoded);
                         }
                         else
                         {

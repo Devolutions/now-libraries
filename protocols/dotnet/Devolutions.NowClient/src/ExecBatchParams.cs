@@ -54,6 +54,29 @@ namespace Devolutions.NowClient
             return this;
         }
 
+        /// <summary>
+        /// Keep the command interpreter open after the batch file completes (`cmd /K` rather than
+        /// `/C`). Ignored by the server when the session redirects stdio.
+        /// </summary>
+        public ExecBatchParams NoExit(bool enable = true)
+        {
+            _noExit = enable;
+            return this;
+        }
+
+        /// <summary>
+        /// Execute with elevated privileges. Requires the host to advertise the elevation
+        /// capability. The host may prompt the interactive user for consent, and stdio redirection
+        /// is best-effort depending on the host's elevation mechanism.
+        /// </summary>
+        public ExecBatchParams Elevated(bool enable = true)
+        {
+            IsElevated = enable;
+            return this;
+        }
+
+        internal bool IsNoExit => _noExit;
+
         internal NowMsgExecBatch ToNowMessage(uint sessionId)
         {
             var builder = new NowMsgExecBatch.Builder(sessionId, command);
@@ -83,6 +106,16 @@ namespace Devolutions.NowClient
                 builder.EnableUnicodeConsole();
             }
 
+            if (IsElevated)
+            {
+                builder.EnableElevated();
+            }
+
+            if (_noExit)
+            {
+                builder.EnableNoExit();
+            }
+
             return builder.Build();
         }
 
@@ -91,5 +124,6 @@ namespace Devolutions.NowClient
         private bool _detached = false;
         private bool _rawEncoding = false;
         private bool _unicodeConsole = false;
+        private bool _noExit = false;
     }
 }

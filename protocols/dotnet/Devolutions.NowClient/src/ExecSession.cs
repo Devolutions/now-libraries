@@ -35,8 +35,13 @@ namespace Devolutions.NowClient
             }
         }
 
-        void IExecSessionHandler.HandleStarted()
+        void IExecSessionHandler.HandleStarted(NowMsgExecStarted msg)
         {
+            NoIoRedirection = msg.NoIoRedirection;
+            if (msg.NoIoRedirection)
+            {
+                _lastStdinSent = true;
+            }
             _onStarted?.Invoke(SessionId);
         }
 
@@ -179,6 +184,12 @@ namespace Devolutions.NowClient
         /// Current session id.
         /// </summary>
         public uint SessionId { get; }
+
+        /// <summary>
+        /// True if the server reported in <see cref="NowMsgExecStarted"/> that requested I/O
+        /// redirection could not be established for this session.
+        /// </summary>
+        public bool NoIoRedirection { get; private set; }
 
         private void ThrowIfExited()
         {
