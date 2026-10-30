@@ -4,7 +4,7 @@
 
 use crate::document::{OptInPatterns, Policy, Rule, Selection, SourceSelector, VersionCondition};
 use crate::reading::{InstallLocation, ReadRequest, read};
-use crate::request::Request;
+use crate::request::{BadRequest, Request};
 use crate::text::{eq_ignore_case, map_pattern_segments, pattern_matches_exact, pattern_matches_ignore_case};
 use crate::timestamp::Timestamp;
 use crate::values::{Manager, Operation, OptIn, OptInSet, RuleDecision};
@@ -94,8 +94,16 @@ pub struct Decision {
 
 /// Evaluates `request` against `policy` at the evaluation time `time`.
 ///
-/// A request that is not well-formed under the wire contract ([`Request`]) is outside the contract, so the decision is a denial by the check `UnreadableRequest`, whatever the policy says.
-pub fn evaluate(policy: &Policy, request: &Request, time: Timestamp) -> Decision {
+/// Returns [`BadRequest`] when `request` is not well-formed under the wire contract ([`Request`]), whatever the policy says.
+pub fn evaluate(policy: &Policy, request: &Request, time: Timestamp) -> Result<Decision, BadRequest> {
+    if !request.is_well_formed() {
+        return Err(BadRequest);
+    }
+
+    Ok(decide_well_formed(policy, request, time))
+}
+
+fn decide_well_formed(policy: &Policy, request: &Request, time: Timestamp) -> Decision {
     let Ok(request) = read(request) else {
         return decide(policy, Check::UnreadableRequest, Vec::new(), OptInSet::default());
     };

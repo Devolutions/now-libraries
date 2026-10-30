@@ -2,7 +2,7 @@
 
 use now_policy_eval::{
     Check, CustomInstallLocation, CustomParameters, Decision, Elevation, Manager, Operation, OptIns, Outcome, Package,
-    Request, Scope, Source, evaluate, parse_policy,
+    Policy, Request, Scope, Source, evaluate, parse_policy,
 };
 use proptest::prelude::*;
 use proptest::sample::select;
@@ -58,8 +58,8 @@ proptest! {
         let ids = policy.default_ids();
         let (reordered, reordered_ids) = policy.reordered(&ids, &mut Shuffler::new(seed));
 
-        let original = comparable(evaluate(&policy.parse(&ids), &request, time));
-        let reordered = comparable(evaluate(&reordered.parse(&reordered_ids), &request, time));
+        let original = comparable(decide(&policy.parse(&ids), &request, time));
+        let reordered = comparable(decide(&reordered.parse(&reordered_ids), &request, time));
         prop_assert_eq!(original, reordered);
     }
 
@@ -112,11 +112,18 @@ proptest! {
         time in generators::time(),
     ) {
         // oracle: contract policies/CONTRACT.policy.md §decision
-        // Reading arbitrary text never fails the evaluation, and the outcome follows the check and audit flag.
-        let decision = evaluate(&policy.parse(&policy.default_ids()), &request, time);
-        let allowed = decision.check == Check::AllowRules || decision.audited;
-        prop_assert_eq!(decision.outcome == Outcome::Allow, allowed);
+        // A request that is not well-formed gets an error, and every other one gets a decision, whatever its text.
+        // The outcome of a decision follows the check and audit flag.
+        if let Ok(decision) = evaluate(&policy.parse(&policy.default_ids()), &request, time) {
+            let allowed = decision.check == Check::AllowRules || decision.audited;
+            prop_assert_eq!(decision.outcome == Outcome::Allow, allowed);
+        }
     }
+}
+
+/// Evaluates a request that the generators build well-formed.
+fn decide(policy: &Policy, request: &Request, time: now_policy_eval::Timestamp) -> Decision {
+    evaluate(policy, request, time).expect("generated request is well-formed")
 }
 
 /// Evaluates `request` against `policy` and against `policy` with `extra` inserted at `position` under an unused id.
@@ -128,14 +135,14 @@ fn with_extra_rule(
     time: now_policy_eval::Timestamp,
 ) -> (Decision, Decision) {
     let ids = policy.default_ids();
-    let before = evaluate(&policy.parse(&ids), request, time);
+    let before = decide(&policy.parse(&ids), request, time);
 
     let position = position.index(policy.rules.len() + 1);
     let mut extended = policy.clone();
     extended.rules.insert(position, extra);
     let mut extended_ids = ids;
     extended_ids.insert(position, "extra".to_owned());
-    let after = evaluate(&extended.parse(&extended_ids), request, time);
+    let after = decide(&extended.parse(&extended_ids), request, time);
 
     (before, after)
 }

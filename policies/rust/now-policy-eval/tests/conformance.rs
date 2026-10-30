@@ -264,7 +264,9 @@ fn run_evaluation_case(file: &RawObject, case: &RawObject) -> Result<(), String>
     let expect = value_field(case, "expect")?.ok_or("no `expect`")?;
     let expected = read_decision(&expect)?;
 
-    let actual = decision_value(&evaluate(&policy, &request, time));
+    let decision =
+        evaluate(&policy, &request, time).map_err(|error| format!("{error}: the suite has no error case"))?;
+    let actual = decision_value(&decision);
     if actual == expected {
         Ok(())
     } else {

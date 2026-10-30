@@ -57,14 +57,8 @@ pub(crate) enum InstallLocation {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct Unreadable;
 
-/// Reads `request` the way the broker executes it.
-///
-/// A request that is not well-formed is unreadable, because it is outside the contract.
+/// Reads the well-formed `request` the way the broker executes it.
 pub(crate) fn read(request: &Request) -> Result<ReadRequest, Unreadable> {
-    if !request.is_well_formed() {
-        return Err(Unreadable);
-    }
-
     let operation = request.operation;
     let manager = request.manager;
     let used = used_opt_ins(&request.opt_ins);

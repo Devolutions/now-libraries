@@ -1,6 +1,6 @@
 use now_policy_eval::{
-    Check, CustomInstallLocation, CustomParameters, Decision, Elevation, Manager, Operation, OptIns, Outcome, Package,
-    Policy, Request, Source, Timestamp, parse_policy,
+    BadRequest, Check, CustomInstallLocation, CustomParameters, Decision, Elevation, Manager, Operation, OptIns,
+    Outcome, Package, Policy, Request, Source, Timestamp, parse_policy,
 };
 
 /// The metadata every test document uses unless the test is about metadata.
@@ -100,12 +100,18 @@ pub(crate) const TRUST_ALL: &str = r#"[
     {"Manager":"Vcpkg","AnySource":true}
 ]"#;
 
+/// Evaluates `request`, which a test that expects a decision builds well-formed.
 pub(crate) fn evaluate_at(policy_text: &str, request: &Request, at: &str) -> Decision {
-    now_policy_eval::evaluate(&policy(policy_text), request, time(at))
+    now_policy_eval::evaluate(&policy(policy_text), request, time(at)).expect("test request is well-formed")
 }
 
 pub(crate) fn evaluate(policy_text: &str, request: &Request) -> Decision {
     evaluate_at(policy_text, request, NOW)
+}
+
+/// Evaluates `request` at the usual time, whether or not it is well-formed.
+pub(crate) fn try_evaluate(policy_text: &str, request: &Request) -> Result<Decision, BadRequest> {
+    now_policy_eval::evaluate(&policy(policy_text), request, time(NOW))
 }
 
 /// Evaluates `request` under a policy that trusts every source and has the given rules.

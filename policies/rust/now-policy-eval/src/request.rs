@@ -7,12 +7,14 @@
 //! [§request-input]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#request-input
 //! [§package-request]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.wire.md#package-request
 
+use core::fmt;
+
 use crate::values::{Architecture, Elevation, InstallerArgumentsMode, Manager, Operation, Scope};
 
 /// A request to install, update or uninstall one package through one manager.
 ///
 /// The types allow requests that the wire contract rejects as `BadRequest` ([§package-request]): a member outside its lengths, an empty list or string, a `Package.Id` outside its character set, `PrePostCommands` with neither `Pre` nor `Post`, a `*` or `?` in `Processes`, and `Scope` `Machine` with `Elevation` `NonElevated`.
-/// Such a request is outside the contract, and [`evaluate`](crate::evaluate) denies it with the check `UnreadableRequest`, whatever the policy says.
+/// [`evaluate`](crate::evaluate) returns [`BadRequest`] for such a request, whatever the policy says.
 ///
 /// [§package-request]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.wire.md#package-request
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -26,6 +28,18 @@ pub struct Request {
     pub elevation: Elevation,
     pub opt_ins: OptIns,
 }
+
+/// The request is not well-formed under the wire contract.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BadRequest;
+
+impl fmt::Display for BadRequest {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("request is not well-formed")
+    }
+}
+
+impl core::error::Error for BadRequest {}
 
 /// The source of the package.
 #[derive(Debug, Clone, PartialEq, Eq)]
