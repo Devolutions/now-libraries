@@ -508,7 +508,7 @@ This table is the closed set of `InvalidReason` values.
 
 | InvalidReason           | The policy file                                                                          |
 | ----------------------- | ---------------------------------------------------------------------------------------- |
-| `Unreadable`            | cannot be opened or read                                                                 |
+| `ReadFailed`            | cannot be opened or read                                                                 |
 | `UnsupportedPath`       | has a path whose form or extension the broker does not read                              |
 | `InsecureStorage`       | or its location fails the broker's storage security checks                               |
 | `InvalidDocument`       | is not a valid policy document ([CONTRACT.policy.md §errors](CONTRACT.policy.md#errors)) |
@@ -527,7 +527,6 @@ This table is the closed set of `ReadOnlyReason` values.
 
 A state whose `InvalidReason` is `MonitoringUnavailable` has the `ReadOnlyReason` `MonitoringUnavailable`.
 Which reason applies is implementation-defined when several do.
-`Unreadable` names a policy file the broker cannot open or read, not an unreadable package request ([CONTRACT.policy.md §def-unreadable](CONTRACT.policy.md#def-unreadable)).
 
 <a id="policy-errors"></a>
 ### Policy errors
