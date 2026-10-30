@@ -101,9 +101,9 @@ A Deny rule therefore protects a package only from requests that name it.
 ## Fail-closed checks
 
 Outside the validity dates, every request is denied, with no fallback.
-A custom install location that is not one plain local path is refused before any rule runs, so audit mode cannot let it through.
+A custom install location that is not one plain local path is denied by a check that runs before any rule, so audit mode cannot let it through.
 Install and update requests carry a concrete version, so that the broker has the information rule matching needs.
-A request without one is rejected before any rule runs, except through package managers for which the broker cannot pin a version.
+A request without one is denied by a check that runs before any rule, except through package managers for which the broker cannot pin a version.
 For those managers the version is unknown: a Deny rule's version condition matches, and an Allow rule's does not.
 When scope or architecture is unknown, a Deny rule's selection matches and an Allow rule's does not.
 Uninstalls carry no version or source a policy can check, so a selection that tests the version or the source applies to installs and updates only, and says so by listing its operations.
