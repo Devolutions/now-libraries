@@ -390,6 +390,7 @@ A process of the operation runs too long when it runs longer than `OperationTime
 These rules decide how an operation that is not canceled ends:
 
 - when its request has `PrePostCommands` and the token the broker would run its processes with is elevated, such as when User Account Control is disabled, it runs no step and ends `Failed`, because the broker never runs a `Pre` or `Post` command with an elevated token;
+- when its request is an Update through a manager that updates from the source recorded when the package was installed, and that record names another source or cannot be read ([CONTRACT.policy.md §managers](CONTRACT.policy.md#managers)), it runs no step and ends `Failed`;
 - a failure to stop a process of `KillBeforeOperation` is ignored;
 - when the `Pre` command cannot be run, exits with a code other than 0 or runs too long, it runs no later step and ends `Failed`;
 - when the manager process cannot be launched or runs too long, it runs no later step and ends `Failed`;
