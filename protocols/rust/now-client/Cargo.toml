@@ -1,6 +1,6 @@
 [package]
 name = "now-client"
-version = "0.1.0"
+version = "0.1.1"
 readme = "README.md"
 description = "High-level Tokio client for NOW execution channels"
 edition.workspace = true
