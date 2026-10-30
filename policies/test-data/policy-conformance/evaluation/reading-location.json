@@ -1,0 +1,3240 @@
+{
+  "policy": {
+    "PolicyFormatVersion": "2.0.0",
+    "Metadata": {
+      "Id": "conformance-reading",
+      "Publisher": "Policy conformance suite",
+      "Revision": 1,
+      "PublishedAt": "2026-01-01T00:00:00Z"
+    },
+    "TrustedSources": [
+      {
+        "Manager": "Winget",
+        "AnySource": true
+      },
+      {
+        "Manager": "PowerShell",
+        "AnySource": true
+      },
+      {
+        "Manager": "PowerShell7",
+        "AnySource": true
+      },
+      {
+        "Manager": "Apt",
+        "AnySource": true
+      },
+      {
+        "Manager": "Bun",
+        "AnySource": true
+      },
+      {
+        "Manager": "Cargo",
+        "AnySource": true
+      },
+      {
+        "Manager": "Chocolatey",
+        "AnySource": true
+      },
+      {
+        "Manager": "Dnf",
+        "AnySource": true
+      },
+      {
+        "Manager": "Dotnet",
+        "AnySource": true
+      },
+      {
+        "Manager": "Flatpak",
+        "AnySource": true
+      },
+      {
+        "Manager": "Homebrew",
+        "AnySource": true
+      },
+      {
+        "Manager": "Npm",
+        "AnySource": true
+      },
+      {
+        "Manager": "Pacman",
+        "AnySource": true
+      },
+      {
+        "Manager": "Pip",
+        "AnySource": true
+      },
+      {
+        "Manager": "Scoop",
+        "AnySource": true
+      },
+      {
+        "Manager": "Snap",
+        "AnySource": true
+      },
+      {
+        "Manager": "Vcpkg",
+        "AnySource": true
+      }
+    ],
+    "Rules": [
+      {
+        "Id": "allow-all",
+        "Decision": "Allow",
+        "Select": {},
+        "Grants": {
+          "CustomInstallLocation": {
+            "Patterns": [
+              "*"
+            ]
+          },
+          "CustomParameters": {
+            "Patterns": [
+              "*"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "read-location-plain-drive-root-backslash",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-drive-root-slash",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:/"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-lowercase-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "c:\\"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-other-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "Z:\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-nested",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\Tool"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-slashes",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:/Apps/Tool"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-mixed-separators",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps/Tool"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-trailing-separator",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-repeated-separators",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\\\Tool"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-inner-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\My Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-leading-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\.config"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-inner-dots",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a..b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-non-ascii",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\\u00e9t\u00e9"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-no-break-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\u00a0b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-equals",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path; every location is granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a=b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-drive-only",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "No separator after ':'. Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-drive-relative",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "No separator after ':'. Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-relative",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "Apps\\Tool"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-rooted-no-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-slash-rooted",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "/Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-unc",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\\\\server\\share"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-unc-slashes",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "//server/share"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-device-path",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\\\\?\\C:\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-device-namespace",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\\\\.\\C:\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-digit-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "1:\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-two-letter-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "CD:\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-non-ascii-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\u00e9:\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-leading-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": " C:\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-dot-dot-segment",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\..\\Windows"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-dot-dot-only",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\.."
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-dot-segment",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\.\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-segment-leading-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\ Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-segment-trailing-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps "
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-segment-trailing-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps."
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-colon",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\x:y"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-asterisk",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a*"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-question-mark",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a?"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-quote",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Through PowerShell, whose reading refuses no character of the path, since \" is a batch character that makes a WinGet request unreadable (§manager-winget). Control: read-location-plain-powershell.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\"b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-less-than",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Through PowerShell, whose reading refuses no character of the path, since < is a batch character that makes a WinGet request unreadable (§manager-winget). Control: read-location-plain-powershell.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a<b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-greater-than",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Through PowerShell, whose reading refuses no character of the path, since > is a batch character that makes a WinGet request unreadable (§manager-winget). Control: read-location-plain-powershell.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a>b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-pipe",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "Through PowerShell, whose reading refuses no character of the path, since | is a batch character that makes a WinGet request unreadable (§manager-winget). Control: read-location-plain-powershell.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a|b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-control-0001",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "U+0001, a control character (UnicodeData.txt 16.0.0 general category Cc), UnicodeData.txt line 2. Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\u0001b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-control-tab",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "U+0009, a control character (UnicodeData.txt 16.0.0 general category Cc), UnicodeData.txt line 10. Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\tb"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-control-007f",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "U+007F, a control character (UnicodeData.txt 16.0.0 general category Cc), UnicodeData.txt line 128. Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\u007fb"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-control-0085",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "U+0085, a control character (UnicodeData.txt 16.0.0 general category Cc), UnicodeData.txt line 134. Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\u0085b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-control-009f",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "U+009F, a control character (UnicodeData.txt 16.0.0 general category Cc), UnicodeData.txt line 160. Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\u009fb"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-normalized-separators",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The pattern is C:\\Apps\\Tool; the normalized location has an uppercase drive, '\\' separators, repeated separators collapsed and no trailing separator, and compares ignoring case.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "C:\\Apps\\Tool"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "c:/Apps//Tool/"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-normalized-case",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The pattern is C:\\Apps\\Tool; the normalized location has an uppercase drive, '\\' separators, repeated separators collapsed and no trailing separator, and compares ignoring case.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "C:\\Apps\\Tool"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\APPS\\TOOL"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-normalized-trailing-separators",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The pattern is C:\\Apps\\Tool; the normalized location has an uppercase drive, '\\' separators, repeated separators collapsed and no trailing separator, and compares ignoring case.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "C:\\Apps\\Tool"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\Tool\\\\"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-normalized-parent-not-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The pattern is C:\\Apps\\Tool; the normalized location has an uppercase drive, '\\' separators, repeated separators collapsed and no trailing separator, and compares ignoring case.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "C:\\Apps\\Tool"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "CustomInstallLocation"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-normalized-child-not-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The pattern is C:\\Apps\\Tool; the normalized location has an uppercase drive, '\\' separators, repeated separators collapsed and no trailing separator, and compares ignoring case.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "C:\\Apps\\Tool"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\Tool\\x"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "CustomInstallLocation"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-pattern-normalized",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The pattern c:/apps/* is normalized as a location before matching.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "c:/apps/*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps\\Tool"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-pattern-normalized-other-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "c:/apps/*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "D:\\Apps\\Tool"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "CustomInstallLocation"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-drive-root-normalized",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The normalized drive root keeps its separator: C:\\.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "C:\\"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "c:/"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-drive-root-not-subfolder",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "C:\\"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "CustomInstallLocation"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-unicode-simple-case",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "U+00E9's simple uppercase mapping is U+00C9 (UnicodeData.txt 16.0.0 line 234).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "C:\\\u00c9T\u00c9"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\\u00e9t\u00e9"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-unicode-no-full-case-mapping",
+      "oracle": "contract policies/CONTRACT.policy.md §text-comparison",
+      "note": "U+00DF has no simple uppercase mapping (UnicodeData.txt 16.0.0 line 224: '00DF;LATIN SMALL LETTER SHARP S;Ll;0;L;;;;;N;;;;;'), so it never equals 'SS'.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {
+                "Patterns": [
+                  "C:\\STRASSE"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\stra\u00dfe"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "CustomInstallLocation"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-one-from-parameter",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "'--location' would ask for CustomInstallLocation, so the request is unreadable (§manager-winget). Control: read-location-plain-nested.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--location",
+              "C:\\Apps"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-field-and-terminated-parameter",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "After '--' nothing names an option (§manager-winget), so there is one location.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\Apps"
+          },
+          "CustomParameters": {
+            "Values": [
+              "--",
+              "--location",
+              "C:\\Other"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-check-before-rules",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The check applies whatever the policy says: with no rules the check, not DefaultDeny, decides.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": []
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "\\\\server\\share"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-used",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A request without CustomInstallLocation passes the check.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-plain-segment-leading-no-break-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The segment starts with U+00A0 NO-BREAK SPACE; only U+0020 is a space for the segment rules, and U+00A0 is outside the control ranges U+0000 to U+001F and U+007F to U+009F, so the path is plain; every location is granted. Control: read-location-not-plain-segment-leading-space.",
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\\u00a0Apps"}}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-plain-segment-trailing-no-break-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The segment ends with U+00A0 NO-BREAK SPACE, which is not the space U+0020; every location is granted. Control: read-location-not-plain-segment-trailing-space.",
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\u00a0"}}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-plain-segment-trailing-ideographic-space",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The segment ends with U+3000 IDEOGRAPHIC SPACE, which is not the space U+0020 and is outside the control ranges; every location is granted. Control: read-location-not-plain-segment-trailing-space.",
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\u3000"}}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-plain-repeated-after-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "After the drive's ':' and separator, any sequence of separators and segments follows, so a second separator right after the drive keeps the path plain; every location is granted. Control: read-location-plain-nested.",
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\\\Apps"}}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-normalized-repeated-after-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "'C://Apps' is plain and normalizes to 'C:\\Apps', with the repeated separator collapsed; the grant pattern is 'C:\\Apps'. Control: read-location-normalized-separators.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C://Apps"}}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-drive-root-repeated-separators",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "'C:\\\\' is plain; collapsing the separators leaves the drive root, whose trailing separator follows ':' and is kept, so it normalizes to 'C:\\'; the grant pattern is 'C:\\'. Control: read-location-drive-root-normalized.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-reading", "Publisher": "Policy conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\\\"}}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "read-location-plain-powershell",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A plain local path through PowerShell; control for the read-location-not-plain cases through PowerShell.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "C:\\a\\b"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-parameter-not-read",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "The check reads only OptIns.CustomInstallLocation.Path: a Scoop custom parameter holding a relative path gives no install location, so the check does not apply. Control: read-location-not-plain-relative-powershell.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--dir=..\\x"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-location-not-plain-relative-powershell",
+      "oracle": "contract policies/CONTRACT.policy.md §install-location",
+      "note": "A relative path in OptIns.CustomInstallLocation.Path fails the check.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomInstallLocation": {
+            "Path": "..\\x"
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "InstallLocation",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}

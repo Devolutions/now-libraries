@@ -1,0 +1,3114 @@
+{
+  "policy": {
+    "PolicyFormatVersion": "2.0.0",
+    "Metadata": {
+      "Id": "conformance-reading",
+      "Publisher": "Policy conformance suite",
+      "Revision": 1,
+      "PublishedAt": "2026-01-01T00:00:00Z"
+    },
+    "TrustedSources": [
+      {
+        "Manager": "Winget",
+        "AnySource": true
+      },
+      {
+        "Manager": "PowerShell",
+        "AnySource": true
+      },
+      {
+        "Manager": "PowerShell7",
+        "AnySource": true
+      },
+      {
+        "Manager": "Apt",
+        "AnySource": true
+      },
+      {
+        "Manager": "Bun",
+        "AnySource": true
+      },
+      {
+        "Manager": "Cargo",
+        "AnySource": true
+      },
+      {
+        "Manager": "Chocolatey",
+        "AnySource": true
+      },
+      {
+        "Manager": "Dnf",
+        "AnySource": true
+      },
+      {
+        "Manager": "Dotnet",
+        "AnySource": true
+      },
+      {
+        "Manager": "Flatpak",
+        "AnySource": true
+      },
+      {
+        "Manager": "Homebrew",
+        "AnySource": true
+      },
+      {
+        "Manager": "Npm",
+        "AnySource": true
+      },
+      {
+        "Manager": "Pacman",
+        "AnySource": true
+      },
+      {
+        "Manager": "Pip",
+        "AnySource": true
+      },
+      {
+        "Manager": "Scoop",
+        "AnySource": true
+      },
+      {
+        "Manager": "Snap",
+        "AnySource": true
+      },
+      {
+        "Manager": "Vcpkg",
+        "AnySource": true
+      }
+    ],
+    "Rules": [
+      {
+        "Id": "allow-all",
+        "Decision": "Allow",
+        "Select": {},
+        "Grants": {
+          "CustomParameters": {
+            "Patterns": [
+              "*"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "read-request-plain",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The control for this file.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-no-command-apt",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The broker builds no command for this manager (§managers); the policy trusts it. Control: read-request-built-manager.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Apt",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-no-command-dnf",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The broker builds no command for this manager (§managers); the policy trusts it. Control: read-request-built-manager.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dnf",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-no-command-flatpak",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The broker builds no command for this manager (§managers); the policy trusts it. Control: read-request-built-manager.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Flatpak",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-no-command-homebrew",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The broker builds no command for this manager (§managers); the policy trusts it. Control: read-request-built-manager.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Homebrew",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-no-command-pacman",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The broker builds no command for this manager (§managers); the policy trusts it. Control: read-request-built-manager.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Pacman",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-no-command-snap",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The broker builds no command for this manager (§managers); the policy trusts it. Control: read-request-built-manager.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Snap",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-built-manager",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The same request through a manager the broker builds commands for; 'main' is a plain source name.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-no-command-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Unreadable whatever the operation.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Apt",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-custom-parameter-nul",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Control: read-request-custom-parameter-tab.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "a\u0000b"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-nul",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Control: read-request-source-name-tab. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\u0000get"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-custom-parameter-line-feed",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Control: read-request-custom-parameter-tab.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "a\nb"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-line-feed",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Control: read-request-source-name-tab. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\nget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-custom-parameter-carriage-return",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Control: read-request-custom-parameter-tab.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "a\rb"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-carriage-return",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Control: read-request-source-name-tab. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\rget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-custom-parameter-tab",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "U+0009 is not one of U+0000, U+000A, U+000D.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "a\tb"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-tab",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "U+0009 is White_Space (PropList.txt 16.0.0 line 12: '0009..000D ; White_Space') but only a leading or trailing White_Space code point makes the name unreadable, and it is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\tget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-leading-space",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "PropList.txt 16.0.0 line 13: '0020 ; White_Space'. Control: read-request-source-name-inner-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": " winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-inner-space",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win get"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-trailing-tab",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "PropList.txt 16.0.0 line 12: '0009..000D ; White_Space'. Control: read-request-source-name-inner-tab. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "winget\t"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-inner-tab",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\tget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-leading-no-break-space",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "PropList.txt 16.0.0 line 15: '00A0 ; White_Space'. Control: read-request-source-name-inner-no-break-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "\u00a0winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-inner-no-break-space",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\u00a0get"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-trailing-hair-space",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "PropList.txt 16.0.0 line 17: '2000..200A ; White_Space'. Control: read-request-source-name-inner-hair-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "winget\u200a"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-inner-hair-space",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\u200aget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-leading-ideographic-space",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "PropList.txt 16.0.0 line 22: '3000 ; White_Space'. Control: read-request-source-name-inner-ideographic-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "\u3000winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-inner-ideographic-space",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\u3000get"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-trailing-next-line",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "PropList.txt 16.0.0 line 14: '0085 ; White_Space'. Control: read-request-source-name-inner-next-line. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "winget\u0085"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-inner-next-line",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "White_Space inside the name is allowed; the code point is not Default_Ignorable_Code_Point. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\u0085get"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-ignorable-zero-width-space",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "DerivedCoreProperties.txt 16.0.0 line 10591: '200B..200F ; Default_Ignorable_Code_Point'. Control: read-request-source-name-inner-hair-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\u200bget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-ignorable-mongolian-vowel-separator",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "DerivedCoreProperties.txt 16.0.0 line 10589: '180E ; Default_Ignorable_Code_Point'; it is not White_Space in 16.0.0. Control: read-request-source-name-inner-hair-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "\u180ewinget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-ignorable-zero-width-no-break-space",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "DerivedCoreProperties.txt 16.0.0 line 10598: 'FEFF ; Default_Ignorable_Code_Point'. Control: read-request-source-name-inner-hair-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "winget\ufeff"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-source-name-ignorable-soft-hyphen",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "DerivedCoreProperties.txt 16.0.0 line 10583: '00AD ; Default_Ignorable_Code_Point'. Control: read-request-source-name-inner-hair-space. A Dotnet Uninstall, whose reading puts no other constraint on Source.Name (§manager-dotnet).",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "win\u00adget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-custom-parameter-not-split",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "One element is one custom parameter: it names the long option 'interactive --force', which the Winget table does not list, so neither Interactive nor SkipHashCheck is used (§manager-winget). Control: read-winget-interactive-long.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--interactive --force"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-custom-parameter-not-joined",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Elements are never joined, so no element names --interactive. Control: read-winget-interactive-long.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--inter",
+              "active"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-pattern-matches-one-element",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The pattern '--silent x' matches neither element on its own. Control: read-request-pattern-covers-each-element.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "--silent x"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--silent",
+              "x"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "CustomParameters"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-pattern-covers-each-element",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "--silent",
+                  "x"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--silent",
+              "x"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-option-value-is-custom-parameter",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The option's value 'x64' is a custom parameter too, and no CustomParameters pattern covers it. Control: read-request-option-value-covered.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "--architecture"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--architecture",
+              "x64"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [
+          "CustomParameters"
+        ],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-option-value-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Both elements are covered.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "--architecture",
+                  "x64"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--architecture",
+              "x64"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-scope-from-field",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-user",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "User"
+              ]
+            }
+          },
+          {
+            "Id": "allow-machine",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "Machine"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Scope": "User",
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-user"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-scope-from-parameter",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-user",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "User"
+              ]
+            }
+          },
+          {
+            "Id": "allow-machine",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "Machine"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--scope",
+              "user"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-user"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-scope-field-and-parameter",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Set by a field and by a custom parameter, even to the same value: unknown. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Elevated, because a scope a custom parameter makes unknown is unreadable with NonElevated (§reading).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-user",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "User"
+              ]
+            }
+          },
+          {
+            "Id": "allow-machine",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "Machine"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Scope": "User",
+        "Elevation": "Elevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--scope",
+              "user"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-scope-two-parameters-same",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Set by two custom parameters: unknown. The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Elevated, because a scope a custom parameter makes unknown is unreadable with NonElevated (§reading).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-user",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "User"
+              ]
+            }
+          },
+          {
+            "Id": "allow-machine",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "Machine"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "Elevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--scope",
+              "user",
+              "--scope",
+              "user"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-scope-two-parameters-different",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The observer has one Allow rule per value and a catch-all; an unknown property matches no value rule (§applicability), so only the catch-all applies. Elevated, because a scope a custom parameter makes unknown is unreadable with NonElevated (§reading).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-user",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "User"
+              ]
+            }
+          },
+          {
+            "Id": "allow-machine",
+            "Decision": "Allow",
+            "Select": {
+              "Scopes": [
+                "Machine"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "Elevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--scope",
+              "user",
+              "--scope",
+              "machine"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-architecture-from-field",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3",
+          "Architecture": "X64"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-x64"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-architecture-from-parameter",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-a",
+              "x64"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-x64"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-architecture-field-and-parameter",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Set by a field and by a custom parameter: unknown. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3",
+          "Architecture": "X64"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "-a",
+              "x64"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-architecture-two-parameters",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "Set by two custom parameters: unknown. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomParameters": {
+                "Patterns": [
+                  "*"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {
+          "CustomParameters": {
+            "Values": [
+              "--architecture",
+              "x64",
+              "-a",
+              "x64"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-leading-hyphen-winget",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "A WinGet Package.Id that starts with '-' is unreadable, so that the manager never reads it as an option. Control: read-request-id-inner-hyphen-winget.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "-Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-inner-hyphen-winget",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "A '-' that is not the first character of Package.Id is allowed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso-Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-leading-hyphen-dotnet",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "A Dotnet Package.Id that starts with '-' is unreadable. Control: read-request-id-inner-hyphen-dotnet.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "-tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-leading-hyphen-dotnet-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The leading '-' rule applies whatever the operation. Control: read-request-id-inner-hyphen-dotnet.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "-tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-inner-hyphen-dotnet",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "A '-' that is not the first character of Package.Id is allowed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-id-leading-hyphen-powershell",
+      "oracle": "contract policies/CONTRACT.policy.md §reading",
+      "note": "The leading '-' rule names only Winget and Dotnet, so a PowerShell Package.Id may start with '-'.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "-Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-request-empty-opt-ins",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "OptIns {} has no key, so the request uses no opt-in and is plain. Control: read-request-plain.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated",
+        "OptIns": {}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}

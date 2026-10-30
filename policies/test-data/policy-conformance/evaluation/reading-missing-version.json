@@ -1,0 +1,2752 @@
+{
+  "policy": {
+    "PolicyFormatVersion": "2.0.0",
+    "Metadata": {
+      "Id": "conformance-reading",
+      "Publisher": "Policy conformance suite",
+      "Revision": 1,
+      "PublishedAt": "2026-01-01T00:00:00Z"
+    },
+    "TrustedSources": [
+      {
+        "Manager": "Winget",
+        "AnySource": true
+      },
+      {
+        "Manager": "PowerShell",
+        "AnySource": true
+      },
+      {
+        "Manager": "PowerShell7",
+        "AnySource": true
+      },
+      {
+        "Manager": "Apt",
+        "AnySource": true
+      },
+      {
+        "Manager": "Bun",
+        "AnySource": true
+      },
+      {
+        "Manager": "Cargo",
+        "AnySource": true
+      },
+      {
+        "Manager": "Chocolatey",
+        "AnySource": true
+      },
+      {
+        "Manager": "Dnf",
+        "AnySource": true
+      },
+      {
+        "Manager": "Dotnet",
+        "AnySource": true
+      },
+      {
+        "Manager": "Flatpak",
+        "AnySource": true
+      },
+      {
+        "Manager": "Homebrew",
+        "AnySource": true
+      },
+      {
+        "Manager": "Npm",
+        "AnySource": true
+      },
+      {
+        "Manager": "Pacman",
+        "AnySource": true
+      },
+      {
+        "Manager": "Pip",
+        "AnySource": true
+      },
+      {
+        "Manager": "Scoop",
+        "AnySource": true
+      },
+      {
+        "Manager": "Snap",
+        "AnySource": true
+      },
+      {
+        "Manager": "Vcpkg",
+        "AnySource": true
+      }
+    ],
+    "Rules": [
+      {
+        "Id": "allow-all",
+        "Decision": "Allow",
+        "Select": {}
+      }
+    ]
+  },
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "read-missing-version-winget-install",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Control: read-missing-version-winget-concrete.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-winget-concrete",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-winget-update",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-winget-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An uninstall is never missing its version.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-winget-not-a-version",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Winget resolves no range, so any present version is concrete.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "latest"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-dotnet-identifier-selects",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Under Dotnet, 'name@version' selects the version (§package-identity), so Package.Version is not concrete. Control: read-missing-version-winget-at-id-concrete.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-dotnet-identifier-selects-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An Uninstall is never missing its version, even when its Dotnet identifier selects one.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef@1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-no-rules",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Denied whatever the policy says: with no rules this check, not DefaultDeny, decides.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": []
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-three-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-two-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Npm reads a version that is not a Semantic Versioning 2.0.0 version as a range or a dist-tag. Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-bun-three-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Bun",
+        "Source": {
+          "Name": "Bun"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-bun-two-components",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
+      "note": "'1.2' is not a Semantic Versioning 2.0.0 version, so a Bun request with it is unreadable (§manager-bun). Control: read-missing-version-bun-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Bun",
+        "Source": {
+          "Name": "Bun"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-cargo-three-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Cargo",
+        "Source": {
+          "Name": "crates.io"
+        },
+        "Package": {
+          "Id": "serde",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-cargo-two-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Cargo resolves a version with fewer than three release components as a range. Control: read-missing-version-cargo-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Cargo",
+        "Source": {
+          "Name": "crates.io"
+        },
+        "Package": {
+          "Id": "serde",
+          "Version": "1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-dotnet-three-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-dotnet-two-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Dotnet resolves a version with fewer than three release components as a range. Control: read-missing-version-dotnet-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef",
+          "Version": "1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-one-component",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An Npm version is concrete only when it is a Semantic Versioning 2.0.0 version.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-caret-range",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'^' is not a character an Npm Package.Version may contain (§managers, §manager-npm), so the request is unreadable. Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "^1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-tag",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An Npm version is concrete only when it is a Semantic Versioning 2.0.0 version.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "latest"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-dotnet-v-prefix",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Dotnet reads a version (§version-scheme) with at least three release components as exactly that version, so it is concrete.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef",
+          "Version": "v1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-pre-release",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An Npm version is concrete only when it is a Semantic Versioning 2.0.0 version.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3-beta.1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-dotnet-four-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Dotnet reads a version (§version-scheme) with at least three release components as exactly that version, so it is concrete.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef",
+          "Version": "1.2.3.4"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-build-metadata",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An Npm version is concrete only when it is a Semantic Versioning 2.0.0 version.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3+build"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-pre-release-leading-zero",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An Npm version is concrete only when it is a Semantic Versioning 2.0.0 version.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3-01"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-update-range",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'1.2' is not a Semantic Versioning 2.0.0 version, so Npm reads it as a range. Control: read-missing-version-npm-update-three-components.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-alias-selects",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
+      "note": "The broker drops the '@' suffix of an alias, so the identifier selects no version and Package.Version is concrete (§manager-npm). Neighbour of read-missing-version-npm-alias.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "my-alias:left-pad@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-pip-two-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Pip does not resolve versions as ranges.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Pip",
+        "Source": {
+          "Name": "pip"
+        },
+        "Package": {
+          "Id": "requests",
+          "Version": "1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-pip-absent",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Pip",
+        "Source": {
+          "Name": "pip"
+        },
+        "Package": {
+          "Id": "requests"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-chocolatey-two-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Chocolatey does not resolve versions as ranges.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {
+          "Name": "chocolatey"
+        },
+        "Package": {
+          "Id": "git",
+          "Version": "1.2"
+        },
+        "Elevation": "Elevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-chocolatey-absent",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Chocolatey",
+        "Source": {
+          "Name": "chocolatey"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "Elevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell-two-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "PowerShell does not resolve versions as ranges.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell-absent",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-two-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'1.2' is a version (§version-scheme), so PowerShell7 does not resolve it as a range. Contrast: read-missing-version-powershell7-wildcard.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-absent",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-scoop-install",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "The broker cannot pin a version: never missing.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-scoop-update",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-scoop-unknown-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "The version is unknown, so an Allow rule's version condition does not match. Control: read-missing-version-scoop-install.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-from-0",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-scoop-unknown-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "The version is unknown, so a Deny rule's version condition matches.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-from-0",
+            "Decision": "Deny",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "0"
+              }
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-from-0"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-vcpkg-install",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "The broker cannot pin a version: never missing.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-vcpkg-update",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-vcpkg-unknown-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "The version is unknown, so an Allow rule's version condition does not match. Control: read-missing-version-vcpkg-install.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-from-0",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-vcpkg-unknown-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "The version is unknown, so a Deny rule's version condition matches.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-from-0",
+            "Decision": "Deny",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "0"
+              }
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-from-0"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-name-at-version",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
+      "note": "'left-pad@1.2.3' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-name-at-version-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
+      "note": "'left-pad@1.2.3' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-scoped-name",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'@contoso/tool' is a registry name; its '@' is its first character, so it selects no version. Control for read-missing-version-npm-scoped-name-at-version.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "@contoso/tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-scoped-name-at-version",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
+      "note": "'@contoso/tool@1.2.3' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "@contoso/tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-alias-selects-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
+      "note": "The broker drops the '@' suffix of an alias, so the identifier selects no version and Package.Version is concrete (§manager-npm). Neighbour of read-missing-version-npm-alias-update.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "my-alias:left-pad@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-alias",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An alias of two registry names without '@version' selects no version. Control for read-missing-version-npm-alias-selects and read-missing-version-npm-alias-selects-update.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "my-alias:left-pad",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-alias-scoped-target-selects",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
+      "note": "The broker drops the '@' suffix of an alias, so the identifier selects no version and Package.Version is concrete (§manager-npm). Neighbour of read-missing-version-npm-alias-scoped-target.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "my-alias:@contoso/tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-alias-scoped-target",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "In 'my-alias:@contoso/tool' the only '@' after the ':' is the first character after it, so the alias selects no version.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "my-alias:@contoso/tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-hash-selects",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
+      "note": "'github:contoso/tool#v1.2.3' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "github:contoso/tool#v1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-hash-selects-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
+      "note": "'github:contoso/tool#v1.2.3' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "github:contoso/tool#v1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-git-specifier",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
+      "note": "'github:contoso/tool' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "github:contoso/tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-update-three-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Control for read-missing-version-npm-update-range: a Semantic Versioning 2.0.0 version is not read as a range.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-bun-name-at-version",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
+      "note": "'left-pad@1.2.3' is not a registry name, so the Bun request is unreadable (§manager-bun). Control: read-missing-version-bun-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Bun",
+        "Source": {
+          "Name": "Bun"
+        },
+        "Package": {
+          "Id": "left-pad@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-bun-name-at-version-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
+      "note": "'left-pad@1.2.3' is not a registry name, so the Bun request is unreadable (§manager-bun). Control: read-missing-version-bun-three-components.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Bun",
+        "Source": {
+          "Name": "Bun"
+        },
+        "Package": {
+          "Id": "left-pad@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-bun-update-three-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "A concrete version on a Bun Update.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Bun",
+        "Source": {
+          "Name": "Bun"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-bun-alias-selects",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
+      "note": "'my-alias:left-pad@1.2.3' is not a registry name, so the Bun request is unreadable (§manager-bun). Control: read-missing-version-bun-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Bun",
+        "Source": {
+          "Name": "Bun"
+        },
+        "Package": {
+          "Id": "my-alias:left-pad@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-bun-alias",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
+      "note": "'my-alias:left-pad' is not a registry name, so the Bun request is unreadable (§manager-bun). Control: read-missing-version-bun-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Bun",
+        "Source": {
+          "Name": "Bun"
+        },
+        "Package": {
+          "Id": "my-alias:left-pad",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-bun-hash-selects",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
+      "note": "'github:contoso/tool#v1.2.3' is not a registry name, so the Bun request is unreadable (§manager-bun). Control: read-missing-version-bun-three-components.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Bun",
+        "Source": {
+          "Name": "Bun"
+        },
+        "Package": {
+          "Id": "github:contoso/tool#v1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-bun-git-specifier",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-bun",
+      "note": "'github:contoso/tool' is not a registry name, so the Bun request is unreadable (§manager-bun). Control: read-missing-version-bun-three-components.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Bun",
+        "Source": {
+          "Name": "Bun"
+        },
+        "Package": {
+          "Id": "github:contoso/tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-three-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'2.3.5' is a version (§version-scheme), so PowerShell7 does not resolve it as a range.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "2.3.5"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-one-component",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'2' is a version (§version-scheme), so PowerShell7 does not resolve it as a range; unlike Cargo and Dotnet it needs no three components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-pre-release",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'2.4.0-beta1' is a version (§version-scheme).",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "2.4.0-beta1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-range",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'[2.0,3.0)' is not a version (§version-scheme), so PowerShell7 resolves it as a range. Control: read-missing-version-powershell7-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "[2.0,3.0)"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-wildcard",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'2.*' is not a version (§version-scheme), so PowerShell7 resolves it as a range. Control: read-missing-version-powershell7-two-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "2.*"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-update-concrete",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "A version on a PowerShell7 Update.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "2.3.5"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-update-range",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'[2.0,3.0)' is not a version, so it is resolved as a range. Control: read-missing-version-powershell7-update-concrete.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "[2.0,3.0)"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-update-absent",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "No version on an Update. Control: read-missing-version-powershell7-update-concrete.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-uninstall-absent",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An Uninstall is never missing its version. Contrast: read-missing-version-powershell7-absent.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-uninstall-range",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An Uninstall is never missing its version, even with a version PowerShell7 resolves as a range. Contrast: read-missing-version-powershell7-range.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "[2.0,3.0)"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-alias-update",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "An alias of two registry names without '@version' selects no version, so Package.Version is concrete on an Update. Control for read-missing-version-npm-alias-selects-update.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "my-alias:left-pad",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-git-specifier-update",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-npm",
+      "note": "'github:contoso/tool' is neither a registry name nor an alias of two registry names, so the broker builds no Npm command (§manager-npm). Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "github:contoso/tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-winget-at-id-concrete",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-winget",
+      "note": "A Winget identifier selects no version, even with '@', so Package.Version 1.2.3 is concrete. Contrast read-missing-version-dotnet-identifier-selects.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell-at-id-concrete",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "A PowerShell identifier selects no version, even with '@', so Package.Version 1.2.3 is concrete. Contrast read-missing-version-dotnet-identifier-selects.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-powershell7-at-id-concrete",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "A PowerShell7 identifier selects no version, even with '@', so Package.Version 1.2.3 is concrete. Contrast read-missing-version-dotnet-identifier-selects.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool@1.2.3",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-four-components-not-semver",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'1.2.3.4' is not a Semantic Versioning 2.0.0 version, so Npm reads it as a range or a dist-tag and the version is missing. Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.2.3.4"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-npm-upper-v-prefix",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'V1.2.3' is not a Semantic Versioning 2.0.0 version, so the version is missing under Npm, though §version-scheme reads it as 1.2.3. Control: read-missing-version-npm-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "V1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-pip-three-components",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'2.0.0' is release components of ASCII digits separated by '.', so it is concrete under Pip.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Pip",
+        "Source": {
+          "Name": "pip"
+        },
+        "Package": {
+          "Id": "requests",
+          "Version": "2.0.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-pip-post-release-hyphen",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Pip reads '2.0.0-1' as a post-release above 2.0.0, so '2.0.0-1' is not one or more release components of ASCII digits and the version is missing; the Pip version characters allow it, so the request is readable. Control: read-missing-version-pip-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Pip",
+        "Source": {
+          "Name": "pip"
+        },
+        "Package": {
+          "Id": "requests",
+          "Version": "2.0.0-1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-pip-post-release",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'post1' is not ASCII digits, so '2.0.0.post1' is not one or more release components of ASCII digits and the version is missing; the Pip version characters allow it, so the request is readable. Control: read-missing-version-pip-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Pip",
+        "Source": {
+          "Name": "pip"
+        },
+        "Package": {
+          "Id": "requests",
+          "Version": "2.0.0.post1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-pip-release-candidate",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'0rc1' is not ASCII digits, so '2.0.0rc1' is not one or more release components of ASCII digits and the version is missing; the Pip version characters allow it, so the request is readable. Control: read-missing-version-pip-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Pip",
+        "Source": {
+          "Name": "pip"
+        },
+        "Package": {
+          "Id": "requests",
+          "Version": "2.0.0rc1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-pip-epoch",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'!' separates an epoch, so '1!2.0.0' is not one or more release components of ASCII digits and the version is missing; the Pip version characters allow it, so the request is readable. Control: read-missing-version-pip-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Pip",
+        "Source": {
+          "Name": "pip"
+        },
+        "Package": {
+          "Id": "requests",
+          "Version": "1!2.0.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-pip-local",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "'+' starts a local version label, so '2.0.0+local' is not one or more release components of ASCII digits and the version is missing; the Pip version characters allow it, so the request is readable. Control: read-missing-version-pip-three-components.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Pip",
+        "Source": {
+          "Name": "pip"
+        },
+        "Package": {
+          "Id": "requests",
+          "Version": "2.0.0+local"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-missing-version-pip-update-post-release-hyphen",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "The Pip rule applies to an Update too. Control: read-missing-version-pip-three-components.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Pip",
+        "Source": {
+          "Name": "pip"
+        },
+        "Package": {
+          "Id": "requests",
+          "Version": "2.0.0-1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}

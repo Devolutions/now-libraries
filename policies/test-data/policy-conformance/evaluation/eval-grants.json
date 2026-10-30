@@ -1,0 +1,756 @@
+{
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "eval-grants-pattern-covers",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-accept",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--accept-*"], "Except": ["--accept-source-agreements"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--accept-package-agreements"]}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-accept"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-except-uncovers",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The value matches a pattern and the grant's Except. Control: eval-grants-pattern-covers.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-accept",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--accept-*"], "Except": ["--accept-source-agreements"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--accept-source-agreements"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-accept"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-except-not-other-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A grant's Except never narrows another rule's grant.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-accept",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--accept-*"], "Except": ["--accept-source-agreements"]}}
+          },
+          {
+            "Id": "allow-source-agreements",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--accept-source-agreements"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--accept-source-agreements"]}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-accept"}, {"id": "allow-source-agreements"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-except-not-other-grant",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The CustomParameters Except names the location's text, but narrows only the CustomParameters grant.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-both",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {
+              "CustomInstallLocation": {"Patterns": ["C:\\Apps\\*"]},
+              "CustomParameters": {"Patterns": ["*"], "Except": ["C:\\Apps\\*"]}
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Tool"}, "CustomParameters": {"Values": ["--silent"]}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-both"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-each-element-needs-cover",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "'--accept-package-agreements' is not covered.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-silent",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--silent"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent", "--accept-package-agreements"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-silent"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-each-element-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-silent",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--silent", "--accept-*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent", "--accept-package-agreements"]}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-silent"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-pattern-not-across-elements",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A pattern matches one element; the joined text of two elements is no value.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-joined",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--silent --accept-package-agreements"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent", "--accept-package-agreements"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-joined"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-option-value-own-element",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The option value 'x64' is a custom parameter of its own and is not covered. Control: eval-grants-option-value-covered.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-architecture", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": ["--architecture"]}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--architecture", "x64"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-architecture"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-option-value-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Each element, the option and its value, is covered by a pattern of its own.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-architecture", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": ["--architecture", "x64"]}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--architecture", "x64"]}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-architecture"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-add-up-across-rules",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-in-evaluation",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-interactive", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}}},
+          {"Id": "allow-skip-hash", "Decision": "Allow", "Select": {}, "Grants": {"SkipHashCheck": {}}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}, "SkipHashCheck": {}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-interactive"}, {"id": "allow-skip-hash"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-one-rule-short",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-in-evaluation",
+      "note": "Control: eval-grants-add-up-across-rules.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-interactive", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}, "SkipHashCheck": {}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-interactive"}],
+        "optIns": ["SkipHashCheck"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-custom-parameters-add-up",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-in-evaluation",
+      "note": "Each element is covered by a grant of some applicable rule.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-silent",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--silent"]}}
+          },
+          {
+            "Id": "allow-accept",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--accept-*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent", "--accept-package-agreements"]}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-silent"}, {"id": "allow-accept"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-not-applicable-rule-grants-nothing",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-in-evaluation",
+      "note": "allow-accept selects Fabrikam packages only, so its grant does not count.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-silent",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--silent"]}}
+          },
+          {
+            "Id": "allow-accept",
+            "Decision": "Allow",
+            "Select": {"Packages": ["Fabrikam.*"]},
+            "Grants": {"CustomParameters": {"Patterns": ["--accept-*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent", "--accept-package-agreements"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-silent"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-location-pattern-normalized",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The pattern 'C:/Apps/*' is normalized to 'C:\\Apps\\*'.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-location",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomInstallLocation": {"Patterns": ["C:/Apps/*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Tool"}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-location"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-location-value-normalized",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The location normalizes to 'C:\\Apps\\Tool' (§install-location).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-location",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps\\Tool"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "c:/Apps/Tool"}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-location"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-location-star-crosses-separators",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "'*' matches any sequence, separators included.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-location",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps\\*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Tool\\Bin"}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-location"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-location-not-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-location",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps\\*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "D:\\Apps"}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-location"}],
+        "optIns": ["CustomInstallLocation"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-location-except",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Control: eval-grants-location-except-control.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-location",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps\\*"], "Except": ["C:\\Apps\\Secret*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Secret"}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-location"}],
+        "optIns": ["CustomInstallLocation"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-location-except-control",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-location",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps\\*"], "Except": ["C:\\Apps\\Secret*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Tool"}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-location"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-grants-location-pattern-without-drive",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Each '/' in a CustomInstallLocation pattern becomes '\\' before matching, whether or not the pattern starts with a drive, so '*/Tool' is '*\\Tool' and covers 'C:\\Apps\\Tool'. Control: eval-grants-location-pattern-without-drive-not-covered.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-location", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*/Tool"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Tool"}}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-location"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-grants-location-pattern-without-drive-not-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "'*/Tool' is '*\\Tool', which does not cover 'C:\\Apps\\Other'. Control: eval-grants-location-pattern-without-drive.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-location", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*/Tool"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Other"}}},
+      "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-location"}], "optIns": ["CustomInstallLocation"], "audited": false}
+    },
+    {
+      "name": "eval-grants-location-pattern-repeated-separators",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "In the pattern '*//Tool', each '/' becomes '\\' and repeated '\\' are collapsed, giving '*\\Tool', which covers 'C:\\Apps\\Tool'. Control: eval-grants-location-pattern-repeated-separators-not-covered, which differs only in the location.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-location", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*//Tool"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Tool"}}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-location"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-grants-location-pattern-trailing-separator",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The pattern '*\\Tool\\' loses its trailing '\\', which does not follow a ':', giving '*\\Tool'; the normalized location 'C:\\Apps\\Tool' has no trailing separator, so only the normalized pattern covers it. Control: eval-grants-location-pattern-trailing-separator-not-covered, which differs only in the location.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-location", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*\\Tool\\"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Tool"}}},
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-location"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-grants-location-pattern-repeated-separators-not-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The pattern '*//Tool' normalizes to '*\\Tool', which does not cover 'C:\\Apps\\Other'. Control: eval-grants-location-pattern-repeated-separators, which differs only in the location.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-location", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*//Tool"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Other"}}},
+      "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-location"}], "optIns": ["CustomInstallLocation"], "audited": false}
+    },
+    {
+      "name": "eval-grants-location-pattern-trailing-separator-not-covered",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "The pattern '*\\Tool\\' normalizes to '*\\Tool', which does not cover 'C:\\Apps\\Other'. Control: eval-grants-location-pattern-trailing-separator, which differs only in the location.",
+      "policy": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": [{"Id": "allow-location", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*\\Tool\\"]}}}]},
+      "request": {"Operation": "Install", "Manager": "Winget", "Source": {"Name": "winget"}, "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"}, "Elevation": "NonElevated", "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps\\Other"}}},
+      "expect": {"outcome": "Deny", "check": "UngrantedOptIn", "rules": [{"id": "allow-location"}], "optIns": ["CustomInstallLocation"], "audited": false}
+    }
+  ]
+}
