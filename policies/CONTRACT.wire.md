@@ -38,6 +38,13 @@ An opt-in is something a package request asks for beyond a plain request, as [CO
 ### Decision
 
 A decision is the result of evaluating a package request against the broker's policy ([CONTRACT.policy.md §decision](CONTRACT.policy.md#decision)), written as [§decision](#decision) states.
+A decision is `Allow` or `Deny`, and a `Deny` decision, an unreadable request's included, is a response that is not an error.
+
+<a id="def-error"></a>
+### Error
+
+An error is an error response ([§errors](#errors)), which reports that the broker did not carry out the request.
+It carries a decision only when its `Code` is `NotRunnable`, for an allowed request the broker still does not run.
 
 <a id="def-accepted-policy"></a>
 ### Accepted policy
@@ -235,7 +242,7 @@ A package object has these members.
 
 A package request whose `Scope` is `Machine` and whose `Elevation` is `NonElevated` is `BadRequest`, because it contradicts itself; the broker does not elevate it silently.
 A package request that is not `BadRequest` is well-formed.
-This contract defines only the shape of a package request: a well-formed request may still be unreadable under [CONTRACT.policy.md §reading](CONTRACT.policy.md#reading), and its decision then follows from that contract.
+This contract defines only the shape of a package request: a well-formed request may still be unreadable under [CONTRACT.policy.md §reading](CONTRACT.policy.md#reading), and then gets a decision, `Deny` with the check `UnreadableRequest`, rather than an error.
 
 <a id="opt-ins"></a>
 ### Opt-ins
