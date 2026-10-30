@@ -675,7 +675,7 @@ A plain local path is an ASCII letter followed by `:` and a separator, then any 
 A segment is not `.` or `..`, does not start with a space (U+0020), does not end with `.` or a space, and contains no control character (Unicode general category Cc, U+0000 to U+001F and U+007F to U+009F), and none of `: * ? " < > |`.
 The normalized location has an uppercase drive letter and uses `\` as its only separator, with repeated separators collapsed and a trailing separator dropped unless it follows the drive's `:`, so the normalized drive root is `C:\`; grant and forbid patterns match it.
 The check reads only the path's text and does not ask the operating system what a drive letter refers to, so both implementations give the same result on any machine.
-A network path, a device path or a relative path would give an elevated installer a target that no rule can describe, so the check applies whatever the policy says.
+A network path, a device path or a relative path would give an elevated installer a target that no rule can describe, so the check applies whatever the policy says, and a request that fails it is denied with the check `InstallLocation` ([§precedence](#precedence)).
 
 <a id="missing-version"></a>
 ### Missing version
@@ -686,7 +686,7 @@ Under `Cargo` and `Dotnet`, a version is not concrete unless it is a version ([�
 Under `PowerShell7`, a version is not concrete unless it is a version ([§version-scheme](#version-scheme)), because its `-Version` accepts NuGet version ranges.
 Under `Npm`, a version is not concrete unless it is a version as [Semantic Versioning 2.0.0][semver] defines it, because npm reads other spellings by its own rules, such as `1.2.3.4` and `V1.2.3` as dist-tags; [§manager-bun](#manager-bun) makes a request with any other Bun version unreadable.
 Under `Pip`, a version is not concrete unless it is one or more release components of ASCII digits separated by `.`, because Pip reads other spellings by its own rules, under which `2.0.0-1` is a post-release above `2.0.0`, while [§version-scheme](#version-scheme) orders it below.
-An Install or Update request is missing its version when the broker can pin a version through its manager and its version is not concrete, and is denied whatever the policy says, so that rule matching always has the version.
+An Install or Update request is missing its version when the broker can pin a version through its manager and its version is not concrete, and is denied with the check `MissingVersion` whatever the policy says ([§precedence](#precedence)), so that rule matching always has the version.
 An Uninstall request is never missing its version, because no version condition applies to it ([§version-condition](#version-condition)).
 
 <a id="evaluation"></a>
