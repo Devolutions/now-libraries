@@ -586,7 +586,7 @@ fn is_scoop_manifest(text: &str) -> bool {
 
 /// Returns whether another text fetches the same manifest URL, which a `Source` selector or a `Packages` pattern naming this one would not match ([§manager-scoop]).
 ///
-/// A percent-encoded character, a fragment, an explicit port, an empty host, a trailing `.` on the host and a dot segment each allow another text.
+/// A percent-encoded character, a fragment, an explicit port, an empty host, a trailing `.` on the host, a host whose last label starts with a digit and a dot segment each can allow another text.
 ///
 /// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
 fn has_alternate_spelling(url: &str) -> bool {
@@ -606,6 +606,8 @@ fn has_alternate_spelling(url: &str) -> bool {
     host.is_empty()
         || host.contains(':')
         || host.ends_with('.')
+        // A numeric host, such as `192.168.0.1`, `3232235777` or `0xc0.0xa8.0.1`, has other spellings.
+        || host.rsplit('.').next().is_some_and(|label| label.starts_with(|c: char| c.is_ascii_digit()))
         || path.split('/').any(|segment| matches!(segment, "." | ".."))
 }
 
