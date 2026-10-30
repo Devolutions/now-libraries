@@ -270,6 +270,15 @@ fn install_manifest(url: &str) -> Request {
 #[case::port_in_upper_case_scheme("HTTPS://example.test:8080/git.json")]
 #[case::empty_port("http://example.test:/git.json")]
 #[case::port_without_path("https://example.test:443")]
+#[case::empty_host("https:///git.json")]
+#[case::empty_host_without_path("HTTPS://")]
+#[case::host_ending_with_a_dot("https://example.test./git.json")]
+#[case::host_ending_with_a_dot_without_path("http://example.test.")]
+#[case::dot_segment("https://example.test/./git.json")]
+#[case::dot_dot_segment("https://example.test/a/../git.json")]
+#[case::last_segment_is_a_dot("https://example.test/git.json/.")]
+#[case::last_segment_is_dot_dot("https://example.test/..")]
+#[case::empty_segment_before_a_dot_segment("https://example.test//./git.json")]
 fn manifest_urls_with_another_spelling_are_unreadable(#[case] url: &str) {
     assert_eq!(check_of(GRANT_ALL, &install_manifest(url)), Check::UnreadableRequest);
 }
@@ -280,6 +289,10 @@ fn manifest_urls_with_another_spelling_are_unreadable(#[case] url: &str) {
 #[case::colon_in_a_later_segment("https://example.test/dir/c:/git.json")]
 #[case::scheme_in_upper_case("HTTP://example.test/git.json")]
 #[case::dots_in_the_host("https://sub.example.test/git.json")]
+#[case::segment_starting_with_a_dot("https://example.test/.x/git.json")]
+#[case::dots_inside_a_segment("https://example.test/x..y/git.json")]
+#[case::segment_of_three_dots("https://example.test/.../git.json")]
+#[case::segment_ending_with_a_dot("https://example.test/a./git.json")]
 fn manifest_urls_without_another_spelling_are_readable(#[case] url: &str) {
     assert_eq!(check_of(GRANT_ALL, &install_manifest(url)), Check::AllowRules);
 }

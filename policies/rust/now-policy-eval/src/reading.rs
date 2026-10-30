@@ -601,21 +601,29 @@ fn is_scoop_manifest(text: &str) -> bool {
             .any(|scheme| starts_with_ignore_ascii_case(after_slashes, scheme))
 }
 
-/// Returns whether another text fetches the same manifest URL, which a `Source` selector naming this one would not match ([§manager-scoop]).
+/// Returns whether another text fetches the same manifest URL, which a `Source` selector or a `Packages` pattern naming this one would not match ([§manager-scoop]).
 ///
-/// A percent-encoded character, a fragment and an explicit port each allow another text.
+/// A percent-encoded character, a fragment, an explicit port, an empty host, a trailing `.` on the host and a dot segment each allow another text.
 ///
 /// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
 fn has_alternate_spelling(url: &str) -> bool {
-    let has_port = ["http://", "https://"].iter().any(|scheme| {
-        starts_with_ignore_ascii_case(url, scheme) && {
-            let rest = &url[scheme.len()..];
-            let authority = rest.split(['/', '\\', '?', '#']).next().unwrap_or(rest);
-            authority.contains(':')
-        }
-    });
+    if url.contains(['%', '#']) {
+        return true;
+    }
 
-    url.contains(['%', '#']) || has_port
+    let after_scheme = ["http://", "https://"]
+        .iter()
+        .find(|scheme| starts_with_ignore_ascii_case(url, scheme))
+        .map(|scheme| &url[scheme.len()..]);
+    let Some(after_scheme) = after_scheme else {
+        return false;
+    };
+
+    let (host, path) = after_scheme.split_once('/').unwrap_or((after_scheme, ""));
+    host.is_empty()
+        || host.contains(':')
+        || host.ends_with('.')
+        || path.split('/').any(|segment| matches!(segment, "." | ".."))
 }
 
 fn starts_with_ignore_ascii_case(text: &str, prefix: &str) -> bool {
