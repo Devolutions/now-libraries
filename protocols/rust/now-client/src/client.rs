@@ -348,6 +348,7 @@ enum PendingWriteCompletion {
     },
     Cancel,
     Session {
+        request: SessionRequest,
         response: oneshot::Sender<Result<(), NowClientError>>,
     },
 }
@@ -472,6 +473,7 @@ where
                 HeartbeatTimeout,
             }
 
+            self.reject_unsupported_session_writes();
             let has_pending_write = !self.pending_writes.is_empty();
             let can_receive_command = self.pending_writes.len() < self.write_queue_capacity;
             let event = {
@@ -826,8 +828,9 @@ where
                 Ok(())
             }
             WorkerCommand::Session { request, response } => {
-                // Checked here rather than in the handle so the check uses the capset that is
-                // current when the request is written, including any peer refresh.
+                // Checked in the worker so the latest peer capset refresh applies. The check
+                // is repeated before the first byte is written because a refresh can arrive
+                // while the request waits behind other pending writes.
                 if !request.is_supported(&self.capabilities()) {
                     let _ = response.send(Err(NowClientError::UnsupportedCapability(request.capability_name())));
                     return Ok(());
@@ -839,13 +842,35 @@ where
                     Ok(bytes) => self.pending_writes.push_back(PendingWrite {
                         bytes,
                         written: 0,
-                        completion: PendingWriteCompletion::Session { response },
+                        completion: PendingWriteCompletion::Session { request, response },
                     }),
                     Err(error) => {
                         let _ = response.send(Err(error));
                     }
                 }
                 Ok(())
+            }
+        }
+    }
+
+    /// Fails unsent session requests at the head of the write queue whose capability the
+    /// latest negotiated capset no longer includes, so they never reach the transport.
+    fn reject_unsupported_session_writes(&mut self) {
+        while let Some(PendingWrite {
+            written: 0,
+            completion: PendingWriteCompletion::Session { request, .. },
+            ..
+        }) = self.pending_writes.front()
+        {
+            if request.is_supported(&self.capabilities()) {
+                return;
+            }
+            if let Some(PendingWrite {
+                completion: PendingWriteCompletion::Session { request, response },
+                ..
+            }) = self.pending_writes.pop_front()
+            {
+                let _ = response.send(Err(NowClientError::UnsupportedCapability(request.capability_name())));
             }
         }
     }
@@ -916,7 +941,7 @@ where
                 let _ = response.send(Ok(()));
             }
             PendingWriteCompletion::Cancel => {}
-            PendingWriteCompletion::Session { response } => {
+            PendingWriteCompletion::Session { response, .. } => {
                 let _ = response.send(Ok(()));
             }
         }
@@ -929,7 +954,7 @@ where
                 PendingWriteCompletion::Start { response, .. } => {
                     let _ = response.send(Err(NowClientError::WorkerClosed(reason.clone())));
                 }
-                PendingWriteCompletion::Stdin { response, .. } | PendingWriteCompletion::Session { response } => {
+                PendingWriteCompletion::Stdin { response, .. } | PendingWriteCompletion::Session { response, .. } => {
                     let _ = response.send(Err(NowClientError::WorkerClosed(reason.clone())));
                 }
                 PendingWriteCompletion::Cancel => {}
@@ -1655,6 +1680,86 @@ mod tests {
             handle.session_lock().await,
             Err(NowClientError::UnsupportedCapability("session lock"))
         ));
+        if let Err(error) = handle.session_logoff().await {
+            panic!("session logoff must still be sent: {error}");
+        }
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn queued_session_request_is_rechecked_before_it_is_written() {
+        // A small transport keeps the Run request below blocked behind the peer's reads.
+        let (client_stream, mut peer_stream) = tokio::io::duplex(64);
+        let (refresh_sender, refresh_receiver) = tokio::sync::oneshot::channel();
+        let (drain_sender, drain_receiver) = tokio::sync::oneshot::channel();
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_RUN)
+                    .with_session_capset(NowSessionCapsetFlags::LOCK | NowSessionCapsetFlags::LOGOFF),
+            )
+            .await;
+            if refresh_receiver.await.is_err() {
+                panic!("test must request the capset refresh");
+            }
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_RUN).with_session_capset(NowSessionCapsetFlags::LOGOFF),
+            )
+            .await;
+            if drain_receiver.await.is_err() {
+                panic!("test must release the blocked writes");
+            }
+            match read_message(&mut peer_stream).await {
+                NowMessage::Exec(NowExecMessage::Run(_)) => {}
+                message => panic!("expected Run request, got {message:?}"),
+            }
+            // The withdrawn lock request must not follow the Run request.
+            assert_eq!(read_frame(&mut peer_stream).await, SESSION_LOGOFF_FRAME);
+        });
+
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        let run = tokio::spawn({
+            let handle = handle.clone();
+            async move { handle.run(RunRequest::new("a".repeat(4096))).await }
+        });
+        let lock = tokio::spawn({
+            let handle = handle.clone();
+            async move { handle.session_lock().await }
+        });
+        // With the clock paused, this sleep returns only once every task is idle: the Run
+        // request is partly written and the lock request is queued behind it.
+        tokio::time::sleep(Duration::from_millis(10)).await;
+        assert!(!run.is_finished());
+        assert!(!lock.is_finished());
+
+        if refresh_sender.send(()).is_err() {
+            panic!("test peer stopped before the capset refresh");
+        }
+        while handle.capabilities().supports_session_lock() {
+            tokio::time::sleep(Duration::from_millis(1)).await;
+        }
+        if drain_sender.send(()).is_err() {
+            panic!("test peer stopped before draining");
+        }
+
+        match lock.await {
+            Ok(Err(NowClientError::UnsupportedCapability("session lock"))) => {}
+            Ok(result) => panic!("withdrawn lock request must be rejected, got {result:?}"),
+            Err(error) => panic!("lock task failed: {error}"),
+        }
+        match run.await {
+            Ok(Ok(_)) => {}
+            Ok(Err(error)) => panic!("Run request must be written: {error}"),
+            Err(error) => panic!("Run task failed: {error}"),
+        }
         if let Err(error) = handle.session_logoff().await {
             panic!("session logoff must still be sent: {error}");
         }
