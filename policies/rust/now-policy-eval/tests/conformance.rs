@@ -556,3 +556,37 @@ fn decode_base64(text: &str) -> Result<Vec<u8>, String> {
 
     Ok(bytes)
 }
+
+/// A request that is not well-formed gets no decision, so a runner reports it and never expects `Deny` of it.
+#[test]
+fn request_that_is_not_well_formed_is_reported_not_denied() {
+    // oracle: contract policies/CONTRACT.policy.md §error
+    let case: RawObject = serde_json::from_str(
+        r#"{
+            "policy": {
+                "PolicyFormatVersion": "2.0.0",
+                "Metadata": {"Id": "t", "Publisher": "t", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+                "TrustedSources": [],
+                "Rules": []
+            },
+            "time": "2026-06-01T00:00:00Z",
+            "request": {
+                "Operation": "Install",
+                "Manager": "Winget",
+                "Source": {"Name": "winget"},
+                "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+                "Scope": "Machine",
+                "Elevation": "NonElevated"
+            },
+            "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+        }"#,
+    )
+    .expect("test case is JSON");
+
+    let result = run_evaluation_case(&RawObject::new(), &case);
+
+    assert!(
+        result.is_err_and(|error| error.contains("contradicts")),
+        "the case must fail as a request that is not well-formed, not run as a decision"
+    );
+}
