@@ -18,6 +18,8 @@
                 NowProtocolErrorCode.Internal => "Internal error.",
                 NowProtocolErrorCode.NotImplemented => "Operation is not implemented.",
                 NowProtocolErrorCode.ProtocolVersion => "Incompatible protocol versions.",
+                NowProtocolErrorCode.ElevationDenied => "Elevation was denied.",
+                NowProtocolErrorCode.ElevationUnavailable => "Elevation is unavailable.",
                 _ => $"Unknown NOW-proto error (code={code})."
             };
         }

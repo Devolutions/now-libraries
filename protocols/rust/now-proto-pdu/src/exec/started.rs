@@ -1,3 +1,4 @@
+use bitflags::bitflags;
 use ironrdp_core::{
     cast_length, ensure_fixed_part_size, invalid_field_err, Decode, DecodeResult, Encode, EncodeResult, ReadCursor,
     WriteCursor,
@@ -5,12 +6,26 @@ use ironrdp_core::{
 
 use crate::{NowExecMessage, NowExecMsgKind, NowHeader, NowMessage, NowMessageClass};
 
+bitflags! {
+    /// Underlying flag type for `NOW_EXEC_STARTED_MSG`.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+    pub struct NowExecStartedFlags: u16 {
+        /// Set when `NOW_EXEC_FLAG_*_IO_REDIRECTION` was requested, but the server could not
+        /// redirect standard streams for this session (for example, because the elevation
+        /// mechanism does not support pipe inheritance).
+        ///
+        /// NOW-PROTO: NOW_EXEC_FLAG_STARTED_NO_IO_REDIRECTION
+        const NO_IO_REDIRECTION = 0x0001;
+    }
+}
+
 /// The NOW_EXEC_STARTED_MSG message is sent by the server after the execution session has been
 /// successfully started.
 ///
 /// NOW-PROTO: NOW_EXEC_STARTED_MSG
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NowExecStartedMsg {
+    flags: NowExecStartedFlags,
     session_id: u32,
 }
 
@@ -19,19 +34,33 @@ impl NowExecStartedMsg {
     const FIXED_PART_SIZE: usize = 4;
 
     pub fn new(session_id: u32) -> Self {
-        Self { session_id }
+        Self {
+            flags: NowExecStartedFlags::empty(),
+            session_id,
+        }
+    }
+
+    #[must_use]
+    pub fn with_no_io_redirection(mut self) -> Self {
+        self.flags |= NowExecStartedFlags::NO_IO_REDIRECTION;
+        self
+    }
+
+    pub fn is_no_io_redirection(&self) -> bool {
+        self.flags.contains(NowExecStartedFlags::NO_IO_REDIRECTION)
     }
 
     pub fn session_id(&self) -> u32 {
         self.session_id
     }
 
-    pub(super) fn decode_from_body(_header: NowHeader, src: &mut ReadCursor<'_>) -> DecodeResult<Self> {
+    pub(super) fn decode_from_body(header: NowHeader, src: &mut ReadCursor<'_>) -> DecodeResult<Self> {
         ensure_fixed_part_size!(in: src);
 
+        let flags = NowExecStartedFlags::from_bits_retain(header.flags);
         let session_id = src.read_u32();
 
-        Ok(Self { session_id })
+        Ok(Self { flags, session_id })
     }
 }
 
@@ -41,7 +70,7 @@ impl Encode for NowExecStartedMsg {
             size: cast_length!("size", Self::FIXED_PART_SIZE)?,
             class: NowMessageClass::EXEC,
             kind: NowExecMsgKind::STARTED.0,
-            flags: 0,
+            flags: self.flags.bits(),
         };
 
         header.encode(dst)?;

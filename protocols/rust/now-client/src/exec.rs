@@ -14,6 +14,7 @@ struct CommonRequest {
     directory: Option<String>,
     stdin: Option<Vec<u8>>,
     timeout: Option<Duration>,
+    elevated: bool,
 }
 
 impl CommonRequest {
@@ -23,6 +24,7 @@ impl CommonRequest {
             directory: None,
             stdin: None,
             timeout: None,
+            elevated: false,
         }
     }
 }
@@ -32,6 +34,7 @@ impl CommonRequest {
 pub struct RunRequest {
     command: String,
     directory: Option<String>,
+    elevated: bool,
 }
 
 impl RunRequest {
@@ -40,6 +43,7 @@ impl RunRequest {
         Self {
             command: command.into(),
             directory: None,
+            elevated: false,
         }
     }
 
@@ -47,6 +51,16 @@ impl RunRequest {
     #[must_use]
     pub fn with_directory(mut self, directory: impl Into<String>) -> Self {
         self.directory = Some(directory.into());
+        self
+    }
+
+    /// Requests elevated privileges.
+    ///
+    /// Requires [`NowCapabilities::supports_elevation`]; the peer may prompt the interactive user
+    /// for consent before the command starts.
+    #[must_use]
+    pub fn with_elevated(mut self) -> Self {
+        self.elevated = true;
         self
     }
 }
@@ -59,6 +73,7 @@ pub struct ProcessRequest {
     directory: Option<String>,
     stdin: Option<Vec<u8>>,
     timeout: Option<Duration>,
+    elevated: bool,
 }
 
 impl ProcessRequest {
@@ -70,6 +85,7 @@ impl ProcessRequest {
             directory: None,
             stdin: None,
             timeout: None,
+            elevated: false,
         }
     }
 
@@ -98,6 +114,17 @@ impl ProcessRequest {
     #[must_use]
     pub fn with_timeout(mut self, timeout: Duration) -> Self {
         self.timeout = Some(timeout);
+        self
+    }
+
+    /// Requests elevated privileges.
+    ///
+    /// Requires [`NowCapabilities::supports_elevation`].
+    /// The peer may prompt the interactive user for consent before the process starts, and stdio
+    /// redirection is best-effort depending on the host's elevation mechanism.
+    #[must_use]
+    pub fn with_elevated(mut self) -> Self {
+        self.elevated = true;
         self
     }
 }
@@ -134,6 +161,17 @@ impl BatchRequest {
     #[must_use]
     pub fn with_timeout(mut self, timeout: Duration) -> Self {
         self.common.timeout = Some(timeout);
+        self
+    }
+
+    /// Requests elevated privileges.
+    ///
+    /// Requires [`NowCapabilities::supports_elevation`].
+    /// The peer may prompt the interactive user for consent before the process starts, and stdio
+    /// redirection is best-effort depending on the host's elevation mechanism.
+    #[must_use]
+    pub fn with_elevated(mut self) -> Self {
+        self.common.elevated = true;
         self
     }
 }
@@ -188,6 +226,17 @@ impl PowerShellRequest {
     #[must_use]
     pub fn with_non_interactive(mut self) -> Self {
         self.non_interactive = true;
+        self
+    }
+
+    /// Requests elevated privileges.
+    ///
+    /// Requires [`NowCapabilities::supports_elevation`].
+    /// The peer may prompt the interactive user for consent before the process starts, and stdio
+    /// redirection is best-effort depending on the host's elevation mechanism.
+    #[must_use]
+    pub fn with_elevated(mut self) -> Self {
+        self.common.elevated = true;
         self
     }
 }
@@ -247,6 +296,9 @@ impl RequestSpec {
                 if let Some(directory) = &request.directory {
                     message = pdu(message.with_directory(directory.clone()))?;
                 }
+                if request.elevated {
+                    message = message.with_elevated();
+                }
                 Ok(EncodedRequest {
                     message: message.into(),
                     non_interactive: false,
@@ -263,9 +315,12 @@ impl RequestSpec {
                 if capabilities.supports_unicode_console() {
                     message = message.with_encoding_utf8();
                 }
+                if request.elevated {
+                    message = message.with_elevated();
+                }
                 if detached {
                     message = message.with_detached();
-                } else {
+                } else if capabilities.supports_io_redirection() {
                     message = message.with_io_redirection();
                 }
                 Ok(EncodedRequest {
@@ -282,9 +337,12 @@ impl RequestSpec {
                 if capabilities.supports_unicode_console() {
                     message = message.with_raw_encoding().with_unicode_console();
                 }
+                if common.elevated {
+                    message = message.with_elevated();
+                }
                 if detached {
                     message = message.with_detached();
-                } else {
+                } else if capabilities.supports_io_redirection() {
                     message = message.with_io_redirection();
                 }
                 Ok(EncodedRequest {
@@ -303,14 +361,16 @@ impl RequestSpec {
                 require(capabilities.supports_run(), "Run")?;
                 validate_command(&request.command)?;
                 validate_directory(request.directory.as_deref())?;
+                validate_elevation(capabilities, request.elevated)?;
             }
             Self::Process(request) => {
                 require(capabilities.supports_process(), "Process")?;
                 validate_filename(&request.filename)?;
                 validate_optional(&request.parameters, "parameters")?;
                 validate_directory(request.directory.as_deref())?;
+                validate_elevation(capabilities, request.elevated)?;
                 validate_common(detached, request.stdin.as_deref(), request.timeout)?;
-                validate_tracking(capabilities, detached)?;
+                validate_tracking(capabilities, detached, request.elevated, request.stdin.is_some())?;
             }
             Self::Batch(request) => {
                 require(capabilities.supports_batch(), "Batch")?;
@@ -340,9 +400,12 @@ macro_rules! apply_power_shell_options {
         if $capabilities.supports_unicode_console() {
             $message = $message.with_raw_encoding().with_unicode_console();
         }
+        if $common.elevated {
+            $message = $message.with_elevated();
+        }
         if $detached {
             $message = $message.with_detached();
-        } else {
+        } else if $capabilities.supports_io_redirection() {
             $message = $message.with_io_redirection();
         }
     };
@@ -380,8 +443,20 @@ fn validate_common_request(
 ) -> Result<(), NowClientError> {
     validate_command(&request.command)?;
     validate_directory(request.directory.as_deref())?;
+    validate_elevation(capabilities, request.elevated)?;
     validate_common(detached, request.stdin.as_deref(), request.timeout)?;
-    validate_tracking(capabilities, detached)
+    validate_tracking(capabilities, detached, request.elevated, request.stdin.is_some())
+}
+
+/// Refuses an elevated request the peer cannot honour.
+///
+/// A peer older than 1.7 ignores the `ELEVATED` flag and runs the command unelevated with nothing
+/// on the wire to show it, so the capability is the only signal and the refusal happens here.
+fn validate_elevation(capabilities: &NowCapabilities, elevated: bool) -> Result<(), NowClientError> {
+    if elevated {
+        require(capabilities.supports_elevation(), "elevated execution")?;
+    }
+    Ok(())
 }
 
 fn validate_common(detached: bool, stdin: Option<&[u8]>, timeout: Option<Duration>) -> Result<(), NowClientError> {
@@ -403,14 +478,22 @@ fn validate_common(detached: bool, stdin: Option<&[u8]>, timeout: Option<Duratio
     Ok(())
 }
 
-fn validate_tracking(capabilities: &NowCapabilities, detached: bool) -> Result<(), NowClientError> {
+fn validate_tracking(
+    capabilities: &NowCapabilities,
+    detached: bool,
+    elevated: bool,
+    has_stdin: bool,
+) -> Result<(), NowClientError> {
     if detached {
         require(capabilities.supports_detached(), "detached execution")
+    } else if elevated && !has_stdin {
+        // Tracked elevated sessions report their result even when the peer does not redirect
+        // stdio; when the peer does support I/O redirection, `IO_REDIRECTION` is set as usual.
+        Ok(())
     } else {
         require(capabilities.supports_io_redirection(), "I/O redirection")
     }
 }
-
 fn validate_command(command: &str) -> Result<(), NowClientError> {
     if command.trim().is_empty() {
         return Err(NowClientError::InvalidRequest("command must not be empty".to_owned()));

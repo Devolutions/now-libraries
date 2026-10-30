@@ -21,11 +21,17 @@ bitflags! {
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_SHELL_DIRECTORY_SET
         const DIRECTORY_SET = 0x0002;
-
         /// Enable stdio (stdout, stderr, stdin) redirection.
         ///
         /// NOW-PROTO: NOW_EXEC_FLAG_SHELL_IO_REDIRECTION
         const IO_REDIRECTION = 0x1000;
+
+        /// Execute the command with elevated privileges. The elevation mechanism is chosen by the
+        /// host and advertised in `execCapset`; a host that cannot elevate fails the request
+        /// instead of silently executing without elevation.
+        ///
+        /// NOW-PROTO: NOW_EXEC_FLAG_SHELL_ELEVATED
+        const ELEVATED = 0x4000;
 
         /// Detached mode: the shell is started without tracking execution or sending back output.
         ///
@@ -131,6 +137,16 @@ impl<'a> NowExecShellMsg<'a> {
         } else {
             None
         }
+    }
+
+    #[must_use]
+    pub fn with_elevated(mut self) -> Self {
+        self.flags |= NowExecShellFlags::ELEVATED;
+        self
+    }
+
+    pub fn is_elevated(&self) -> bool {
+        self.flags.contains(NowExecShellFlags::ELEVATED)
     }
 
     #[must_use]

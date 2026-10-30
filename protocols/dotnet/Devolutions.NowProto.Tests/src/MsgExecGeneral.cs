@@ -113,6 +113,52 @@
         }
 
         [Fact]
+        public void ResultElevationDenied()
+        {
+            var msg = NowMsgExecResult.Error(
+                0x12345678,
+                new NowProtocolException(NowProtocolErrorCode.ElevationDenied)
+            );
+
+            var encoded = new byte[]
+            {
+                0x12, 0x00, 0x00, 0x00, 0x13, 0x04, 0x00, 0x00, 0x78, 0x56, 0x34, 0x12,
+                0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x09, 0x00, 0x00, 0x00,
+                0x00, 0x00
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.Equal(msg.SessionId, decoded.SessionId);
+            Assert.False(decoded.IsSuccess);
+            var exception = Assert.Throws<NowProtocolException>(() => decoded.GetExitCodeOrThrow());
+            Assert.Equal(NowProtocolErrorCode.ElevationDenied, exception.NowProtocolError);
+        }
+
+        [Fact]
+        public void ResultElevationUnavailable()
+        {
+            var msg = NowMsgExecResult.Error(
+                0x12345678,
+                new NowProtocolException(NowProtocolErrorCode.ElevationUnavailable)
+            );
+
+            var encoded = new byte[]
+            {
+                0x12, 0x00, 0x00, 0x00, 0x13, 0x04, 0x00, 0x00, 0x78, 0x56, 0x34, 0x12,
+                0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x0A, 0x00, 0x00, 0x00,
+                0x00, 0x00
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.Equal(msg.SessionId, decoded.SessionId);
+            Assert.False(decoded.IsSuccess);
+            var exception = Assert.Throws<NowProtocolException>(() => decoded.GetExitCodeOrThrow());
+            Assert.Equal(NowProtocolErrorCode.ElevationUnavailable, exception.NowProtocolError);
+        }
+
+        [Fact]
         public void Data()
         {
             var msg = new NowMsgExecData(
@@ -174,6 +220,24 @@
             var decoded = NowTest.MessageRoundtrip(msg, encoded);
 
             Assert.Equal(msg.SessionId, decoded.SessionId);
+            Assert.False(decoded.NoIoRedirection);
+        }
+
+        [Fact]
+        public void StartedNoIoRedirection()
+        {
+            var msg = new NowMsgExecStarted(0x12345678, noIoRedirection: true);
+
+            var encoded = new byte[]
+            {
+                0x04, 0x00, 0x00, 0x00, 0x13, 0x06, 0x01, 0x00, 0x78, 0x56,
+                0x34, 0x12,
+            };
+
+            var decoded = NowTest.MessageRoundtrip(msg, encoded);
+
+            Assert.Equal(msg.SessionId, decoded.SessionId);
+            Assert.True(decoded.NoIoRedirection);
         }
     }
 }

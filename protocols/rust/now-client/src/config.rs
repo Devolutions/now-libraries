@@ -31,7 +31,8 @@ impl Default for NowClientConfig {
             | NowExecCapsetFlags::STYLE_WINPS
             | NowExecCapsetFlags::STYLE_PWSH
             | NowExecCapsetFlags::IO_REDIRECTION
-            | NowExecCapsetFlags::UNICODE_CONSOLE;
+            | NowExecCapsetFlags::UNICODE_CONSOLE
+            | NowExecCapsetFlags::ELEVATION;
         let capset = NowChannelCapsetMsg::default().with_exec_capset(exec_capset);
         let client_capset = match capset.with_heartbeat_interval(Duration::from_secs(60)) {
             Ok(capset) => capset,

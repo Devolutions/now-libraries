@@ -23,6 +23,8 @@ namespace Devolutions.NowProto.Messages
             (Directory != null ? MsgFlags.DirectorySet : 0) |
             (RawEncoding ? MsgFlags.RawEncoding : 0) |
             (UnicodeConsole ? MsgFlags.UnicodeConsole : 0) |
+            (Elevated ? MsgFlags.Elevated : 0) |
+            (NoExit ? MsgFlags.NoExit : 0) |
             (IoRedirection ? MsgFlags.IoRedirection : 0) |
             (Detached ? MsgFlags.Detached : 0)
         );
@@ -54,6 +56,8 @@ namespace Devolutions.NowProto.Messages
                 msgFlags.HasFlag(MsgFlags.DirectorySet) ? directory : null,
                 msgFlags.HasFlag(MsgFlags.RawEncoding),
                 msgFlags.HasFlag(MsgFlags.UnicodeConsole),
+                msgFlags.HasFlag(MsgFlags.Elevated),
+                msgFlags.HasFlag(MsgFlags.NoExit),
                 msgFlags.HasFlag(MsgFlags.IoRedirection),
                 msgFlags.HasFlag(MsgFlags.Detached)
             );
@@ -88,11 +92,27 @@ namespace Devolutions.NowProto.Messages
             UnicodeConsole = 0x0004,
 
             /// <summary>
+            /// Keeps the command interpreter running after the batch file completes (cmd /K rather
+            /// than /C). Ignored when the session redirects stdio.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_NO_EXIT
+            /// </summary>
+            NoExit = 0x0008,
+
+            /// <summary>
             /// Enable stdio (stdout, stderr, stdin) redirection.
             ///
             /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_IO_REDIRECTION
             /// </summary>
             IoRedirection = 0x1000,
+
+            /// <summary>
+            /// Execute the command with elevated privileges. The elevation mechanism is chosen by
+            /// the host and advertised in execCapset.
+            ///
+            /// NOW-PROTO: NOW_EXEC_FLAG_BATCH_ELEVATED
+            /// </summary>
+            Elevated = 0x4000,
 
             /// <summary>
             /// Detached mode: the batch is started without tracking execution or sending back output.
@@ -129,6 +149,18 @@ namespace Devolutions.NowProto.Messages
                 return this;
             }
 
+            public Builder EnableElevated()
+            {
+                _elevated = true;
+                return this;
+            }
+
+            public Builder EnableNoExit()
+            {
+                _noExit = true;
+                return this;
+            }
+
             public Builder EnableDetached()
             {
                 _detached = true;
@@ -137,7 +169,7 @@ namespace Devolutions.NowProto.Messages
 
             public NowMsgExecBatch Build()
             {
-                return new NowMsgExecBatch(_sessionId, _filename, _directory, _rawEncoding, _unicodeConsole, _ioRedirection, _detached);
+                return new NowMsgExecBatch(_sessionId, _filename, _directory, _rawEncoding, _unicodeConsole, _elevated, _noExit, _ioRedirection, _detached);
             }
 
             private readonly uint _sessionId = sessionId;
@@ -145,17 +177,21 @@ namespace Devolutions.NowProto.Messages
             private string? _directory = null;
             private bool _rawEncoding = false;
             private bool _unicodeConsole = false;
+            private bool _elevated = false;
+            private bool _noExit = false;
             private bool _ioRedirection = false;
             private bool _detached = false;
         }
 
-        internal NowMsgExecBatch(uint sessionId, string filename, string? directory, bool rawEncoding, bool unicodeConsole, bool ioRedirection, bool detached)
+        internal NowMsgExecBatch(uint sessionId, string filename, string? directory, bool rawEncoding, bool unicodeConsole, bool elevated, bool noExit, bool ioRedirection, bool detached)
         {
             SessionId = sessionId;
             Filename = filename;
             Directory = directory;
             RawEncoding = rawEncoding;
             UnicodeConsole = unicodeConsole;
+            Elevated = elevated;
+            NoExit = noExit;
             IoRedirection = ioRedirection;
             Detached = detached;
         }
@@ -165,6 +201,8 @@ namespace Devolutions.NowProto.Messages
         public string? Directory { get; }
         public bool RawEncoding { get; }
         public bool UnicodeConsole { get; }
+        public bool Elevated { get; }
+        public bool NoExit { get; }
         public bool IoRedirection { get; }
         public bool Detached { get; }
     }

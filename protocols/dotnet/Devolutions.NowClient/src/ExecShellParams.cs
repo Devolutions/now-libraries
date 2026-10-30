@@ -46,6 +46,17 @@ namespace Devolutions.NowClient
             return this;
         }
 
+        /// <summary>
+        /// Execute with elevated privileges. Requires the host to advertise the elevation
+        /// capability. The host may prompt the interactive user for consent, and stdio redirection
+        /// is best-effort depending on the host's elevation mechanism.
+        /// </summary>
+        public ExecShellParams Elevated(bool enable = true)
+        {
+            IsElevated = enable;
+            return this;
+        }
+
         internal NowMsgExecShell ToNowMessage(uint sessionId)
         {
             var builder = new NowMsgExecShell.Builder(sessionId, command);
@@ -68,6 +79,11 @@ namespace Devolutions.NowClient
             if (_detached)
             {
                 builder.EnableDetached();
+            }
+
+            if (IsElevated)
+            {
+                builder.EnableElevated();
             }
 
             return builder.Build();

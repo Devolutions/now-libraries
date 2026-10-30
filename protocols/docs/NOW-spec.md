@@ -3,7 +3,7 @@
 TOC is generated in [Obsidian](obsidian.md) via
 [TOC plugin](https://github.com/hipstersmoothie/obsidian-plugin-toc)
 -->
-# NOW-PROTO 1.6
+# NOW-PROTO 1.7
 - [Messages](#messages)
 	- [Transport](#transport)
 	- [Message Syntax](#message-syntax)
@@ -46,6 +46,7 @@ TOC is generated in [Obsidian](obsidian.md) via
 			- [NOW_EXEC_BATCH_MSG](#now_exec_batch_msg)
 			- [NOW_EXEC_WINPS_MSG](#now_exec_winps_msg)
 			- [NOW_EXEC_PWSH_MSG](#now_exec_pwsh_msg)
+			- [Elevated Execution](#elevated-execution)
 		- [RDM Messages](#rdm-messages)
 			- [NOW_RDM_MSG](#now_rdm_msg)
 			- [NOW_RDM_CAPABILITIES_MSG](#now_rdm_capabilities_msg)
@@ -230,6 +231,8 @@ For successful operation this field value is operation specific.
         | NOW_CODE_INTERNAL<br>0x0006 | Internal error. |
         | NOW_CODE_NOT_IMPLEMENTED<br>0x0007 | Operation is not implemented on current platform. |
         | NOW_CODE_PROTOCOL_VERSION<br>0x0008 | Incompatible protocol versions. |
+        | NOW_CODE_ELEVATION_DENIED<br>0x0009 | Elevation was requested and refused for this session: the interactive user declined consent, the consent prompt expired, or a host policy/rule denied elevation for the request. See [Elevated Execution](#elevated-execution). |
+        | NOW_CODE_ELEVATION_UNAVAILABLE<br>0x000A | Elevation was requested and is not possible for this request: the account has no elevated token, elevation is disabled on the host, or the server cannot elevate the requested execution style. See [Elevated Execution](#elevated-execution). |
 
     - `NOW_STATUS_ERROR_KIND_WINAPI`: code contains standard WinAPI error.
     - `NOW_STATUS_ERROR_KIND_UNIX`: code contains standard UNIX error code.
@@ -328,6 +331,7 @@ increment major version; Protocol implementations with different major version a
 | NOW_CAP_EXEC_STYLE_PWSH<br>0x0020 | PowerShell 7 (.ps1) execution style. |
 | NOW_CAP_EXEC_UNICODE_CONSOLE<br>0x0040 | Host supports encoding control flags (RAW_ENCODING, UNICODE_CONSOLE, and ENCODING_UTF8). |
 | NOW_CAP_EXEC_IO_REDIRECTION<br>0x1000 | Set if host implements exec session IO redirection. |
+| NOW_CAP_EXEC_ELEVATION<br>0x0080 | Set if host can run elevated exec sessions. Elevation may prompt the interactive user for consent, and stdio redirection may be unavailable depending on the host's elevation mechanism. See [Elevated Execution](#elevated-execution). |
 
 <!-- TODO: add AppleScript command -->
 
@@ -924,9 +928,13 @@ packet-beta
 
 **msgClass (1 byte)**: The message class (NOW_EXEC_MSG_CLASS_ID).
 
-**msgType (1 byte)**: The message type (NOW_EXEC_RESULT_MSG_ID).
+**msgType (1 byte)**: The message type (NOW_EXEC_STARTED_MSG_ID).
 
 **msgFlags (2 bytes)**: The message flags.
+
+| Flag | Meaning |
+|------|---------|
+| NOW_EXEC_FLAG_STARTED_NO_IO_REDIRECTION<br>0x0001 | Set when `NOW_EXEC_FLAG_*_IO_REDIRECTION` was requested, but the server could not redirect standard streams for this session (for example, because the elevation mechanism does not support pipe inheritance). |
 
 **sessionId (4 bytes)**: A 32-bit unsigned integer containing a unique remote execution session id.
 
@@ -956,6 +964,7 @@ packet-beta
 | Flag                                   | Meaning                   |
 |----------------------------------------|---------------------------|
 | NOW_EXEC_FLAG_RUN_DIRECTORY_SET<br>0x0001 | `directory` field contains non-default value. |
+| NOW_EXEC_FLAG_RUN_ELEVATED<br>0x4000 | Execute the command with elevated privileges. Requires `NOW_CAP_EXEC_ELEVATION`; see [Elevated Execution](#elevated-execution). |
 
 **sessionId (4 bytes)**: A 32-bit unsigned integer containing a unique remote execution session id.
 
@@ -994,6 +1003,7 @@ packet-beta
 | NOW_EXEC_FLAG_PROCESS_DIRECTORY_SET<br>0x0002 | `directory` field contains non-default value.|
 | NOW_EXEC_FLAG_PROCESS_ENCODING_UTF8<br>0x0004 | Enables OEM-to-UTF-8 transcoding for stdin, stdout, and stderr. Without this flag, data streams are passed through as raw bytes without encoding conversion. |
 | NOW_EXEC_FLAG_PROCESS_IO_REDIRECTION<br>0x1000 | Enable stdio (stdout, stderr, stdin) redirection. |
+| NOW_EXEC_FLAG_PROCESS_ELEVATED<br>0x4000 | Execute the command with elevated privileges. Requires `NOW_CAP_EXEC_ELEVATION`; see [Elevated Execution](#elevated-execution). |
 | NOW_EXEC_FLAG_PROCESS_DETACHED<br>0x8000 | Detached mode: the process is started without tracking execution or sending back output. |
 
 **Encoding behavior:** By default, process data streams are passed through as raw bytes without any encoding conversion, since no assumptions can be made about the encoding of an arbitrary process.
@@ -1036,6 +1046,7 @@ packet-beta
 | NOW_EXEC_FLAG_SHELL_SHELL_SET<br>0x0001 | `shell` field contains non-default value. |
 | NOW_EXEC_FLAG_SHELL_DIRECTORY_SET<br>0x0002 | `directory` field contains non-default value. |
 | NOW_EXEC_FLAG_SHELL_IO_REDIRECTION<br>0x1000 | Enable stdio (stdout, stderr, stdin) redirection. |
+| NOW_EXEC_FLAG_SHELL_ELEVATED<br>0x4000 | Execute the command with elevated privileges. Requires `NOW_CAP_EXEC_ELEVATION`; see [Elevated Execution](#elevated-execution). |
 | NOW_EXEC_FLAG_SHELL_DETACHED<br>0x8000 | Detached mode: the shell is started without tracking execution or sending back output. |
 
 **sessionId (4 bytes)**: A 32-bit unsigned integer containing a unique remote execution session id.
@@ -1077,7 +1088,9 @@ packet-beta
 | NOW_EXEC_FLAG_BATCH_DIRECTORY_SET<br>0x0001 | `directory` field contains non-default value. |
 | NOW_EXEC_FLAG_BATCH_RAW_ENCODING<br>0x0002 | Disables the default OEM-to-UTF-8 transcoding: data streams are passed through as raw bytes without any encoding conversion. |
 | NOW_EXEC_FLAG_BATCH_UNICODE_CONSOLE<br>0x0004 | Enables Unicode console: agent injects `@chcp 65001 > nul` and writes the script in BOM-less UTF-8. Implies UTF-8 stdout/stderr streams. |
+| NOW_EXEC_FLAG_BATCH_NO_EXIT<br>0x0008 | Keeps the command interpreter running after the batch file completes (`cmd /K` rather than `/C`). MUST be ignored when the session redirects stdio, where the hidden interpreter would never exit. |
 | NOW_EXEC_FLAG_BATCH_IO_REDIRECTION<br>0x1000 | Enable stdio (stdout, stderr, stdin) redirection. |
+| NOW_EXEC_FLAG_BATCH_ELEVATED<br>0x4000 | Execute the command with elevated privileges. Requires `NOW_CAP_EXEC_ELEVATION`; see [Elevated Execution](#elevated-execution). |
 | NOW_EXEC_FLAG_BATCH_DETACHED<br>0x8000 | Detached mode: the batch is started without tracking execution or sending back output. |
 
 **Encoding behavior:** By default, batch (cmd.exe) output is transcoded from OEM encoding to UTF-8, since cmd.exe uses the system OEM code page.
@@ -1134,6 +1147,7 @@ packet-beta
 | NOW_EXEC_FLAG_PS_UNICODE_CONSOLE<br>0x0400    | Enables Unicode console: agent injects `$OutputEncoding = [Console]::InputEncoding = [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()` at script start. Implies stdin/stdout/stderr streams are UTF-8. |
 | NOW_EXEC_FLAG_PS_IO_REDIRECTION<br>0x1000     | Enable stdio (stdout, stderr, stdin) redirection.                                                              |
 | NOW_EXEC_FLAG_PS_SERVER_MODE<br>0x2000        | Run PowerShell in server mode.                                                                                 |
+| NOW_EXEC_FLAG_PS_ELEVATED<br>0x4000           | Execute the command with elevated privileges. Requires `NOW_CAP_EXEC_ELEVATION`; see [Elevated Execution](#elevated-execution). |
 | NOW_EXEC_FLAG_PS_DETACHED<br>0x8000           | Detached mode: PowerShell is started without tracking execution or sending back output.                        |
 
 **Encoding behavior (WinPs):** By default, Windows PowerShell (powershell.exe) output is transcoded from OEM encoding to UTF-8, since Windows PowerShell uses the system OEM code page for console output.
@@ -1195,6 +1209,73 @@ packet-beta
 **executionPolicy (variable)**: A NOW_VARSTR structure, same as with NOW_EXEC_WINPS_MSG.
 
 **configurationName (variable)**: A NOW_VARSTR structure, same as with NOW_EXEC_WINPS_MSG.
+
+#### Elevated Execution
+
+Any exec request message may set its `NOW_EXEC_FLAG_*_ELEVATED` (`0x4000`) flag to ask that the
+command run with elevated privileges. The flag expresses *intent* only: it names no mechanism, and
+the client does not choose one.
+
+`ELEVATED` raises the privileges of the identity that would otherwise run the command, which is the
+session user. It carries no credentials and lets the client select no identity. Where the platform
+grants elevation only through credentials supplied at a prompt, as Windows does for a standard user,
+the command runs as the account whose credentials were supplied, with that account's profile and
+environment. Running a command as a caller-chosen user is a separate concern and would be expressed
+by a separate field.
+
+**Requesting elevation.** A client MUST NOT set an `ELEVATED` flag unless the negotiated
+`execCapset` contains `NOW_CAP_EXEC_ELEVATION`, and client libraries SHOULD refuse such a request
+locally. A server predating this version ignores the flag and executes without elevation, with
+nothing on the wire to show it, so capability negotiation is the only reliable signal. If elevation
+is globally disabled in the server's configuration, the server SHOULD omit `NOW_CAP_EXEC_ELEVATION`
+from `execCapset`. A server that receives an `ELEVATED` flag without having advertised
+`NOW_CAP_EXEC_ELEVATION` MUST fail the session with `NOW_CODE_NOT_IMPLEMENTED` (or
+`NOW_CODE_ELEVATION_UNAVAILABLE`). A server MUST NOT execute a command without elevation after
+being asked to elevate it.
+
+**Capability scope.** `NOW_CAP_EXEC_ELEVATION` states that the server can evaluate and perform
+elevation requests, not that every advertised execution style or command can be elevated. A server
+that cannot elevate the requested style MUST fail the session with `NOW_CODE_ELEVATION_UNAVAILABLE`
+rather than execute it without elevation, and a client MUST be prepared for that failure even when
+the capability was advertised.
+
+**Execution semantics.** Depending on how the server elevates the session (for example, via a UAC
+consent prompt or via a privileged agent service/rule), the following properties apply:
+
+- *Consent.* Elevation MAY require the interactive user to consent or supply credentials, or MAY be
+  granted automatically by host policy/rules. When interactive consent is required, the request
+  fails if nobody is present to respond, the user declines, or the prompt expires. The server sends
+  `NOW_EXEC_STARTED_MSG` only after elevation is granted and the process has started, so a client
+  SHOULD allow for the consent wait before `STARTED`, for example by starting execution timers at
+  `STARTED` rather than at submission.
+- *Standard streams.* `NOW_EXEC_FLAG_*_IO_REDIRECTION` is orthogonal to `ELEVATED`. A client MAY
+  request `IO_REDIRECTION` on an elevated session. The server SHOULD redirect stdio when its
+  elevation mechanism supports pipe inheritance (such as service- or policy-assisted elevation) and
+  MAY omit stdio redirection when the mechanism does not (such as Windows `ShellExecuteEx` UAC).
+  When `IO_REDIRECTION` was requested on the exec message but the server could not redirect stdio
+  for the session, the server MUST set `NOW_EXEC_FLAG_STARTED_NO_IO_REDIRECTION` (`0x0001`) on
+  `NOW_EXEC_STARTED_MSG` and send no `NOW_EXEC_DATA_MSG` for it. When stdio is not redirected,
+  output stays on the host; `NOW_EXEC_FLAG_BATCH_NO_EXIT` and `NOW_EXEC_FLAG_PS_NO_EXIT` keep the
+  interpreter window open so the user can read it.
+- *Result.* Unless the request is `NOW_EXEC_RUN_MSG`, which is never tracked, or sets
+  `NOW_EXEC_FLAG_*_DETACHED`, which promises no tracking, the server SHOULD track the session and
+  report the real exit code in `NOW_EXEC_RESULT_MSG`, so a client can distinguish success from
+  failure even when stdio is not redirected.
+- *Control.* `NOW_EXEC_ABORT_MSG` and `NOW_EXEC_CANCEL_REQ_MSG` MAY fail when the elevated process
+  runs at a higher integrity level than the server's session process. A cancel failure is reported
+  in `NOW_EXEC_CANCEL_RSP_MSG`. Neither message can dismiss a pending consent prompt.
+
+**Failure reporting.** A server that cannot grant elevation MUST report it in
+`NOW_EXEC_RESULT_MSG` with a `NOW_STATUS` of kind `NOW_STATUS_ERROR_KIND_NOW`:
+
+| Code | When |
+|------|------|
+| NOW_CODE_ELEVATION_DENIED | Elevation was refused for this session: the interactive user declined consent, the consent prompt expired, or a host policy/rule denied elevation for the request. |
+| NOW_CODE_ELEVATION_UNAVAILABLE | Elevation is not possible for this request: the account has no elevated token, elevation is disabled on the host, or the server cannot elevate the requested execution style. |
+| NOW_CODE_NOT_IMPLEMENTED | `ELEVATED` was set although `NOW_CAP_EXEC_ELEVATION` was not negotiated. |
+
+The platform error, such as Win32 `ERROR_CANCELLED`, MAY be carried in `errorMessage` but MUST NOT
+replace the NOW code, because a client needs a platform-independent signal.
 
 ### RDM Messages
 
@@ -1484,3 +1565,9 @@ packet-beta
 	- Add `NOW_EXEC_FLAG_PROCESS_ENCODING_UTF8` flag for process exec commands.
 	- Add `NOW_EXEC_FLAG_*_UNICODE_CONSOLE` flags for batch (cmd), winps, and pwsh exec commands.
 	- Add `NOW_CAP_EXEC_UNICODE_CONSOLE` capability flag.
+- 1.7
+	- Add `NOW_EXEC_FLAG_*_ELEVATED` (`0x4000`) flags for run, process, shell, batch, winps, and pwsh exec messages.
+	- Add `NOW_CAP_EXEC_ELEVATION` capability flag.
+	- Add `NOW_EXEC_FLAG_STARTED_NO_IO_REDIRECTION` flag for `NOW_EXEC_STARTED_MSG`.
+	- Add `NOW_CODE_ELEVATION_DENIED` and `NOW_CODE_ELEVATION_UNAVAILABLE` status codes.
+	- Add `NOW_EXEC_FLAG_BATCH_NO_EXIT` flag for batch exec commands.
