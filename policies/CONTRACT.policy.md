@@ -99,7 +99,22 @@ Audit mode is a policy setting under which a request that the policy content den
 <a id="def-decision"></a>
 ### Decision
 
-A decision is the result of evaluating one request: whether the broker runs it, and the check, rules and opt-ins that produced that outcome ([§decision](#decision)).
+A decision is the result of evaluating one request: an outcome, `Allow` or `Deny`, which says whether the broker runs the request, and the check, rules and opt-ins that produced it ([§decision](#decision)).
+Every well-formed request gets a decision, an unreadable one included.
+
+<a id="def-unreadable"></a>
+### Unreadable
+
+A request is unreadable when it is well-formed but the evaluator cannot tell what the broker would run for it, or the broker builds no command for it ([§reading](#reading)).
+Unreadable is not an error: an unreadable request gets a decision, `Deny` with the check `UnreadableRequest` ([§precedence](#precedence)).
+*Avoid:* invalid, malformed, rejected, which name errors.
+
+<a id="def-error"></a>
+### Error
+
+An error is a result that has no decision: a validation error of a policy document ([§errors](#errors)), or an error response of the broker ([CONTRACT.wire.md §errors](CONTRACT.wire.md#errors)), such as `BadRequest` for a package request that is not well-formed.
+The one error response that carries a decision is `NotRunnable`, for an allowed request the broker still does not run.
+The `InvalidReason` `Unreadable` of the broker's policy management state names a policy file the broker cannot open or read, not an unreadable request ([CONTRACT.wire.md §management-state](CONTRACT.wire.md#management-state)).
 
 <a id="general"></a>
 ## General rules
@@ -196,11 +211,10 @@ Outside that period every request is denied ([§precedence](#precedence)), and t
 ### Trusted sources
 
 `TrustedSources` lists, as source selectors, the sources that installs and updates may get packages from.
-The list governs installs and updates only, because uninstalls download nothing; rules alone govern uninstalls.
+The list governs installs and updates only, because uninstalls download nothing, and rules govern uninstalls by package rather than by source, because the source of every Uninstall is unknown ([§managers](#managers)).
 The source of an Install or Update request is trusted when a selector in the list matches it ([§source-selector](#source-selector)); a selector that is unknown for the request does not trust it.
 An Install or Update request whose source is not trusted is denied whatever the rules say ([§precedence](#precedence)).
 A manager with no selector in the list therefore cannot install or update anything.
-A rule may name a source the list does not trust.
 The source of an Update through a manager whose reading says so is unknown, so a `Source` selector of the request's manager is unknown for that Update ([§source-selector](#source-selector)), and, in `Select` or in an `Except` entry, the selector never keeps a Deny rule from being applicable to it and never makes an Allow rule applicable to it ([§applicability](#applicability)).
 The source of every Uninstall is unknown too ([§managers](#managers)), and [§selection](#selection) keeps `Source` selectors away from uninstalls.
 For installs and updates, a rule only narrows which trusted sources it applies to.
@@ -363,6 +377,7 @@ A document with several defects reports a non-empty subset of the errors that ap
 ### Request input
 
 The evaluator's input is a well-formed package request ([CONTRACT.wire.md §package-request](CONTRACT.wire.md#package-request)) without its `RequestId`.
+A package request that is not well-formed gets no decision: the broker answers it with the error `BadRequest`, and an evaluator given one reports an error rather than a decision.
 
 <a id="reading"></a>
 ### Reading a request
@@ -445,7 +460,7 @@ Unless a manager's reading below states otherwise:
 - the scope is `Scope`, and `User` when it is absent;
 - the architecture is `Package.Architecture`, and unknown when it is absent.
 
-The source of an Uninstall is unknown under every manager ([§source-selector](#source-selector)), because no command the broker builds limits an uninstall to packages installed from `Source.Name`, even where it passes `Source.Name` to the manager, as WinGet `--source`, PowerShell `-Repository`, a Scoop `<bucket>/<app>` and a Vcpkg `<port>:<triplet>` do, and a Vcpkg uninstall may also remove ports of other triplets ([§manager-vcpkg](#manager-vcpkg)).
+The source of an Uninstall is unknown under every manager ([§source-selector](#source-selector)), because no manager reliably records which source an installed package came from, and no command the broker builds limits an uninstall to packages installed from `Source.Name`, even where it passes `Source.Name` to the manager, as WinGet `--source`, PowerShell `-Repository`, a Scoop `<bucket>/<app>` and a Vcpkg `<port>:<triplet>` do, and a Vcpkg uninstall may also remove ports of other triplets ([§manager-vcpkg](#manager-vcpkg)).
 A reading below that names the only source name of its manager, or of some of its operations, compares `Source.Name` with it ignoring ASCII case.
 A plain source name starts with an ASCII letter or digit and contains only ASCII letters, digits, `.`, `-`, `_` and spaces.
 The batch characters are `"`, `%`, `!`, `^`, `&`, `|`, `<` and `>`, which the broker cannot pass to a manager that it runs through a batch file.
