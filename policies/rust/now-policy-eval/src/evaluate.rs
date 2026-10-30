@@ -10,7 +10,9 @@ use crate::timestamp::Timestamp;
 use crate::values::{Manager, Operation, OptIn, OptInSet, RuleDecision};
 use crate::version::Version;
 
-/// Whether the broker runs the request, `Allow` or `Deny` ([§decision]).
+/// Whether the policy lets the broker run the request, `Allow` or `Deny` ([§decision]).
+///
+/// An allowed request may still not run, because the broker may be unable to run it.
 ///
 /// [§decision]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-decision
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -36,7 +38,7 @@ impl Outcome {
 /// [§precedence]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#precedence
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Check {
-    /// The request is well-formed, but the evaluator cannot tell what the broker would run for it ([§unreadable]).
+    /// The request is well-formed, and a case of the reading of requests holds for it ([§unreadable]), such as the broker building no command for it.
     ///
     /// An unreadable request gets a `Deny` decision, not an error.
     ///
@@ -86,8 +88,8 @@ pub struct DecisionRule {
 
 /// The result of evaluating one well-formed request: an outcome, and the check, rules and opt-ins that produced it ([§decision]).
 ///
-/// Every well-formed request gets a decision, an unreadable one included.
-/// A result that has no decision is an error ([§error]).
+/// Evaluating a well-formed request always gives a decision, an unreadable request's included.
+/// An error reports no outcome and carries no decision ([§error]).
 ///
 /// [§decision]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-decision
 /// [§error]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#def-error
@@ -99,13 +101,13 @@ pub struct Decision {
     pub rules: Vec<DecisionRule>,
     /// Opt-ins in the order of [`OptIn`].
     pub opt_ins: Vec<OptIn>,
-    /// Whether audit mode let a denied request run.
+    /// Whether audit mode turned a denial into `Allow`.
     pub audited: bool,
 }
 
 /// Evaluates `request` against `policy` at the evaluation time `time`.
 ///
-/// A request that is not well-formed gets an error and no decision ([§request-input]): this returns [`BadRequest`], whatever the policy says.
+/// A request that is not well-formed gets no decision ([§request-input]): this returns [`BadRequest`], whatever the policy says.
 /// An unreadable request is well-formed and gets a `Deny` decision with the check `UnreadableRequest`.
 ///
 /// [§request-input]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#request-input
