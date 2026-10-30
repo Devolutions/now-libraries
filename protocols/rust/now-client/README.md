@@ -12,8 +12,10 @@ queues, and permits **one tracked execution at a time per stream**. Tracked oper
 expose raw `Vec<u8>` stdout/stderr chunks, stdin forwarding, normal cancellation, and
 terminal status.
 
-`session_lock` and `session_logoff` ask the peer to lock or log off the user session that
-hosts it. They require the matching negotiated session capability and have no response:
+`session_lock` and `session_logoff` ask the peer to lock or log off the interactive user
+session that hosts it. They require the matching negotiated session capability, so a custom
+`client_capset` must advertise `NowSessionCapsetFlags::LOCK` or `LOGOFF`; otherwise they
+fail with `UnsupportedCapability` without writing anything. Neither message has a response:
 they complete once the request is written, so callers confirm a logoff by observing the
 end of the session that carries the channel.
 

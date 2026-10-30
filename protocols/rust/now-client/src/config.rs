@@ -8,6 +8,10 @@ use crate::NowClientError;
 #[derive(Clone, Debug)]
 pub struct NowClientConfig {
     /// Capabilities sent to the peer during the initial handshake.
+    ///
+    /// Only capabilities advertised here can be negotiated. The default advertises every
+    /// execution style this client implements and the session lock and logoff commands;
+    /// a custom capset that omits a flag disables the matching request.
     pub client_capset: NowChannelCapsetMsg,
     /// Largest accepted PDU body, excluding the eight-byte NOW header.
     pub max_frame_body_size: usize,

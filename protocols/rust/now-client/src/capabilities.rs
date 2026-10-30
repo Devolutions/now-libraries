@@ -80,12 +80,14 @@ impl NowCapabilities {
         self.has(NowExecCapsetFlags::UNICODE_CONSOLE) && self.version().supports_exec_unicode_console()
     }
 
-    /// Returns whether the peer accepts session lock requests.
+    /// Returns whether both sides negotiated `NOW_CAP_SESSION_LOCK`, which
+    /// [`NowClientHandle::session_lock`](crate::NowClientHandle::session_lock) requires.
     pub fn supports_session_lock(&self) -> bool {
         self.capset.session_capset().contains(NowSessionCapsetFlags::LOCK)
     }
 
-    /// Returns whether the peer accepts session logoff requests.
+    /// Returns whether both sides negotiated `NOW_CAP_SESSION_LOGOFF`, which
+    /// [`NowClientHandle::session_logoff`](crate::NowClientHandle::session_logoff) requires.
     pub fn supports_session_logoff(&self) -> bool {
         self.capset.session_capset().contains(NowSessionCapsetFlags::LOGOFF)
     }
@@ -100,5 +102,42 @@ impl NowCapabilities {
 
     fn at_least(&self, major: u16, minor: u16) -> bool {
         self.version() >= NowProtoVersion { major, minor }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use now_proto_pdu::{NowChannelCapsetMsg, NowSessionCapsetFlags};
+
+    use super::NowCapabilities;
+
+    fn negotiate(client: NowSessionCapsetFlags, peer: NowSessionCapsetFlags) -> NowCapabilities {
+        let client = NowChannelCapsetMsg::default().with_session_capset(client);
+        let peer = NowChannelCapsetMsg::default().with_session_capset(peer);
+        match NowCapabilities::negotiate(&client, &peer) {
+            Ok(capabilities) => capabilities,
+            Err(error) => panic!("matching major versions must negotiate: {error}"),
+        }
+    }
+
+    #[test]
+    fn session_capabilities_require_both_sides() {
+        let both = NowSessionCapsetFlags::LOCK | NowSessionCapsetFlags::LOGOFF;
+
+        let negotiated = negotiate(both, both);
+        assert!(negotiated.supports_session_lock());
+        assert!(negotiated.supports_session_logoff());
+
+        let peer_lacks_logoff = negotiate(both, NowSessionCapsetFlags::LOCK);
+        assert!(peer_lacks_logoff.supports_session_lock());
+        assert!(!peer_lacks_logoff.supports_session_logoff());
+
+        let client_lacks_lock = negotiate(NowSessionCapsetFlags::LOGOFF, both);
+        assert!(!client_lacks_lock.supports_session_lock());
+        assert!(client_lacks_lock.supports_session_logoff());
+
+        let unrelated = negotiate(NowSessionCapsetFlags::empty(), NowSessionCapsetFlags::all());
+        assert!(!unrelated.supports_session_lock());
+        assert!(!unrelated.supports_session_logoff());
     }
 }
