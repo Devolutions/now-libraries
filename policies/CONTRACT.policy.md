@@ -99,20 +99,20 @@ Audit mode is a policy setting under which a request that the policy content den
 <a id="def-decision"></a>
 ### Decision
 
-A decision is the result of evaluating one request: an outcome, `Allow` or `Deny`, which says whether the policy lets the broker run the request, and the check, rules and opt-ins that produced it ([§decision](#decision)).
-Evaluating a well-formed request against a policy always gives a decision, an unreadable request's included.
+A decision is the result of evaluating one request: an outcome, `Allow` or `Deny`, which says whether the policy lets the broker run the request, the check, rules and opt-ins that produced it, and whether audit mode let a denied request run ([§decision](#decision)).
+Evaluating a well-formed request against a valid policy at an evaluation time always gives a decision, an unreadable request's included.
 
 <a id="def-unreadable"></a>
 ### Unreadable
 
-A request is unreadable when it is well-formed and a case of [§reading](#reading) holds for it, such as when the broker builds no command for it, or the command would act in a way the request's fields do not show.
+A request is unreadable exactly when it is well-formed and a case of [§reading](#reading) holds for it.
 Unreadable is not an error: an unreadable request gets a decision, `Deny` with the check `UnreadableRequest` ([§precedence](#precedence)).
-*Avoid:* invalid, malformed, rejected, which name errors.
+*Avoid:* invalid, malformed, rejected; say denied, or name the check.
 
 <a id="def-error"></a>
 ### Error
 
-An error is a result that reports no outcome for a request or a document: a validation error of a policy document ([§errors](#errors)), an evaluator's report that its input is not a well-formed package request ([§request-input](#request-input)), or an error response of the broker ([CONTRACT.wire.md §errors](CONTRACT.wire.md#errors)), such as `BadRequest`.
+An error is a result that is not a decision: a validation error of a policy document ([§errors](#errors)), an evaluator's report that its input is not a well-formed package request ([§request-input](#request-input)), or an error response of the broker ([CONTRACT.wire.md §errors](CONTRACT.wire.md#errors)), such as `BadRequest`.
 No error carries a decision except the error response `NotRunnable`, which carries the `Allow` decision of a request that [CONTRACT.wire.md §not-runnable](CONTRACT.wire.md#not-runnable) says the broker will not run.
 
 <a id="general"></a>
@@ -232,7 +232,7 @@ A source selector names one manager and either one of its sources or all of them
 A selector with both `Source` and `AnySource` is `ConflictingKeys` at `AnySource`, and one with neither is `MissingKey` at `Source`.
 `AnySource` with the value `false` is `InvalidValue`, because such a selector would name no source.
 A selector does not match a request through another manager.
-For a request through its manager, a selector with `AnySource` matches whatever the source, including an unknown one.
+For a request through its manager, a selector with `AnySource` matches whatever the source, including an unknown one, so it tests only the manager.
 For a request through its manager, a selector with `Source` matches a known source equal to it ignoring case ([§text-comparison](#text-comparison)), does not match a different known source, and is unknown for an unknown source; a Scoop *manifest source* compares as [§manager-scoop](#manager-scoop) states.
 
 <a id="rules"></a>
@@ -353,7 +353,7 @@ A document is valid when it has none of these errors, and this table is the clos
 | `DuplicateRuleId`          | has two rules with equal ids                                                     |
 
 In every object this contract defines, an absent required key is `MissingKey`, a key the object's table does not list is `UnknownKey`, and a value of the wrong JSON type is `WrongType`, except at `PolicyFormatVersion`, where every present value other than `"2.0.0"` is `UnsupportedFormatVersion`.
-Every error carries its code and a [JSON Pointer][rfc6901] to where it is:
+Every validation error carries its code and a [JSON Pointer][rfc6901] to where it is:
 
 - for `DuplicateKey`, `UnknownKey` and `ConflictingKeys`, the member;
 - for `MissingKey`, the absent member;
@@ -461,7 +461,7 @@ Unless a manager's reading below states otherwise:
 - the scope is `Scope`, and `User` when it is absent;
 - the architecture is `Package.Architecture`, and unknown when it is absent.
 
-The source of an Uninstall is unknown under every manager ([§source-selector](#source-selector)), because no manager reliably records which source an installed package came from, and no command the broker builds limits an uninstall to packages installed from `Source.Name`, even where it passes `Source.Name` to the manager, as WinGet `--source`, PowerShell `-Repository`, a Scoop `<bucket>/<app>` and a Vcpkg `<port>:<triplet>` do.
+The source of an Uninstall is unknown under every manager ([§source-selector](#source-selector)), because no command the broker builds limits an uninstall to packages installed from `Source.Name`, even where it passes `Source.Name` to the manager, as WinGet `--source`, PowerShell `-Repository`, a Scoop `<bucket>/<app>` and a Vcpkg `<port>:<triplet>` do.
 The source of an Update is its `Source.Name` under every manager.
 Where a manager's reading states that the manager updates a package from the source recorded when it was installed, the broker reads that record before running anything, and runs nothing for an Update whose recorded source differs from `Source.Name` ignoring ASCII case or whose record it cannot read; that refusal comes after the decision and is not one ([§evaluation](#evaluation)), and a broker that does not read the record runs no Update through that manager.
 A reading below that names the only source name of its manager, or of some of its operations, compares `Source.Name` with it ignoring ASCII case.
@@ -540,8 +540,8 @@ A source name or identifier is a manifest URL or local path when it contains `..
 On an Install, a manifest URL or local path, a *manifest source*, is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
 An Install whose `Source.Name` or `Package.Id` is a manifest URL or local path is readable only when `Package.Id` equals `Source.Name` with exact characters and starts with `http://` or `https://` ignoring ASCII case, because only then does the command fetch exactly the URL that `Source.Name` names: the broker passes `Package.Id` alone whenever `Source.Name` starts with `http://` or `https://` ignoring ASCII case, or contains `...` or `:\`, and otherwise passes the one argument `<Source.Name>/<Package.Id>`, which Scoop may read as another URL, look up in every bucket, or resolve as a relative path.
 A request whose `Package.Id` is a manifest URL or local path and contains `@` is unreadable, because Scoop may split the text after an `@` off the URL as a version, so that `https://example.test/app.json@1.2` reads as the URL `https://example.test/app.json` with the version `1.2`, and because an `@` before the host adds user information, which another text of the same URL lacks.
-An Install whose `Package.Id` is a manifest URL is unreadable when its `Package.Id` contains `%` or `#`; when its host part, the text after the `://` of its leading `http://` or `https://`, ignoring ASCII case, and before the next `/` or its end, is empty, contains `:` or ends with `.`; or when a `/`-separated segment after its host part is `.` or `..`.
-Each of these spellings, a percent-encoded character, a fragment, an explicit port, an empty host, a trailing `.` on the host and a dot segment, lets another text fetch the same manifest, which a `Source` selector or a `Packages` pattern naming the URL would not match.
+An Install whose `Package.Id` starts with `http://` or `https://` ignoring ASCII case is unreadable when its `Package.Id` contains `%` or `#`; when its host part, the text after its first `://` and before the next `/` or its end, is empty, contains `:`, ends with `.`, or has a last `.`-separated label that starts with an ASCII digit; or when a `/`-separated segment after its host part is `.` or `..`.
+Each of these spellings, a percent-encoded character, a fragment, an explicit port, an empty host, a trailing `.` on the host, a numeric host and a dot segment, can let another text fetch the same manifest, which a `Source` selector or a `Packages` pattern naming the URL would not match.
 An Update or Uninstall whose `Source.Name` or `Package.Id` is a manifest URL or local path is unreadable, because Scoop acts on an installed app it derives from the URL, and the request does not name that app.
 The `Package.Id` of a readable Install through a manifest source names itself, keeping its case in canonical form, and selects no version, so the `name@version` reading of [§package-identity](#package-identity) does not apply to it, as Scoop fetches the URL as given.
 A `Source` selector matches a manifest source when the two are equal with exact characters, is unknown for it when they are equal only ignoring case ([§text-comparison](#text-comparison)), and does not match it otherwise, so a Deny rule that names the URL in another case still applies and an Allow rule fails closed.
@@ -696,7 +696,7 @@ An Uninstall request is never missing its version, because no version condition 
 The broker evaluates each request once, before running it, against the one policy it holds, at its current time, which is the evaluation time.
 A decision depends only on the policy, the request and the evaluation time.
 The broker accepts every valid document, refuses every invalid document whose `PolicyFormatVersion` is `"2.0.0"` and reports its errors, and runs no request while it holds no accepted policy.
-An allowed request may still run nothing, such as when the broker will not run its `Pre` or `Post` command ([CONTRACT.wire.md §not-runnable](CONTRACT.wire.md#not-runnable)), when an Update's recorded source differs from the one it names ([§managers](#managers)), or when it cannot launch the manager process ([CONTRACT.wire.md §operations](CONTRACT.wire.md#operations)); that refusal comes after the decision and is not one, so `Allow` does not promise that a request runs.
+An allowed request may still not run, such as when it is `NotRunnable` ([CONTRACT.wire.md §not-runnable](CONTRACT.wire.md#not-runnable)) or its operation ends `Failed` ([CONTRACT.wire.md §operations](CONTRACT.wire.md#operations)), as it does when an Update's recorded source differs from the one it names ([§managers](#managers)); neither is a decision, so `Allow` does not promise that a request runs.
 
 <a id="applicability"></a>
 ### Matching and applicability
@@ -726,7 +726,7 @@ A Deny rule denies a request when it is applicable and has no `Forbids`, or when
 ### Outcomes and precedence
 
 Each check below denies a request when it holds, except `AllowRules`, which allows it.
-When several checks hold, the one higher in the table produces the decision; this fixes which outcome wins, not the order in which an implementation runs its checks.
+When several checks hold, the one higher in the table produces the decision; this fixes which check produces the decision, not the order in which an implementation runs its checks.
 
 | Check               | Holds when                                                                  | Audit mode lets it through |
 | ------------------- | --------------------------------------------------------------------------- | -------------------------- |
