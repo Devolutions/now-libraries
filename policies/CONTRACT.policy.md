@@ -547,7 +547,7 @@ A `Source` selector matches a manifest source when the two are equal with exact 
 Any other source name is a bucket name, and a request through it is unreadable unless the bucket name and `Package.Id` are each one or more ASCII letters, digits, `-`, `_` and `.`, and `Package.Id` does not end with `.json` ignoring ASCII case, so that `<bucket>/<id>` names exactly one app in that bucket: no version after `@`, no path inside the bucket and no local manifest file.
 A request whose `Source.Name` or `Package.Id` ends with `.` is unreadable, because Windows drops trailing `.` from a path segment, so a bucket or app name would reach the same directory as the name without it, and `.` or `..` would name a directory outside the bucket.
 Scoop updates an app from the bucket recorded when it was installed, whatever bucket the request names, so the broker checks that record ([§managers](#managers)).
-The rules above on `Source.Name` and `Package.Id` still decide whether an Uninstall is readable, although its source is unknown.
+The rules above on `Source.Name` and `Package.Id` decide whether an Update or an Uninstall is readable too, although an Uninstall's source is unknown.
 The broker cannot pin a version through Scoop.
 
 <a id="manager-vcpkg"></a>
