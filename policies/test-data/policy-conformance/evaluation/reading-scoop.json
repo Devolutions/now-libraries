@@ -4378,7 +4378,7 @@
     {
       "name": "read-scoop-manifest-id-at-userinfo",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "Scoop would split the text after '@' off the URL as a version, so a manifest id containing '@', here in the URL's userinfo, is unreadable, and the Deny rule naming the whole URL is never reached. Control: read-scoop-manifest-id-without-at.",
+      "note": "A manifest id containing '@' is unreadable: here the '@' adds user information before the host, which the text 'https://host.test/app.json' of the same URL lacks, and Scoop may also split the text after an '@' off the URL as a version. The Deny rule naming the whole URL is never reached. Control: read-scoop-manifest-id-without-at.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -5355,6 +5355,467 @@
         },
         "Package": {
           "Id": "https://example.test/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-percent-in-path",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'%61' percent-encodes 'a', so the text 'https://example.test/app.json' fetches the same manifest; a manifest URL containing '%' is unreadable. Control: read-scoop-manifest-id-without-at.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/%61pp.json"
+        },
+        "Package": {
+          "Id": "https://example.test/%61pp.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-percent-in-host",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'%61' in the host percent-encodes 'a'; a manifest URL containing '%' is unreadable wherever it is. Control: read-scoop-manifest-id-without-at.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://ex%61mple.test/app.json"
+        },
+        "Package": {
+          "Id": "https://ex%61mple.test/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-percent-not-encoding",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The rule names any '%', whether or not two hexadecimal digits follow it. Control: read-scoop-manifest-id-without-at.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/app%zz.json"
+        },
+        "Package": {
+          "Id": "https://example.test/app%zz.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-fragment",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "A fragment lets another text fetch the same manifest; a manifest URL containing '#' is unreadable. Control: read-scoop-manifest-id-without-at.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/app.json#x"
+        },
+        "Package": {
+          "Id": "https://example.test/app.json#x"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-port",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The host part, the text after '://' and before the next '/', is 'example.test:443', which contains ':', so the explicit port makes the request unreadable. Control: read-scoop-manifest-id-without-at.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test:443/app.json"
+        },
+        "Package": {
+          "Id": "https://example.test:443/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-port-scheme-upper",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The host part follows the leading 'HTTPS://', which starts Package.Id ignoring ASCII case, and 'h:443' contains ':'. Control: read-scoop-manifest-scheme-upper-equal.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "HTTPS://h:443/a.json"
+        },
+        "Package": {
+          "Id": "HTTPS://h:443/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-port-http",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The port rule applies to 'http://' as to 'https://'; the authority 'h:80' contains ':'. Control: read-scoop-manifest-http-equal.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "http://h:80/a.json"
+        },
+        "Package": {
+          "Id": "http://h:80/a.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-empty-port",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The host part 'example.test:' contains ':' although no digits follow it; the rule names the ':', not a port number. Control: read-scoop-manifest-id-without-at.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test:/app.json"
+        },
+        "Package": {
+          "Id": "https://example.test:/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-port-at-end",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "With no '/' after '://', the host part runs to the end of the text, 'example.test:443', which contains ':'. Control: read-scoop-manifest-no-path.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test:443"
+        },
+        "Package": {
+          "Id": "https://example.test:443"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-no-path",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "An https:// manifest URL without a path, equal to Package.Id, whose host part is not empty and has no ':' or trailing '.', is readable. Control of read-scoop-manifest-port-at-end.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test"
+        },
+        "Package": {
+          "Id": "https://example.test"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-colon-in-path",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The host part ends at the first '/' after '://', so it is 'example.test', and a ':' after it is not a port: the request stays readable. Near miss of read-scoop-manifest-port.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/app.json:443"
+        },
+        "Package": {
+          "Id": "https://example.test/app.json:443"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-empty-host",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The text after '://' and before the next '/' is empty, so the host part is empty and the request is unreadable. Control: read-scoop-manifest-id-without-at.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https:///example.test/app.json"
+        },
+        "Package": {
+          "Id": "https:///example.test/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-trailing-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The host part 'example.test.' ends with '.', so the request is unreadable. Control: read-scoop-manifest-id-without-at; near miss: read-scoop-manifest-segment-trailing-dot.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test./app.json"
+        },
+        "Package": {
+          "Id": "https://example.test./app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-segment-trailing-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "Only the host part may not end with '.', and the segment 'v1.' after it is neither '.' nor '..', so the request stays readable. Near miss of read-scoop-manifest-host-trailing-dot.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/v1./app.json"
+        },
+        "Package": {
+          "Id": "https://example.test/v1./app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-double-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The host part 'example..test' is not empty and has no ':' or trailing '.', and the text contains no '...', so the request stays readable: the dot-segment rule names only segments after the host part. Near miss of read-scoop-manifest-segment-dot-dot.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example..test/app.json"
+        },
+        "Package": {
+          "Id": "https://example..test/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-segment-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The segment '.' after the host part makes the request unreadable. Control: read-scoop-manifest-id-without-at; near miss: read-scoop-manifest-segment-dot-prefix.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/./app.json"
+        },
+        "Package": {
+          "Id": "https://example.test/./app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-segment-dot-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The segment '..' after the host part makes the request unreadable. Control: read-scoop-manifest-id-without-at; near miss: read-scoop-manifest-segment-dots-inside.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/x/../app.json"
+        },
+        "Package": {
+          "Id": "https://example.test/x/../app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-segment-dot-prefix",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The segment '.x' starts with '.' but is neither '.' nor '..', so the request stays readable. Near miss of read-scoop-manifest-segment-dot.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/.x/app.json"
+        },
+        "Package": {
+          "Id": "https://example.test/.x/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-segment-dots-inside",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The segment 'x..y' contains '..' but is not '..', and the text contains no '...', so the request stays readable. Near miss of read-scoop-manifest-segment-dot-dot.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/x..y/app.json"
+        },
+        "Package": {
+          "Id": "https://example.test/x..y/app.json"
         },
         "Elevation": "NonElevated"
       },
