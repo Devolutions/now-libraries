@@ -2,7 +2,8 @@ use core::time::Duration;
 
 use now_proto_pdu::ironrdp_core::encode_vec;
 use now_proto_pdu::{
-    NowChannelCapsetMsg, NowChannelMessage, NowExecDataStreamKind, NowExecMessage, NowMessage, OwnedNowMessage,
+    NowChannelCapsetMsg, NowChannelMessage, NowExecDataStreamKind, NowExecMessage, NowMessage, NowSessionLockMsg,
+    NowSessionLogoffMsg, OwnedNowMessage,
 };
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
@@ -119,6 +120,46 @@ impl NowClientHandle {
     /// Submits a detached PowerShell 7 request.
     pub async fn pwsh_detached(&self, request: crate::PwshRequest) -> Result<DetachedExecution, NowClientError> {
         self.submit_detached(RequestSpec::Pwsh(request)).await
+    }
+
+    /// Asks the peer to lock the interactive user session that hosts it.
+    ///
+    /// "Session" here is the operating system logon session, not a NOW execution session.
+    /// The request has no response: success means it was written and flushed after any
+    /// previously queued request, not that the session is locked.
+    ///
+    /// Returns [`NowClientError::UnsupportedCapability`] without writing anything when
+    /// [`NowCapabilities::supports_session_lock`] is false for the latest negotiated capset.
+    pub async fn session_lock(&self) -> Result<(), NowClientError> {
+        self.send_session_request(SessionRequest::Lock).await
+    }
+
+    /// Asks the peer to log off the interactive user session that hosts it.
+    ///
+    /// "Session" here is the operating system logon session, not a NOW execution session.
+    /// The request has no response: success means it was written and flushed after any
+    /// previously queued request, not that the logoff happened. A successful logoff ends the
+    /// session that carries the channel, after which this handle returns
+    /// [`NowClientError::WorkerClosed`]; callers confirm the logoff by observing that end.
+    ///
+    /// Returns [`NowClientError::UnsupportedCapability`] without writing anything when
+    /// [`NowCapabilities::supports_session_logoff`] is false for the latest negotiated capset.
+    pub async fn session_logoff(&self) -> Result<(), NowClientError> {
+        self.send_session_request(SessionRequest::Logoff).await
+    }
+
+    async fn send_session_request(&self, request: SessionRequest) -> Result<(), NowClientError> {
+        let (response_sender, response_receiver) = oneshot::channel();
+        self.command_sender
+            .send(WorkerCommand::Session {
+                request,
+                response: response_sender,
+            })
+            .await
+            .map_err(|_| NowClientError::WorkerClosed("command queue is closed".to_owned()))?;
+        response_receiver
+            .await
+            .map_err(|_| NowClientError::WorkerClosed("worker stopped while sending session request".to_owned()))?
     }
 
     async fn submit(&self, spec: RequestSpec) -> Result<Execution, NowClientError> {
@@ -306,6 +347,10 @@ enum PendingWriteCompletion {
         response: oneshot::Sender<Result<(), NowClientError>>,
     },
     Cancel,
+    Session {
+        request: SessionRequest,
+        response: oneshot::Sender<Result<(), NowClientError>>,
+    },
 }
 
 struct PendingWrite {
@@ -332,6 +377,35 @@ impl BufferUpdate {
     }
 }
 
+#[derive(Clone, Copy)]
+enum SessionRequest {
+    Lock,
+    Logoff,
+}
+
+impl SessionRequest {
+    fn is_supported(self, capabilities: &NowCapabilities) -> bool {
+        match self {
+            Self::Lock => capabilities.supports_session_lock(),
+            Self::Logoff => capabilities.supports_session_logoff(),
+        }
+    }
+
+    fn capability_name(self) -> &'static str {
+        match self {
+            Self::Lock => "session lock",
+            Self::Logoff => "session logoff",
+        }
+    }
+
+    fn message(self) -> NowMessage<'static> {
+        match self {
+            Self::Lock => NowSessionLockMsg::default().into(),
+            Self::Logoff => NowSessionLogoffMsg::default().into(),
+        }
+    }
+}
+
 enum WorkerCommand {
     Start {
         spec: RequestSpec,
@@ -348,6 +422,10 @@ enum WorkerCommand {
     Cancel {
         session_id: u32,
         response: Option<oneshot::Sender<Result<(), NowClientError>>>,
+    },
+    Session {
+        request: SessionRequest,
+        response: oneshot::Sender<Result<(), NowClientError>>,
     },
 }
 
@@ -395,6 +473,7 @@ where
                 HeartbeatTimeout,
             }
 
+            self.reject_unsupported_session_writes();
             let has_pending_write = !self.pending_writes.is_empty();
             let can_receive_command = self.pending_writes.len() < self.write_queue_capacity;
             let event = {
@@ -753,6 +832,51 @@ where
                 }
                 Ok(())
             }
+            WorkerCommand::Session { request, response } => {
+                // Checked in the worker so the latest peer capset refresh applies. The check
+                // is repeated before the first byte is written because a refresh can arrive
+                // while the request waits behind other pending writes.
+                if !request.is_supported(&self.capabilities()) {
+                    let _ = response.send(Err(NowClientError::UnsupportedCapability(request.capability_name())));
+                    return Ok(());
+                }
+                match Self::encode_request(EncodedRequest {
+                    message: request.message(),
+                    non_interactive: false,
+                }) {
+                    Ok(bytes) => self.pending_writes.push_back(PendingWrite {
+                        bytes,
+                        written: 0,
+                        completion: PendingWriteCompletion::Session { request, response },
+                    }),
+                    Err(error) => {
+                        let _ = response.send(Err(error));
+                    }
+                }
+                Ok(())
+            }
+        }
+    }
+
+    /// Fails unsent session requests at the head of the write queue whose capability the
+    /// latest negotiated capset no longer includes, so they never reach the transport.
+    fn reject_unsupported_session_writes(&mut self) {
+        while let Some(PendingWrite {
+            written: 0,
+            completion: PendingWriteCompletion::Session { request, .. },
+            ..
+        }) = self.pending_writes.front()
+        {
+            if request.is_supported(&self.capabilities()) {
+                return;
+            }
+            if let Some(PendingWrite {
+                completion: PendingWriteCompletion::Session { request, response },
+                ..
+            }) = self.pending_writes.pop_front()
+            {
+                let _ = response.send(Err(NowClientError::UnsupportedCapability(request.capability_name())));
+            }
         }
     }
 
@@ -822,6 +946,9 @@ where
                 let _ = response.send(Ok(()));
             }
             PendingWriteCompletion::Cancel => {}
+            PendingWriteCompletion::Session { response, .. } => {
+                let _ = response.send(Ok(()));
+            }
         }
     }
 
@@ -832,7 +959,7 @@ where
                 PendingWriteCompletion::Start { response, .. } => {
                     let _ = response.send(Err(NowClientError::WorkerClosed(reason.clone())));
                 }
-                PendingWriteCompletion::Stdin { response, .. } => {
+                PendingWriteCompletion::Stdin { response, .. } | PendingWriteCompletion::Session { response, .. } => {
                     let _ = response.send(Err(NowClientError::WorkerClosed(reason.clone())));
                 }
                 PendingWriteCompletion::Cancel => {}
@@ -959,8 +1086,9 @@ mod tests {
 
     use now_proto_pdu::ironrdp_core::{encode_vec, Decode, IntoOwned, ReadCursor};
     use now_proto_pdu::{
-        NowChannelCapsetMsg, NowChannelHeartbeatMsg, NowExecCancelRspMsg, NowExecCapsetFlags, NowExecDataMsg,
-        NowExecDataStreamKind, NowExecMessage, NowExecResultMsg, NowExecStartedMsg, NowMessage,
+        NowChannelCapsetMsg, NowChannelHeartbeatMsg, NowChannelMessage, NowExecCancelRspMsg, NowExecCapsetFlags,
+        NowExecDataMsg, NowExecDataStreamKind, NowExecMessage, NowExecResultMsg, NowExecStartedMsg, NowMessage,
+        NowSessionCapsetFlags,
     };
     use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
@@ -1457,6 +1585,220 @@ mod tests {
         }
         match peer.await {
             Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
+
+    async fn read_frame<S>(stream: &mut S) -> [u8; 8]
+    where
+        S: AsyncRead + Unpin,
+    {
+        let mut frame = [0; 8];
+        if let Err(error) = stream.read_exact(&mut frame).await {
+            panic!("test peer must receive a header-only PDU: {error}");
+        }
+        frame
+    }
+
+    // msgSize = 0, msgClass = NOW_SESSION_MSG_CLASS_ID, msgType, msgFlags = 0.
+    const SESSION_LOCK_FRAME: [u8; 8] = [0x00, 0x00, 0x00, 0x00, 0x12, 0x01, 0x00, 0x00];
+    const SESSION_LOGOFF_FRAME: [u8; 8] = [0x00, 0x00, 0x00, 0x00, 0x12, 0x02, 0x00, 0x00];
+
+    #[tokio::test]
+    async fn session_requests_write_header_only_pdus() {
+        let (client_stream, mut peer_stream) = tokio::io::duplex(1024);
+        let peer = tokio::spawn(async move {
+            match read_message(&mut peer_stream).await {
+                NowMessage::Channel(NowChannelMessage::Capset(client_capset)) => assert_eq!(
+                    client_capset.session_capset(),
+                    NowSessionCapsetFlags::LOCK | NowSessionCapsetFlags::LOGOFF
+                ),
+                message => panic!("expected client capset, got {message:?}"),
+            }
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_RUN)
+                    .with_session_capset(NowSessionCapsetFlags::LOCK | NowSessionCapsetFlags::LOGOFF),
+            )
+            .await;
+            assert_eq!(read_frame(&mut peer_stream).await, SESSION_LOCK_FRAME);
+            assert_eq!(read_frame(&mut peer_stream).await, SESSION_LOGOFF_FRAME);
+        });
+
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        assert!(handle.capabilities().supports_session_lock());
+        assert!(handle.capabilities().supports_session_logoff());
+        if let Err(error) = handle.session_lock().await {
+            panic!("session lock must be sent: {error}");
+        }
+        if let Err(error) = handle.session_logoff().await {
+            panic!("session logoff must be sent: {error}");
+        }
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+
+        // The peer ending the channel, as a completed logoff does, closes the handle.
+        assert!(matches!(
+            handle.session_lock().await,
+            Err(NowClientError::WorkerClosed(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn session_requests_follow_a_capset_refresh() {
+        let (client_stream, mut peer_stream) = tokio::io::duplex(1024);
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_RUN)
+                    .with_session_capset(NowSessionCapsetFlags::LOCK | NowSessionCapsetFlags::LOGOFF),
+            )
+            .await;
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_RUN).with_session_capset(NowSessionCapsetFlags::LOGOFF),
+            )
+            .await;
+            // The rejected lock request must not reach the transport ahead of the logoff.
+            assert_eq!(read_frame(&mut peer_stream).await, SESSION_LOGOFF_FRAME);
+        });
+
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        let refreshed = tokio::time::timeout(Duration::from_secs(2), async {
+            while handle.capabilities().supports_session_lock() {
+                tokio::time::sleep(Duration::from_millis(1)).await;
+            }
+        })
+        .await;
+        assert!(refreshed.is_ok(), "the refreshed capset must be applied");
+        assert!(handle.capabilities().supports_session_logoff());
+        assert!(matches!(
+            handle.session_lock().await,
+            Err(NowClientError::UnsupportedCapability("session lock"))
+        ));
+        if let Err(error) = handle.session_logoff().await {
+            panic!("session logoff must still be sent: {error}");
+        }
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn queued_session_request_is_rechecked_before_it_is_written() {
+        // A small transport keeps the Run request below blocked behind the peer's reads.
+        let (client_stream, mut peer_stream) = tokio::io::duplex(64);
+        let (refresh_sender, refresh_receiver) = tokio::sync::oneshot::channel();
+        let (drain_sender, drain_receiver) = tokio::sync::oneshot::channel();
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_RUN)
+                    .with_session_capset(NowSessionCapsetFlags::LOCK | NowSessionCapsetFlags::LOGOFF),
+            )
+            .await;
+            if refresh_receiver.await.is_err() {
+                panic!("test must request the capset refresh");
+            }
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_RUN).with_session_capset(NowSessionCapsetFlags::LOGOFF),
+            )
+            .await;
+            if drain_receiver.await.is_err() {
+                panic!("test must release the blocked writes");
+            }
+            match read_message(&mut peer_stream).await {
+                NowMessage::Exec(NowExecMessage::Run(_)) => {}
+                message => panic!("expected Run request, got {message:?}"),
+            }
+            // The withdrawn lock request must not follow the Run request.
+            assert_eq!(read_frame(&mut peer_stream).await, SESSION_LOGOFF_FRAME);
+        });
+
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        let run = tokio::spawn({
+            let handle = handle.clone();
+            async move { handle.run(RunRequest::new("a".repeat(4096))).await }
+        });
+        let lock = tokio::spawn({
+            let handle = handle.clone();
+            async move { handle.session_lock().await }
+        });
+        // With the clock paused, this sleep returns only once every task is idle: the Run
+        // request is partly written and the lock request is queued behind it.
+        tokio::time::sleep(Duration::from_millis(10)).await;
+        assert!(!run.is_finished());
+        assert!(!lock.is_finished());
+
+        if refresh_sender.send(()).is_err() {
+            panic!("test peer stopped before the capset refresh");
+        }
+        while handle.capabilities().supports_session_lock() {
+            tokio::time::sleep(Duration::from_millis(1)).await;
+        }
+        if drain_sender.send(()).is_err() {
+            panic!("test peer stopped before draining");
+        }
+
+        match lock.await {
+            Ok(Err(NowClientError::UnsupportedCapability("session lock"))) => {}
+            Ok(result) => panic!("withdrawn lock request must be rejected, got {result:?}"),
+            Err(error) => panic!("lock task failed: {error}"),
+        }
+        match run.await {
+            Ok(Ok(_)) => {}
+            Ok(Err(error)) => panic!("Run request must be written: {error}"),
+            Err(error) => panic!("Run task failed: {error}"),
+        }
+        if let Err(error) = handle.session_logoff().await {
+            panic!("session logoff must still be sent: {error}");
+        }
+        match peer.await {
+            Ok(()) => {}
+            Err(error) => panic!("test peer task failed: {error}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn session_logoff_requires_the_negotiated_capability() {
+        let (client_stream, mut peer_stream) = tokio::io::duplex(1024);
+        let peer = tokio::spawn(async move {
+            let _ = read_message(&mut peer_stream).await;
+            write_message(
+                &mut peer_stream,
+                capset(NowExecCapsetFlags::STYLE_RUN).with_session_capset(NowSessionCapsetFlags::LOCK),
+            )
+            .await;
+            peer_stream
+        });
+
+        let handle = match NowClient::connect(client_stream, NowClientConfig::default()).await {
+            Ok(handle) => handle,
+            Err(error) => panic!("handshake must succeed: {error}"),
+        };
+        assert!(!handle.capabilities().supports_session_logoff());
+        assert!(matches!(
+            handle.session_logoff().await,
+            Err(NowClientError::UnsupportedCapability("session logoff"))
+        ));
+        drop(handle);
+        match peer.await {
+            Ok(_peer_stream) => {}
             Err(error) => panic!("test peer task failed: {error}"),
         }
     }

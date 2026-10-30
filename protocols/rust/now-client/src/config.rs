@@ -1,6 +1,6 @@
 use core::time::Duration;
 
-use now_proto_pdu::{NowChannelCapsetMsg, NowExecCapsetFlags};
+use now_proto_pdu::{NowChannelCapsetMsg, NowExecCapsetFlags, NowSessionCapsetFlags};
 
 use crate::NowClientError;
 
@@ -8,6 +8,10 @@ use crate::NowClientError;
 #[derive(Clone, Debug)]
 pub struct NowClientConfig {
     /// Capabilities sent to the peer during the initial handshake.
+    ///
+    /// Only capabilities advertised here can be negotiated. The default advertises every
+    /// execution capability this client implements and the session lock and logoff commands;
+    /// a custom capset that omits a flag disables the matching request.
     pub client_capset: NowChannelCapsetMsg,
     /// Largest accepted PDU body, excluding the eight-byte NOW header.
     pub max_frame_body_size: usize,
@@ -33,7 +37,9 @@ impl Default for NowClientConfig {
             | NowExecCapsetFlags::IO_REDIRECTION
             | NowExecCapsetFlags::UNICODE_CONSOLE
             | NowExecCapsetFlags::ELEVATION;
-        let capset = NowChannelCapsetMsg::default().with_exec_capset(exec_capset);
+        let capset = NowChannelCapsetMsg::default()
+            .with_session_capset(NowSessionCapsetFlags::LOCK | NowSessionCapsetFlags::LOGOFF)
+            .with_exec_capset(exec_capset);
         let client_capset = match capset.with_heartbeat_interval(Duration::from_secs(60)) {
             Ok(capset) => capset,
             Err(_) => unreachable!("the fixed default heartbeat interval is valid"),
