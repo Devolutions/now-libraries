@@ -38,14 +38,14 @@ An opt-in is something a package request asks for beyond a plain request, as [CO
 ### Decision
 
 A decision is the result of evaluating a package request against the broker's policy ([CONTRACT.policy.md §decision](CONTRACT.policy.md#decision)), written as [§decision](#decision) states.
-A decision is `Allow` or `Deny`.
-A `Deny` decision, an unreadable request's included, comes in an evaluation or execution response ([§evaluate](#evaluate), [§execute](#execute)), never in an error response.
+A decision's `Outcome` is `Allow` or `Deny`, and a `Deny` decision, an unreadable request's included, comes in an evaluation or execution response ([§evaluate](#evaluate), [§execute](#execute)), never in an error response.
+In this contract, the outcome of a request is the response it gets, which is not a decision's `Outcome`.
 
 <a id="def-error"></a>
 ### Error
 
-An error is an error response ([§errors](#errors)).
-It carries a decision only when its `Code` is `NotRunnable` ([§not-runnable](#not-runnable)), and [§errors](#errors) states which codes leave the outcome of the request unknown.
+An error is a result that is not a decision, as [CONTRACT.policy.md §def-error](CONTRACT.policy.md#def-error) defines; in this contract, an error response ([§errors](#errors)) or a policy error ([§policy-errors](#policy-errors)).
+Only an error response whose `Code` is `NotRunnable` carries a decision ([§not-runnable](#not-runnable)), and [§errors](#errors) states which codes leave the outcome of the request unknown.
 
 <a id="def-accepted-policy"></a>
 ### Accepted policy
@@ -243,7 +243,7 @@ A package object has these members.
 
 A package request whose `Scope` is `Machine` and whose `Elevation` is `NonElevated` is `BadRequest`, because it contradicts itself; the broker does not elevate it silently.
 A package request that is not `BadRequest` is well-formed.
-This contract defines only the shape of a package request: a well-formed request may still be unreadable under [CONTRACT.policy.md §reading](CONTRACT.policy.md#reading), and then gets a decision, `Deny` with the check `UnreadableRequest`, rather than an error.
+This contract defines only the shape of a package request: a well-formed request may still be unreadable under [CONTRACT.policy.md §reading](CONTRACT.policy.md#reading), and evaluating it then gives a decision, `Deny` with the check `UnreadableRequest`, not an error.
 
 <a id="opt-ins"></a>
 ### Opt-ins
@@ -319,7 +319,7 @@ The evaluation response has these members.
 | `Policy`      | the identity of the policy that decided ([§policy-identity](#policy-identity)) |
 | `EvaluatedAt` | the evaluation time, a timestamp                                               |
 
-An evaluation response means that the broker would run the request at that time exactly when its `Outcome` is `Allow`; it reserves nothing, and a later execution request is evaluated again.
+An evaluation response means that an execution request at that time would start an operation exactly when its `Outcome` is `Allow`; it reserves nothing, and a later execution request is evaluated again.
 
 <a id="not-runnable"></a>
 ### Not runnable
@@ -390,6 +390,7 @@ A process of the operation runs too long when it runs longer than `OperationTime
 These rules decide how an operation that is not canceled ends:
 
 - when its request has `PrePostCommands` and the token the broker would run its processes with is elevated, such as when User Account Control is disabled, it runs no step and ends `Failed`, because the broker never runs a `Pre` or `Post` command with an elevated token;
+- when its request is an Update through a manager that updates from the source recorded when the package was installed, and that record names another source or cannot be read ([CONTRACT.policy.md §managers](CONTRACT.policy.md#managers)), it runs no step and ends `Failed`;
 - a failure to stop a process of `KillBeforeOperation` is ignored;
 - when the `Pre` command cannot be run, exits with a code other than 0 or runs too long, it runs no later step and ends `Failed`;
 - when the manager process cannot be launched or runs too long, it runs no later step and ends `Failed`;
@@ -508,7 +509,7 @@ This table is the closed set of `InvalidReason` values.
 
 | InvalidReason           | The policy file                                                                          |
 | ----------------------- | ---------------------------------------------------------------------------------------- |
-| `Unreadable`            | cannot be opened or read                                                                 |
+| `ReadFailed`            | cannot be opened or read                                                                 |
 | `UnsupportedPath`       | has a path whose form or extension the broker does not read                              |
 | `InsecureStorage`       | or its location fails the broker's storage security checks                               |
 | `InvalidDocument`       | is not a valid policy document ([CONTRACT.policy.md §errors](CONTRACT.policy.md#errors)) |
@@ -527,7 +528,6 @@ This table is the closed set of `ReadOnlyReason` values.
 
 A state whose `InvalidReason` is `MonitoringUnavailable` has the `ReadOnlyReason` `MonitoringUnavailable`.
 Which reason applies is implementation-defined when several do.
-`Unreadable` names a policy file the broker cannot open or read, not an unreadable package request ([CONTRACT.policy.md §def-unreadable](CONTRACT.policy.md#def-unreadable)).
 
 <a id="policy-errors"></a>
 ### Policy errors
