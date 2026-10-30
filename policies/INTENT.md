@@ -82,6 +82,7 @@ A policy that does not restrict a manager's sources says so with an explicit ent
 A manager missing from the list therefore cannot install or update anything, so the list also says which managers the policy uses.
 The list governs installs and updates only, because uninstalls download nothing.
 No package manager reliably records which source an installed package came from, so the source of an uninstall is unknown, and rules govern uninstalls by package rather than by source.
+The source of an update is the source the request names: where a package manager updates from the source recorded when the package was installed rather than from the one named, the broker reads that record and refuses an update whose recorded source differs from the named one or cannot be read, so that the trusted-source list governs updates as it governs installs.
 Audit mode can let an untrusted source through, so that a new list can be tried out without blocking users; unlike the custom install location check, the list is ordinary policy content.
 A rule names its sources as manager-and-source pairs, so one rule can span managers.
 Rules that may name a source only when they select exactly one manager are rejected, because trust and ban lists would need one rule per manager.
@@ -93,6 +94,8 @@ Named source lists are rejected, because they add indirection that the trusted-s
 Every decision names what produced it.
 A denial names the opt-in that no applicable rule grants.
 Adding an Allow rule never denies a request that was allowed, and adding a Deny rule never allows a request that was denied.
+A decision covers the packages a request names; the other packages the command installs, updates, rebuilds or removes along the way, such as their dependencies and the packages that depend on them, come with them, because a policy cannot practically name every package a manager touches.
+A Deny rule therefore protects a package only from requests that name it.
 
 <a id="fail-closed"></a>
 ## Fail-closed checks
