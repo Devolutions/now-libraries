@@ -112,7 +112,7 @@ Unreadable is not an error: an unreadable request gets a decision, `Deny` with t
 <a id="def-error"></a>
 ### Error
 
-An error is a result that is not a decision: a validation error of a policy document ([§errors](#errors)), an evaluator's report that its input is not a well-formed package request ([§request-input](#request-input)), or an error response of the broker ([CONTRACT.wire.md §errors](CONTRACT.wire.md#errors)), such as `BadRequest`.
+An error is one of these results, none of which is a decision: a validation error of a policy document ([§errors](#errors)), an evaluator's report that its input is not a well-formed package request ([§request-input](#request-input)), or an error response of the broker ([CONTRACT.wire.md §errors](CONTRACT.wire.md#errors)), such as `BadRequest`.
 No error carries a decision except the error response `NotRunnable`, which carries the `Allow` decision of a request that [CONTRACT.wire.md §not-runnable](CONTRACT.wire.md#not-runnable) says the broker will not run.
 
 <a id="general"></a>
@@ -214,7 +214,7 @@ The list governs installs and updates only, because uninstalls download nothing,
 The source of an Install or Update request is trusted when a selector in the list matches it ([§source-selector](#source-selector)); a selector that is unknown for the request does not trust it.
 An Install or Update request whose source is not trusted is denied whatever the rules say ([§precedence](#precedence)).
 A manager with no selector in the list therefore cannot install or update anything.
-The source of an Update is its `Source.Name`, as for an Install, and where a manager updates from the source recorded when the package was installed, the broker checks that record before running anything ([§managers](#managers)).
+The source of an Update is its `Source.Name` ([§managers](#managers)).
 [§selection](#selection) keeps `Source` selectors away from uninstalls.
 For installs and updates, a rule only narrows which trusted sources it applies to.
 
@@ -418,7 +418,7 @@ This table is the only list of the values of request properties.
 | Operation    | `Install`, `Update`, `Uninstall`       | `Operation`; never unknown                                                  |
 | Manager      | an identifier from [§managers](#managers) | `Manager`; never unknown                                                 |
 | Source       | a source name                          | `Source.Name`; unknown for an Uninstall ([§managers](#managers))            |
-| Package names | one or more package ids               | [§package-identity](#package-identity), unless the manager's reading makes it unknown |
+| Package names | one or more package ids               | [§package-identity](#package-identity)                                      |
 | Version      | a version string                       | [§missing-version](#missing-version)                                        |
 | Scope        | `User`, `Machine`                      | the manager's reading                                                       |
 | Architecture | `X86`, `X64`, `Arm64`, `Neutral`       | the manager's reading                                                       |
@@ -428,13 +428,12 @@ This table is the only list of the values of request properties.
 ### Package identity
 
 A request's package names are the packages its `Package.Id` names, as its manager's reading parses the identifier.
-The other packages the command installs, updates, rebuilds or removes along the way, such as their dependencies and the packages that depend on them, are not package names of the request: a decision covers them only as part of the request that names their package, so a Deny rule protects a package only from requests that name it.
+The other packages the command installs, updates, rebuilds or removes along the way, such as their dependencies and the packages that depend on them, are not package names of the request: no rule tests them, and the decision on the request covers them with the packages it names, so a Deny rule protects a package only from requests that name it.
 Unless the manager's reading states otherwise, an identifier `name@version`, where that `@` is its last `@` and is not its first character, names `name` and selects the version, and any other identifier names one package, itself.
 A package name compares in the canonical form its manager's reading gives it, and a pattern's characters between `*` are put in that name's canonical form before matching.
 Unless the manager's reading states otherwise, the canonical form maps ASCII letters to lowercase.
 For each package name, the `Packages` patterns match when one matches it in canonical form, are unknown when none does but one would when case is ignored ([§text-comparison](#text-comparison)), and do not match otherwise.
 `Packages` matches when the patterns match every package name, does not match when, for every package name, the patterns do not match it, and is unknown otherwise, so a name they would match only ignoring case makes it unknown.
-`Packages` is unknown when the manager's reading makes the package identity unknown.
 So an Allow rule's selection matches only when it covers every package the identifier names, and a Deny rule's selection matches when it covers any of them, whatever their case.
 
 <a id="version-scheme"></a>
@@ -463,7 +462,7 @@ Unless a manager's reading below states otherwise:
 
 The source of an Uninstall is unknown under every manager ([§source-selector](#source-selector)), because no command the broker builds limits an uninstall to packages installed from `Source.Name`, even where it passes `Source.Name` to the manager, as WinGet `--source`, PowerShell `-Repository`, a Scoop `<bucket>/<app>` and a Vcpkg `<port>:<triplet>` do.
 The source of an Update is its `Source.Name` under every manager.
-Where a manager's reading states that the manager updates a package from the source recorded when it was installed, the broker reads that record before running anything, and runs nothing for an Update whose recorded source differs from `Source.Name` ignoring ASCII case or whose record it cannot read; that refusal comes after the decision and is not one ([§evaluation](#evaluation)), and a broker that does not read the record runs no Update through that manager.
+Where a manager's reading states that the manager updates a package from the source recorded when it was installed, the broker reads before running anything every record the command would update from, and runs nothing for an Update unless it has read each of them and each names `Source.Name` ignoring ASCII case; that refusal comes after the decision and is not one ([§evaluation](#evaluation)).
 A reading below that names the only source name of its manager, or of some of its operations, compares `Source.Name` with it ignoring ASCII case.
 A plain source name starts with an ASCII letter or digit and contains only ASCII letters, digits, `.`, `-`, `_` and spaces.
 The batch characters are `"`, `%`, `!`, `^`, `&`, `|`, `<` and `>`, which the broker cannot pass to a manager that it runs through a batch file.
@@ -567,7 +566,7 @@ The broker builds no Vcpkg command, so a request is unreadable, when:
 
 An identifier names its port, so `port[features]:triplet` names `port`, and no identifier selects the version.
 The ports that `upgrade --no-dry-run` rebuilds and `remove --recurse` removes beside the named one come with it ([§package-identity](#package-identity)).
-The architecture is `X86`, `X64` or `Arm64` when the source triplet starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise.
+The architecture is `X86`, `X64` or `Arm64` when `Source.Name` starts with `x86-`, `x64-` or `arm64-` ignoring ASCII case, and unknown otherwise, whatever the operation.
 The broker cannot pin a version through Vcpkg.
 
 <a id="manager-npm"></a>
@@ -664,7 +663,7 @@ The scope is `Machine` when `Scope` is absent, and a requested architecture of `
 
 A source name that is not a plain source name, or a `Package.Id` that contains `[` or `]`, makes the request unreadable, because PowerShell reads other characters as wildcards or matches them by its own rules.
 An identifier names itself and selects no version, because the broker passes it whole as the value of `-Name`.
-Under `PowerShell`, `Update-Module` updates a module from the repository recorded when it was installed, so the broker checks that record ([§managers](#managers)); under `PowerShell7`, `Update-PSResource` searches only `Source.Name`.
+Under `PowerShell`, `Update-Module` updates a module from the repository recorded when it was installed, so the broker checks that record ([§managers](#managers)); under `PowerShell7`, the broker passes `Source.Name` as `-Repository` to `Update-PSResource`, which searches only that repository.
 Under `PowerShell7`, a `Package.Version` may also contain `[`, `]`, `(`, `)`, `,`, `*` and spaces.
 The architecture is always `Neutral`, and the scope of an Uninstall is unknown.
 
@@ -696,7 +695,7 @@ An Uninstall request is never missing its version, because no version condition 
 The broker evaluates each request once, before running it, against the one policy it holds, at its current time, which is the evaluation time.
 A decision depends only on the policy, the request and the evaluation time.
 The broker accepts every valid document, refuses every invalid document whose `PolicyFormatVersion` is `"2.0.0"` and reports its errors, and runs no request while it holds no accepted policy.
-An allowed request may still not run, such as when it is `NotRunnable` ([CONTRACT.wire.md §not-runnable](CONTRACT.wire.md#not-runnable)) or its operation ends `Failed` ([CONTRACT.wire.md §operations](CONTRACT.wire.md#operations)), as it does when an Update's recorded source differs from the one it names ([§managers](#managers)); neither is a decision, so `Allow` does not promise that a request runs.
+An allowed request may still not run, such as when it is `NotRunnable` ([CONTRACT.wire.md §not-runnable](CONTRACT.wire.md#not-runnable)) or its operation ends `Failed` without running a step ([CONTRACT.wire.md §operations](CONTRACT.wire.md#operations)), as it does when an Update's recorded source differs from the one it names or cannot be read ([§managers](#managers)); neither is a decision, so `Allow` does not promise that a request runs.
 
 <a id="applicability"></a>
 ### Matching and applicability
