@@ -5078,6 +5078,608 @@
       }
     },
     {
+      "name": "read-vcpkg-architecture-update-arm64-triplet",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "The architecture comes from Source.Name whatever the operation: 'arm64-osx' starts with 'arm64-', so the architecture is Arm64 on an Update as on the Install read-vcpkg-architecture-arm64-triplet. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "arm64-osx"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-arm64"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-architecture-update-arm-triplet",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "The architecture comes from Source.Name whatever the operation: 'arm-windows' starts with none of 'x86-', 'x64-' and 'arm64-', so the architecture is unknown on an Update as on the Install read-vcpkg-architecture-arm-triplet. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "arm-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-architecture-uninstall-arm64-triplet",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "The architecture comes from Source.Name whatever the operation: 'arm64-osx' starts with 'arm64-', so the architecture is Arm64 on an Uninstall as on the Install read-vcpkg-architecture-arm64-triplet. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "arm64-osx"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-arm64"
+          },
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-architecture-uninstall-arm-triplet",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "The architecture comes from Source.Name whatever the operation: 'arm-windows' starts with none of 'x86-', 'x64-' and 'arm64-', so the architecture is unknown on an Uninstall as on the Install read-vcpkg-architecture-arm-triplet. The observer has one Allow rule per value and a catch-all; a known property also matches its value rule, while an unknown one matches none (§applicability), so only the catch-all applies to it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-x86",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-x64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-arm64",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Arm64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-neutral",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "Neutral"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "arm-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
       "name": "read-vcpkg-architecture-field-wins",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
       "note": "Package.Architecture through Vcpkg: the broker builds no Vcpkg command (§manager-vcpkg); the architecture comes from the triplet only. Control: read-vcpkg-architecture-x64-triplet.",
@@ -10757,8 +11359,8 @@
     },
     {
       "name": "read-powershell-update-source-selector-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
-      "note": "The source of a PowerShell Update is unknown, so a Source selector naming Source.Name is unknown and the Allow rule fails closed. Control: read-powershell-install-source-selector-allow.",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a PowerShell Update is its Source.Name (§managers), so the Allow rule's Source selector naming 'PSGallery' matches and the rule applies. Update-Module updates from the repository recorded at install, which the broker checks after the decision, so that check is not part of it (§managers). Neighbour: read-powershell-update-source-selector-other-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -10868,6 +11470,130 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-src"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-powershell-update-source-selector-other-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "The source of a PowerShell Update is its Source.Name, 'PSGallery' (§managers), so a Source selector naming 'other' does not match and the Allow rule does not apply. Neighbour: read-powershell-update-source-selector-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-src",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Update"
+              ],
+              "Sources": [
+                {
+                  "Manager": "PowerShell",
+                  "Source": "other"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DefaultDeny",
         "rules": [],
@@ -10877,8 +11603,8 @@
     },
     {
       "name": "read-powershell-update-source-selector-deny",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
-      "note": "The source of a PowerShell Update is unknown, so a Deny rule naming another source still applies. Control: read-powershell-install-source-selector-deny.",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a PowerShell Update is its Source.Name, 'PSGallery' (§managers), so a Deny rule naming 'other' does not apply. Neighbour: read-powershell-update-source-selector-same-deny.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -10993,6 +11719,135 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-powershell-update-source-selector-same-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "The source of a PowerShell Update is its Source.Name (§managers), so a Deny rule naming 'PSGallery' applies. Neighbour: read-powershell-update-source-selector-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-src",
+            "Decision": "Deny",
+            "Select": {
+              "Operations": [
+                "Update"
+              ],
+              "Sources": [
+                {
+                  "Manager": "PowerShell",
+                  "Source": "PSGallery"
+                }
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DenyRule",
         "rules": [
@@ -11006,8 +11861,8 @@
     },
     {
       "name": "read-powershell-update-any-source-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
-      "note": "An AnySource selector matches the unknown source of a PowerShell Update.",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "An AnySource selector tests only the manager, so it matches a PowerShell Update.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -11127,8 +11982,8 @@
     },
     {
       "name": "read-powershell-update-trusted-named-source",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
-      "note": "The source of a PowerShell Update is unknown, so a TrustedSources entry naming Source.Name does not trust it, while AnySource does (read-powershell-update-any-source-allow). Control: read-powershell-install-trusted-named-source.",
+      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
+      "note": "The source of a PowerShell Update is its Source.Name (§managers), so a TrustedSources entry naming 'PSGallery' trusts it, as for the Install read-powershell-install-trusted-named-source. Update-Module updates from the repository recorded at install, which the broker checks after the decision, so that check is not part of it (§managers). Neighbour: read-powershell-update-untrusted-other-source.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -11205,6 +12060,120 @@
           {
             "Manager": "PowerShell",
             "Source": "PSGallery"
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-powershell-update-untrusted-other-source",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "The only PowerShell entry of TrustedSources names 'other', and the source of the Update is its Source.Name, 'PSGallery' (§managers), so the source is not trusted whatever the rules say. Neighbour: read-powershell-update-trusted-named-source.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "Source": "other"
           }
         ],
         "Rules": [
@@ -11724,8 +12693,8 @@
     },
     {
       "name": "read-powershell7-update-source-selector-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
-      "note": "The source of a PowerShell7 Update is unknown, so a Source selector naming Source.Name is unknown and the Allow rule fails closed. Control: read-powershell7-install-source-selector-allow.",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a PowerShell7 Update is its Source.Name (§managers), so the Allow rule's Source selector naming 'PSGallery' matches and the rule applies. Neighbour: read-powershell7-update-source-selector-other-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -11835,6 +12804,130 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-src"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-powershell7-update-source-selector-other-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "The source of a PowerShell7 Update is its Source.Name, 'PSGallery' (§managers), so a Source selector naming 'other' does not match and the Allow rule does not apply. Neighbour: read-powershell7-update-source-selector-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-src",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Update"
+              ],
+              "Sources": [
+                {
+                  "Manager": "PowerShell7",
+                  "Source": "other"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DefaultDeny",
         "rules": [],
@@ -11844,8 +12937,8 @@
     },
     {
       "name": "read-powershell7-update-source-selector-deny",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
-      "note": "The source of a PowerShell7 Update is unknown, so a Deny rule naming another source still applies. Control: read-powershell7-install-source-selector-deny.",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a PowerShell7 Update is its Source.Name, 'PSGallery' (§managers), so a Deny rule naming 'other' does not apply. Neighbour: read-powershell7-update-source-selector-same-deny.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -11960,6 +13053,135 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-powershell7-update-source-selector-same-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "The source of a PowerShell7 Update is its Source.Name (§managers), so a Deny rule naming 'PSGallery' applies. Neighbour: read-powershell7-update-source-selector-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-src",
+            "Decision": "Deny",
+            "Select": {
+              "Operations": [
+                "Update"
+              ],
+              "Sources": [
+                {
+                  "Manager": "PowerShell7",
+                  "Source": "PSGallery"
+                }
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DenyRule",
         "rules": [
@@ -11973,8 +13195,8 @@
     },
     {
       "name": "read-powershell7-update-any-source-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
-      "note": "An AnySource selector matches the unknown source of a PowerShell7 Update.",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "An AnySource selector tests only the manager, so it matches a PowerShell7 Update.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -12094,8 +13316,8 @@
     },
     {
       "name": "read-powershell7-update-trusted-named-source",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
-      "note": "The source of a PowerShell7 Update is unknown, so a TrustedSources entry naming Source.Name does not trust it, while AnySource does (read-powershell7-update-any-source-allow). Control: read-powershell7-install-trusted-named-source.",
+      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
+      "note": "The source of a PowerShell7 Update is its Source.Name (§managers), so a TrustedSources entry naming 'PSGallery' trusts it, as for the Install read-powershell7-install-trusted-named-source. Neighbour: read-powershell7-update-untrusted-other-source.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -12172,6 +13394,120 @@
           {
             "Manager": "PowerShell7",
             "Source": "PSGallery"
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-powershell7-update-untrusted-other-source",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-powershell",
+      "note": "The only PowerShell7 entry of TrustedSources names 'other', and the source of the Update is its Source.Name, 'PSGallery' (§managers), so the source is not trusted whatever the rules say. Neighbour: read-powershell7-update-trusted-named-source.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "Source": "other"
           }
         ],
         "Rules": [
@@ -12325,7 +13661,7 @@
     {
       "name": "read-vcpkg-install-packages-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "A Vcpkg Install's identifier names its port, so a Packages pattern naming it matches.",
+      "note": "A Vcpkg identifier names its port, so a Packages pattern naming it matches.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -12442,7 +13778,7 @@
     {
       "name": "read-vcpkg-install-packages-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "A Vcpkg Install names only its port, so a Deny rule naming another package does not apply.",
+      "note": "A Vcpkg identifier names only its port, so a Deny rule naming another package does not apply.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -12564,7 +13900,7 @@
     {
       "name": "read-vcpkg-update-packages-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The package identity of a Vcpkg Update is unknown, because the command also acts on the ports that depend on the named one, so Packages is unknown and the Allow rule fails closed. Control: read-vcpkg-install-packages-allow.",
+      "note": "A Vcpkg Update's identifier names its port, as an Install's does, so a Packages pattern naming 'zlib' matches and the Allow rule applies. Neighbour: read-vcpkg-update-packages-other-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -12667,6 +14003,123 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-update-packages-other-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "A Vcpkg Update of 'zlib' names only 'zlib' (§manager-vcpkg), so an Allow rule naming 'other' does not apply. Neighbour: read-vcpkg-update-packages-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "other"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DefaultDeny",
         "rules": [],
@@ -12677,7 +14130,7 @@
     {
       "name": "read-vcpkg-update-packages-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The package identity of a Vcpkg Update is unknown, so a Deny rule naming another package still applies. Control: read-vcpkg-install-packages-deny.",
+      "note": "A Vcpkg Update of 'zlib' names only 'zlib' (§manager-vcpkg), so a Deny rule naming 'other' does not apply. Neighbour: read-vcpkg-update-packages-same-deny.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -12785,11 +14238,255 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-update-packages-same-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "A Vcpkg Update's identifier names its port (§manager-vcpkg), so a Deny rule naming 'zlib' applies. Neighbour: read-vcpkg-update-packages-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "zlib"
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DenyRule",
         "rules": [
           {
             "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-update-deny-other-port-not-applicable",
+      "oracle": "contract policies/CONTRACT.policy.md §package-identity",
+      "note": "The request names only the port 'zlib' (§manager-vcpkg). The ports that 'upgrade --no-dry-run' rebuilds beside it, such as ports that depend on it, are not package names of the request, so a Deny rule naming the port 'libpng' does not apply even where libpng depends on zlib: a Deny rule protects a port only from requests that name it. Neighbour: read-vcpkg-update-packages-same-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "libpng"
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
           }
         ],
         "optIns": [],
@@ -12826,7 +14523,7 @@
     {
       "name": "read-vcpkg-uninstall-packages-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The package identity of a Vcpkg Uninstall is unknown, because the command also acts on the ports that depend on the named one, so Packages is unknown and the Allow rule fails closed. Control: read-vcpkg-install-packages-allow.",
+      "note": "A Vcpkg Uninstall's identifier names its port, as an Install's does, so a Packages pattern naming 'zlib' matches and the Allow rule applies. Neighbour: read-vcpkg-uninstall-packages-other-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -12929,6 +14626,123 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-uninstall-packages-other-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "A Vcpkg Uninstall of 'zlib' names only 'zlib' (§manager-vcpkg), so an Allow rule naming 'other' does not apply. Neighbour: read-vcpkg-uninstall-packages-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "other"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DefaultDeny",
         "rules": [],
@@ -12939,7 +14753,7 @@
     {
       "name": "read-vcpkg-uninstall-packages-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The package identity of a Vcpkg Uninstall is unknown, so a Deny rule naming another package still applies. Control: read-vcpkg-install-packages-deny.",
+      "note": "A Vcpkg Uninstall of 'zlib' names only 'zlib' (§manager-vcpkg), so a Deny rule naming 'other' does not apply. Neighbour: read-vcpkg-uninstall-packages-same-deny.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -13047,11 +14861,255 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-uninstall-packages-same-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "A Vcpkg Uninstall's identifier names its port (§manager-vcpkg), so a Deny rule naming 'zlib' applies. Neighbour: read-vcpkg-uninstall-packages-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "zlib"
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DenyRule",
         "rules": [
           {
             "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-uninstall-deny-other-port-not-applicable",
+      "oracle": "contract policies/CONTRACT.policy.md §package-identity",
+      "note": "The request names only the port 'zlib' (§manager-vcpkg). The ports that 'remove --recurse' removes beside it, such as ports that depend on it, are not package names of the request, so a Deny rule naming the port 'libpng' does not apply even where libpng depends on zlib: a Deny rule protects a port only from requests that name it. Neighbour: read-vcpkg-uninstall-packages-same-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "libpng"
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
           }
         ],
         "optIns": [],
@@ -14950,8 +17008,8 @@
     },
     {
       "name": "read-vcpkg-update-source-selector-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The source of a Vcpkg Update is unknown, so a Source selector naming the triplet is unknown and the Allow rule fails closed. Control: read-vcpkg-install-source-selector-allow.",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a Vcpkg Update is its Source.Name (§managers), so the Allow rule's Source selector naming 'x64-windows' matches and the rule applies. Neighbour: read-vcpkg-update-source-selector-other-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -15060,6 +17118,129 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-src"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-update-source-selector-other-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "The source of a Vcpkg Update is its Source.Name, 'x64-windows' (§managers), so a Source selector naming 'other' does not match and the Allow rule does not apply. Neighbour: read-vcpkg-update-source-selector-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-src",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Update"
+              ],
+              "Sources": [
+                {
+                  "Manager": "Vcpkg",
+                  "Source": "other"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DefaultDeny",
         "rules": [],
@@ -15069,8 +17250,8 @@
     },
     {
       "name": "read-vcpkg-update-source-selector-deny",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The source of a Vcpkg Update is unknown, so a Deny rule naming another triplet still applies. Control: read-vcpkg-install-source-selector-deny.",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a Vcpkg Update is its Source.Name, 'x64-windows' (§managers), so a Deny rule naming 'other' does not apply. Neighbour: read-vcpkg-update-source-selector-same-deny.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -15184,6 +17365,134 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-update-source-selector-same-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "The source of a Vcpkg Update is its Source.Name (§managers), so a Deny rule naming 'x64-windows' applies. Neighbour: read-vcpkg-update-source-selector-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-src",
+            "Decision": "Deny",
+            "Select": {
+              "Operations": [
+                "Update"
+              ],
+              "Sources": [
+                {
+                  "Manager": "Vcpkg",
+                  "Source": "x64-windows"
+                }
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DenyRule",
         "rules": [
@@ -15197,8 +17506,8 @@
     },
     {
       "name": "read-vcpkg-update-any-source-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "An AnySource selector matches the unknown source of a Vcpkg Update. Contrast read-vcpkg-update-source-selector-allow.",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "An AnySource selector tests only the manager, so it matches a Vcpkg Update.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -15317,8 +17626,8 @@
     },
     {
       "name": "read-vcpkg-update-trusted-named-source",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The source of a Vcpkg Update is unknown, so a TrustedSources entry naming the triplet does not trust it, while AnySource does (read-vcpkg-update-any-source-allow). Control: read-vcpkg-install-trusted-named-source.",
+      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
+      "note": "The source of a Vcpkg Update is its Source.Name (§managers), so a TrustedSources entry naming 'x64-windows' trusts it, as for the Install read-vcpkg-install-trusted-named-source. Neighbour: read-vcpkg-update-untrusted-other-source.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -15417,6 +17726,119 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-update-untrusted-other-source",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "The only Vcpkg entry of TrustedSources names 'other', and the source of the Update is its Source.Name, 'x64-windows' (§managers), so the source is not trusted whatever the rules say. Neighbour: read-vcpkg-update-trusted-named-source.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "Source": "other"
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "UntrustedSource",
         "rules": [],
@@ -15427,7 +17849,7 @@
     {
       "name": "read-vcpkg-install-trusted-named-source",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "A TrustedSources entry naming the triplet of a Vcpkg Install trusts it. Contrast read-vcpkg-update-trusted-named-source.",
+      "note": "A TrustedSources entry naming the triplet of a Vcpkg Install trusts it. An Update is read the same way: read-vcpkg-update-trusted-named-source.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -15540,7 +17962,7 @@
     {
       "name": "read-vcpkg-install-architectures-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The architecture of a Vcpkg Install is read from the triplet, so 'x64-windows' is X64 and the Allow rule applies. Contrast read-vcpkg-update-architectures-allow.",
+      "note": "The architecture of a Vcpkg request comes from Source.Name, so 'x64-windows' is X64 and the Allow rule applies. Updates and Uninstalls are read the same way: read-vcpkg-{update,uninstall}-architectures-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -15657,7 +18079,7 @@
     {
       "name": "read-vcpkg-install-architectures-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The architecture of a Vcpkg Install is X64 from 'x64-windows', so a Deny rule naming X86 does not apply. Contrast read-vcpkg-update-architectures-deny.",
+      "note": "The architecture of a Vcpkg Install is X64 from 'x64-windows', so a Deny rule naming X86 does not apply. Updates and Uninstalls are read the same way: read-vcpkg-{update,uninstall}-architectures-deny.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -15779,7 +18201,7 @@
     {
       "name": "read-vcpkg-update-architectures-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The architecture of a Vcpkg Update is unknown, whatever the triplet, so the Allow rule naming X64 fails closed. Control: read-vcpkg-install-architectures-allow.",
+      "note": "The architecture of a Vcpkg request comes from Source.Name whatever the operation, so 'x64-windows' makes this Update X64 and the Allow rule naming X64 applies. Neighbour: read-vcpkg-update-architectures-other-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -15882,6 +18304,123 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-arch"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-update-architectures-other-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "'x64-windows' makes the Update X64 (§manager-vcpkg), so an Allow rule naming X86 does not apply. Neighbour: read-vcpkg-update-architectures-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-arch",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DefaultDeny",
         "rules": [],
@@ -15892,7 +18431,7 @@
     {
       "name": "read-vcpkg-update-architectures-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The architecture of a Vcpkg Update is unknown, so a Deny rule naming X86 still applies. Control: read-vcpkg-install-architectures-deny.",
+      "note": "'x64-windows' makes the Update X64 (§manager-vcpkg), so a Deny rule naming X86 does not apply. Neighbour: read-vcpkg-update-architectures-same-deny.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -15978,6 +18517,128 @@
             "Select": {
               "Architectures": [
                 "X86"
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-update-architectures-same-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "'x64-windows' makes the Update X64 (§manager-vcpkg), so a Deny rule naming X64 applies. Neighbour: read-vcpkg-update-architectures-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-arch",
+            "Decision": "Deny",
+            "Select": {
+              "Architectures": [
+                "X64"
               ]
             }
           },
@@ -16014,7 +18675,7 @@
     {
       "name": "read-vcpkg-uninstall-architectures-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The architecture of a Vcpkg Uninstall is unknown, whatever the triplet, so the Allow rule naming X64 fails closed. Control: read-vcpkg-install-architectures-allow.",
+      "note": "The architecture of a Vcpkg request comes from Source.Name whatever the operation, so 'x64-windows' makes this Uninstall X64 and the Allow rule naming X64 applies. Neighbour: read-vcpkg-uninstall-architectures-other-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -16117,6 +18778,123 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-arch"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-uninstall-architectures-other-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "'x64-windows' makes the Uninstall X64 (§manager-vcpkg), so an Allow rule naming X86 does not apply. Neighbour: read-vcpkg-uninstall-architectures-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-arch",
+            "Decision": "Allow",
+            "Select": {
+              "Architectures": [
+                "X86"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DefaultDeny",
         "rules": [],
@@ -16127,7 +18905,7 @@
     {
       "name": "read-vcpkg-uninstall-architectures-deny",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
-      "note": "The architecture of a Vcpkg Uninstall is unknown, so a Deny rule naming X86 still applies. Control: read-vcpkg-install-architectures-deny.",
+      "note": "'x64-windows' makes the Uninstall X64 (§manager-vcpkg), so a Deny rule naming X86 does not apply. Neighbour: read-vcpkg-uninstall-architectures-same-deny.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -16235,6 +19013,128 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-vcpkg-uninstall-architectures-same-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "'x64-windows' makes the Uninstall X64 (§manager-vcpkg), so a Deny rule naming X64 applies. Neighbour: read-vcpkg-uninstall-architectures-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-arch",
+            "Decision": "Deny",
+            "Select": {
+              "Architectures": [
+                "X64"
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DenyRule",
         "rules": [
@@ -16249,7 +19149,7 @@
     {
       "name": "read-powershell-update-allow-except-source",
       "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
-      "note": "The source of a PowerShell Update is unknown, so an Except entry naming 'PSGallery' is unknown and the Allow rule is not applicable. Control: read-powershell-update-allow-except-other-manager.",
+      "note": "The source of a PowerShell Update is its Source.Name (§managers), so the Except entry naming 'PSGallery' matches and the Allow rule is not applicable. Control: read-powershell-update-allow-except-other-manager.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -16501,7 +19401,7 @@
     {
       "name": "read-powershell-update-deny-except-source",
       "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
-      "note": "The source of a PowerShell Update is unknown, so an Except entry naming 'PSGallery' is unknown, which does not keep the Deny rule from applying. Control: read-powershell-install-deny-except-source.",
+      "note": "The source of a PowerShell Update is its Source.Name (§managers), so the Except entry naming 'PSGallery' matches and the Deny rule does not apply, as for the Install read-powershell-install-deny-except-source. Neighbour: read-powershell-update-deny-except-other-source.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -16620,6 +19520,139 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-powershell-update-deny-except-other-source",
+      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
+      "note": "The source of a PowerShell Update is 'PSGallery' (§managers), so an Except entry naming 'other' does not match and the Deny rule applies. Neighbour: read-powershell-update-deny-except-source.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-except",
+            "Decision": "Deny",
+            "Select": {},
+            "Except": [
+              {
+                "Operations": [
+                  "Install",
+                  "Update"
+                ],
+                "Sources": [
+                  {
+                    "Manager": "PowerShell",
+                    "Source": "other"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DenyRule",
         "rules": [
@@ -16634,7 +19667,7 @@
     {
       "name": "read-powershell-install-deny-except-source",
       "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
-      "note": "The source of a PowerShell Install is 'PSGallery', so the Except entry naming it matches and the Deny rule does not apply. Contrast read-powershell-update-deny-except-source.",
+      "note": "The source of a PowerShell Install is 'PSGallery', so the Except entry naming it matches and the Deny rule does not apply. The Update read-powershell-update-deny-except-source is decided the same way.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -16767,7 +19800,7 @@
     {
       "name": "read-powershell-update-source-and-any-source-allow",
       "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
-      "note": "A Sources list with a Source selector, unknown for the Npm Uninstall, and an AnySource selector, which matches it, matches, so the Allow rule applies.",
+      "note": "Both selectors match the PowerShell Update: the Source selector names its Source.Name (§managers) and AnySource tests only the manager, so the Sources list matches and the Allow rule applies.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {

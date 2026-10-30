@@ -5732,6 +5732,279 @@
       }
     },
     {
+      "name": "read-scoop-manifest-host-numeric-ipv4",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The last '.'-separated label of the host part '10.0.0.5' is '5', which starts with an ASCII digit, so the request is unreadable. Near misses: read-scoop-manifest-host-digit-inner-label, read-scoop-manifest-host-last-label-letter-after-digits.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://10.0.0.5/app.json"
+        },
+        "Package": {
+          "Id": "https://10.0.0.5/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-numeric-integer",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The host part '2130706433' is one label, which starts with an ASCII digit, so the request is unreadable. Control: read-scoop-manifest-id-without-at.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://2130706433/app.json"
+        },
+        "Package": {
+          "Id": "https://2130706433/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-numeric-hex",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The host part '0x7f000001' is one label starting with the ASCII digit '0', so the request is unreadable, although the label also has letters. Control: read-scoop-manifest-id-without-at.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://0x7f000001/app.json"
+        },
+        "Package": {
+          "Id": "https://0x7f000001/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-last-label-digit-first",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The last label '1test' starts with an ASCII digit, so the request is unreadable: the rule tests the label's first character, not whether it is all digits. Near miss: read-scoop-manifest-host-last-label-letter-then-digit.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.1test/app.json"
+        },
+        "Package": {
+          "Id": "https://example.1test/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-numeric-scheme-upper",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The rule applies to a Package.Id starting with 'http://' ignoring ASCII case, so 'HTTP://' with the host part '10.0.0.5' is unreadable. Control: read-scoop-manifest-scheme-upper-equal.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "HTTP://10.0.0.5/app.json"
+        },
+        "Package": {
+          "Id": "HTTP://10.0.0.5/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-numeric-no-path",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "With no '/' after the host part, the host part runs to the end of the text, '10.0.0.5', whose last label starts with an ASCII digit, so the request is unreadable. Control: read-scoop-manifest-no-path.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://10.0.0.5"
+        },
+        "Package": {
+          "Id": "https://10.0.0.5"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-digit-inner-label",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "Only the last label of the host part is tested, and 'test' starts with a letter; the digit in 'a1' does not matter, so the request stays readable. Near miss of read-scoop-manifest-host-numeric-ipv4.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://a1.example.test/app.json"
+        },
+        "Package": {
+          "Id": "https://a1.example.test/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-last-label-letter-after-digits",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The labels '10', '0' and '0' start with digits, but the last label 'a5' starts with a letter, so the request stays readable. Near miss of read-scoop-manifest-host-numeric-ipv4.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://10.0.0.a5/app.json"
+        },
+        "Package": {
+          "Id": "https://10.0.0.a5/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-last-label-letter-then-digit",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The last label 't1' contains a digit but starts with a letter, so the request stays readable. Near miss of read-scoop-manifest-host-last-label-digit-first.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.t1/app.json"
+        },
+        "Package": {
+          "Id": "https://example.t1/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-numeric-segment-after-host",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "'10.0.0.5' is a segment after the host part 'example.test', not the host part, so the request stays readable. Near miss of read-scoop-manifest-host-numeric-ipv4.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/10.0.0.5/app.json"
+        },
+        "Package": {
+          "Id": "https://example.test/10.0.0.5/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-manifest-host-after-first-scheme",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The host part is the text after the first '://' and before the next '/', 'example.test'; the later 'https://10.0.0.5' is in segments after it, none of them '.' or '..', so the request stays readable. Near miss of read-scoop-manifest-host-numeric-ipv4.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "https://example.test/x/https://10.0.0.5/app.json"
+        },
+        "Package": {
+          "Id": "https://example.test/x/https://10.0.0.5/app.json"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
       "name": "read-scoop-manifest-segment-dot",
       "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
       "note": "The segment '.' after the host part makes the request unreadable. Control: read-scoop-manifest-id-without-at; near miss: read-scoop-manifest-segment-dot-prefix.",
@@ -6289,8 +6562,8 @@
     },
     {
       "name": "read-scoop-update-source-selector-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "The source of a Scoop Update is unknown, so a Source selector naming Source.Name is unknown and the Allow rule fails closed. Control: read-scoop-install-source-selector-allow.",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a Scoop Update is its Source.Name (§managers), so the Allow rule's Source selector naming 'main' matches and the rule applies. Scoop updates from the bucket recorded at install, which the broker checks after the decision, so that check is not part of it (§managers). Neighbour: read-scoop-update-source-selector-other-allow.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -6399,6 +6672,129 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-src"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-update-source-selector-other-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The source of a Scoop Update is its Source.Name, 'main' (§managers), so a Source selector naming 'other' does not match and the Allow rule does not apply. Neighbour: read-scoop-update-source-selector-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-src",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Update"
+              ],
+              "Sources": [
+                {
+                  "Manager": "Scoop",
+                  "Source": "other"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DefaultDeny",
         "rules": [],
@@ -6408,8 +6804,8 @@
     },
     {
       "name": "read-scoop-update-source-selector-deny",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "The source of a Scoop Update is unknown, so a Deny rule naming another source still applies. Control: read-scoop-install-source-selector-deny.",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The source of a Scoop Update is its Source.Name, 'main' (§managers), so a Deny rule naming 'other' does not apply. Neighbour: read-scoop-update-source-selector-same-deny.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -6523,6 +6919,134 @@
         "Elevation": "NonElevated"
       },
       "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-update-source-selector-same-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The source of a Scoop Update is its Source.Name (§managers), so a Deny rule naming 'main' applies. Neighbour: read-scoop-update-source-selector-deny.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-src",
+            "Decision": "Deny",
+            "Select": {
+              "Operations": [
+                "Update"
+              ],
+              "Sources": [
+                {
+                  "Manager": "Scoop",
+                  "Source": "main"
+                }
+              ]
+            }
+          },
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
         "outcome": "Deny",
         "check": "DenyRule",
         "rules": [
@@ -6536,8 +7060,8 @@
     },
     {
       "name": "read-scoop-update-any-source-allow",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "An AnySource selector matches the unknown source of a Scoop Update.",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "An AnySource selector tests only the manager, so it matches a Scoop Update.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -6656,8 +7180,8 @@
     },
     {
       "name": "read-scoop-update-trusted-named-source",
-      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
-      "note": "The source of a Scoop Update is unknown, so a TrustedSources entry naming Source.Name does not trust it, while AnySource does (read-scoop-update-any-source-allow). Control: read-scoop-install-trusted-named-source.",
+      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
+      "note": "The source of a Scoop Update is its Source.Name (§managers), so a TrustedSources entry naming 'main' trusts it, as for the Install read-scoop-install-trusted-named-source. Scoop updates from the bucket recorded at install, which the broker checks after the decision, so that check is not part of it (§managers). Neighbour: read-scoop-update-untrusted-other-source.",
       "policy": {
         "PolicyFormatVersion": "2.0.0",
         "Metadata": {
@@ -6734,6 +7258,119 @@
           {
             "Manager": "Scoop",
             "Source": "main"
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Scoop",
+        "Source": {
+          "Name": "main"
+        },
+        "Package": {
+          "Id": "git"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-scoop-update-untrusted-other-source",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-scoop",
+      "note": "The only Scoop entry of TrustedSources names 'other', and the source of the Update is its Source.Name, 'main' (§managers), so the source is not trusted whatever the rules say. Neighbour: read-scoop-update-trusted-named-source.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "Source": "other"
           }
         ],
         "Rules": [

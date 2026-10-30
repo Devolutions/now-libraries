@@ -10701,6 +10701,484 @@
       }
     },
     {
+      "name": "read-identity-vcpkg-update-port-features-triplet-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "'port[features]:triplet' names 'port' on an Update as on an Install (§manager-vcpkg). Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "zlib"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib[core]:x64-windows"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-vcpkg-update-port-features-triplet-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "'port[features]:triplet' names 'port' on an Update as on an Install (§manager-vcpkg). Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "zlib"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib[core]:x64-windows"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-vcpkg-uninstall-port-features-triplet-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "'port[features]:triplet' names 'port' on an Uninstall as on an Install (§manager-vcpkg). Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-pkg",
+            "Decision": "Allow",
+            "Select": {
+              "Packages": [
+                "zlib"
+              ]
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib[core]:x64-windows"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-identity-vcpkg-uninstall-port-features-triplet-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
+      "note": "'port[features]:triplet' names 'port' on an Uninstall as on an Install (§manager-vcpkg). Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-pkg",
+            "Decision": "Deny",
+            "Select": {
+              "Packages": [
+                "zlib"
+              ]
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Vcpkg",
+        "Source": {
+          "Name": "x64-windows"
+        },
+        "Package": {
+          "Id": "zlib[core]:x64-windows"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-pkg"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
       "name": "read-identity-vcpkg-whole-identifier-not-name-allow",
       "oracle": "contract policies/CONTRACT.policy.md §manager-vcpkg",
       "note": "Allow-only and Deny-plus-catch-all policies together tell match (Allow, DenyRule), no match (DefaultDeny, Allow) and unknown (DefaultDeny, DenyRule) apart.",
