@@ -39,12 +39,12 @@ An opt-in is something a package request asks for beyond a plain request, as [CO
 
 A decision is the result of evaluating a package request against the broker's policy ([CONTRACT.policy.md §decision](CONTRACT.policy.md#decision)), written as [§decision](#decision) states.
 A decision's `Outcome` is `Allow` or `Deny`, and a `Deny` decision, an unreadable request's included, comes in an evaluation or execution response ([§evaluate](#evaluate), [§execute](#execute)), never in an error response.
-In this contract, the outcome of a request is the response it gets, which is not a decision's `Outcome`.
+In this contract, the outcome of a request is the response the rules of this contract give it, which `InternalError` may replace ([§errors](#errors)); it is not a decision's `Outcome`.
 
 <a id="def-error"></a>
 ### Error
 
-An error is a result that is not a decision, as [CONTRACT.policy.md §def-error](CONTRACT.policy.md#def-error) defines; in this contract, an error response ([§errors](#errors)) or a policy error ([§policy-errors](#policy-errors)).
+An error is a result that [CONTRACT.policy.md §def-error](CONTRACT.policy.md#def-error) lists; in this contract, an error is an error response ([§errors](#errors)) or a policy error ([§policy-errors](#policy-errors)), and neither is a decision.
 Only an error response whose `Code` is `NotRunnable` carries a decision ([§not-runnable](#not-runnable)), and [§errors](#errors) states which codes leave the outcome of the request unknown.
 
 <a id="def-accepted-policy"></a>
@@ -319,7 +319,7 @@ The evaluation response has these members.
 | `Policy`      | the identity of the policy that decided ([§policy-identity](#policy-identity)) |
 | `EvaluatedAt` | the evaluation time, a timestamp                                               |
 
-An evaluation response means that an execution request at that time would start an operation exactly when its `Outcome` is `Allow`; it reserves nothing, and a later execution request is evaluated again.
+An evaluation response means that an execution request at that time, with a `RequestId` the broker does not hold, would start an operation exactly when its `Outcome` is `Allow`; it reserves nothing, and a later execution request is evaluated again.
 
 <a id="not-runnable"></a>
 ### Not runnable
@@ -390,7 +390,7 @@ A process of the operation runs too long when it runs longer than `OperationTime
 These rules decide how an operation that is not canceled ends:
 
 - when its request has `PrePostCommands` and the token the broker would run its processes with is elevated, such as when User Account Control is disabled, it runs no step and ends `Failed`, because the broker never runs a `Pre` or `Post` command with an elevated token;
-- when its request is an Update through a manager that updates from the source recorded when the package was installed, and that record names another source or cannot be read ([CONTRACT.policy.md §managers](CONTRACT.policy.md#managers)), it runs no step and ends `Failed`;
+- when its request is an Update for which [CONTRACT.policy.md §managers](CONTRACT.policy.md#managers) has the broker check the recorded source, and the broker has not read records that all name its `Source.Name`, it runs no step and ends `Failed`;
 - a failure to stop a process of `KillBeforeOperation` is ignored;
 - when the `Pre` command cannot be run, exits with a code other than 0 or runs too long, it runs no later step and ends `Failed`;
 - when the manager process cannot be launched or runs too long, it runs no later step and ends `Failed`;
