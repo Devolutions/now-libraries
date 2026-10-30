@@ -99,22 +99,22 @@ Audit mode is a policy setting under which a request that the policy content den
 <a id="def-decision"></a>
 ### Decision
 
-A decision is the result of evaluating one request: an outcome, `Allow` or `Deny`, which says whether the broker runs the request, and the check, rules and opt-ins that produced it ([§decision](#decision)).
-Every well-formed request gets a decision, an unreadable one included.
+A decision is the result of evaluating one request: an outcome, `Allow` or `Deny`, which says whether the policy lets the broker run the request, and the check, rules and opt-ins that produced it ([§decision](#decision)).
+Evaluating a well-formed request against a policy always gives a decision, an unreadable request's included.
 
 <a id="def-unreadable"></a>
 ### Unreadable
 
-A request is unreadable when it is well-formed but the evaluator cannot tell what the broker would run for it, or the broker builds no command for it ([§reading](#reading)).
+A request is unreadable when it is well-formed and a case of [§reading](#reading) holds for it, such as when the broker builds no command for it, or the command would act in a way the request's fields do not show.
 Unreadable is not an error: an unreadable request gets a decision, `Deny` with the check `UnreadableRequest` ([§precedence](#precedence)).
+The `InvalidReason` `Unreadable` of the broker's policy management state names a policy file the broker cannot open or read, not an unreadable request ([CONTRACT.wire.md §management-state](CONTRACT.wire.md#management-state)).
 *Avoid:* invalid, malformed, rejected, which name errors.
 
 <a id="def-error"></a>
 ### Error
 
-An error is a result that has no decision: a validation error of a policy document ([§errors](#errors)), or an error response of the broker ([CONTRACT.wire.md §errors](CONTRACT.wire.md#errors)), such as `BadRequest` for a package request that is not well-formed.
-The one error response that carries a decision is `NotRunnable`, for an allowed request the broker still does not run.
-The `InvalidReason` `Unreadable` of the broker's policy management state names a policy file the broker cannot open or read, not an unreadable request ([CONTRACT.wire.md §management-state](CONTRACT.wire.md#management-state)).
+An error is a result that reports no outcome for a request or a document: a validation error of a policy document ([§errors](#errors)), an evaluator's report that its input is not a well-formed package request ([§request-input](#request-input)), or an error response of the broker ([CONTRACT.wire.md §errors](CONTRACT.wire.md#errors)), such as `BadRequest`.
+No error carries a decision except the error response `NotRunnable`, which carries the `Allow` decision of a request that [CONTRACT.wire.md §not-runnable](CONTRACT.wire.md#not-runnable) says the broker will not run.
 
 <a id="general"></a>
 ## General rules
@@ -216,7 +216,7 @@ The source of an Install or Update request is trusted when a selector in the lis
 An Install or Update request whose source is not trusted is denied whatever the rules say ([§precedence](#precedence)).
 A manager with no selector in the list therefore cannot install or update anything.
 The source of an Update through a manager whose reading says so is unknown, so a `Source` selector of the request's manager is unknown for that Update ([§source-selector](#source-selector)), and, in `Select` or in an `Except` entry, the selector never keeps a Deny rule from being applicable to it and never makes an Allow rule applicable to it ([§applicability](#applicability)).
-The source of every Uninstall is unknown too ([§managers](#managers)), and [§selection](#selection) keeps `Source` selectors away from uninstalls.
+[§selection](#selection) keeps `Source` selectors away from uninstalls.
 For installs and updates, a rule only narrows which trusted sources it applies to.
 
 <a id="source-selector"></a>
@@ -377,7 +377,8 @@ A document with several defects reports a non-empty subset of the errors that ap
 ### Request input
 
 The evaluator's input is a well-formed package request ([CONTRACT.wire.md §package-request](CONTRACT.wire.md#package-request)) without its `RequestId`.
-A package request that is not well-formed gets no decision: the broker answers it with the error `BadRequest`, and an evaluator given one reports an error rather than a decision.
+A package request that is not well-formed is `BadRequest` ([CONTRACT.wire.md §package-request](CONTRACT.wire.md#package-request)) and gets no decision.
+An evaluator given one reports that its input is not well-formed and returns no decision; the form of that report is implementation-defined.
 
 <a id="reading"></a>
 ### Reading a request
@@ -537,7 +538,8 @@ A source name or identifier is a manifest URL or local path when it contains `..
 On an Install, a manifest URL or local path, a *manifest source*, is a known source like a bucket, so a `Source` selector can name one and `AnySource` covers them all.
 An Install whose `Source.Name` or `Package.Id` is a manifest URL or local path is readable only when `Package.Id` equals `Source.Name` with exact characters and starts with `http://` or `https://` ignoring ASCII case, because only then does the command fetch exactly the URL that `Source.Name` names: the broker passes `Package.Id` alone whenever `Source.Name` starts with `http://` or `https://` ignoring ASCII case, or contains `...` or `:\`, and otherwise passes the one argument `<Source.Name>/<Package.Id>`, which Scoop may read as another URL, look up in every bucket, or resolve as a relative path.
 A request whose `Package.Id` is a manifest URL or local path and contains `@` is unreadable, because Scoop may split the text after an `@` off the URL as a version, so that `https://example.test/app.json@1.2` reads as the URL `https://example.test/app.json` with the version `1.2`, and because an `@` before the host adds user information, which another text of the same URL lacks.
-A request whose `Source.Name` or `Package.Id` is a manifest URL or local path is unreadable when it contains `%` or `#`, or when it starts with `http://` or `https://` ignoring ASCII case and its text after that `://` and before the next `/`, `\`, `?` or `#`, or its end, contains `:`, because a percent-encoded character, a fragment and an explicit port each let another text fetch the same manifest, which a `Source` selector naming the URL would not match.
+An Install whose `Package.Id` is a manifest URL is unreadable when its `Package.Id` contains `%` or `#`; when its host part, the text after the `://` of its leading `http://` or `https://` and before the next `/` or its end, is empty, contains `:` or ends with `.`; or when a `/`-separated segment after its host part is `.` or `..`.
+Each of these spellings, a percent-encoded character, a fragment, an explicit port, an empty host, a trailing `.` on the host and a dot segment, lets another text fetch the same manifest, which a `Source` selector or a `Packages` pattern naming the URL would not match.
 An Update or Uninstall whose `Source.Name` or `Package.Id` is a manifest URL or local path is unreadable, because Scoop acts on an installed app it derives from the URL, and the request does not name that app.
 The `Package.Id` of a readable Install through a manifest source names itself, keeping its case in canonical form, and selects no version, so the `name@version` reading of [§package-identity](#package-identity) does not apply to it, as Scoop fetches the URL as given.
 A `Source` selector matches a manifest source when the two are equal with exact characters, is unknown for it when they are equal only ignoring case ([§text-comparison](#text-comparison)), and does not match it otherwise, so a Deny rule that names the URL in another case still applies and an Allow rule fails closed.
@@ -681,7 +683,7 @@ The version is `Package.Version` when it is concrete, and unknown otherwise.
 A version is concrete when it is present, neither a custom parameter nor the identifier ([§package-identity](#package-identity)) selects the version, and no rule below makes it not concrete.
 Under `Cargo` and `Dotnet`, a version is not concrete unless it is a version ([§version-scheme](#version-scheme)) with at least three release components, because they read any other as a range.
 Under `PowerShell7`, a version is not concrete unless it is a version ([§version-scheme](#version-scheme)), because its `-Version` accepts NuGet version ranges.
-Under `Npm`, a version is not concrete unless it is a version as [Semantic Versioning 2.0.0][semver] defines it, because npm reads other spellings by its own rules, such as `1.2.3.4` and `V1.2.3` as dist-tags; [§manager-bun](#manager-bun) refuses any other Bun version.
+Under `Npm`, a version is not concrete unless it is a version as [Semantic Versioning 2.0.0][semver] defines it, because npm reads other spellings by its own rules, such as `1.2.3.4` and `V1.2.3` as dist-tags; [§manager-bun](#manager-bun) makes a request with any other Bun version unreadable.
 Under `Pip`, a version is not concrete unless it is one or more release components of ASCII digits separated by `.`, because Pip reads other spellings by its own rules, under which `2.0.0-1` is a post-release above `2.0.0`, while [§version-scheme](#version-scheme) orders it below.
 An Install or Update request is missing its version when the broker can pin a version through its manager and its version is not concrete, and is denied whatever the policy says, so that rule matching always has the version.
 An Uninstall request is never missing its version, because no version condition applies to it ([§version-condition](#version-condition)).
@@ -752,7 +754,7 @@ A decision has these values, which each implementation may represent in its lang
 
 | Value   | Content                                                              |
 | ------- | -------------------------------------------------------------------- |
-| Outcome | `Allow` when the broker runs the request, `Deny` otherwise           |
+| Outcome | `Allow` when the policy lets the broker run the request, `Deny` otherwise |
 | Check   | the check from [§precedence](#precedence) that produced the decision |
 | Rules   | rule ids, in the order of `Rules`, each with its `Reason` when it has one |
 | Opt-ins | opt-ins, in the order of [§opt-ins](#opt-ins)                        |

@@ -80,8 +80,8 @@ Without the list, a rule that names no source applies to every source the manage
 The list is required.
 A policy that does not restrict a manager's sources says so with an explicit entry trusting any source of that manager, so that trusting everything is a visible choice rather than an omission, and a 1.x policy converts exactly.
 A manager missing from the list therefore cannot install or update anything, so the list also says which managers the policy uses.
-The list governs installs and updates only, because uninstalls download nothing; rules alone govern uninstalls.
-A rule may therefore name a source the list does not trust, to govern uninstalls of packages from that source.
+The list governs installs and updates only, because uninstalls download nothing.
+No package manager reliably records which source an installed package came from, so the source of an uninstall is unknown, and rules govern uninstalls by package rather than by source.
 Audit mode can let an untrusted source through, so that a new list can be tried out without blocking users; unlike the custom install location check, the list is ordinary policy content.
 A rule names its sources as manager-and-source pairs, so one rule can span managers.
 Rules that may name a source only when they select exactly one manager are rejected, because trust and ban lists would need one rule per manager.
@@ -103,7 +103,7 @@ Install and update requests carry a concrete version, so that the broker has the
 A request without one is rejected before any rule runs, except through package managers for which the broker cannot pin a version.
 For those managers the version is unknown: a Deny rule's version condition matches, and an Allow rule's does not.
 When scope or architecture is unknown, a Deny rule's selection matches and an Allow rule's does not.
-Uninstalls carry no version a policy can check, so a selection that tests the version applies to installs and updates only, and says so by listing its operations.
+Uninstalls carry no version or source a policy can check, so a selection that tests the version or the source applies to installs and updates only, and says so by listing its operations.
 Rules that silently never match uninstalls, and versioned Allow rules that implicitly allow uninstalls, are rejected.
 
 <a id="broker-limits"></a>
@@ -111,6 +111,7 @@ Rules that silently never match uninstalls, and versioned Allow rules that impli
 
 The broker never runs pre/post commands for a request that runs elevated, whatever the policy grants and even in audit mode, because such a command is an arbitrary command run as administrator.
 An allowed request that asks for one runs nothing, and that refusal is not a decision.
+On a run as administrator, the broker resolves a source name only through machine-wide configuration, because a source is identified by its name and a name the user can redefine would point a trusted source at another server.
 
 <a id="warnings"></a>
 ## Warnings

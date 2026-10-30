@@ -38,13 +38,14 @@ An opt-in is something a package request asks for beyond a plain request, as [CO
 ### Decision
 
 A decision is the result of evaluating a package request against the broker's policy ([CONTRACT.policy.md §decision](CONTRACT.policy.md#decision)), written as [§decision](#decision) states.
-A decision is `Allow` or `Deny`, and a `Deny` decision, an unreadable request's included, is a response that is not an error.
+A decision is `Allow` or `Deny`.
+A `Deny` decision, an unreadable request's included, comes in an evaluation or execution response ([§evaluate](#evaluate), [§execute](#execute)), never in an error response.
 
 <a id="def-error"></a>
 ### Error
 
-An error is an error response ([§errors](#errors)), which reports that the broker did not carry out the request.
-It carries a decision only when its `Code` is `NotRunnable`, for an allowed request the broker still does not run.
+An error is an error response ([§errors](#errors)).
+It carries a decision only when its `Code` is `NotRunnable` ([§not-runnable](#not-runnable)), and [§errors](#errors) states which codes leave the outcome of the request unknown.
 
 <a id="def-accepted-policy"></a>
 ### Accepted policy
@@ -447,8 +448,8 @@ A client whose channel closes before the `FINISH` frame learns the operation's s
 
 The channel carries a sequence of frames, and every integer in a frame is unsigned and little-endian.
 A frame is a 4-byte body size, a 2-byte frame kind, and a body of that size.
-A fatal error ends the channel for the client: it closes the channel and learns the operation's status with status requests.
-A body size larger than 65536 is a fatal error.
+A fatal frame defect ends the channel for the client: it closes the channel and learns the operation's status with status requests.
+A body size larger than 65536 is a fatal frame defect.
 This table is the closed set of frame kinds.
 
 | Kind     | Name              | Body                                                                 |
@@ -461,9 +462,9 @@ This table is the closed set of frame kinds.
 | `0x0005` | `STDOUT_OVERFLOW` | 4 bytes: a number of standard output bytes dropped                   |
 | `0x0006` | `STDERR_OVERFLOW` | 4 bytes: a number of standard error bytes dropped                    |
 
-A frame of a kind in the table whose body has another size, or a `STDOUT` or `STDERR` body that is not valid UTF-8, is a fatal error.
-A client skips a frame whose kind is not in the table, and a `HELLO` major version other than `2` is a fatal error.
-The end of the stream inside a frame is a fatal error, not a close.
+A frame of a kind in the table whose body has another size, or a `STDOUT` or `STDERR` body that is not valid UTF-8, is a fatal frame defect.
+A client skips a frame whose kind is not in the table, and a `HELLO` major version other than `2` is a fatal frame defect.
+The end of the stream inside a frame is a fatal frame defect, not a close.
 
 <a id="frame-order"></a>
 ### Frame order
@@ -526,6 +527,7 @@ This table is the closed set of `ReadOnlyReason` values.
 
 A state whose `InvalidReason` is `MonitoringUnavailable` has the `ReadOnlyReason` `MonitoringUnavailable`.
 Which reason applies is implementation-defined when several do.
+`Unreadable` names a policy file the broker cannot open or read, not an unreadable package request ([CONTRACT.policy.md §def-unreadable](CONTRACT.policy.md#def-unreadable)).
 
 <a id="policy-errors"></a>
 ### Policy errors
