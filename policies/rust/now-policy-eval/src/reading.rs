@@ -601,6 +601,23 @@ fn is_scoop_manifest(text: &str) -> bool {
             .any(|scheme| starts_with_ignore_ascii_case(after_slashes, scheme))
 }
 
+/// Returns whether another text fetches the same manifest URL, which a `Source` selector naming this one would not match ([§manager-scoop]).
+///
+/// A percent-encoded character, a fragment and an explicit port each allow another text.
+///
+/// [§manager-scoop]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#manager-scoop
+fn has_alternate_spelling(url: &str) -> bool {
+    let has_port = ["http://", "https://"].iter().any(|scheme| {
+        starts_with_ignore_ascii_case(url, scheme) && {
+            let rest = &url[scheme.len()..];
+            let authority = rest.split(['/', '\\', '?', '#']).next().unwrap_or(rest);
+            authority.contains(':')
+        }
+    });
+
+    url.contains(['%', '#']) || has_port
+}
+
 fn starts_with_ignore_ascii_case(text: &str, prefix: &str) -> bool {
     text.get(..prefix.len())
         .is_some_and(|head| head.eq_ignore_ascii_case(prefix))
@@ -623,6 +640,8 @@ fn scoop_sources_are_readable(operation: Operation, source: &str, id: &str) -> b
             && id == source
             && (starts_with_ignore_ascii_case(id, "http://") || starts_with_ignore_ascii_case(id, "https://"))
             && !id.contains('@')
+            // The source equals the identifier here, so one check covers both.
+            && !has_alternate_spelling(id)
     } else {
         is_word(source) && is_word(id) && !id.to_ascii_lowercase().ends_with(".json")
     };

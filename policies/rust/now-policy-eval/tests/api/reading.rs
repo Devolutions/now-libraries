@@ -255,6 +255,35 @@ fn readable_requests_through_scoop(#[case] custom_parameters: &[&str]) {
     assert_eq!(opt_ins(&subject), ["CustomParameters"]);
 }
 
+/// A Scoop install of the manifest URL `url`, named as both the source and the package.
+fn install_manifest(url: &str) -> Request {
+    request("Install", "Scoop", url, url)
+}
+
+#[rstest]
+// oracle: contract policies/CONTRACT.policy.md §manager-scoop
+#[case::percent_encoded_character("https://example.test/a%20b.json")]
+#[case::percent_in_the_host("https://exa%6dple.test/git.json")]
+#[case::fragment("https://example.test/git.json#frag")]
+#[case::empty_fragment("https://example.test/git.json#")]
+#[case::port("https://example.test:8080/git.json")]
+#[case::port_in_upper_case_scheme("HTTPS://example.test:8080/git.json")]
+#[case::empty_port("http://example.test:/git.json")]
+#[case::port_without_path("https://example.test:443")]
+fn manifest_urls_with_another_spelling_are_unreadable(#[case] url: &str) {
+    assert_eq!(check_of(GRANT_ALL, &install_manifest(url)), Check::UnreadableRequest);
+}
+
+#[rstest]
+// oracle: contract policies/CONTRACT.policy.md §manager-scoop
+#[case::colon_in_the_path("https://example.test/a:b.json")]
+#[case::colon_in_a_later_segment("https://example.test/dir/c:/git.json")]
+#[case::scheme_in_upper_case("HTTP://example.test/git.json")]
+#[case::dots_in_the_host("https://sub.example.test/git.json")]
+fn manifest_urls_without_another_spelling_are_readable(#[case] url: &str) {
+    assert_eq!(check_of(GRANT_ALL, &install_manifest(url)), Check::AllowRules);
+}
+
 #[rstest]
 // oracle: contract policies/CONTRACT.policy.md §managers
 #[case::vcpkg_elevated(elevated(request("Install", "Vcpkg", "x64-windows", "zlib")))]
