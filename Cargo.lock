@@ -604,7 +604,7 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "now-client"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "now-proto-pdu",
  "thiserror",

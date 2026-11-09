@@ -29,18 +29,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **`NOW_EXEC_FLAG_*_ELEVATED`** on the run, process, shell, batch,
   winps and pwsh exec messages.
   - **`NOW_CAP_EXEC_ELEVATION`** (0x0080) — advertised by servers that can
-  run elevated exec sessions. The baseline semantics are the most
-  restrictive a platform offers: it may prompt the interactive user for
-  consent, and stdio is not redirected.
+  run elevated exec sessions. Elevation may prompt the interactive user
+  for consent, and stdio redirection depends on the host's mechanism.
   - **`NOW_CODE_ELEVATION_DENIED`** (0x0009) and
   **`NOW_CODE_ELEVATION_UNAVAILABLE`** (0x000A) — NOW-level status codes
   so a client never has to sniff Win32 numbers to learn why elevation
   failed.
-  - **`NOW_EXEC_FLAG_BATCH_NO_EXIT`** (0x0010) — `cmd /K` rather than
-  `/C`. Under elevation there is no stdio, so a console left open is the
-  only way the user sees output. winps/pwsh already had `NO_EXIT`; batch
-  did not. Must be ignored when the session redirects stdio, where the
-  hidden interpreter would never exit.
+  - **`NOW_EXEC_FLAG_BATCH_NO_EXIT`** (0x0008) — `cmd /K` rather than
+  `/C`. Keeps the interpreter window open when stdio is not redirected.
+  winps/pwsh already had `NO_EXIT`; batch did not. Must be ignored when
+  the session redirects stdio, where the hidden interpreter would never
+  exit.
   - A new normative **"Elevated Execution"** spec section.
   - **Client-side refusal** in both `Devolutions.NowClient` and the Rust
   `now-client`: an elevated request is rejected unless the negotiated
@@ -87,9 +86,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `NOW_EXEC_STARTED_MSG` is sent **after** elevation is granted. The UAC
   consent wait (up to 120 s) happens before it, so clients should start
   execution timers at `STARTED`, not at submission.
-  - An elevated session sends **no `EXEC_DATA` at all**, and a server must
-  ignore `IO_REDIRECTION` set alongside `ELEVATED`, so no client waits on
-  a stream EOF that never comes.
+  - Clients may request `IO_REDIRECTION` for elevated sessions. If the
+  server cannot redirect stdio, it sets
+  `STARTED_NO_IO_REDIRECTION` and sends no `EXEC_DATA`.
   - Abort and cancel **may fail** (the child runs at a higher integrity
   level) and cannot dismiss a pending prompt.
   
@@ -104,9 +103,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   downgrade is the exact defect this PR exists to remove; it would be
   perverse to reintroduce it in the client.
   
-  The Rust `now-client` additionally rejects an elevated request carrying
-  inline stdin or a timeout: there is no stdio to write to, and a timeout
-  is enforced by cancellation, which may fail.
+  The Rust `now-client` supports inline stdin when I/O redirection is
+  negotiated and supports timeouts for tracked elevated requests.
   
   ## Bit allocation
   
@@ -115,19 +113,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   
   | Message | Flag | Value |
   |---|---|---|
-  | `NOW_CHANNEL_CAPSET_MSG` (`execCapset`) | `NOW_CAP_EXEC_ELEVATION` |
-  `0x0080` |
-  | `NOW_EXEC_RUN_MSG` | `NOW_EXEC_FLAG_RUN_ELEVATED` | `0x0002` |
-  | `NOW_EXEC_PROCESS_MSG` | `NOW_EXEC_FLAG_PROCESS_ELEVATED` | `0x0008` |
-  | `NOW_EXEC_SHELL_MSG` | `NOW_EXEC_FLAG_SHELL_ELEVATED` | `0x0008` |
-  | `NOW_EXEC_BATCH_MSG` | `NOW_EXEC_FLAG_BATCH_ELEVATED` | `0x0008` |
-  | `NOW_EXEC_BATCH_MSG` | `NOW_EXEC_FLAG_BATCH_NO_EXIT` | `0x0010` |
-  | `NOW_EXEC_WINPS_MSG` / `NOW_EXEC_PWSH_MSG` |
-  `NOW_EXEC_FLAG_PS_ELEVATED` | `0x0800` |
-  | `NOW_STATUS` (`NOW_STATUS_ERROR_KIND_NOW`) |
-  `NOW_CODE_ELEVATION_DENIED` | `0x0009` |
-  | `NOW_STATUS` (`NOW_STATUS_ERROR_KIND_NOW`) |
-  `NOW_CODE_ELEVATION_UNAVAILABLE` | `0x000A` |
+  | `NOW_CHANNEL_CAPSET_MSG` (`execCapset`) | `NOW_CAP_EXEC_ELEVATION` | `0x0080` |
+  | `NOW_EXEC_RUN_MSG` | `NOW_EXEC_FLAG_RUN_ELEVATED` | `0x4000` |
+  | `NOW_EXEC_PROCESS_MSG` | `NOW_EXEC_FLAG_PROCESS_ELEVATED` | `0x4000` |
+  | `NOW_EXEC_SHELL_MSG` | `NOW_EXEC_FLAG_SHELL_ELEVATED` | `0x4000` |
+  | `NOW_EXEC_BATCH_MSG` | `NOW_EXEC_FLAG_BATCH_ELEVATED` | `0x4000` |
+  | `NOW_EXEC_BATCH_MSG` | `NOW_EXEC_FLAG_BATCH_NO_EXIT` | `0x0008` |
+  | `NOW_EXEC_WINPS_MSG` / `NOW_EXEC_PWSH_MSG` | `NOW_EXEC_FLAG_PS_ELEVATED` | `0x4000` |
+  | `NOW_STATUS` (`NOW_STATUS_ERROR_KIND_NOW`) | `NOW_CODE_ELEVATION_DENIED` | `0x0009` |
+  | `NOW_STATUS` (`NOW_STATUS_ERROR_KIND_NOW`) | `NOW_CODE_ELEVATION_UNAVAILABLE` | `0x000A` |
   
   ## Included bug fix (separate commit)
 
@@ -227,4 +221,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### <!-- 6 -->Documentation
 
 - Update README.md and uniformize wording (#19) ([17719140e7](https://github.com/Devolutions/now-proto/commit/17719140e7b52b209cda9c17d0ef892cf006f723)) 
-
