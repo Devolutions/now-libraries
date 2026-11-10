@@ -12,6 +12,12 @@ queues, and permits **one tracked execution at a time per stream**. Tracked oper
 expose raw `Vec<u8>` stdout/stderr chunks, stdin forwarding, normal cancellation, and
 terminal status.
 
+Use `Execution::cancel_handle()` to obtain an owned, cloneable `ExecutionCancelHandle`.
+Its `cancel()` method waits for the peer's cancellation response while the caller continues polling `Execution::next_event()`.
+Queue acceptance is not cancellation success: a peer rejection returns `NowClientError::RemoteStatus`, leaves the execution tracked, and permits another cancellation attempt.
+After acceptance, use `Execution::wait()` to observe the terminal result.
+The existing `Execution::cancel()` remains available when concurrent event polling is not needed.
+
 `session_lock` and `session_logoff` ask the peer to lock or log off the interactive user
 session that hosts it. They require the matching negotiated session capability, so a custom
 `client_capset` must advertise `NowSessionCapsetFlags::LOCK` or `LOGOFF`; otherwise they
