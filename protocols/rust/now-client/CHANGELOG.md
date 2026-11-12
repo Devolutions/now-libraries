@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [[0.2.1](https://github.com/Devolutions/now-libraries/compare/now-client-v0.2.0...now-client-v0.2.1)] - 2026-11-12
+
+### <!-- 1 -->Features
+
+- Add independent execution cancellation handle ([#127](https://github.com/Devolutions/now-libraries/issues/127)) ([ad7da2d5ae](https://github.com/Devolutions/now-libraries/commit/ad7da2d5ae67ba3219ca83670483e8001239c2b3)) 
+
+  ## Summary
+  - Add an owned, cloneable cancellation handle so clients can await the
+  peer response while continuing to poll execution events.
+  - Keep `Execution::cancel()` as a convenience wrapper and preserve
+  rejection/tracking behavior.
+  - Document the API and test accepted, rejected, retry, and
+  event-progress paths.
+  
+  ## Verification
+  - `cargo +1.94.1 test -p now-client --locked --offline`: 21 passed.
+  - `cargo +1.94.1 fmt --all -- --check` and `cargo +1.94.1 clippy -p
+  now-client --all-targets --locked --offline -- -D warnings`: passed.
+  
+  The `feat:` title matches the `release_commits` filter in
+  `release-plz.toml`. No manual version or changelog update is included;
+  after this change lands on `master`, the `Release crates` workflow will
+  generate the release-preparation PR.
+
+
+
 ## [[0.2.0](https://github.com/Devolutions/now-libraries/compare/now-client-v0.1.0...now-client-v0.2.0)] - 2026-10-30
 
 ### <!-- 1 -->Features
