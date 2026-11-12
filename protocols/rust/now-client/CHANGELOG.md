@@ -25,10 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `cargo +1.94.1 fmt --all -- --check` and `cargo +1.94.1 clippy -p
   now-client --all-targets --locked --offline -- -D warnings`: passed.
   
-  The `feat:` title matches the `release_commits` filter in
-  `release-plz.toml`. No manual version or changelog update is included;
-  after this change lands on `master`, the `Release crates` workflow will
-  generate the release-preparation PR.
 
 
 
