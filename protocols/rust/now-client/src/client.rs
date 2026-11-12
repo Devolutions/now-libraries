@@ -237,6 +237,14 @@ impl Execution {
         self.session_id
     }
 
+    /// Returns an owned handle that can await cancellation while [`Self::next_event`] is polled.
+    pub fn cancel_handle(&self) -> ExecutionCancelHandle {
+        ExecutionCancelHandle {
+            session_id: self.session_id,
+            command_sender: self.command_sender.clone(),
+        }
+    }
+
     /// Receives the next execution event, or `None` when the event stream is closed.
     pub async fn next_event(&mut self) -> Option<ExecutionEvent> {
         self.events.recv().await
@@ -261,7 +269,35 @@ impl Execution {
 
     /// Sends a cancel request and waits until the peer responds to it.
     ///
+    /// Use [`Self::cancel_handle`] to keep polling events while waiting for the response.
     /// Call [`Self::wait`] afterwards to observe the matching terminal result.
+    pub async fn cancel(&self) -> Result<(), NowClientError> {
+        self.cancel_handle().cancel().await
+    }
+
+    /// Waits for the remote terminal result.
+    ///
+    /// A nonzero remote exit code is returned as [`ExecutionStatus::Completed`], not an error.
+    pub async fn wait(self) -> Result<ExecutionStatus, NowClientError> {
+        self.terminal
+            .await
+            .map_err(|_| NowClientError::WorkerClosed("worker stopped before terminal result".to_owned()))?
+    }
+}
+
+/// Cloneable cancellation handle for one tracked execution, independent of its event receiver.
+#[derive(Clone)]
+pub struct ExecutionCancelHandle {
+    session_id: u32,
+    command_sender: mpsc::Sender<WorkerCommand>,
+}
+
+impl ExecutionCancelHandle {
+    /// Sends a cancel request and waits for the peer's response, not just queue acceptance.
+    ///
+    /// Continue polling [`Execution::next_event`] while waiting, then use [`Execution::wait`]
+    /// to observe the terminal result.
+    /// A rejected request returns [`NowClientError::RemoteStatus`] and leaves the execution tracked.
     pub async fn cancel(&self) -> Result<(), NowClientError> {
         let (response_sender, response_receiver) = oneshot::channel();
         self.command_sender
@@ -274,15 +310,6 @@ impl Execution {
         response_receiver
             .await
             .map_err(|_| NowClientError::WorkerClosed("worker stopped while waiting for cancel response".to_owned()))?
-    }
-
-    /// Waits for the remote terminal result.
-    ///
-    /// A nonzero remote exit code is returned as [`ExecutionStatus::Completed`], not an error.
-    pub async fn wait(self) -> Result<ExecutionStatus, NowClientError> {
-        self.terminal
-            .await
-            .map_err(|_| NowClientError::WorkerClosed("worker stopped before terminal result".to_owned()))?
     }
 }
 
@@ -1088,7 +1115,7 @@ mod tests {
     use now_proto_pdu::{
         NowChannelCapsetMsg, NowChannelHeartbeatMsg, NowChannelMessage, NowExecCancelRspMsg, NowExecCapsetFlags,
         NowExecDataMsg, NowExecDataStreamKind, NowExecMessage, NowExecResultMsg, NowExecStartedMsg, NowMessage,
-        NowSessionCapsetFlags,
+        NowSessionCapsetFlags, NowStatusErrorKind,
     };
     use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
@@ -1538,6 +1565,181 @@ mod tests {
             Ok(()) => {}
             Err(error) => panic!("test peer task failed: {error}"),
         }
+    }
+
+    // oracle: regression IronRDP cancellation must await the peer while execution events keep advancing.
+    #[tokio::test]
+    async fn cancel_handle_keeps_events_advancing_until_peer_accepts() {
+        tokio::time::timeout(Duration::from_secs(5), async {
+            let (client_stream, mut peer_stream) = tokio::io::duplex(4096);
+            let (output_drained, output_received) = tokio::sync::oneshot::channel();
+            let (finish, finished) = tokio::sync::oneshot::channel();
+            let peer = tokio::spawn(async move {
+                let _ = read_message(&mut peer_stream).await;
+                write_message(
+                    &mut peer_stream,
+                    capset(NowExecCapsetFlags::STYLE_PROCESS | NowExecCapsetFlags::IO_REDIRECTION),
+                )
+                .await;
+                let session_id = match read_message(&mut peer_stream).await {
+                    NowMessage::Exec(NowExecMessage::Process(message)) => message.session_id(),
+                    message => panic!("expected Process request, got {message:?}"),
+                };
+                write_message(&mut peer_stream, NowExecStartedMsg::new(session_id)).await;
+                match read_message(&mut peer_stream).await {
+                    NowMessage::Exec(NowExecMessage::CancelReq(message)) => {
+                        assert_eq!(message.session_id(), session_id)
+                    }
+                    message => panic!("expected cancel request, got {message:?}"),
+                }
+                write_message(
+                    &mut peer_stream,
+                    NowExecDataMsg::new(session_id, NowExecDataStreamKind::Stdout, false, b"still running")
+                        .expect("stdout PDU must be valid"),
+                )
+                .await;
+                output_received
+                    .await
+                    .expect("output must be drained before the peer responds");
+                write_message(&mut peer_stream, NowExecCancelRspMsg::new_success(session_id)).await;
+                finished.await.expect("terminal result must be requested");
+                write_message(&mut peer_stream, NowExecResultMsg::new_success(session_id, 0)).await;
+            });
+
+            let config = NowClientConfig {
+                event_queue_capacity: 1,
+                ..NowClientConfig::default()
+            };
+            let handle = NowClient::connect(client_stream, config)
+                .await
+                .expect("handshake must succeed");
+            let mut execution = handle
+                .process(ProcessRequest::new("process.exe"))
+                .await
+                .expect("Process request must start");
+            assert_eq!(execution.next_event().await, Some(ExecutionEvent::Started));
+            let cancel_handle = execution.cancel_handle().clone();
+            let cancel = cancel_handle.cancel();
+            tokio::pin!(cancel);
+            tokio::select! {
+                biased;
+                result = &mut cancel => panic!("cancel completed before the peer responded: {result:?}"),
+                event = execution.next_event() => assert_eq!(
+                    event,
+                    Some(ExecutionEvent::Stdout { data: b"still running".to_vec(), last: false }),
+                ),
+            }
+            output_drained.send(()).expect("peer must still be waiting");
+            cancel.await.expect("peer must accept cancellation");
+            assert_eq!(execution.next_event().await, Some(ExecutionEvent::CancelAccepted));
+            let terminal = execution.wait();
+            tokio::pin!(terminal);
+            tokio::select! {
+                biased;
+                result = &mut terminal => panic!("execution completed before the terminal result: {result:?}"),
+                () = tokio::task::yield_now() => {}
+            }
+            finish.send(()).expect("peer must still be waiting");
+            assert_eq!(
+                terminal.await.expect("execution must finish"),
+                ExecutionStatus::Cancelled
+            );
+            peer.await.expect("test peer must finish");
+        })
+        .await
+        .expect("cancellation and event polling must not deadlock");
+    }
+
+    // oracle: regression IronRDP rejected cancellation must clear pending state and retain actual execution tracking.
+    #[tokio::test]
+    async fn cancel_handle_rejection_allows_retry_and_preserves_execution() {
+        tokio::time::timeout(Duration::from_secs(5), async {
+            let (client_stream, mut peer_stream) = tokio::io::duplex(4096);
+            let (finish, finished) = tokio::sync::oneshot::channel();
+            let (checked, check) = tokio::sync::oneshot::channel();
+            let peer = tokio::spawn(async move {
+                let _ = read_message(&mut peer_stream).await;
+                write_message(
+                    &mut peer_stream,
+                    capset(NowExecCapsetFlags::STYLE_PROCESS | NowExecCapsetFlags::IO_REDIRECTION),
+                )
+                .await;
+                let session_id = match read_message(&mut peer_stream).await {
+                    NowMessage::Exec(NowExecMessage::Process(message)) => message.session_id(),
+                    message => panic!("expected Process request, got {message:?}"),
+                };
+                write_message(&mut peer_stream, NowExecStartedMsg::new(session_id)).await;
+                for _ in 0..2 {
+                    match read_message(&mut peer_stream).await {
+                        NowMessage::Exec(NowExecMessage::CancelReq(message)) => {
+                            assert_eq!(message.session_id(), session_id);
+                        }
+                        message => panic!("expected cancel request, got {message:?}"),
+                    }
+                    write_message(
+                        &mut peer_stream,
+                        NowExecCancelRspMsg::new_error(session_id, NowStatusErrorKind::WinApi(5))
+                            .expect("access denied response must be valid"),
+                    )
+                    .await;
+                }
+                write_message(
+                    &mut peer_stream,
+                    NowExecDataMsg::new(session_id, NowExecDataStreamKind::Stderr, true, b"still tracked")
+                        .expect("stderr PDU must be valid"),
+                )
+                .await;
+                finished
+                    .await
+                    .expect("execution must stay active until the result is requested");
+                write_message(&mut peer_stream, NowExecResultMsg::new_success(session_id, 37)).await;
+                check.await.expect("finished execution handle must be checked");
+            });
+
+            let handle = NowClient::connect(client_stream, NowClientConfig::default())
+                .await
+                .expect("handshake must succeed");
+            let mut execution = handle
+                .process(ProcessRequest::new("process.exe"))
+                .await
+                .expect("Process request must start");
+            assert_eq!(execution.next_event().await, Some(ExecutionEvent::Started));
+            let cancel_handle = execution.cancel_handle();
+            for _ in 0..2 {
+                match cancel_handle.cancel().await {
+                    Err(NowClientError::RemoteStatus { session_id, error }) => {
+                        assert_eq!(session_id, execution.id());
+                        assert_eq!(error.kind(), NowStatusErrorKind::WinApi(5));
+                    }
+                    result => panic!("peer rejection must be returned before execution finishes: {result:?}"),
+                }
+            }
+            assert!(matches!(
+                handle.process(ProcessRequest::new("other.exe")).await,
+                Err(NowClientError::OperationInProgress),
+            ));
+            assert_eq!(
+                execution.next_event().await,
+                Some(ExecutionEvent::Stderr {
+                    data: b"still tracked".to_vec(),
+                    last: true,
+                }),
+            );
+            let session_id = execution.id();
+            finish.send(()).expect("peer must still be waiting");
+            assert_eq!(
+                execution.wait().await.expect("execution must finish normally"),
+                ExecutionStatus::Completed { exit_code: 37 },
+            );
+            assert!(matches!(
+                cancel_handle.cancel().await,
+                Err(NowClientError::OperationFinished { session_id: id }) if id == session_id,
+            ));
+            checked.send(()).expect("peer must still be connected");
+            peer.await.expect("test peer must finish");
+        })
+        .await
+        .expect("peer rejection must not wait for execution completion");
     }
 
     #[tokio::test]
