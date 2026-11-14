@@ -161,15 +161,11 @@ pub fn parse_policy(bytes: &[u8]) -> Result<Policy, Vec<ValidationError>> {
         return Err(malformed());
     };
 
-    if !document.duplicate_keys.is_empty() {
-        return Err(document
-            .duplicate_keys
-            .into_iter()
-            .map(|pointer| ValidationError {
-                code: ErrorCode::DuplicateKey,
-                pointer,
-            })
-            .collect());
+    if let Some(pointer) = document.first_duplicate_key {
+        return Err(vec![ValidationError {
+            code: ErrorCode::DuplicateKey,
+            pointer,
+        }]);
     }
 
     let top = Members {

@@ -1,6 +1,6 @@
 //! A strict RFC 8259 reader that keeps what the contract needs and general parsers hide ([§json]).
 //!
-//! It reports duplicate keys after unescaping with their pointers, keeps the raw spelling of numbers, rejects unpaired surrogates and limits nesting depth.
+//! It reports the first key that repeats after unescaping with its pointer, keeps the raw spelling of numbers, rejects unpaired surrogates and limits nesting depth.
 //!
 //! [§json]: https://github.com/Devolutions/now-libraries/blob/master/policies/CONTRACT.policy.md#json
 
@@ -24,8 +24,10 @@ pub(crate) enum Value {
 #[derive(Debug)]
 pub(crate) struct Document {
     pub(crate) value: Value,
-    /// The pointer of every member whose key an earlier member of the same object already has.
-    pub(crate) duplicate_keys: Vec<String>,
+    /// The pointer of the first member, in document order, whose key an earlier member of the same object already has.
+    ///
+    /// Later duplicates are not recorded, because each pointer copies its whole path and a document within the size limit can hold enough duplicates under a long key to exhaust memory.
+    pub(crate) first_duplicate_key: Option<String>,
 }
 
 /// The document is not well-formed JSON within the contract's limits.
@@ -39,7 +41,7 @@ pub(crate) fn parse(text: &str) -> Result<Document, Malformed> {
         text,
         pos: 0,
         path: Vec::new(),
-        duplicate_keys: Vec::new(),
+        first_duplicate_key: None,
     };
 
     parser.skip_whitespace();
@@ -52,7 +54,7 @@ pub(crate) fn parse(text: &str) -> Result<Document, Malformed> {
 
     Ok(Document {
         value,
-        duplicate_keys: parser.duplicate_keys,
+        first_duplicate_key: parser.first_duplicate_key,
     })
 }
 
@@ -74,7 +76,7 @@ struct Parser<'a> {
     pos: usize,
     /// The reference tokens of the value being read.
     path: Vec<String>,
-    duplicate_keys: Vec<String>,
+    first_duplicate_key: Option<String>,
 }
 
 impl Parser<'_> {
@@ -140,12 +142,12 @@ impl Parser<'_> {
             self.pos += 1;
             self.skip_whitespace();
 
-            if !keys.insert(key.clone()) {
+            if !keys.insert(key.clone()) && self.first_duplicate_key.is_none() {
                 let mut pointer = String::new();
                 for token in self.path.iter().chain(core::iter::once(&key)) {
                     push_token(&mut pointer, token);
                 }
-                self.duplicate_keys.push(pointer);
+                self.first_duplicate_key = Some(pointer);
             }
 
             self.path.push(key.clone());

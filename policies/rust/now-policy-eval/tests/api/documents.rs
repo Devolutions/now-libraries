@@ -147,6 +147,15 @@ fn keys_repeated_after_unescaping_are_duplicates() {
 }
 
 #[test]
+fn several_duplicate_keys_report_only_the_first() {
+    // oracle: contract policies/CONTRACT.policy.md §errors
+    // Several duplicates are several defects, so any non-empty subset of their DuplicateKey errors conforms.
+    // Reporting only the first keeps the report small whatever the number of duplicates and the length of their pointers.
+    let text = r#"{"Rules":[],"Metadata":{"a":0,"a":1,"b":0,"b":1,"a":2},"Rules":[]}"#;
+    assert_eq!(errors(text.as_bytes()), error("DuplicateKey", "/Metadata/a"));
+}
+
+#[test]
 fn duplicate_key_pointer_escapes_its_tokens() {
     // oracle: spec RFC 6901 §3
     // oracle: contract policies/CONTRACT.policy.md §errors
