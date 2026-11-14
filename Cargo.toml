@@ -5,6 +5,7 @@ members = [
   "protocols/rust/*",
   "xtask",
 ]
+exclude = ["xtask/unicode-tables"]
 
 [workspace.package]
 edition = "2021"

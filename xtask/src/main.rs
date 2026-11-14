@@ -15,6 +15,7 @@ mod dotnet;
 mod prelude;
 mod rust;
 mod section;
+mod unicode;
 
 use std::path::{Path, PathBuf};
 
@@ -84,6 +85,7 @@ fn main() -> anyhow::Result<()> {
                 rust::tests_run(&sh)?;
             }
         }
+        Action::UnicodeTables => unicode::tables(&sh)?,
     }
 
     Ok(())

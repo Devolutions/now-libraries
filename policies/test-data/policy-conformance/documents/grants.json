@@ -1,0 +1,375 @@
+{
+  "cases": [
+    {
+      "name": "doc-grant-every-opt-in-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "A grant for each of the nine opt-ins of §opt-ins.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}, "SkipHashCheck": {}, "CustomInstallLocation": {"Patterns": ["C:/Apps/*"]}, "CustomParameters": {"Patterns": ["--silent"]}, "InstallerArguments": {}, "PrePostCommands": {}, "KillBeforeOperation": {}, "UninstallPrevious": {}, "NoUpgrade": {}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-forbid-every-opt-in-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "A forbid for each of the nine opt-ins of §opt-ins.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}, "SkipHashCheck": {}, "CustomInstallLocation": {"Patterns": ["C:/Apps/*"]}, "CustomParameters": {"Patterns": ["--silent"]}, "InstallerArguments": {}, "PrePostCommands": {}, "KillBeforeOperation": {}, "UninstallPrevious": {}, "NoUpgrade": {}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-grant-interactive-with-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A grant for Interactive is an object with no keys. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {"Patterns": ["*"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/Interactive/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-skiphashcheck-with-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A grant for SkipHashCheck is an object with no keys. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"SkipHashCheck": {"Patterns": ["*"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/SkipHashCheck/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-installerarguments-with-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A grant for InstallerArguments is an object with no keys. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"InstallerArguments": {"Patterns": ["*"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/InstallerArguments/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-prepostcommands-with-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A grant for PrePostCommands is an object with no keys. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"PrePostCommands": {"Patterns": ["*"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/PrePostCommands/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-killbeforeoperation-with-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A grant for KillBeforeOperation is an object with no keys. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"KillBeforeOperation": {"Patterns": ["*"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/KillBeforeOperation/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-uninstallprevious-with-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A grant for UninstallPrevious is an object with no keys. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"UninstallPrevious": {"Patterns": ["*"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/UninstallPrevious/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-noupgrade-with-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A grant for NoUpgrade is an object with no keys. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"NoUpgrade": {"Patterns": ["*"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/NoUpgrade/Patterns"}]}
+    },
+    {
+      "name": "doc-forbid-no-key-opt-in-with-key-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A forbid for KillBeforeOperation is an object with no keys. Control: doc-forbid-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"KillBeforeOperation": {"Patterns": ["explorer.exe"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Forbids/KillBeforeOperation/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-no-key-opt-in-boolean-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Every grant is an object, even one with no fields (§def-grants). Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": true}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Grants/Interactive"}]}
+    },
+    {
+      "name": "doc-grant-no-key-opt-in-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Every grant is an object, even one with no fields (§def-grants). Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": null}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Grants/Interactive"}]}
+    },
+    {
+      "name": "doc-grant-no-key-opt-in-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Every grant is an object, even one with no fields (§def-grants). Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": []}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Grants/Interactive"}]}
+    },
+    {
+      "name": "doc-forbid-no-key-opt-in-boolean-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Every forbid is an object. Control: doc-forbid-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"NoUpgrade": true}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Forbids/NoUpgrade"}]}
+    },
+    {
+      "name": "doc-grant-unknown-opt-in-pre-release",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "PreRelease is not in the closed set of opt-ins: Pre-release is a version condition, not an opt-in. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"PreRelease": {}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/PreRelease"}]}
+    },
+    {
+      "name": "doc-grant-unknown-opt-in-elevation",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "Elevation is not in the closed set of opt-ins: elevation is a property, not an opt-in (§def-elevation). Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"Elevation": {}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/Elevation"}]}
+    },
+    {
+      "name": "doc-grant-unknown-opt-in-lowercase",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "interactive is not in the closed set of opt-ins: keys match only with their exact characters (§json). Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"interactive": {}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/interactive"}]}
+    },
+    {
+      "name": "doc-grant-unknown-opt-in-singular",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "CustomParameter is not in the closed set of opt-ins: the opt-in is CustomParameters. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameter": {}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/CustomParameter"}]}
+    },
+    {
+      "name": "doc-grant-unknown-opt-in-scope",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "Scope is not in the closed set of opt-ins: scope is a property, not an opt-in. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"Scope": {}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/Scope"}]}
+    },
+    {
+      "name": "doc-forbid-unknown-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "Elevated is not an opt-in. Control: doc-forbid-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"Elevated": {}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Forbids/Elevated"}]}
+    },
+    {
+      "name": "doc-grant-params-patterns-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Patterns is required in a grant for CustomParameters. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {}}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Grants/CustomParameters/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-params-patterns-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Patterns is a non-empty list. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": []}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Grants/CustomParameters/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-params-empty-pattern-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "A pattern is a non-empty string. Control: doc-grant-every-opt-in-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": ["--silent", ""]}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Grants/CustomParameters/Patterns/1"}]}
+    },
+    {
+      "name": "doc-grant-params-except-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A '*' pattern narrowed by Except.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": ["*"], "Except": ["--silent"]}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-grant-params-except-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Except is a non-empty list. Control: doc-grant-params-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": ["*"], "Except": []}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Grants/CustomParameters/Except"}]}
+    },
+    {
+      "name": "doc-grant-params-except-empty-pattern-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "An Except pattern is a non-empty string. Control: doc-grant-params-except-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": ["*"], "Except": [""]}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Grants/CustomParameters/Except/0"}]}
+    },
+    {
+      "name": "doc-grant-params-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": ["--silent"], "Values": ["--silent"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/CustomParameters/Values"}]}
+    },
+    {
+      "name": "doc-grant-location-patterns-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Patterns is required in a grant for CustomInstallLocation. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {}}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Grants/CustomInstallLocation/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-location-patterns-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Patterns is a non-empty list. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": []}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Grants/CustomInstallLocation/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-location-empty-pattern-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "A pattern is a non-empty string. Control: doc-grant-every-opt-in-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["C:/Apps/*", ""]}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Grants/CustomInstallLocation/Patterns/1"}]}
+    },
+    {
+      "name": "doc-grant-location-except-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A '*' pattern narrowed by Except.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*"], "Except": ["C:/Apps/*"]}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-grant-location-except-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Except is a non-empty list. Control: doc-grant-location-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*"], "Except": []}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Grants/CustomInstallLocation/Except"}]}
+    },
+    {
+      "name": "doc-grant-location-except-empty-pattern-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "An Except pattern is a non-empty string. Control: doc-grant-location-except-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*"], "Except": [""]}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Grants/CustomInstallLocation/Except/0"}]}
+    },
+    {
+      "name": "doc-grant-location-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["C:/Apps/*"], "Values": ["C:/Apps/*"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Grants/CustomInstallLocation/Values"}]}
+    },
+    {
+      "name": "doc-grant-params-patterns-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Patterns is a list. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": "--silent"}}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Grants/CustomParameters/Patterns"}]}
+    },
+    {
+      "name": "doc-grant-params-pattern-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A pattern is a string. Control: doc-grant-every-opt-in-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": [1]}}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Grants/CustomParameters/Patterns/0"}]}
+    },
+    {
+      "name": "doc-grant-params-except-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Except is a list. Control: doc-grant-params-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": {"Patterns": ["*"], "Except": "--override"}}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Grants/CustomParameters/Except"}]}
+    },
+    {
+      "name": "doc-grant-params-boolean-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A grant is an object. Control: doc-grant-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomParameters": true}}]},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/Rules/0/Grants/CustomParameters"}]}
+    },
+    {
+      "name": "doc-grant-location-star-pattern-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "Any non-empty string is a pattern; validation sets no path syntax for CustomInstallLocation patterns.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {}, "Grants": {"CustomInstallLocation": {"Patterns": ["*"]}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-forbid-params-patterns-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Patterns is required in a forbid for CustomParameters. Control: doc-forbid-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomParameters": {}}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Forbids/CustomParameters/Patterns"}]}
+    },
+    {
+      "name": "doc-forbid-params-patterns-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Patterns is a non-empty list. Control: doc-forbid-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomParameters": {"Patterns": []}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Forbids/CustomParameters/Patterns"}]}
+    },
+    {
+      "name": "doc-forbid-params-empty-pattern-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "A pattern is a non-empty string. Control: doc-forbid-every-opt-in-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomParameters": {"Patterns": ["--silent", ""]}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Forbids/CustomParameters/Patterns/1"}]}
+    },
+    {
+      "name": "doc-forbid-params-except-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A '*' pattern narrowed by Except.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomParameters": {"Patterns": ["*"], "Except": ["--silent"]}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-forbid-params-except-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Except is a non-empty list. Control: doc-forbid-params-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomParameters": {"Patterns": ["*"], "Except": []}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Forbids/CustomParameters/Except"}]}
+    },
+    {
+      "name": "doc-forbid-params-except-empty-pattern-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "An Except pattern is a non-empty string. Control: doc-forbid-params-except-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomParameters": {"Patterns": ["*"], "Except": [""]}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Forbids/CustomParameters/Except/0"}]}
+    },
+    {
+      "name": "doc-forbid-params-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Control: doc-forbid-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomParameters": {"Patterns": ["--silent"], "Values": ["--silent"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Forbids/CustomParameters/Values"}]}
+    },
+    {
+      "name": "doc-forbid-location-patterns-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Patterns is required in a forbid for CustomInstallLocation. Control: doc-forbid-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomInstallLocation": {}}}]},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/Rules/0/Forbids/CustomInstallLocation/Patterns"}]}
+    },
+    {
+      "name": "doc-forbid-location-patterns-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Patterns is a non-empty list. Control: doc-forbid-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomInstallLocation": {"Patterns": []}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Forbids/CustomInstallLocation/Patterns"}]}
+    },
+    {
+      "name": "doc-forbid-location-empty-pattern-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "A pattern is a non-empty string. Control: doc-forbid-every-opt-in-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomInstallLocation": {"Patterns": ["C:/Apps/*", ""]}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Forbids/CustomInstallLocation/Patterns/1"}]}
+    },
+    {
+      "name": "doc-forbid-location-except-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "A '*' pattern narrowed by Except.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomInstallLocation": {"Patterns": ["*"], "Except": ["C:/Apps/*"]}}}]},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-forbid-location-except-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Except is a non-empty list. Control: doc-forbid-location-except-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomInstallLocation": {"Patterns": ["*"], "Except": []}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Forbids/CustomInstallLocation/Except"}]}
+    },
+    {
+      "name": "doc-forbid-location-except-empty-pattern-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §patterns",
+      "note": "An Except pattern is a non-empty string. Control: doc-forbid-location-except-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomInstallLocation": {"Patterns": ["*"], "Except": [""]}}}]},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/Rules/0/Forbids/CustomInstallLocation/Except/0"}]}
+    },
+    {
+      "name": "doc-forbid-location-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §grants",
+      "note": "Control: doc-forbid-every-opt-in-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Forbids": {"CustomInstallLocation": {"Patterns": ["C:/Apps/*"], "Values": ["C:/Apps/*"]}}}]},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Rules/0/Forbids/CustomInstallLocation/Values"}]}
+    }
+  ]
+}

@@ -1,0 +1,254 @@
+{
+  "cases": [
+    {
+      "name": "doc-trust-source-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "winget"}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-any-source-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-every-manager-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Every manager identifier of §managers, including those the broker builds no command for, which a policy may still name.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": true}, {"Manager": "PowerShell", "AnySource": true}, {"Manager": "PowerShell7", "AnySource": true}, {"Manager": "Apt", "AnySource": true}, {"Manager": "Bun", "AnySource": true}, {"Manager": "Cargo", "AnySource": true}, {"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Dnf", "AnySource": true}, {"Manager": "Dotnet", "AnySource": true}, {"Manager": "Flatpak", "AnySource": true}, {"Manager": "Homebrew", "AnySource": true}, {"Manager": "Npm", "AnySource": true}, {"Manager": "Pacman", "AnySource": true}, {"Manager": "Pip", "AnySource": true}, {"Manager": "Scoop", "AnySource": true}, {"Manager": "Snap", "AnySource": true}, {"Manager": "Vcpkg", "AnySource": true}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-repeated-entry-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "A list other than Rules may repeat an entry with no effect.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "winget"}, {"Manager": "Winget", "Source": "winget"}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-source-and-any-source-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Controls: doc-trust-source-valid, doc-trust-any-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "winget", "AnySource": true}], "Rules": []},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/TrustedSources/0/AnySource"}]}
+    },
+    {
+      "name": "doc-trust-any-source-first-conflict",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "The pointer is AnySource whatever the key order.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"AnySource": true, "Manager": "Winget", "Source": "winget"}], "Rules": []},
+      "expect": {"errors": [{"code": "ConflictingKeys", "pointer": "/TrustedSources/0/AnySource"}]}
+    },
+    {
+      "name": "doc-trust-neither-source-key-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget"}], "Rules": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/TrustedSources/0/Source"}]}
+    },
+    {
+      "name": "doc-trust-any-source-false-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-trust-any-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": false}], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/TrustedSources/0/AnySource"}]}
+    },
+    {
+      "name": "doc-trust-any-source-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "AnySource is the boolean true. Control: doc-trust-any-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": "true"}], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0/AnySource"}]}
+    },
+    {
+      "name": "doc-trust-any-source-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "AnySource is the boolean true. Control: doc-trust-any-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": null}], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0/AnySource"}]}
+    },
+    {
+      "name": "doc-trust-any-source-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "AnySource is the boolean true. Control: doc-trust-any-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "AnySource": 1}], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0/AnySource"}]}
+    },
+    {
+      "name": "doc-trust-source-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Source is a non-empty name. Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": ""}], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/TrustedSources/0/Source"}]}
+    },
+    {
+      "name": "doc-trust-source-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": 1}], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0/Source"}]}
+    },
+    {
+      "name": "doc-trust-source-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": null}], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0/Source"}]}
+    },
+    {
+      "name": "doc-trust-source-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": ["winget"]}], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0/Source"}]}
+    },
+    {
+      "name": "doc-trust-manager-missing",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Source": "winget"}], "Rules": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/TrustedSources/0/Manager"}]}
+    },
+    {
+      "name": "doc-trust-manager-lowercase-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'winget' is not a manager identifier: closed-set values match only with their exact characters (§text-comparison). Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "winget", "Source": "winget"}], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/TrustedSources/0/Manager"}]}
+    },
+    {
+      "name": "doc-trust-manager-wrong-case-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'WinGet' is not a manager identifier: closed-set values match only with their exact characters (§text-comparison). Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "WinGet", "Source": "winget"}], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/TrustedSources/0/Manager"}]}
+    },
+    {
+      "name": "doc-trust-manager-trailing-space-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'Winget ' is not a manager identifier: closed-set values match only with their exact characters. Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget ", "Source": "winget"}], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/TrustedSources/0/Manager"}]}
+    },
+    {
+      "name": "doc-trust-manager-unlisted-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'Msstore' is not a manager identifier: it is not in the §managers list. Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Msstore", "Source": "winget"}], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/TrustedSources/0/Manager"}]}
+    },
+    {
+      "name": "doc-trust-manager-empty-invalid",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'' is not a manager identifier: it is not in the §managers list. Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "", "Source": "winget"}], "Rules": []},
+      "expect": {"errors": [{"code": "InvalidValue", "pointer": "/TrustedSources/0/Manager"}]}
+    },
+    {
+      "name": "doc-trust-manager-number-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": 1, "Source": "winget"}], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0/Manager"}]}
+    },
+    {
+      "name": "doc-trust-manager-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": null, "Source": "winget"}], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0/Manager"}]}
+    },
+    {
+      "name": "doc-trust-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Control: doc-trust-source-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "winget", "Url": "https://example.test"}], "Rules": []},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/TrustedSources/0/Url"}]}
+    },
+    {
+      "name": "doc-trust-entry-string-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
+      "note": "An entry is a source selector object. Control: doc-trust-source-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": ["winget"], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0"}]}
+    },
+    {
+      "name": "doc-trust-entry-null-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
+      "note": "An entry is a source selector object. Control: doc-trust-source-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [null], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0"}]}
+    },
+    {
+      "name": "doc-trust-entry-array-wrong-type",
+      "oracle": "contract policies/CONTRACT.policy.md §trusted-sources",
+      "note": "An entry is a source selector object. Control: doc-trust-source-valid. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [[]], "Rules": []},
+      "expect": {"errors": [{"code": "WrongType", "pointer": "/TrustedSources/0"}]}
+    },
+    {
+      "name": "doc-trust-second-entry-pointer",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "The pointer indexes the second entry from 0 (RFC 6901 §4).",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "winget"}, {"Manager": "Scoop"}], "Rules": []},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/TrustedSources/1/Source"}]}
+    },
+    {
+      "name": "doc-trust-source-129-bytes-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "A 129-byte source name, longer than any Source.Name a request can carry (§request-input). §source-selector asks only for a non-empty string. Control: doc-trust-source-valid; the rejected neighbour is doc-trust-source-empty-invalid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-source-leading-space-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "' winget' starts with White_Space, which would make a request's Source.Name unreadable (§reading). §source-selector asks only for a non-empty string. Control: doc-trust-source-valid; the rejected neighbour is doc-trust-source-empty-invalid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": " winget"}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-source-space-only-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "A source name of one space is non-empty. §source-selector asks only for a non-empty string. Control: doc-trust-source-valid; the rejected neighbour is doc-trust-source-empty-invalid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": " "}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-source-line-feed-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "A name containing U+000A, which a request's Source.Name cannot carry (§reading). §source-selector asks only for a non-empty string. Control: doc-trust-source-valid; the rejected neighbour is doc-trust-source-empty-invalid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "win\nget"}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-source-nul-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "A name containing U+0000, which a request's Source.Name cannot carry (§reading). §source-selector asks only for a non-empty string. Control: doc-trust-source-valid; the rejected neighbour is doc-trust-source-empty-invalid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "win\u0000get"}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-source-zero-width-space-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "A name containing U+200B, a Default_Ignorable_Code_Point that makes a request's Source.Name unreadable (§reading). §source-selector asks only for a non-empty string. Control: doc-trust-source-valid; the rejected neighbour is doc-trust-source-empty-invalid. DerivedCoreProperties.txt of Unicode 16.0.0 line 10591: '200B..200F    ; Default_Ignorable_Code_Point # Cf   [5] ZERO WIDTH SPACE..RIGHT-TO-LEFT MARK'.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "win\u200bget"}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-source-powershell-wildcard-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "'PS*' contains a character PowerShell's reading refuses in a source name (§manager-powershell); the selector is still valid. §source-selector asks only for a non-empty string. Control: doc-trust-source-valid; the rejected neighbour is doc-trust-source-empty-invalid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "PowerShell", "Source": "PS*"}], "Rules": []},
+      "expect": {"valid": true}
+    },
+    {
+      "name": "doc-trust-source-npm-other-name-valid",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "Npm's only source name is 'npm' (§manager-npm), so no readable request matches 'registry'; the selector is still valid. §source-selector asks only for a non-empty string. Control: doc-trust-source-valid; the rejected neighbour is doc-trust-source-empty-invalid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Npm", "Source": "registry"}], "Rules": []},
+      "expect": {"valid": true}
+    }
+  ]
+}

@@ -1,0 +1,280 @@
+{
+  "cases": [
+    {
+      "name": "doc-err-pointer-slash",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "An unknown top-level key 'a/b'; '/' is written '~1' (RFC 6901 §3). Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "a/b": 1},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/a~1b"}]}
+    },
+    {
+      "name": "doc-err-pointer-tilde",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "An unknown top-level key 'a~b'; '~' is written '~0' (RFC 6901 §3). Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "a~b": 1},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/a~0b"}]}
+    },
+    {
+      "name": "doc-err-pointer-tilde-one-literal",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "An unknown top-level key '~1'; the key is the two characters '~1'; '~' becomes '~0' and '1' stays, giving '~01', not '~1' (RFC 6901 §3). Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "~1": 1},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/~01"}]}
+    },
+    {
+      "name": "doc-err-pointer-empty-key",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "An unknown top-level key ''; the empty key is the empty reference token after '/' (RFC 6901 §3). Control: doc-minimal-valid.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "": 1},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/"}]}
+    },
+    {
+      "name": "doc-err-pointer-escaped-solidus-key",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "The key is written a\\/b, which decodes to a/b, and the pointer escapes the decoded key. The pointer escapes the key as RFC 6901 §3 defines.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"a\\/b\": 1}",
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/a~1b"}]}
+    },
+    {
+      "name": "doc-err-pointer-nested-escapes",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "An unknown Metadata key x~y/z. The pointer escapes the key as RFC 6901 §3 defines.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "x~y/z": 1}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Metadata/x~0y~1z"}]}
+    },
+    {
+      "name": "doc-err-pointer-non-ascii-key",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A pointer holds the key's characters unescaped except '~' and '/'. The pointer escapes the key as RFC 6901 §3 defines.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z", "é": 1}, "TrustedSources": [], "Rules": []},
+      "expect": {"errors": [{"code": "UnknownKey", "pointer": "/Metadata/é"}]}
+    },
+    {
+      "name": "doc-err-duplicate-key",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Metadata repeats Id with the same value; the pointer is the member. Control: doc-minimal-valid.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/Metadata/Id"}]}
+    },
+    {
+      "name": "doc-err-duplicate-key-top-level",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "The top-level object repeats Rules.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/Rules"}]}
+    },
+    {
+      "name": "doc-err-duplicate-key-escaped",
+      "oracle": "contract policies/CONTRACT.policy.md §json",
+      "note": "I\\u0064 decodes to Id, and keys match after escapes are decoded.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"I\\u0064\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/Metadata/Id"}]}
+    },
+    {
+      "name": "doc-err-duplicate-key-in-array-element",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "The first trusted source selector repeats Manager.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [{\"Manager\": \"Winget\", \"Manager\": \"Winget\", \"AnySource\": true}], \"Rules\": []}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/TrustedSources/0/Manager"}]}
+    },
+    {
+      "name": "doc-err-duplicate-key-in-grants",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Grants repeats the Interactive opt-in.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [{\"Id\": \"r1\", \"Decision\": \"Allow\", \"Select\": {}, \"Grants\": {\"Interactive\": {}, \"Interactive\": {}}}]}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/Rules/0/Grants/Interactive"}]}
+    },
+    {
+      "name": "doc-err-duplicate-format-version-supported-first",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "DuplicateKey is the only kind of error reported when it applies, so neither value is read as the format version.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"PolicyFormatVersion\": \"3.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-err-duplicate-format-version-supported-last",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "As doc-err-duplicate-format-version-supported-first with the values in the other order, which a last-value-wins parser would accept.",
+      "text": "{\"PolicyFormatVersion\": \"3.0.0\", \"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-err-duplicate-key-over-unknown-key",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "The unknown key ~ is repeated: UnknownKey and DuplicateKey both apply, and only DuplicateKey errors are reported. '~' is written '~0' (RFC 6901 §3).",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"~\": 1, \"~\": 2}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/~0"}]}
+    },
+    {
+      "name": "doc-err-duplicate-key-inside-unknown-value",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "DuplicateKey applies to any object of the document, including the value of an unknown key; UnknownKey at /X is then not reported.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"X\": {\"a\": 1, \"a\": 2}}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/X/a"}]}
+    },
+    {
+      "name": "doc-err-two-duplicate-keys",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Two DuplicateKey errors apply; which of them are reported is implementation-defined.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], \"Rules\": []}",
+      "expect": {"someOf": [{"code": "DuplicateKey", "pointer": "/Metadata/Id"}, {"code": "DuplicateKey", "pointer": "/Rules"}]}
+    },
+    {
+      "name": "doc-err-too-large-over-malformed",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Both DocumentTooLarge and MalformedDocument apply, and DocumentTooLarge is then the only error.",
+      "text": "{",
+      "padTo": 4194305,
+      "expect": {"errors": [{"code": "DocumentTooLarge", "pointer": ""}]}
+    },
+    {
+      "name": "doc-err-too-large-over-duplicate-key",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "doc-err-duplicate-key padded past the limit.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "padTo": 4194305,
+      "expect": {"errors": [{"code": "DocumentTooLarge", "pointer": ""}]}
+    },
+    {
+      "name": "doc-err-too-large-over-unsupported-version",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "An unsupported format version padded past the limit.",
+      "text": "{\"PolicyFormatVersion\": \"3.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "padTo": 4194305,
+      "expect": {"errors": [{"code": "DocumentTooLarge", "pointer": ""}]}
+    },
+    {
+      "name": "doc-err-malformed-over-duplicate-key",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "doc-err-duplicate-key with a trailing comma: MalformedDocument is the only error.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [], }",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-err-malformed-over-unsupported-version",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "An unsupported format version with a comment: MalformedDocument is the only error.",
+      "text": "{\"PolicyFormatVersion\": \"3.0.0\", \"Metadata\": {\"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [] /* newer */ }",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-err-malformed-unpaired-surrogate-over-duplicate-key",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A duplicate key and an unpaired surrogate: MalformedDocument is the only error.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Id\": \"p\", \"Publisher\": \"\\udfff\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "MalformedDocument", "pointer": ""}]}
+    },
+    {
+      "name": "doc-err-duplicate-key-over-unsupported-version",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A duplicate key and an unsupported format version: only DuplicateKey errors are reported.",
+      "text": "{\"PolicyFormatVersion\": \"9.9.9\", \"Metadata\": {\"Id\": \"p\", \"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/Metadata/Id"}]}
+    },
+    {
+      "name": "doc-err-duplicate-key-over-missing-format-version",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A duplicate key and no PolicyFormatVersion: only DuplicateKey errors are reported.",
+      "text": "{\"Metadata\": {\"Id\": \"p\", \"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": []}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/Metadata/Id"}]}
+    },
+    {
+      "name": "doc-err-duplicate-key-over-other-errors",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A duplicate key plus InvalidValue at Revision, UnknownKey at Extra and MissingKey at Rules: only DuplicateKey errors are reported.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 0, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Extra\": 1}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/Metadata/Id"}]}
+    },
+    {
+      "name": "doc-err-duplicate-key-over-duplicate-rule-id",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A duplicate key and a duplicate rule id: only DuplicateKey errors are reported.",
+      "text": "{\"PolicyFormatVersion\": \"2.0.0\", \"Metadata\": {\"Id\": \"p\", \"Id\": \"p\", \"Publisher\": \"x\", \"Revision\": 1, \"PublishedAt\": \"2026-01-01T00:00:00Z\"}, \"TrustedSources\": [], \"Rules\": [{\"Id\": \"r1\", \"Decision\": \"Allow\", \"Select\": {}}, {\"Id\": \"r1\", \"Decision\": \"Deny\", \"Select\": {}}]}",
+      "expect": {"errors": [{"code": "DuplicateKey", "pointer": "/Metadata/Id"}]}
+    },
+    {
+      "name": "doc-err-unsupported-version-over-other-errors",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "An unsupported format version plus MissingKey at Metadata and WrongType at Rules: UnsupportedFormatVersion is the only error.",
+      "document": {"PolicyFormatVersion": "1.0.0", "TrustedSources": [], "Rules": {}},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-err-unsupported-non-string-version-over-other-errors",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "A numeric format version plus an unknown key: UnsupportedFormatVersion is the only error.",
+      "document": {"PolicyFormatVersion": 2, "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Extra": 1},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-err-unsupported-version-over-nested-errors",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Format version 2.0 plus InvalidValue at Revision and at a rule Id: UnsupportedFormatVersion is the only error.",
+      "document": {"PolicyFormatVersion": "2.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 0, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "", "Decision": "Allow", "Select": {}}]},
+      "expect": {"errors": [{"code": "UnsupportedFormatVersion", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-err-empty-object-reports-format-version-only",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Every required top-level key is absent; the MissingKey for PolicyFormatVersion is then the only error.",
+      "text": "{}",
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-err-missing-format-version-over-other-errors",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "No PolicyFormatVersion plus InvalidValue at Revision and UnknownKey at Extra: the MissingKey for PolicyFormatVersion is the only error.",
+      "document": {"Metadata": {"Id": "p", "Publisher": "x", "Revision": 0, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [], "Extra": 1},
+      "expect": {"errors": [{"code": "MissingKey", "pointer": "/PolicyFormatVersion"}]}
+    },
+    {
+      "name": "doc-err-several-invalid-values",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Two defects and no precedence rule between them.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "", "Publisher": "", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"someOf": [{"code": "InvalidValue", "pointer": "/Metadata/Id"}, {"code": "InvalidValue", "pointer": "/Metadata/Publisher"}]}
+    },
+    {
+      "name": "doc-err-several-missing-keys",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Two defects and no precedence rule between them.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Publisher": "x", "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": []},
+      "expect": {"someOf": [{"code": "MissingKey", "pointer": "/Metadata/Id"}, {"code": "MissingKey", "pointer": "/Metadata/Revision"}]}
+    },
+    {
+      "name": "doc-err-unknown-key-and-invalid-decision",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Two defects at different depths.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "allow", "Select": {}}], "Extra": 1},
+      "expect": {"someOf": [{"code": "UnknownKey", "pointer": "/Extra"}, {"code": "InvalidValue", "pointer": "/Rules/0/Decision"}]}
+    },
+    {
+      "name": "doc-err-selector-conflict-and-false",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "AnySource conflicts with Source and is also false.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [{"Manager": "Winget", "Source": "winget", "AnySource": false}], "Rules": []},
+      "expect": {"someOf": [{"code": "ConflictingKeys", "pointer": "/TrustedSources/0/AnySource"}, {"code": "InvalidValue", "pointer": "/TrustedSources/0/AnySource"}]}
+    },
+    {
+      "name": "doc-err-grants-on-deny-and-empty-except",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Two defects in one rule. §errors: the pointer is the value, which is the entry when the defect is in one entry of a list.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Deny", "Select": {}, "Except": [{}], "Grants": {"Interactive": {}}}]},
+      "expect": {"someOf": [{"code": "ConflictingKeys", "pointer": "/Rules/0/Grants"}, {"code": "InvalidValue", "pointer": "/Rules/0/Except/0"}]}
+    },
+    {
+      "name": "doc-err-version-without-operations-and-invalid-minimum",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "Two defects in one selection.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "Allow", "Select": {"Version": {"Minimum": "latest"}}}]},
+      "expect": {"someOf": [{"code": "MissingKey", "pointer": "/Rules/0/Select/Operations"}, {"code": "InvalidValue", "pointer": "/Rules/0/Select/Version/Minimum"}]}
+    },
+    {
+      "name": "doc-err-duplicate-rule-id-and-invalid-decision",
+      "oracle": "contract policies/CONTRACT.policy.md §errors",
+      "note": "DuplicateRuleId has no precedence over other errors.",
+      "document": {"PolicyFormatVersion": "2.0.0", "Metadata": {"Id": "p", "Publisher": "x", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"}, "TrustedSources": [], "Rules": [{"Id": "r1", "Decision": "allow", "Select": {}}, {"Id": "r1", "Decision": "Allow", "Select": {}}]},
+      "expect": {"someOf": [{"code": "InvalidValue", "pointer": "/Rules/0/Decision"}, {"code": "DuplicateRuleId", "pointer": "/Rules/1/Id"}]}
+    }
+  ]
+}

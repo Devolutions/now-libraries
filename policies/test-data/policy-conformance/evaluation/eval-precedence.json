@@ -1,0 +1,556 @@
+{
+  "policy": {
+    "PolicyFormatVersion": "2.0.0",
+    "Metadata": {
+      "Id": "conformance-eval",
+      "Publisher": "Conformance suite",
+      "Revision": 1,
+      "PublishedAt": "2026-01-01T00:00:00Z",
+      "ValidFrom": "2026-01-01T00:00:00Z",
+      "ValidUntil": "2026-12-31T23:59:59Z"
+    },
+    "TrustedSources": [{"Manager": "Winget", "Source": "winget"}],
+    "Rules": [
+      {"Id": "allow-contoso", "Decision": "Allow", "Select": {"Packages": ["Contoso.*"]}},
+      {"Id": "deny-blocked", "Decision": "Deny", "Select": {"Packages": ["*.Blocked"]}}
+    ]
+  },
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "eval-precedence-unreadable-request-holds",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget).",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-validity-window-holds",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "ValidityWindow: the time is after ValidUntil.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-install-location-holds",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "InstallLocation: the relative location 'Apps' fails the install location check.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
+      },
+      "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-missing-version-holds",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "MissingVersion: the install has no Package.Version.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-untrusted-source-holds",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UntrustedSource: the source 'msstore' is not trusted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-deny-rule-holds",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "DenyRule: deny-blocked applies to the package.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-blocked"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-precedence-ungranted-opt-in-holds",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-contoso"}],
+        "optIns": ["SkipHashCheck"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-precedence-default-deny-holds",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "DefaultDeny: no Allow rule selects the Fabrikam package.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-allow-rules-holds",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "No check holds.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-contoso"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-precedence-unreadable-request-over-validity-window",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); ValidityWindow: the time is after ValidUntil. The higher check produces the decision.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-unreadable-request-over-install-location",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); InstallLocation: the relative location 'Apps' fails the install location check. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-unreadable-request-over-missing-version",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); MissingVersion: the install has no Package.Version. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool%"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-unreadable-request-over-untrusted-source",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-unreadable-request-over-deny-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); DenyRule: deny-blocked applies to the package. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.%.Blocked", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-unreadable-request-over-ungranted-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-unreadable-request-over-default-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); DefaultDeny: no Allow rule selects the package. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Fabrikam.Tool%", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-validity-window-over-install-location",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "ValidityWindow: the time is after ValidUntil; InstallLocation: the relative location 'Apps' fails the install location check. The higher check produces the decision.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-validity-window-over-missing-version",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "ValidityWindow: the time is after ValidUntil; MissingVersion: the install has no Package.Version. The higher check produces the decision.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-validity-window-over-untrusted-source",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "ValidityWindow: the time is after ValidUntil; UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-validity-window-over-deny-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "ValidityWindow: the time is after ValidUntil; DenyRule: deny-blocked applies to the package. The higher check produces the decision.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-validity-window-over-ungranted-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "ValidityWindow: the time is after ValidUntil; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-validity-window-over-default-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "ValidityWindow: the time is after ValidUntil; DefaultDeny: no Allow rule selects the Fabrikam package. The higher check produces the decision.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "ValidityWindow", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-install-location-over-missing-version",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "InstallLocation: the relative location 'Apps' fails the install location check; MissingVersion: the install has no Package.Version. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
+      },
+      "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-install-location-over-untrusted-source",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "InstallLocation: the relative location 'Apps' fails the install location check; UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
+      },
+      "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-install-location-over-deny-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "InstallLocation: the relative location 'Apps' fails the install location check; DenyRule: deny-blocked applies to the package. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
+      },
+      "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-install-location-over-ungranted-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "InstallLocation: the relative location 'Apps' fails the install location check; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}, "CustomInstallLocation": {"Path": "Apps"}}
+      },
+      "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-install-location-over-default-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "InstallLocation: the relative location 'Apps' fails the install location check; DefaultDeny: no Allow rule selects the Fabrikam package. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "Apps"}}
+      },
+      "expect": {"outcome": "Deny", "check": "InstallLocation", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-missing-version-over-untrusted-source",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "MissingVersion: the install has no Package.Version; UntrustedSource: the source 'msstore' is not trusted. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-missing-version-over-deny-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "MissingVersion: the install has no Package.Version; DenyRule: deny-blocked applies to the package. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Blocked"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-missing-version-over-ungranted-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "MissingVersion: the install has no Package.Version; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
+      },
+      "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-missing-version-over-default-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "MissingVersion: the install has no Package.Version; DefaultDeny: no Allow rule selects the Fabrikam package. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Fabrikam.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "MissingVersion", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-untrusted-source-over-deny-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UntrustedSource: the source 'msstore' is not trusted; DenyRule: deny-blocked applies to the package. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-untrusted-source-over-ungranted-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UntrustedSource: the source 'msstore' is not trusted; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
+      },
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-untrusted-source-over-default-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UntrustedSource: the source 'msstore' is not trusted; DefaultDeny: no Allow rule selects the Fabrikam package. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Fabrikam.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "UntrustedSource", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-precedence-deny-rule-over-ungranted-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "DenyRule: deny-blocked applies to the package; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Blocked", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-blocked"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-precedence-deny-rule-over-default-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "DenyRule: deny-blocked applies to the package; DefaultDeny: no Allow rule selects the Fabrikam package. The higher check produces the decision.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Fabrikam.Blocked", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-blocked"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-precedence-all-checks-hold",
+      "oracle": "contract policies/CONTRACT.policy.md §precedence",
+      "note": "UnreadableRequest: Package.Id contains the batch character %, so the broker builds no WinGet command and the request is unreadable (§manager-winget); ValidityWindow: the time is after ValidUntil; InstallLocation: the relative location 'Apps' fails the install location check; MissingVersion: the install has no Package.Version; UntrustedSource: the source 'msstore' is not trusted; DenyRule: deny-blocked applies to the package; UngrantedOptIn: allow-contoso applies and SkipHashCheck is not granted.",
+      "time": "2027-06-01T00:00:00Z",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.%.Blocked"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}, "CustomInstallLocation": {"Path": "Apps"}}
+      },
+      "expect": {"outcome": "Deny", "check": "UnreadableRequest", "rules": [], "optIns": [], "audited": false}
+    }
+  ]
+}

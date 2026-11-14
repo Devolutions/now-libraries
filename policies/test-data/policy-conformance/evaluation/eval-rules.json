@@ -1,0 +1,416 @@
+{
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "eval-rules-disabled-allow-not-applicable",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: eval-rules-enabled-true-allow.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Enabled": false, "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-rules-enabled-true-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Enabled": true, "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-rules-enabled-absent-allow",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Absent Enabled means true.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-rules-disabled-allow-grants-nothing",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "The disabled rule's grant of Interactive does not count.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {
+            "Id": "allow-interactive",
+            "Enabled": false,
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"Interactive": {}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["Interactive"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-rules-disabled-deny-not-applicable",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "Control: eval-rules-enabled-deny-applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-all", "Enabled": false, "Decision": "Deny", "Select": {}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-rules-enabled-deny-applies",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-all", "Enabled": true, "Decision": "Deny", "Select": {}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-rules-allow-without-grants-plain",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-rules-allow-without-grants-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "An Allow rule without Grants permits plain requests only. Control: eval-rules-allow-without-grants-plain.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["Interactive"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-rules-deny-without-forbids-plain",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}}},
+          {"Id": "deny-all", "Decision": "Deny", "Select": {}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-rules-deny-without-forbids-opt-in",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "A Deny rule without Forbids denies the request, not an opt-in, so the decision names no opt-in.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}}},
+          {"Id": "deny-all", "Decision": "Deny", "Select": {}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
+      },
+      "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-all"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-rules-deny-forbids-plain-allowed",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "A Deny rule with Forbids denies only requests using a forbidden opt-in.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"Interactive": {}, "SkipHashCheck": {}}
+          },
+          {"Id": "deny-interactive", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-rules-deny-forbids-opt-in-used",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"Interactive": {}, "SkipHashCheck": {}}
+          },
+          {"Id": "deny-interactive", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-interactive"}],
+        "optIns": ["Interactive"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-rules-deny-forbids-other-opt-in-used",
+      "oracle": "contract policies/CONTRACT.policy.md §rules",
+      "note": "SkipHashCheck is granted and not forbidden.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-all",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"Interactive": {}, "SkipHashCheck": {}}
+          },
+          {"Id": "deny-interactive", "Decision": "Deny", "Select": {}, "Forbids": {"Interactive": {}}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}

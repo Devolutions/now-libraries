@@ -28,3 +28,5 @@ _ReSharper*/
 
 # Obsidian
 .obsidian/
+# Standalone tool build output
+/xtask/unicode-tables/target

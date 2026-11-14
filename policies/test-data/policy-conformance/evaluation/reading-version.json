@@ -1,0 +1,7350 @@
+{
+  "policy": {
+    "PolicyFormatVersion": "2.0.0",
+    "Metadata": {
+      "Id": "conformance-reading",
+      "Publisher": "Policy conformance suite",
+      "Revision": 1,
+      "PublishedAt": "2026-01-01T00:00:00Z"
+    },
+    "TrustedSources": [
+      {
+        "Manager": "Winget",
+        "AnySource": true
+      },
+      {
+        "Manager": "PowerShell",
+        "AnySource": true
+      },
+      {
+        "Manager": "PowerShell7",
+        "AnySource": true
+      },
+      {
+        "Manager": "Apt",
+        "AnySource": true
+      },
+      {
+        "Manager": "Bun",
+        "AnySource": true
+      },
+      {
+        "Manager": "Cargo",
+        "AnySource": true
+      },
+      {
+        "Manager": "Chocolatey",
+        "AnySource": true
+      },
+      {
+        "Manager": "Dnf",
+        "AnySource": true
+      },
+      {
+        "Manager": "Dotnet",
+        "AnySource": true
+      },
+      {
+        "Manager": "Flatpak",
+        "AnySource": true
+      },
+      {
+        "Manager": "Homebrew",
+        "AnySource": true
+      },
+      {
+        "Manager": "Npm",
+        "AnySource": true
+      },
+      {
+        "Manager": "Pacman",
+        "AnySource": true
+      },
+      {
+        "Manager": "Pip",
+        "AnySource": true
+      },
+      {
+        "Manager": "Scoop",
+        "AnySource": true
+      },
+      {
+        "Manager": "Snap",
+        "AnySource": true
+      },
+      {
+        "Manager": "Vcpkg",
+        "AnySource": true
+      }
+    ],
+    "Rules": [
+      {
+        "Id": "allow-all",
+        "Decision": "Allow",
+        "Select": {}
+      }
+    ]
+  },
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "read-version-missing-trailing-zero",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2' against bound '1.2.0'. Missing trailing components count as zero. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-extra-trailing-zeros",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2.0.0.0' against bound '1.2'. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.0.0.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-leading-zeros",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '01.002.000' against bound '1.2'. Components compare numerically. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "01.002.000"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-numeric-not-lexical",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.10.0' against bound '1.2.0'. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.10.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-lower-component",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.1.99' against bound '1.2.0'. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.1.99"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-fourth-component",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2.0.1' against bound '1.2'. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.0.1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-v-prefix",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request 'v1.2.0' against bound '1.2'. An optional 'v' or 'V' prefix. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "v1.2.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-upper-v-prefix",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request 'V1.2' against bound '1.2.0'. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "V1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-build-metadata-ignored",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2.0+build.7' against bound '1.2.0'. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.0+build.7"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-empty-build-metadata",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2.0+' against bound '1.2.0'. Build metadata is zero or more characters. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.0+"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-component-beyond-64-bits",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '18446744073709551616.0' against bound '18446744073709551615.9'. 2^64 against 2^64-1: components compare whatever their length. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "18446744073709551615.9"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "18446744073709551615.9"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "18446744073709551616.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-long-components-equal",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.099999999999999999999' against bound '1.99999999999999999999'. A leading zero on a component longer than 64 bits. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.99999999999999999999"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.99999999999999999999"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.099999999999999999999"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-letter-component",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2.x' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.x"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-empty-component",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1..2' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1..2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-trailing-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2.' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2."
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-leading-dot",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '.1.2' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": ".1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-empty-pre-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2.0-' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.0-"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-pre-release-leading-zero",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2.0-beta.01' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.0-beta.01"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-empty-pre-release-identifier",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2.0-beta..1' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.0-beta..1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-plus-in-build",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2.0+a+b' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2.0+a+b"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-underscore",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.2_0' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.2_0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-double-v",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request 'vv1.2' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "vv1.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-v-only",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request 'v' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "v"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-word",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request 'latest' against bound '1.2.0'. Not a version (§version-scheme), so the condition is unknown; Winget resolves no range, so the version is concrete and the request is not missing it (§missing-version). Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.2.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "latest"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-not-a-version-matches-deny",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "A condition on a value that is not a version is unknown, which matches a Deny rule. Control: read-version-lower-not-denied.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-from-2",
+            "Decision": "Deny",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "latest"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [
+          {
+            "id": "deny-from-2"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-lower-not-denied",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "deny-from-2",
+            "Decision": "Deny",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "2.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-any",
+            "Decision": "Allow",
+            "Select": {}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-any"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-alpha",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-alpha' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-alpha"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-alpha-numeric",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-alpha.1' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-alpha.1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-fewer-identifiers",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-beta"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-numeric-below-alphanumeric",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-1' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-ascii-uppercase-first",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-Beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-Beta.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-equal",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-beta.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-equal-build",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta.2+exp.sha.5114f85' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-beta.2+exp.sha.5114f85"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-equal-v-prefix",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request 'v1.0.0-beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Dotnet reads a version with at least three release components as exactly that version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef",
+          "Version": "v1.0.0-beta.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-equal-fourth-zero",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0.0-beta.2' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; Dotnet reads a version with at least three release components as exactly that version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef",
+          "Version": "1.0.0.0-beta.2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-numeric-not-lexical",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta.11' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-beta.11"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-numeric-beyond-64-bits",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta.18446744073709551616' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-beta.18446744073709551616"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-more-identifiers",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta.2.0' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-beta.2.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-alphanumeric-above-numeric",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta.a' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-beta.a"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-rc",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-rc.1' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-rc.1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-higher-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.1-alpha' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.1-alpha"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-lower-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '0.9.9' against bound '1.0.0-beta.2'. Semantic Versioning 2.0.0 section 11 precedence; an Npm version is concrete when it is a Semantic Versioning 2.0.0 version. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta.2"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta.2"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "0.9.9"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-bound-two-components",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-alpha' against bound '1.0-alpha'. The bound's missing third component counts as zero. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum, and a value that is not a version neither (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0-alpha"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0-alpha"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-alpha"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-excluded",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "A version with a pre-release is a pre-release. Control: read-version-release-not-excluded.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-stable",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Prerelease": "Exclude"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0-beta.1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-release-not-excluded",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-stable",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Prerelease": "Exclude"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-stable"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-build-metadata-not-pre-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "'+beta' is build metadata, not a pre-release.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-stable",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Prerelease": "Exclude"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "1.0.0+beta"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-stable"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-winget-never-pre-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Under Winget no version is a pre-release. Control: read-version-pre-release-excluded.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-stable",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Prerelease": "Exclude"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0.0-beta.1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-stable"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-pre-release-satisfies-without-exclude",
+      "oracle": "contract policies/CONTRACT.policy.md §version-condition",
+      "note": "Without Prerelease, a pre-release satisfies the condition like any other version.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-from-1",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "2.0.0-beta.1"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-from-1"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-winget-pre-release-below-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta' against bound '1.0.0': lower. Comparisons use the pre-release under every manager (§version-scheme), Winget included. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum (§version-condition). Control: read-version-winget-pre-release-equal.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0.0-beta"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-winget-release-above-pre-release",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0' against bound '1.0.0-beta': higher. Comparisons use the pre-release under every manager (§version-scheme), Winget included. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum (§version-condition). Control: read-version-winget-pre-release-equal.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-winget-pre-release-order",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-alpha' against bound '1.0.0-beta': lower by Semantic Versioning 2.0.0 section 11 precedence (ASCII order of alphanumeric identifiers). Comparisons use the pre-release under every manager (§version-scheme), Winget included. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum (§version-condition). Control: read-version-winget-pre-release-equal.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0.0-alpha"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-winget-pre-release-equal",
+      "oracle": "contract policies/CONTRACT.policy.md §version-scheme",
+      "note": "Request '1.0.0-beta' against bound '1.0.0-beta': equal. Comparisons use the pre-release under every manager (§version-scheme), Winget included. Rules with Minimum and with Maximum set to the same bound: equal satisfies both, higher only Minimum, lower only Maximum (§version-condition).",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-reading",
+          "Publisher": "Policy conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [
+          {
+            "Manager": "Winget",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell",
+            "AnySource": true
+          },
+          {
+            "Manager": "PowerShell7",
+            "AnySource": true
+          },
+          {
+            "Manager": "Apt",
+            "AnySource": true
+          },
+          {
+            "Manager": "Bun",
+            "AnySource": true
+          },
+          {
+            "Manager": "Cargo",
+            "AnySource": true
+          },
+          {
+            "Manager": "Chocolatey",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dnf",
+            "AnySource": true
+          },
+          {
+            "Manager": "Dotnet",
+            "AnySource": true
+          },
+          {
+            "Manager": "Flatpak",
+            "AnySource": true
+          },
+          {
+            "Manager": "Homebrew",
+            "AnySource": true
+          },
+          {
+            "Manager": "Npm",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pacman",
+            "AnySource": true
+          },
+          {
+            "Manager": "Pip",
+            "AnySource": true
+          },
+          {
+            "Manager": "Scoop",
+            "AnySource": true
+          },
+          {
+            "Manager": "Snap",
+            "AnySource": true
+          },
+          {
+            "Manager": "Vcpkg",
+            "AnySource": true
+          }
+        ],
+        "Rules": [
+          {
+            "Id": "allow-at-least",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Minimum": "1.0.0-beta"
+              }
+            }
+          },
+          {
+            "Id": "allow-at-most",
+            "Decision": "Allow",
+            "Select": {
+              "Operations": [
+                "Install"
+              ],
+              "Version": {
+                "Maximum": "1.0.0-beta"
+              }
+            }
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0.0-beta"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-at-least"
+          },
+          {
+            "id": "allow-at-most"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-leading-hyphen",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "An Install whose Package.Version starts with '-' is unreadable under the default rule. Control: read-version-characters-allowed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "-1.0"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-slash",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'/' is not a character the default rule allows in Package.Version. Control: read-version-characters-allowed.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0/2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-update",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The default version character rule applies to an Update. Control: read-version-characters-allowed.",
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0/2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "The default version character rule names Install and Update only.",
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0/2"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-allowed",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "ASCII letters, digits, '.', '-', '+' and '_' are allowed; the version is concrete.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "1.0_rc+x-y"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [
+          {
+            "id": "allow-all"
+          }
+        ],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-tilde-winget",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'~' is a character only some readings add, not WinGet's. Control: read-version-characters-tilde-npm.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {
+          "Name": "winget"
+        },
+        "Package": {
+          "Id": "Contoso.Tool",
+          "Version": "~1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-tilde-npm",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Npm adds '~' to the version characters; '~1.2.3' is not a Semantic Versioning 2.0.0 version, so Npm reads it as a range and the version is missing.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "~1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-equals-cargo",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Cargo adds '='; '=1.2.3' is not a version, so Cargo resolves it as a range and the version is missing.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Cargo",
+        "Source": {
+          "Name": "crates.io"
+        },
+        "Package": {
+          "Id": "serde",
+          "Version": "=1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-equals-npm",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "'=' is a Cargo addition, not Npm's. Control: read-version-characters-equals-cargo.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Npm",
+        "Source": {
+          "Name": "npm"
+        },
+        "Package": {
+          "Id": "left-pad",
+          "Version": "=1.2.3"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-range-dotnet",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "Dotnet adds '[', ']', '(', ')' and ','; the range is not a version, so the version is missing.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "Dotnet",
+        "Source": {
+          "Name": "nuget.org"
+        },
+        "Package": {
+          "Id": "dotnet-ef",
+          "Version": "[1.0.0,2.0.0)"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-range-powershell7",
+      "oracle": "contract policies/CONTRACT.policy.md §missing-version",
+      "note": "PowerShell7 adds '[', ']', ',' and spaces; the range is not a version, so PowerShell7 resolves it as a range and the version is missing.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell7",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "[1.0, 2.0]"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "MissingVersion",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "read-version-characters-range-powershell",
+      "oracle": "contract policies/CONTRACT.policy.md §managers",
+      "note": "PowerShell adds no version characters, so '[' makes the request unreadable. Control: read-version-characters-range-powershell7.",
+      "request": {
+        "Operation": "Install",
+        "Manager": "PowerShell",
+        "Source": {
+          "Name": "PSGallery"
+        },
+        "Package": {
+          "Id": "PSReadLine",
+          "Version": "[1.0]"
+        },
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}
