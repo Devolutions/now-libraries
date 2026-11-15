@@ -1,0 +1,13 @@
+[package]
+name = "unicode-tables"
+version = "0.0.0"
+edition = "2024"
+description = "Generates the Unicode tables that the policy evaluators use from the published UCD files"
+readme = "README.md"
+publish = false
+
+# This crate is not a member of the root workspace: it is compiled only when `cargo xtask unicode tables` runs it.
+[workspace]
+
+[dependencies]
+sha2 = "0.11"

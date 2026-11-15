@@ -1,0 +1,25 @@
+[package]
+name = "now-policy-eval"
+version = "0.0.0"
+readme = "README.md"
+description = "NOW policy 2.x document reading and request evaluation"
+edition = "2024"
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+publish = false
+
+[lib]
+doctest = false
+test = false
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+proptest = { version = "1", default-features = false, features = ["std"] }
+rstest = "0.27"
+serde_json = { version = "1", features = ["raw_value"] }

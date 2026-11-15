@@ -1,0 +1,795 @@
+{
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "eval-selection-empty-selects-all",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "An absent condition places no constraint.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-operations-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Update"]}}]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-operations-no-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Update"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-operations-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Install", "Uninstall"]}}]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-sources-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-sources-no-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "The source is trusted through AnySource; only the rule's selection excludes it.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-sources-any-source",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-sel",
+            "Decision": "Allow",
+            "Select": {"Sources": [{"Manager": "Winget", "AnySource": true}]}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "msstore"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-sources-other-manager",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-sel",
+            "Decision": "Allow",
+            "Select": {"Sources": [{"Manager": "Chocolatey", "AnySource": true}]}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-sources-spans-managers",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "One selection may name sources of several managers; one matching selector suffices.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Chocolatey", "AnySource": true}, {"Manager": "Winget", "Source": "winget"}]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-packages-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Packages": ["Contoso.*"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-packages-no-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Packages": ["Fabrikam.*"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-version-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-sel",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "1.0"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-version-no-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-sel",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Version": {"Minimum": "2.0"}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-scopes-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Scopes": ["Machine"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Scope": "Machine",
+        "Elevation": "Elevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-scopes-no-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Scopes": ["Machine"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Scope": "User",
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-scopes-any-entry",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Scopes": ["User", "Machine"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Scope": "Machine",
+        "Elevation": "Elevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-architectures-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Architectures": ["X64"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-architectures-no-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Architectures": ["X64"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-elevation-requested",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Elevation Elevated makes the elevation Elevated.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Elevation": "Elevated"}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Scope": "User",
+        "Elevation": "Elevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-elevation-machine-scope",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Scope Machine makes the elevation Elevated.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Elevation": "Elevated"}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Scope": "Machine",
+        "Elevation": "Elevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-elevation-not-elevated",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Elevation": "Elevated"}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Scope": "User",
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-non-elevated-match",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Elevation": "NonElevated"}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Scope": "User",
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-non-elevated-no-scope",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Elevation is a required member, so it is never unknown: with no Scope the request states NonElevated.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Elevation": "NonElevated"}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-non-elevated-machine-scope",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Elevation": "NonElevated"}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Scope": "Machine",
+        "Elevation": "Elevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-all-conditions-hold",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-sel",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Architectures": ["X64"]}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-one-condition-fails",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "Every condition must hold. Control: eval-selection-all-conditions-hold.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-sel",
+            "Decision": "Allow",
+            "Select": {"Operations": ["Install"], "Architectures": ["X64"]}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-selection-sources-named-excludes-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "A selection naming a source lists Install and Update, so the Allow rule does not select the WinGet Uninstall. Control: eval-selection-sources-any-source-uninstall.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Operations": ["Install", "Update"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}}]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DefaultDeny",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-selection-sources-any-source-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §selection",
+      "note": "An AnySource selector needs no Operations and matches the unknown source of a WinGet Uninstall. Contrast eval-selection-sources-named-excludes-uninstall.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-sel", "Decision": "Allow", "Select": {"Sources": [{"Manager": "Winget", "AnySource": true}]}}]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-sel"}],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}

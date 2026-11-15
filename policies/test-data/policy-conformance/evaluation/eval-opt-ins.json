@@ -1,0 +1,850 @@
+{
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "eval-opt-in-interactive-ungranted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["Interactive"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-interactive-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-granted", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"Interactive": {}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-granted"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-skip-hash-check-ungranted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["SkipHashCheck"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-skip-hash-check-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-granted", "Decision": "Allow", "Select": {}, "Grants": {"SkipHashCheck": {}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"SkipHashCheck": {}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-granted"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-custom-install-location-ungranted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps"}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["CustomInstallLocation"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-custom-install-location-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-granted",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomInstallLocation": {"Path": "C:\\Apps"}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-granted"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-custom-parameters-ungranted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "'--silent' is not in the Winget table, so the request uses only CustomParameters.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["CustomParameters"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-custom-parameters-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-granted",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomParameters": {"Patterns": ["--silent"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--silent"]}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-granted"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-pre-operation-command-ungranted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"PrePostCommands": {"Pre": "cmd /c echo"}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["PrePostCommands"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-pre-operation-command-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-granted", "Decision": "Allow", "Select": {}, "Grants": {"PrePostCommands": {}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"PrePostCommands": {"Pre": "cmd /c echo"}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-granted"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-post-operation-command-ungranted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"PrePostCommands": {"Post": "cmd /c echo"}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["PrePostCommands"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-post-operation-command-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-granted", "Decision": "Allow", "Select": {}, "Grants": {"PrePostCommands": {}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"PrePostCommands": {"Post": "cmd /c echo"}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-granted"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-kill-before-operation-ungranted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"KillBeforeOperation": {"Processes": ["tool.exe"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["KillBeforeOperation"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-kill-before-operation-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-granted", "Decision": "Allow", "Select": {}, "Grants": {"KillBeforeOperation": {}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"KillBeforeOperation": {"Processes": ["tool.exe"]}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-granted"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-uninstall-previous-ungranted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"UninstallPrevious": {}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["UninstallPrevious"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-uninstall-previous-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-granted", "Decision": "Allow", "Select": {}, "Grants": {"UninstallPrevious": {}}}]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"UninstallPrevious": {}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-granted"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-no-upgrade-ungranted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"NoUpgrade": {}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["NoUpgrade"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-no-upgrade-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-granted", "Decision": "Allow", "Select": {}, "Grants": {"NoUpgrade": {}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"NoUpgrade": {}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-granted"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-interactive-parameter-both-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "'--interactive' would ask for Interactive (§manager-winget), so the request is unreadable even though the rule grants both Interactive and the parameter: no custom parameter makes a request use an opt-in (§opt-ins). Control: eval-opt-in-custom-parameters-granted.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-both",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"Interactive": {}, "CustomParameters": {"Patterns": ["*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--interactive"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-skip-hash-check-parameter-both-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "'--ignore-security-hash' would ask for SkipHashCheck (§manager-winget), so the request is unreadable even though the rule grants both SkipHashCheck and the parameter: no custom parameter makes a request use an opt-in (§opt-ins). Control: eval-opt-in-custom-parameters-granted.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-both",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"SkipHashCheck": {}, "CustomParameters": {"Patterns": ["*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--ignore-security-hash"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-location-parameter-both-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "'--location' would ask for CustomInstallLocation (§manager-winget), so the request is unreadable even though the rule grants both CustomInstallLocation and the parameter: no custom parameter makes a request use an opt-in (§opt-ins). Control: eval-opt-in-custom-parameters-granted.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-both",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"CustomInstallLocation": {"Patterns": ["C:\\Apps"]}, "CustomParameters": {"Patterns": ["*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--location", "C:\\Apps"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-installer-arguments-parameter-both-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "'--override' would ask for InstallerArguments (§manager-winget), so the request is unreadable even though the rule grants both InstallerArguments and the parameter: no custom parameter makes a request use an opt-in (§opt-ins). Control: eval-opt-in-custom-parameters-granted.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-both",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"InstallerArguments": {}, "CustomParameters": {"Patterns": ["*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--override", "/quiet"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-uninstall-previous-parameter-both-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "'--uninstall-previous' would ask for UninstallPrevious (§manager-winget), so the request is unreadable even though the rule grants both UninstallPrevious and the parameter: no custom parameter makes a request use an opt-in (§opt-ins). Control: eval-opt-in-custom-parameters-granted.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-both",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"UninstallPrevious": {}, "CustomParameters": {"Patterns": ["*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Update",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--uninstall-previous"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-no-upgrade-parameter-both-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "'--no-upgrade' would ask for NoUpgrade (§manager-winget), so the request is unreadable even though the rule grants both NoUpgrade and the parameter: no custom parameter makes a request use an opt-in (§opt-ins). Control: eval-opt-in-custom-parameters-granted.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-both",
+            "Decision": "Allow",
+            "Select": {},
+            "Grants": {"NoUpgrade": {}, "CustomParameters": {"Patterns": ["*"]}}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"CustomParameters": {"Values": ["--no-upgrade"]}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UnreadableRequest",
+        "rules": [],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-installer-arguments-ungranted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "OptIns.InstallerArguments makes the request use InstallerArguments, which no applicable rule grants. Control: eval-opt-in-installer-arguments-granted.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"InstallerArguments": {"Arguments": "/quiet", "Mode": "Replace"}}
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "UngrantedOptIn",
+        "rules": [{"id": "allow-all"}],
+        "optIns": ["InstallerArguments"],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-opt-in-installer-arguments-granted",
+      "oracle": "contract policies/CONTRACT.policy.md §opt-ins",
+      "note": "The rule grants InstallerArguments.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-granted", "Decision": "Allow", "Select": {}, "Grants": {"InstallerArguments": {}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated",
+        "OptIns": {"InstallerArguments": {"Arguments": "/quiet", "Mode": "Replace"}}
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-granted"}],
+        "optIns": [],
+        "audited": false
+      }
+    }
+  ]
+}

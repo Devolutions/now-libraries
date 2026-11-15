@@ -1,0 +1,710 @@
+{
+  "time": "2026-06-01T00:00:00Z",
+  "cases": [
+    {
+      "name": "eval-applicability-allow-select-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "Winget's scope is unknown without Scope or --scope (§manager-winget), so the selection is unknown.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-machine", "Decision": "Allow", "Select": {"Scopes": ["Machine"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-applicability-allow-select-known",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "Control: eval-applicability-allow-select-unknown.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-machine", "Decision": "Allow", "Select": {"Scopes": ["Machine"]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Scope": "Machine",
+        "Elevation": "Elevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-machine"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-deny-select-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "The scope is unknown, so the Deny rule's selection is unknown and the rule applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-machine", "Decision": "Deny", "Select": {"Scopes": ["Machine"]}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-machine"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-deny-select-no-match",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "Control: eval-applicability-deny-select-unknown.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-machine", "Decision": "Deny", "Select": {"Scopes": ["Machine"]}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Scope": "User",
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-allow-except-match",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-but-x64", "Decision": "Allow", "Select": {}, "Except": [{"Architectures": ["X64"]}]}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-applicability-allow-except-no-match",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-but-x64", "Decision": "Allow", "Select": {}, "Except": [{"Architectures": ["X64"]}]}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-but-x64"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-allow-except-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "The architecture is unknown without Package.Architecture (§managers), so the Except is unknown and the Allow rule counts as excepted.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-but-x64", "Decision": "Allow", "Select": {}, "Except": [{"Architectures": ["X64"]}]}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-applicability-deny-except-match",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-but-x64", "Decision": "Deny", "Select": {}, "Except": [{"Architectures": ["X64"]}]}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-deny-except-no-match",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-but-x64", "Decision": "Deny", "Select": {}, "Except": [{"Architectures": ["X64"]}]}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-but-x64"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-deny-except-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "The architecture is unknown, so the Except is unknown and the Deny rule counts as not excepted.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {"Id": "deny-but-x64", "Decision": "Deny", "Select": {}, "Except": [{"Architectures": ["X64"]}]}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Deny",
+        "check": "DenyRule",
+        "rules": [{"id": "deny-but-x64"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-selection-no-match-over-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "Scope unknown, architecture not matching: a condition that does not match makes the selection not match, so the Deny rule does not apply.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {
+            "Id": "deny-machine-x64",
+            "Decision": "Deny",
+            "Select": {"Scopes": ["Machine"], "Architectures": ["X64"]}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-selection-unknown-over-match",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "Scope unknown, architecture matching: the selection is unknown.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-machine-x64",
+            "Decision": "Allow",
+            "Select": {"Scopes": ["Machine"], "Architectures": ["X64"]}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-applicability-selection-all-match",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "Control: eval-applicability-selection-unknown-over-match.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-machine-x64",
+            "Decision": "Allow",
+            "Select": {"Scopes": ["Machine"], "Architectures": ["X64"]}
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
+        "Scope": "Machine",
+        "Elevation": "Elevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-machine-x64"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-except-match-over-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "The scope entry is unknown and the architecture entry matches, so the Except list matches and the Deny rule does not apply.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}},
+          {
+            "Id": "deny-except",
+            "Decision": "Deny",
+            "Select": {},
+            "Except": [{"Scopes": ["Machine"]}, {"Architectures": ["X64"]}]
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-except-unknown-over-no-match",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "The scope entry is unknown and the architecture entry does not match, so the Except list is unknown.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-except",
+            "Decision": "Allow",
+            "Select": {},
+            "Except": [{"Scopes": ["Machine"]}, {"Architectures": ["X64"]}]
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-applicability-except-none-match",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "Control: eval-applicability-except-unknown-over-no-match.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {
+            "Id": "allow-except",
+            "Decision": "Allow",
+            "Select": {},
+            "Except": [{"Scopes": ["Machine"]}, {"Architectures": ["X64"]}]
+          }
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "Arm64"},
+        "Scope": "User",
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-except"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-list-unknown-entry",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "A Source selector equal to a Scoop manifest source only ignoring case is unknown for it (§manager-scoop), so the selector naming 'HTTPS://example.test/a.json' is unknown for the Install from 'https://example.test/a.json'. The only selector is unknown, so the Sources condition is unknown and the Allow rule is not applicable. Neighbour: eval-applicability-list-match-over-unknown.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Scoop", "AnySource": true}],
+        "Rules": [{"Id": "allow-scoop", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Scoop", "Source": "HTTPS://example.test/a.json"}]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {"Name": "https://example.test/a.json"},
+        "Package": {"Id": "https://example.test/a.json"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-applicability-list-match-over-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "A Source selector equal to a Scoop manifest source only ignoring case is unknown for it (§manager-scoop), so the selector naming 'HTTPS://example.test/a.json' is unknown for the Install from 'https://example.test/a.json'. One selector is unknown and AnySource matches, so the Sources condition matches. Neighbour: eval-applicability-list-unknown-entry.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Scoop", "AnySource": true}],
+        "Rules": [{"Id": "allow-scoop", "Decision": "Allow", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Scoop", "Source": "HTTPS://example.test/a.json"}, {"Manager": "Scoop", "AnySource": true}]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {"Name": "https://example.test/a.json"},
+        "Package": {"Id": "https://example.test/a.json"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-scoop"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-deny-list-unknown",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "A Source selector equal to a Scoop manifest source only ignoring case is unknown for it (§manager-scoop), so the selector naming 'HTTPS://example.test/a.json' is unknown for the Install from 'https://example.test/a.json'. The Deny rule's Sources condition is unknown, so it applies. The request is that of eval-applicability-list-unknown-entry.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Scoop", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}, {"Id": "deny-scoop", "Decision": "Deny", "Select": {"Operations": ["Install"], "Sources": [{"Manager": "Scoop", "Source": "HTTPS://example.test/a.json"}]}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Scoop",
+        "Source": {"Name": "https://example.test/a.json"},
+        "Package": {"Id": "https://example.test/a.json"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DenyRule", "rules": [{"id": "deny-scoop"}], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-applicability-other-manager-selector-unknown-source",
+      "oracle": "contract policies/CONTRACT.policy.md §source-selector",
+      "note": "A Dotnet Uninstall has an unknown source, because no command shows which source the installed package came from (§managers). A Winget selector does not match a Dotnet request, even one whose source is unknown, so the Deny rule does not apply.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {"Id": "conformance-eval", "Publisher": "Conformance suite", "Revision": 1, "PublishedAt": "2026-01-01T00:00:00Z"},
+        "TrustedSources": [{"Manager": "Dotnet", "AnySource": true}],
+        "Rules": [{"Id": "allow-all", "Decision": "Allow", "Select": {}}, {"Id": "deny-winget", "Decision": "Deny", "Select": {"Sources": [{"Manager": "Winget", "AnySource": true}]}}]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Dotnet",
+        "Source": {"Name": "nuget.org"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-grants-not-required",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "An Allow rule that grants an opt-in applies to a plain request too.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-interactive", "Decision": "Allow", "Select": {}, "Grants": {"Interactive": {}}}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-interactive"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-except-narrows-own-rule",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "allow-but-x64's Except excludes it alone; allow-all still applies.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [
+          {"Id": "allow-but-x64", "Decision": "Allow", "Select": {}, "Except": [{"Architectures": ["X64"]}]},
+          {"Id": "allow-all", "Decision": "Allow", "Select": {}}
+        ]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3", "Architecture": "X64"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {
+        "outcome": "Allow",
+        "check": "AllowRules",
+        "rules": [{"id": "allow-all"}],
+        "optIns": [],
+        "audited": false
+      }
+    },
+    {
+      "name": "eval-applicability-except-named-source-install",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "The Except entry names Install and the source 'winget', and matches the WinGet Install, so the Allow rule is excepted. Control: eval-applicability-except-named-source-uninstall.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-but-winget-install", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}]}]
+      },
+      "request": {
+        "Operation": "Install",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool", "Version": "1.2.3"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Deny", "check": "DefaultDeny", "rules": [], "optIns": [], "audited": false}
+    },
+    {
+      "name": "eval-applicability-except-named-source-uninstall",
+      "oracle": "contract policies/CONTRACT.policy.md §applicability",
+      "note": "The Except entry lists only Install, so it does not match the WinGet Uninstall, and the Allow rule applies. Contrast eval-applicability-except-named-source-install.",
+      "policy": {
+        "PolicyFormatVersion": "2.0.0",
+        "Metadata": {
+          "Id": "conformance-eval",
+          "Publisher": "Conformance suite",
+          "Revision": 1,
+          "PublishedAt": "2026-01-01T00:00:00Z"
+        },
+        "TrustedSources": [{"Manager": "Winget", "AnySource": true}],
+        "Rules": [{"Id": "allow-but-winget-install", "Decision": "Allow", "Select": {}, "Except": [{"Operations": ["Install"], "Sources": [{"Manager": "Winget", "Source": "winget"}]}]}]
+      },
+      "request": {
+        "Operation": "Uninstall",
+        "Manager": "Winget",
+        "Source": {"Name": "winget"},
+        "Package": {"Id": "Contoso.Tool"},
+        "Elevation": "NonElevated"
+      },
+      "expect": {"outcome": "Allow", "check": "AllowRules", "rules": [{"id": "allow-but-winget-install"}], "optIns": [], "audited": false}
+    }
+  ]
+}
