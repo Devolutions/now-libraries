@@ -771,6 +771,27 @@ public class BrokerClientTests
         Assert.DoesNotContain(trace, line => line.Contains(Grant) || line.Contains("from the broker"));
     }
 
+    // The capabilities preflight runs before the server is authenticated, so its text is untrusted.
+    [Theory]
+    [InlineData(500, "{\"ResponseKind\":\"ErrorResponse\",\"ResponseVersion\":\"1.0\",\"Server\":{\"ServerVersion\":\"x\",\"Transport\":\"HttpNamedPipe\"},\"Code\":\"InternalError\",\"Message\":\"impostor text\"}")]
+    [InlineData(500, "impostor text")]
+    [InlineData(200, "{\"impostor text\"")]
+    public async Task ExecuteGrant_never_copies_capabilities_preflight_text_into_exception(int status, string body)
+    {
+        var transport = new FakeAuthenticatedTransport(
+            capabilitiesResponse: new BrokerTransportResponse { StatusCode = status, Body = body });
+        var trace = new List<string>();
+        var client = CreateGrantClient(transport, trace: trace);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), Grant));
+
+        Assert.DoesNotContain("impostor", ex.ToString());
+        Assert.Null(ex.BrokerError);
+        Assert.True(ex.NoWorkStarted);
+        Assert.Empty(transport.GrantRequests);
+        Assert.DoesNotContain(trace, line => line.Contains("impostor"));
+    }
+
     [Fact]
     public void ServiceBrokerServerAuthenticator_accepts_running_service_process_in_session_0()
     {
@@ -1115,11 +1136,16 @@ internal sealed class RecordingAuthenticator : IBrokerServerAuthenticator
 internal sealed class FakeAuthenticatedTransport : IAuthenticatedBrokerTransport
 {
     private readonly BrokerTransportResponse _grantResponse;
+    private readonly BrokerTransportResponse _capabilitiesResponse;
     private readonly BrokerPipeServerIdentity _server;
 
-    public FakeAuthenticatedTransport(BrokerTransportResponse? grantResponse = null, BrokerPipeServerIdentity? server = null)
+    public FakeAuthenticatedTransport(
+        BrokerTransportResponse? grantResponse = null,
+        BrokerPipeServerIdentity? server = null,
+        BrokerTransportResponse? capabilitiesResponse = null)
     {
         _grantResponse = grantResponse ?? new BrokerTransportResponse { StatusCode = 200, Body = BrokerClientTests.GrantResponseJson() };
+        _capabilitiesResponse = capabilitiesResponse ?? new BrokerTransportResponse { StatusCode = 200, Body = BrokerClientTests.CapabilitiesResponse };
         _server = server ?? new BrokerPipeServerIdentity(Environment.ProcessId, 0);
     }
 
@@ -1135,7 +1161,7 @@ internal sealed class FakeAuthenticatedTransport : IAuthenticatedBrokerTransport
     {
         LegacyRequests.Add(request);
         return request.Path == "/v1/capabilities"
-            ? Task.FromResult(new BrokerTransportResponse { StatusCode = 200, Body = BrokerClientTests.CapabilitiesResponse })
+            ? Task.FromResult(_capabilitiesResponse)
             : throw new InvalidOperationException($"Unexpected legacy request to {request.Path}.");
     }
 

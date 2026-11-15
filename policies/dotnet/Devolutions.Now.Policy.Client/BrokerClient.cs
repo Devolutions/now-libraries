@@ -412,7 +412,7 @@ public sealed class BrokerClient : IDisposable
         }
 
         var packageRequest = BuildPackageRequest(request, requestId);
-        var capabilities = await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
+        var capabilities = await GetGrantCapabilities(endpoint, cancellationToken).ConfigureAwait(false);
         EnsurePackageRequestSupported(packageRequest, capabilities, endpoint);
 
         var body = BrokerSerializer.Serialize(packageRequest);
@@ -789,6 +789,25 @@ public sealed class BrokerClient : IDisposable
 
         _capabilities = await FetchCapabilities(cancellationToken).ConfigureAwait(false);
         return _capabilities;
+    }
+
+    // The capabilities preflight uses an unauthenticated connection, so a failure must not carry
+    // server-supplied text into the grant caller's exception.
+    private async Task<CapabilitiesResponse> GetGrantCapabilities(string endpoint, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            var kind = ex is BrokerClientException brokerException ? brokerException.Kind : BrokerClientErrorKind.BrokerUnavailable;
+            throw new BrokerClientException(
+                kind,
+                "The broker capabilities could not be read before grant execution.",
+                noWorkStarted: true,
+                endpoint: endpoint);
+        }
     }
 
     private TResponse DeserializeResponse<TResponse>(
