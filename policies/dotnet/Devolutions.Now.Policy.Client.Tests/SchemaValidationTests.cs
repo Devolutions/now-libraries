@@ -142,6 +142,37 @@ public class SchemaValidationTests
         Assert.True(errors.Count > 0, "expected the empty package id to fail schema validation");
     }
 
+    // oracle: contract Devolutions/devolutions-gateway@9916823b0e9f:crates/agent-channel-proto/CONTRACT.package-management.md §operations
+    [Theory]
+    [InlineData("Update")]
+    [InlineData("Uninstall")]
+    public async Task Default_feed_is_schema_valid_without_a_url(string operation)
+    {
+        var schema = await TestData.SchemaAsync("PackageRequest");
+        var request = JsonNode.Parse(await File.ReadAllTextAsync(
+            Path.Combine(TestData.SamplesDir, "requests", "winget-vscode-install.request.json")))!;
+        request["Operation"] = operation;
+        request["Source"] = JsonNode.Parse("""{"Name":""}""");
+
+        Assert.Empty(schema.Validate(request.ToJsonString()));
+    }
+
+    // oracle: contract Devolutions/devolutions-gateway@9916823b0e9f:crates/agent-channel-proto/CONTRACT.package-management.md §operations
+    [Theory]
+    [InlineData("Install", null)]
+    [InlineData("Update", "https://example.test/feed")]
+    [InlineData("Uninstall", "https://example.test/feed")]
+    public async Task Empty_feed_is_schema_invalid_for_install_or_with_a_url(string operation, string? url)
+    {
+        var schema = await TestData.SchemaAsync("PackageRequest");
+        var request = JsonNode.Parse(await File.ReadAllTextAsync(
+            Path.Combine(TestData.SamplesDir, "requests", "winget-vscode-install.request.json")))!;
+        request["Operation"] = operation;
+        request["Source"] = new JsonObject { ["Name"] = "", ["Url"] = url };
+
+        Assert.NotEmpty(schema.Validate(request.ToJsonString()));
+    }
+
     private static async Task AssertValid(string samplePath, JsonSchema schema)
     {
         var errors = schema.Validate(await File.ReadAllTextAsync(samplePath));

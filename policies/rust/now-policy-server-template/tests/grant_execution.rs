@@ -97,6 +97,61 @@ fn mock() -> MockPackageBrokerServer {
     MockPackageBrokerServer::new("grant-tests")
 }
 
+// oracle: contract Devolutions/devolutions-gateway@9916823b0e9f:crates/agent-channel-proto/CONTRACT.package-management.md §operations
+#[rstest]
+#[case::install_without_feed("Install", "", None)]
+#[case::default_update_with_url("Update", "", Some("https://example.test/feed"))]
+#[case::uninstall_with_feed("Uninstall", "winget", None)]
+#[case::uninstall_with_url("Uninstall", "", Some("https://example.test/feed"))]
+#[tokio::test]
+async fn invalid_execution_feeds_do_not_reach_the_broker(
+    #[case] operation: &str,
+    #[case] name: &str,
+    #[case] url: Option<&str>,
+) {
+    let server = mock().with_grant_result(Ok(grant_response()));
+    let mut request: Value = serde_json::from_slice(&request_body()).unwrap();
+    request["Operation"] = json!(operation);
+    request["Source"] = json!({ "Name": name, "Url": url });
+
+    let (status, body, _) = post(
+        server.clone(),
+        GRANT_PATH,
+        grant_headers(&[b"secret-grant" as &[u8]], &[JSON]),
+        JSON,
+        serde_json::to_vec(&request).unwrap(),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(body["Code"], "ValidationFailed");
+    assert!(server.grants().is_empty());
+}
+
+// oracle: contract Devolutions/devolutions-gateway@9916823b0e9f:crates/agent-channel-proto/CONTRACT.package-management.md §operations
+#[rstest]
+#[case::default_update("Update")]
+#[case::feed_free_uninstall("Uninstall")]
+#[tokio::test]
+async fn empty_execution_feeds_reach_the_broker(#[case] operation: &str) {
+    let server = mock().with_grant_result(Ok(grant_response()));
+    let mut request: Value = serde_json::from_slice(&request_body()).unwrap();
+    request["Operation"] = json!(operation);
+    request["Source"] = json!({ "Name": "" });
+
+    let (status, _, _) = post(
+        server.clone(),
+        GRANT_PATH,
+        grant_headers(&[b"secret-grant" as &[u8]], &[JSON]),
+        JSON,
+        serde_json::to_vec(&request).unwrap(),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(server.grants(), ["secret-grant"]);
+}
+
 fn error_response(code: ErrorCode, message: &str) -> ErrorResponse {
     let mut error = serde_json::from_value::<ErrorResponse>(json!({
         "ResponseKind": "ErrorResponse",

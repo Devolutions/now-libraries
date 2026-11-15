@@ -544,6 +544,16 @@ public sealed class BrokerClient : IDisposable
             throw GrantRequestRejected("Grant execution does not allow IncludeCommandPreview.", endpoint);
         }
 
+        var source = request.Source;
+        if (source?.Name is null
+            || (source.Name.Length == 0 && (request.Operation == Operation.Install || source.Url is not null))
+            || (request.Operation == Operation.Uninstall && (source.Name.Length != 0 || source.Url is not null)))
+        {
+            throw GrantRequestRejected(
+                "Grant execution requires a named install feed, a named or default update feed, and no uninstall feed.",
+                endpoint);
+        }
+
         return requestId;
     }
 

@@ -467,6 +467,19 @@ async fn execute_grant_handler(
         return rejection_response(&server, ErrorCode::BadRequest, "unsupported request version").await;
     }
 
+    if (request.source.name.is_empty()
+        && (request.operation == now_policy_api::Operation::Install || request.source.url.is_some()))
+        || (request.operation == now_policy_api::Operation::Uninstall
+            && (!request.source.name.is_empty() || request.source.url.is_some()))
+    {
+        return rejection_response(
+            &server,
+            ErrorCode::ValidationFailed,
+            "invalid execution feed for the requested operation",
+        )
+        .await;
+    }
+
     let request_id = request.request_id.clone();
     match server.execute_grant(request, grant).await {
         Ok(response) if response.request_id == request_id && response.validate().is_ok() => {

@@ -550,6 +550,44 @@ public class BrokerClientTests
     private const string Grant = "g-r4nt.secret_value~1:x";
     private const string GrantRequestId = "0b3e6f0e-5d58-4a0e-9d2c-1f4f1c6c8a11";
 
+    // oracle: contract Devolutions/devolutions-gateway@9916823b0e9f:crates/agent-channel-proto/CONTRACT.package-management.md §operations
+    [Theory]
+    [InlineData(Operation.Install, "", null)]
+    [InlineData(Operation.Update, "", "https://example.test/feed")]
+    [InlineData(Operation.Uninstall, "winget", null)]
+    [InlineData(Operation.Uninstall, "", "https://example.test/feed")]
+    public async Task ExecuteGrant_rejects_invalid_execution_feeds_before_sending(
+        Operation operation, string name, string? url)
+    {
+        var transport = new FakeAuthenticatedTransport();
+        using var client = CreateGrantClient(transport);
+        var request = GrantRequest(operation: operation, sourceName: name, sourceUrl: url);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(request, Grant));
+
+        Assert.Equal(BrokerClientErrorKind.InvalidRequest, ex.Kind);
+        Assert.True(ex.NoWorkStarted);
+        Assert.Empty(transport.AllRequests);
+    }
+
+    // oracle: contract Devolutions/devolutions-gateway@9916823b0e9f:crates/agent-channel-proto/CONTRACT.package-management.md §operations
+    [Theory]
+    [InlineData(Operation.Update)]
+    [InlineData(Operation.Uninstall)]
+    public async Task ExecuteGrant_preserves_an_empty_execution_feed(Operation operation)
+    {
+        var transport = new FakeAuthenticatedTransport();
+        using var client = CreateGrantClient(transport);
+        var request = GrantRequest(operation: operation, sourceName: "");
+
+        _ = await client.ExecuteGrant(request, Grant);
+        using var body = JsonDocument.Parse(transport.GrantRequests.Single().Body!);
+
+        Assert.Equal(operation.ToString(), body.RootElement.GetProperty("Operation").GetString());
+        Assert.Equal("", body.RootElement.GetProperty("Source").GetProperty("Name").GetString());
+        Assert.False(body.RootElement.GetProperty("Source").TryGetProperty("Url", out _));
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData(".leading-dot")]
@@ -929,12 +967,15 @@ public class BrokerClientTests
     internal static PackageOperationRequest GrantRequest(
         string? requestId = GrantRequestId,
         bool captureOutput = true,
-        bool includeCommandPreview = false) => new()
+        bool includeCommandPreview = false,
+        Operation operation = Operation.Install,
+        string sourceName = "winget",
+        string? sourceUrl = null) => new()
         {
             RequestId = requestId,
-            Operation = Operation.Install,
+            Operation = operation,
             Manager = ManagerName.Winget,
-            Source = new RequestSource { Name = "winget" },
+            Source = new RequestSource { Name = sourceName, Url = sourceUrl },
             Package = new RequestPackage { Id = "Microsoft.VisualStudioCode" },
             CaptureOutput = captureOutput,
             IncludeCommandPreview = includeCommandPreview,

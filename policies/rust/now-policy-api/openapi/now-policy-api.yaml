@@ -1319,6 +1319,25 @@ components:
           allOf:
           - $ref: '#/components/schemas/RequestSource'
       additionalProperties: false
+      allOf:
+      - anyOf:
+        - properties:
+            Source:
+              properties:
+                Name:
+                  minLength: 1
+        - properties:
+            Operation:
+              enum:
+              - Update
+              - Uninstall
+            Source:
+              properties:
+                Name:
+                  maxLength: 0
+                Url:
+                  enum:
+                  - null
       required:
       - RequestKind
       - RequestVersion
@@ -1931,10 +1950,9 @@ components:
       type: object
       properties:
         Name:
-          description: Source name.
+          description: Execution feed name, or empty for an update's default feed or an uninstall without a feed.
           type: string
           maxLength: 128
-          minLength: 1
         Url:
           description: Optional source URL.
           type:

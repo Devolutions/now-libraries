@@ -63,6 +63,10 @@ public sealed class PackageRequest
 
 public sealed class RequestSource
 {
+    /// <summary>
+    /// Execution feed name, or empty for an update's default feed or an uninstall without a feed.
+    /// An empty name requires <see cref="Url"/> to be absent.
+    /// </summary>
     [JsonPropertyName("Name")]
     public string Name { get; set; } = "";
 
