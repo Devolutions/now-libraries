@@ -51,6 +51,8 @@ pub trait PackageBrokerServer: Send + Sync {
     /// Executes a request authorized by a remote grant.
     ///
     /// The router has already validated the grant syntax and the request envelope.
+    /// Implementations must authenticate the pipe client and validate the grant and all execution-affecting fields
+    /// before consuming the grant or submitting work.
     /// Implementations must not log the grant or place it in any error message.
     /// Responses and errors must not include captured output, command previews or execution command lines.
     /// Implementations must return a contract rejection code only when that request started no work.
@@ -447,16 +449,30 @@ async fn execute_grant_handler(
         .await;
     }
 
+    if !has_json_content_type(&headers) {
+        return rejection_response(
+            &server,
+            ErrorCode::UnsupportedMediaType,
+            "request Content-Type must be application/json",
+        )
+        .await;
+    }
+
     let request = match request {
         Ok(Json(request)) => request,
         Err(rejection) => return request_rejection(&server, rejection, ErrorCode::BadRequest).await,
     };
 
+    if request.request_version.0 != API_VERSION_STR {
+        return rejection_response(&server, ErrorCode::BadRequest, "unsupported request version").await;
+    }
+
+    let request_id = request.request_id.clone();
     match server.execute_grant(request, grant).await {
-        Ok(response) => match response.validate() {
-            Ok(()) => (StatusCode::OK, Json(response)).into_response(),
-            Err(_) => internal_error_response(&server).await,
-        },
+        Ok(response) if response.request_id == request_id && response.validate().is_ok() => {
+            (StatusCode::OK, Json(response)).into_response()
+        }
+        Ok(_) => internal_error_response(&server).await,
         Err(error) if is_valid_grant_error(&error) => (error_status(error.code), Json(error)).into_response(),
         Err(_) => internal_error_response(&server).await,
     }
@@ -484,6 +500,19 @@ fn accepts_json(headers: &HeaderMap) -> bool {
         (Some(value), None) => value
             .to_str()
             .is_ok_and(|value| value.trim().eq_ignore_ascii_case("application/json")),
+        _ => false,
+    }
+}
+
+fn has_json_content_type(headers: &HeaderMap) -> bool {
+    let mut values = headers.get_all(header::CONTENT_TYPE).iter();
+    match (values.next(), values.next()) {
+        (Some(value), None) => value.to_str().is_ok_and(|value| {
+            value
+                .split(';')
+                .next()
+                .is_some_and(|media_type| media_type.trim().eq_ignore_ascii_case("application/json"))
+        }),
         _ => false,
     }
 }

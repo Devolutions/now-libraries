@@ -37,7 +37,9 @@ fn fixture(relative: &str) -> Vec<u8> {
 }
 
 fn request_body() -> Vec<u8> {
-    fixture("requests/winget-vscode-install.request.json")
+    let mut request: Value = serde_json::from_slice(&fixture("requests/winget-vscode-install.request.json")).unwrap();
+    request["RequestId"] = json!("0b3e6f0e-5d58-4a0e-9d2c-1f4f1c6c8a11");
+    serde_json::to_vec(&request).unwrap()
 }
 
 fn grant_response() -> GrantExecutionResponse {
@@ -147,8 +149,10 @@ async fn grant_header_and_accept_rejections_stop_before_the_server(
     assert!(!text.contains("secret"), "the body must not echo the grant");
 }
 
+// oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §broker-grant-errors
 #[rstest]
 #[case::wrong_content_type("text/plain", request_body(), 415, "UnsupportedMediaType")]
+#[case::unsupported_json_media_type("application/vnd.example+json", request_body(), 415, "UnsupportedMediaType")]
 #[case::malformed_json(JSON, b"{".to_vec(), 400, "BadRequest")]
 #[case::unknown_field(JSON, with_unknown_field(), 400, "BadRequest")]
 #[case::oversized_body(JSON, vec![b' '; MAX_REQUEST_BODY_BYTES + 1], 413, "PayloadTooLarge")]
@@ -180,6 +184,64 @@ fn with_unknown_field() -> Vec<u8> {
     let mut value: Value = serde_json::from_slice(&request_body()).unwrap();
     value["Unexpected"] = json!(true);
     serde_json::to_vec(&value).unwrap()
+}
+
+// oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §broker-grant-errors
+#[tokio::test]
+async fn unsupported_request_version_is_rejected_before_grant_execution() {
+    let server = mock().with_grant_result(Ok(grant_response()));
+    let mut request: Value = serde_json::from_slice(&request_body()).unwrap();
+    request["RequestVersion"] = json!("2.0");
+
+    let (status, body, _) = post(
+        server.clone(),
+        GRANT_PATH,
+        grant_headers(&[b"grant" as &[u8]], &[JSON]),
+        JSON,
+        serde_json::to_vec(&request).unwrap(),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(body["Code"], "BadRequest");
+    assert!(server.grants().is_empty());
+}
+
+// oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §operations
+#[tokio::test]
+async fn grant_execution_accepts_json_with_charset_parameter() {
+    let server = mock().with_grant_result(Ok(grant_response()));
+
+    let (status, _, _) = post(
+        server.clone(),
+        GRANT_PATH,
+        grant_headers(&[b"grant" as &[u8]], &[JSON]),
+        "application/json; charset=utf-8",
+        request_body(),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(server.grants().len(), 1);
+}
+
+// oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §broker-grant-response
+#[tokio::test]
+async fn grant_execution_does_not_return_success_for_mismatched_request_id() {
+    let mut response = grant_response();
+    response.request_id = "11111111-1111-4111-8111-111111111111".into();
+    let server = mock().with_grant_result(Ok(response));
+
+    let (status, _, _) = post(
+        server,
+        GRANT_PATH,
+        grant_headers(&[b"grant" as &[u8]], &[JSON]),
+        JSON,
+        request_body(),
+    )
+    .await;
+
+    assert_ne!(status, StatusCode::OK);
 }
 
 #[rstest]
@@ -252,7 +314,14 @@ async fn legacy_execute_without_the_grant_header_is_unchanged() {
     .unwrap();
     let server = mock().with_execution_response(execution);
 
-    let (status, body, _) = post(server.clone(), LEGACY_PATH, Vec::new(), JSON, request_body()).await;
+    let (status, body, _) = post(
+        server.clone(),
+        LEGACY_PATH,
+        Vec::new(),
+        JSON,
+        fixture("requests/winget-vscode-install.request.json"),
+    )
+    .await;
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["ResponseKind"], "ExecutionResponse");
