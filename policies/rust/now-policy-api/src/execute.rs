@@ -15,7 +15,7 @@ use super::enums::OperationStatus;
 use super::event_channel::EventChannel;
 use super::{
     ApiVersion, ExecutionResponseKind, GrantExecutionResponseKind, GrantResponseVersion, ModelValidationError,
-    ResourceId,
+    PackageIdentifier, ResourceId,
 };
 
 /// Response returned after an execute request is evaluated and, when allowed, submitted.
@@ -154,6 +154,9 @@ impl GrantExecutionResponse {
         }
         check_server_version(&self.server.server_version)?;
         ResourceId::parse(&self.operation.operation_id)?;
+        if let Some(package_id) = &self.request.package_id {
+            PackageIdentifier::parse(package_id)?;
+        }
         if let Some(channel) = &self.operation.event_channel {
             check_event_channel_path(&channel.path)?;
         }
@@ -424,7 +427,7 @@ mod tests {
     fn serialization_rejects_values_that_deserialization_rejects() {
         let response: GrantExecutionResponse = serde_json::from_value(valid()).expect("valid response");
         type Mutation = fn(&mut GrantExecutionResponse);
-        let invalid: [(&str, Mutation); 5] = [
+        let invalid: [(&str, Mutation); 6] = [
             ("non-UUID RequestId", |response| {
                 response.request_id = ResourceId::from("op-1")
             }),
@@ -436,6 +439,9 @@ mod tests {
             }),
             ("invalid OperationId", |response| {
                 response.operation.operation_id = ResourceId::from("op 1")
+            }),
+            ("invalid PackageId", |response| {
+                response.request.package_id = Some(PackageIdentifier::from("foo;bar".to_owned()))
             }),
             ("empty EventChannel.Path", |response| {
                 response
