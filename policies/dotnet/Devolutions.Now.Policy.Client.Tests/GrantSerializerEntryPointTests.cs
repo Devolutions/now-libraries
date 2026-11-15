@@ -51,6 +51,38 @@ public sealed class GrantSerializerEntryPointTests
         Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<GrantExecutionResponse>(json));
     }
 
+    // oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §broker-grant-response
+    [Theory]
+    [MemberData(nameof(Malformed))]
+    public void Public_options_reject_malformed_responses(string json)
+    {
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<GrantExecutionResponse>(json, BrokerSerializer.Options));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<GrantExecutionResponse>(json, BrokerSerializer.PrettyOptions));
+    }
+
+    // oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §broker-grant-response
+    [Fact]
+    public void Public_options_reject_an_invalid_response_on_serialization()
+    {
+        var response = JsonSerializer.Deserialize<GrantExecutionResponse>(Valid, BrokerSerializer.Options)!;
+        response.Request.PackageId = "foo;bar";
+        Assert.Throws<JsonException>(() => JsonSerializer.Serialize(response, BrokerSerializer.Options));
+        Assert.Throws<JsonException>(() => JsonSerializer.Serialize(response, BrokerSerializer.PrettyOptions));
+    }
+
+    // oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §broker-grant-response
+    [Fact]
+    public void Null_is_rejected_by_every_entry_point()
+    {
+        Assert.Throws<JsonException>(() => BrokerSerializer.Deserialize<GrantExecutionResponse>("null"));
+        Assert.Throws<JsonException>(() => BrokerSerializer.DeserializeStrict<GrantExecutionResponse>("null"));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<GrantExecutionResponse>("null", BrokerSerializer.Options));
+        Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<GrantExecutionResponse>("null", BrokerSerializer.PrettyOptions));
+        Assert.Throws<ArgumentNullException>(() => BrokerSerializer.Serialize<GrantExecutionResponse>(null!));
+        Assert.Throws<ArgumentNullException>(() => JsonSerializer.Serialize<GrantExecutionResponse?>(null, BrokerSerializer.Options));
+        Assert.Throws<ArgumentNullException>(() => JsonSerializer.Serialize<GrantExecutionResponse?>(null, BrokerSerializer.PrettyOptions));
+    }
+
     [Fact]
     public void Serialize_rejects_a_response_that_breaks_the_contract()
     {

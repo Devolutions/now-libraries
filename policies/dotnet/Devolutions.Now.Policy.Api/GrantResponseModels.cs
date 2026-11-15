@@ -2,6 +2,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
+using Devolutions.Now.Policy.Model;
+
 namespace Devolutions.Now.Policy.Api;
 
 /// <summary>
@@ -78,6 +80,42 @@ public enum GrantAuthorizationKind
 {
     /// <summary>The operation was authorized by a remote grant, not by local policy.</summary>
     RemoteGrant,
+}
+
+/// <summary>
+/// Applies the grant wire contract when <see cref="GrantExecutionResponse"/> is read or written through
+/// <see cref="BrokerSerializer.Options"/> or <see cref="BrokerSerializer.PrettyOptions"/>.
+/// JSON null and null values are rejected because the contract requires an object.
+/// </summary>
+internal sealed class GrantExecutionResponseConverter : JsonConverter<GrantExecutionResponse>
+{
+    public override bool HandleNull => true;
+
+    public override GrantExecutionResponse? Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Null)
+        {
+            throw new JsonException("A grant response must be a JSON object, not null.");
+        }
+
+        using var document = JsonDocument.ParseValue(ref reader);
+        var json = document.RootElement.GetRawText();
+        PolicyJsonInput.RejectDuplicatePropertyNames(json, BrokerSerializerContext.Default.Options);
+        GrantResponseValidator.Validate(json);
+        return JsonSerializer.Deserialize(json, BrokerStrictSerializerContext.Default.GrantExecutionResponse);
+    }
+
+    public override void Write(Utf8JsonWriter writer, GrantExecutionResponse value, JsonSerializerOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        var json = JsonSerializer.Serialize(value, BrokerSerializerContext.Default.GrantExecutionResponse);
+        GrantResponseValidator.Validate(json);
+        using var document = JsonDocument.Parse(json);
+        document.RootElement.WriteTo(writer);
+    }
 }
 
 /// <summary>

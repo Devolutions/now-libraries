@@ -6,12 +6,13 @@ use core::marker::PhantomData;
 
 use chrono::{DateTime, Utc};
 use schemars::JsonSchema;
+use serde::de::IntoDeserializer;
 use serde::de::value::MapAccessDeserializer;
 use serde::de::{MapAccess, Visitor};
 use serde::{Deserialize, Serialize};
 
 use super::api::{DecisionInfo, OperationDiagnostics, RequestSummary, ResponsePolicyInfo, ServerContext};
-use super::enums::OperationStatus;
+use super::enums::{EventChannelKind, ManagerName, Operation, OperationStatus, Transport};
 use super::event_channel::EventChannel;
 use super::{
     ApiVersion, ExecutionResponseKind, GrantExecutionResponseKind, GrantResponseVersion, ModelValidationError,
@@ -98,6 +99,7 @@ pub enum GrantAuthorizationKind {
 #[serde(deny_unknown_fields)]
 pub struct GrantAuthorization {
     /// Authorization kind.
+    #[serde(deserialize_with = "string_enum")]
     pub kind: GrantAuthorizationKind,
 }
 
@@ -117,7 +119,7 @@ pub struct GrantExecutionResponse {
     pub response_version: GrantResponseVersion,
 
     /// Server context.
-    #[serde(deserialize_with = "bounded_server_context")]
+    #[serde(deserialize_with = "grant_server_context")]
     pub server: ServerContext,
 
     /// Echoed request id, a lowercase hyphenated UUID.
@@ -134,7 +136,7 @@ pub struct GrantExecutionResponse {
     pub completed_at: DateTime<Utc>,
 
     /// Parsed request summary.
-    #[serde(deserialize_with = "object")]
+    #[serde(deserialize_with = "grant_request_summary")]
     pub request: RequestSummary,
 
     /// Authorization under which the operation ran.
@@ -203,6 +205,7 @@ pub struct GrantOperation {
     pub operation_id: ResourceId,
 
     /// Initial operation status.
+    #[serde(deserialize_with = "string_enum")]
     pub status: OperationStatus,
 
     /// UTC timestamp when the operation was accepted.
@@ -288,13 +291,113 @@ where
     }
 }
 
-fn bounded_server_context<'de, D>(deserializer: D) -> Result<ServerContext, D::Error>
+// `ServerContext`, `RequestSummary` and `EventChannel` are shared with legacy responses, which accept an
+// object-shaped enum. Grant responses read them through these string-only mirrors instead.
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
+struct GrantServerContext {
+    server_version: String,
+    #[serde(deserialize_with = "string_enum")]
+    transport: Transport,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
+struct GrantRequestSummary {
+    #[serde(default, deserialize_with = "optional_string_enum")]
+    manager: Option<ManagerName>,
+    #[serde(default)]
+    source: Option<String>,
+    #[serde(default)]
+    package_id: Option<PackageIdentifier>,
+    #[serde(default, deserialize_with = "optional_string_enum")]
+    operation: Option<Operation>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase", deny_unknown_fields)]
+struct GrantEventChannel {
+    #[serde(deserialize_with = "string_enum")]
+    kind: EventChannelKind,
+    path: String,
+}
+
+fn grant_server_context<'de, D>(deserializer: D) -> Result<ServerContext, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
-    let server: ServerContext = object(deserializer)?;
+    let server: GrantServerContext = object(deserializer)?;
     check_server_version(&server.server_version).map_err(serde::de::Error::custom)?;
-    Ok(server)
+    Ok(ServerContext {
+        server_version: server.server_version,
+        transport: server.transport,
+    })
+}
+
+fn grant_request_summary<'de, D>(deserializer: D) -> Result<RequestSummary, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let request: GrantRequestSummary = object(deserializer)?;
+    Ok(RequestSummary {
+        manager: request.manager,
+        source: request.source,
+        package_id: request.package_id,
+        operation: request.operation,
+    })
+}
+
+// A derived enum deserializer also accepts `{"Variant": null}`; the contract allows only the string.
+fn string_enum<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    struct StringOnly<T>(PhantomData<T>);
+
+    impl<'de, T: Deserialize<'de>> Visitor<'de> for StringOnly<T> {
+        type Value = T;
+
+        fn expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            formatter.write_str("a string")
+        }
+
+        fn visit_str<E: serde::de::Error>(self, value: &str) -> Result<Self::Value, E> {
+            T::deserialize(value.into_deserializer())
+        }
+    }
+
+    deserializer.deserialize_str(StringOnly(PhantomData))
+}
+
+fn optional_string_enum<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    struct OptionalString<T>(PhantomData<T>);
+
+    impl<'de, T: Deserialize<'de>> Visitor<'de> for OptionalString<T> {
+        type Value = Option<T>;
+
+        fn expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            formatter.write_str("a string or null")
+        }
+
+        fn visit_none<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+            Ok(None)
+        }
+
+        fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+            Ok(None)
+        }
+
+        fn visit_some<D: serde::Deserializer<'de>>(self, deserializer: D) -> Result<Self::Value, D::Error> {
+            string_enum(deserializer).map(Some)
+        }
+    }
+
+    deserializer.deserialize_option(OptionalString(PhantomData))
 }
 
 fn bounded_event_channel<'de, D>(deserializer: D) -> Result<Option<EventChannel>, D::Error>
@@ -319,7 +422,11 @@ where
         }
 
         fn visit_some<D: serde::Deserializer<'de>>(self, deserializer: D) -> Result<Self::Value, D::Error> {
-            object(deserializer).map(Some)
+            let channel: GrantEventChannel = object(deserializer)?;
+            Ok(Some(EventChannel {
+                kind: channel.kind,
+                path: channel.path,
+            }))
         }
     }
 
@@ -413,6 +520,39 @@ mod tests {
                 "{pointer} accepted as an array"
             );
         }
+    }
+
+    // oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §broker-grant-response
+    #[test]
+    fn object_shaped_enumerations_are_rejected() {
+        for (pointer, variant) in [
+            ("/Authorization/Kind", "RemoteGrant"),
+            ("/Operation/Status", "Running"),
+            ("/Server/Transport", "HttpNamedPipe"),
+            ("/Request/Manager", "Winget"),
+            ("/Request/Operation", "Install"),
+            ("/Operation/EventChannel/Kind", "LocalPipe"),
+        ] {
+            let mut value = valid();
+            *value.pointer_mut(pointer).expect("valid response has the member") = json!({ (variant): null });
+            assert!(
+                serde_json::from_value::<GrantExecutionResponse>(value).is_err(),
+                "{pointer} accepted as an object"
+            );
+        }
+    }
+
+    // oracle: reference Devolutions/now-libraries@27729ec917c4:policies/rust/now-policy-api/src/enums.rs
+    #[test]
+    fn legacy_enumerations_still_accept_the_object_form_rejected_in_grant_responses() {
+        fn accepts<T: serde::de::DeserializeOwned>(variant: &str) -> bool {
+            serde_json::from_value::<T>(json!({ (variant): null })).is_ok()
+        }
+        assert!(accepts::<OperationStatus>("Running"));
+        assert!(accepts::<Transport>("HttpNamedPipe"));
+        assert!(accepts::<ManagerName>("Winget"));
+        assert!(accepts::<Operation>("Install"));
+        assert!(accepts::<EventChannelKind>("LocalPipe"));
     }
 
     // oracle: contract - RFC 3339 requires seconds.
