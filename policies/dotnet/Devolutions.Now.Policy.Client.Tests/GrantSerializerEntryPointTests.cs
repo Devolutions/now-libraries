@@ -27,6 +27,13 @@ public sealed class GrantSerializerEntryPointTests
         Valid.Replace("2026-11-15T05:07:43Z", "2026-11-15T14:07:43+09:00"),
         Valid.Replace("\"1.0\"", "\"1.1\""),
         Valid.Replace("\"Winget\"", "\"winget\""),
+        // oracle: RFC 3339 requires seconds.
+        Valid.Replace("2026-11-15T05:07:42Z\",\"Completed", "2026-11-15T05:07Z\",\"Completed"),
+        // oracle: the Rust broker's ResourceId and PackageIdentifier rules, so both languages accept the same documents.
+        Valid.Replace("\"op-1\"", "\"op 1\""),
+        Valid.Replace("\"op-1\"", $"\"{new string('o', 129)}\""),
+        Valid.Replace("\"Winget\"", "\"Winget\",\"PackageId\":\"\""),
+        Valid.Replace("\"Winget\"", "\"Winget\",\"PackageId\":\"foo;bar\""),
     };
 
     [Fact]

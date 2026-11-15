@@ -2,14 +2,21 @@
 //!
 //! Execution uses the shared [`PackageRequest`](crate::PackageRequest) request model.
 
+use core::marker::PhantomData;
+
 use chrono::{DateTime, Utc};
 use schemars::JsonSchema;
+use serde::de::value::MapAccessDeserializer;
+use serde::de::{MapAccess, Visitor};
 use serde::{Deserialize, Serialize};
 
 use super::api::{DecisionInfo, OperationDiagnostics, RequestSummary, ResponsePolicyInfo, ServerContext};
 use super::enums::OperationStatus;
 use super::event_channel::EventChannel;
-use super::{ApiVersion, ExecutionResponseKind, GrantExecutionResponseKind, GrantResponseVersion, ResourceId};
+use super::{
+    ApiVersion, ExecutionResponseKind, GrantExecutionResponseKind, GrantResponseVersion, ModelValidationError,
+    ResourceId,
+};
 
 /// Response returned after an execute request is evaluated and, when allowed, submitted.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -99,6 +106,7 @@ pub struct GrantAuthorization {
 /// It carries no policy decision, rule, diagnostics, grant value or captured output.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "GrantExecutionResponse")]
+#[serde(remote = "Self")]
 #[serde(rename_all = "PascalCase")]
 #[serde(deny_unknown_fields)]
 pub struct GrantExecutionResponse {
@@ -126,14 +134,58 @@ pub struct GrantExecutionResponse {
     pub completed_at: DateTime<Utc>,
 
     /// Parsed request summary.
-    #[serde(deserialize_with = "object_request_summary")]
+    #[serde(deserialize_with = "object")]
     pub request: RequestSummary,
 
     /// Authorization under which the operation ran.
+    #[serde(deserialize_with = "object")]
     pub authorization: GrantAuthorization,
 
     /// Submitted operation.
+    #[serde(deserialize_with = "object")]
     pub operation: GrantOperation,
+}
+
+impl GrantExecutionResponse {
+    /// Checks the constraints that the public field types do not enforce on construction.
+    pub fn validate(&self) -> Result<(), ModelValidationError> {
+        if !is_lowercase_uuid(&self.request_id) {
+            return Err(invalid("RequestId", "must be a lowercase hyphenated UUID"));
+        }
+        check_server_version(&self.server.server_version)?;
+        ResourceId::parse(&self.operation.operation_id)?;
+        if let Some(channel) = &self.operation.event_channel {
+            check_event_channel_path(&channel.path)?;
+        }
+        Ok(())
+    }
+}
+
+impl Serialize for GrantExecutionResponse {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.validate().map_err(serde::ser::Error::custom)?;
+        Self::serialize(self, serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for GrantExecutionResponse {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct ResponseObject;
+
+        impl<'de> Visitor<'de> for ResponseObject {
+            type Value = GrantExecutionResponse;
+
+            fn expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                formatter.write_str("a GrantExecutionResponse object")
+            }
+
+            fn visit_map<A: MapAccess<'de>>(self, map: A) -> Result<Self::Value, A::Error> {
+                GrantExecutionResponse::deserialize(MapAccessDeserializer::new(map))
+            }
+        }
+
+        deserializer.deserialize_map(ResponseObject)
+    }
 }
 
 /// Operation submitted by a grant execution.
@@ -187,17 +239,44 @@ where
         .map_err(serde::de::Error::custom)
 }
 
+fn is_lowercase_uuid(value: &str) -> bool {
+    let groups: Vec<&str> = value.split('-').collect();
+    groups.len() == 5
+        && groups.iter().zip([8, 4, 4, 4, 12]).all(|(group, len)| {
+            group.len() == len && group.bytes().all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
+        })
+}
+
+fn invalid(type_name: &'static str, reason: &str) -> ModelValidationError {
+    ModelValidationError::Invalid {
+        type_name,
+        reason: reason.to_owned(),
+    }
+}
+
+// Lengths are counted in Unicode characters, as the contract specifies.
+fn check_server_version(value: &str) -> Result<(), ModelValidationError> {
+    if (1..=128).contains(&value.chars().count()) {
+        Ok(())
+    } else {
+        Err(invalid("ServerVersion", "must be 1 to 128 characters"))
+    }
+}
+
+fn check_event_channel_path(value: &str) -> Result<(), ModelValidationError> {
+    if (1..=1024).contains(&value.chars().count()) {
+        Ok(())
+    } else {
+        Err(invalid("EventChannel.Path", "must be 1 to 1024 characters"))
+    }
+}
+
 fn uuid_resource_id<'de, D>(deserializer: D) -> Result<ResourceId, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
     let value = String::deserialize(deserializer)?;
-    let groups: Vec<&str> = value.split('-').collect();
-    let is_uuid = groups.len() == 5
-        && groups.iter().zip([8, 4, 4, 4, 12]).all(|(group, len)| {
-            group.len() == len && group.bytes().all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
-        });
-    if is_uuid {
+    if is_lowercase_uuid(&value) {
         Ok(ResourceId(value))
     } else {
         Err(serde::de::Error::custom(
@@ -206,15 +285,12 @@ where
     }
 }
 
-// Lengths are counted in Unicode characters, as the contract specifies.
 fn bounded_server_context<'de, D>(deserializer: D) -> Result<ServerContext, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
-    let server = ServerContext::deserialize(deserializer)?;
-    if !(1..=128).contains(&server.server_version.chars().count()) {
-        return Err(serde::de::Error::custom("ServerVersion must be 1 to 128 characters"));
-    }
+    let server: ServerContext = object(deserializer)?;
+    check_server_version(&server.server_version).map_err(serde::de::Error::custom)?;
     Ok(server)
 }
 
@@ -222,35 +298,158 @@ fn bounded_event_channel<'de, D>(deserializer: D) -> Result<Option<EventChannel>
 where
     D: serde::Deserializer<'de>,
 {
-    let channel = Option::<EventChannel>::deserialize(deserializer)?;
-    if let Some(channel) = &channel
-        && !(1..=1024).contains(&channel.path.chars().count())
-    {
-        return Err(serde::de::Error::custom(
-            "EventChannel.Path must be 1 to 1024 characters",
-        ));
+    struct OptionalObject;
+
+    impl<'de> Visitor<'de> for OptionalObject {
+        type Value = Option<EventChannel>;
+
+        fn expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+            formatter.write_str("an EventChannel object or null")
+        }
+
+        fn visit_none<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+            Ok(None)
+        }
+
+        fn visit_unit<E: serde::de::Error>(self) -> Result<Self::Value, E> {
+            Ok(None)
+        }
+
+        fn visit_some<D: serde::Deserializer<'de>>(self, deserializer: D) -> Result<Self::Value, D::Error> {
+            object(deserializer).map(Some)
+        }
+    }
+
+    let channel = deserializer.deserialize_option(OptionalObject)?;
+    if let Some(channel) = &channel {
+        check_event_channel_path(&channel.path).map_err(serde::de::Error::custom)?;
     }
     Ok(channel)
 }
 
-// A derived struct deserializer also accepts a JSON array, which all-optional `Request` would let through.
-fn object_request_summary<'de, D>(deserializer: D) -> Result<RequestSummary, D::Error>
+// A derived struct deserializer also accepts a JSON array, so each grant response object is read as a map only.
+fn object<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
     D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
 {
-    struct ObjectOnly;
+    struct ObjectOnly<T>(PhantomData<T>);
 
-    impl<'de> serde::de::Visitor<'de> for ObjectOnly {
-        type Value = RequestSummary;
+    impl<'de, T: Deserialize<'de>> Visitor<'de> for ObjectOnly<T> {
+        type Value = T;
 
         fn expecting(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-            formatter.write_str("a Request object")
+            formatter.write_str("a JSON object")
         }
 
-        fn visit_map<A: serde::de::MapAccess<'de>>(self, map: A) -> Result<Self::Value, A::Error> {
-            RequestSummary::deserialize(serde::de::value::MapAccessDeserializer::new(map))
+        fn visit_map<A: MapAccess<'de>>(self, map: A) -> Result<Self::Value, A::Error> {
+            T::deserialize(MapAccessDeserializer::new(map))
         }
     }
 
-    deserializer.deserialize_map(ObjectOnly)
+    deserializer.deserialize_map(ObjectOnly(PhantomData))
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::{Value, json};
+
+    use super::*;
+
+    fn valid() -> Value {
+        json!({
+            "ResponseKind": "GrantExecutionResponse",
+            "ResponseVersion": "1.0",
+            "Server": { "ServerVersion": "1.2.3", "Transport": "HttpNamedPipe" },
+            "RequestId": "0b3e6f0e-5d58-4a0e-9d2c-1f4f1c6c8a11",
+            "ReceivedAt": "2026-11-15T05:07:42Z",
+            "CompletedAt": "2026-11-15T05:07:43Z",
+            "Request": { "Manager": "Winget", "Source": "winget", "PackageId": "Microsoft.VisualStudioCode", "Operation": "Install" },
+            "Authorization": { "Kind": "RemoteGrant" },
+            "Operation": {
+                "OperationId": "op-7f3a",
+                "Status": "Running",
+                "SubmittedAt": "2026-11-15T05:07:42Z",
+                "EventChannel": { "Kind": "LocalPipe", "Path": "events" }
+            }
+        })
+    }
+
+    // oracle: contract - each grant response member is a JSON object; a positional array of the same values is not.
+    #[test]
+    fn objects_written_as_full_arrays_are_rejected() {
+        let mut cases = Vec::new();
+        for pointer in [
+            "/Server",
+            "/Request",
+            "/Authorization",
+            "/Operation",
+            "/Operation/EventChannel",
+        ] {
+            let mut value = valid();
+            let target = value.pointer_mut(pointer).expect("valid response has the member");
+            *target = Value::Array(
+                target
+                    .as_object()
+                    .expect("member is an object")
+                    .values()
+                    .cloned()
+                    .collect(),
+            );
+            cases.push((pointer, value));
+        }
+        let root = valid();
+        cases.push((
+            "/",
+            Value::Array(root.as_object().expect("root is an object").values().cloned().collect()),
+        ));
+
+        for (pointer, value) in cases {
+            assert!(
+                serde_json::from_value::<GrantExecutionResponse>(value).is_err(),
+                "{pointer} accepted as an array"
+            );
+        }
+    }
+
+    // oracle: contract - RFC 3339 requires seconds.
+    #[test]
+    fn timestamps_without_seconds_are_rejected() {
+        let mut value = valid();
+        value["ReceivedAt"] = json!("2026-11-15T05:07Z");
+        assert!(serde_json::from_value::<GrantExecutionResponse>(value).is_err());
+    }
+
+    #[test]
+    fn serialization_rejects_values_that_deserialization_rejects() {
+        let response: GrantExecutionResponse = serde_json::from_value(valid()).expect("valid response");
+        type Mutation = fn(&mut GrantExecutionResponse);
+        let invalid: [(&str, Mutation); 5] = [
+            ("non-UUID RequestId", |response| {
+                response.request_id = ResourceId::from("op-1")
+            }),
+            ("empty ServerVersion", |response| {
+                response.server.server_version = String::new()
+            }),
+            ("129-character ServerVersion", |response| {
+                response.server.server_version = "v".repeat(129)
+            }),
+            ("invalid OperationId", |response| {
+                response.operation.operation_id = ResourceId::from("op 1")
+            }),
+            ("empty EventChannel.Path", |response| {
+                response
+                    .operation
+                    .event_channel
+                    .as_mut()
+                    .expect("valid response has a channel")
+                    .path = String::new();
+            }),
+        ];
+        for (name, mutate) in invalid {
+            let mut response = response.clone();
+            mutate(&mut response);
+            assert!(serde_json::to_string(&response).is_err(), "{name} serialized");
+        }
+    }
 }

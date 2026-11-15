@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Text.Json.Serialization;
 
 namespace Devolutions.Now.Policy.Api;
@@ -84,7 +85,7 @@ public enum GrantAuthorizationKind
 /// discriminators and enumerations, UTC timestamps, Unicode-character lengths, and unknown members at
 /// every object level. Duplicate members are rejected by the caller before this runs.
 /// </summary>
-internal static class GrantResponseValidator
+internal static partial class GrantResponseValidator
 {
     private static readonly string[] s_statuses = ["Starting", "Running", "Canceling", "Completed", "Failed", "Canceled"];
     private static readonly string[] s_transports = ["HttpNamedPipe", "HttpLoopbackSimulator"];
@@ -127,12 +128,13 @@ internal static class GrantResponseValidator
         {
             Exact(manager, "$.Request.Manager", Enum.GetNames<ManagerName>());
         }
-        foreach (var name in (ReadOnlySpan<string>)["Source", "PackageId"])
+        if (request.TryGetValue("Source", out var source) && source.ValueKind != JsonValueKind.Null)
         {
-            if (request.TryGetValue(name, out var text) && text.ValueKind != JsonValueKind.Null)
-            {
-                Length(text, $"$.Request.{name}", 0, int.MaxValue);
-            }
+            Text(source, "$.Request.Source");
+        }
+        if (request.TryGetValue("PackageId", out var packageId) && packageId.ValueKind != JsonValueKind.Null)
+        {
+            Pattern(packageId, "$.Request.PackageId", PackageIdPattern());
         }
         if (request.TryGetValue("Operation", out var operation) && operation.ValueKind != JsonValueKind.Null)
         {
@@ -147,7 +149,7 @@ internal static class GrantResponseValidator
             "$.Operation",
             ["OperationId", "Status", "SubmittedAt"],
             ["EventChannel"]);
-        Length(submission["OperationId"], "$.Operation.OperationId", 1, int.MaxValue);
+        Pattern(submission["OperationId"], "$.Operation.OperationId", ResourceIdPattern());
         Exact(submission["Status"], "$.Operation.Status", s_statuses);
         Timestamp(submission["SubmittedAt"], "$.Operation.SubmittedAt");
         if (submission.TryGetValue("EventChannel", out var channel) && channel.ValueKind != JsonValueKind.Null)
@@ -216,12 +218,29 @@ internal static class GrantResponseValidator
 
     private static void Timestamp(JsonElement element, string path)
     {
-        var text = Text(element, path);
-        if (text.Length < 11 || text[10] != 'T' || !(text.EndsWith('Z') || text.EndsWith("+00:00", StringComparison.Ordinal)) || !element.TryGetDateTimeOffset(out _))
+        if (!UtcTimestampPattern().IsMatch(Text(element, path)) || !element.TryGetDateTimeOffset(out _))
         {
             throw new JsonException($"{path} must be an RFC 3339 UTC timestamp.");
         }
     }
+
+    private static void Pattern(JsonElement element, string path, Regex pattern)
+    {
+        if (!pattern.IsMatch(Text(element, path)))
+        {
+            throw new JsonException($"{path} is not in the allowed format.");
+        }
+    }
+
+    // These match the Rust broker's ResourceId and PackageIdentifier rules.
+    [GeneratedRegex(@"\A[A-Za-z0-9][A-Za-z0-9._:\-]{0,127}\z", RegexOptions.CultureInvariant)]
+    private static partial Regex ResourceIdPattern();
+
+    [GeneratedRegex(@"\A[A-Za-z0-9._+@/:\[\],#$%{}-]{1,256}\z", RegexOptions.CultureInvariant)]
+    private static partial Regex PackageIdPattern();
+
+    [GeneratedRegex(@"\A[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|\+00:00)\z", RegexOptions.CultureInvariant)]
+    private static partial Regex UtcTimestampPattern();
 
     private static void RequestId(JsonElement element)
     {
