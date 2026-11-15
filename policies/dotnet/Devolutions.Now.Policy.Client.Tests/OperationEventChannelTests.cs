@@ -301,6 +301,104 @@ public class OperationEventChannelTests
         Assert.False(channel.IsCaptureComplete);
     }
 
+    // oracle: spec policies/docs/event-channel-protocol.md §NOW_BROKER_FINISH (0x0002)
+    [Fact]
+    public async Task Grant_channel_rejects_output_buffered_after_finish()
+    {
+        await using var channel = GrantChannel(
+            new EventFrame.Hello(1, 0), new EventFrame.Finish(), new EventFrame.Stdout("late"));
+
+        await Assert.ThrowsAsync<EventFrameException>(async () =>
+        {
+            await foreach (var _ in channel.ReadEvents())
+            {
+            }
+        });
+        Assert.False(channel.IsCaptureComplete);
+    }
+
+    // oracle: spec policies/docs/event-channel-protocol.md §NOW_BROKER_HELLO (0x0000)
+    [Fact]
+    public async Task Grant_channel_rejects_a_second_hello()
+    {
+        await using var channel = GrantChannel(new EventFrame.Hello(1, 0), new EventFrame.Hello(1, 0), new EventFrame.Finish());
+
+        Assert.IsType<EventFrame.Hello>(await channel.ReadFrame());
+        await Assert.ThrowsAsync<EventFrameException>(() => channel.ReadFrame());
+        Assert.False(channel.IsCaptureComplete);
+    }
+
+    // oracle: spec policies/docs/event-channel-protocol.md §NOW_BROKER_FINISH (0x0002)
+    [Fact]
+    public async Task Grant_channel_rejects_output_read_after_finish()
+    {
+        var bytes = new EventFrame.Hello(1, 0).Encode()
+            .Concat(new EventFrame.Finish().Encode())
+            .Concat(new EventFrame.Stdout("late").Encode())
+            .ToArray();
+        await using var channel = new OperationEventChannel(new OneByteReadStream(bytes), completeCapture: true);
+
+        Assert.IsType<EventFrame.Hello>(await channel.ReadFrame());
+        Assert.IsType<EventFrame.Finish>(await channel.ReadFrame());
+        await Assert.ThrowsAsync<EventFrameException>(() => channel.ReadFrame());
+        Assert.False(channel.IsCaptureComplete);
+    }
+
+    // oracle: reference Devolutions/now-libraries@27729ec917c4:policies/dotnet/Devolutions.Now.Policy.Client/OperationEventChannel.cs
+    [Fact]
+    public async Task Legacy_channel_preserves_frames_after_finish()
+    {
+        var bytes = new EventFrame.Hello(1, 0).Encode()
+            .Concat(new EventFrame.Finish().Encode())
+            .Concat(new EventFrame.Stdout("late").Encode())
+            .ToArray();
+        await using var channel = new OperationEventChannel(new MemoryStream(bytes));
+
+        Assert.IsType<EventFrame.Hello>(await channel.ReadFrame());
+        Assert.IsType<EventFrame.Finish>(await channel.ReadFrame());
+        Assert.IsType<EventFrame.Stdout>(await channel.ReadFrame());
+    }
+
+    // oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §operations
+    [Fact]
+    public async Task Grant_channel_marks_capture_incomplete_after_read_failure()
+    {
+        var bytes = new EventFrame.Hello(1, 0).Encode().Concat(new EventFrame.Finish().Encode()).ToArray();
+        await using var channel = new OperationEventChannel(new FailAtEndStream(bytes, new IOException("read failed")), completeCapture: true);
+
+        Assert.IsType<EventFrame.Hello>(await channel.ReadFrame());
+        Assert.IsType<EventFrame.Finish>(await channel.ReadFrame());
+        await Assert.ThrowsAsync<IOException>(() => channel.ReadFrame());
+        Assert.False(channel.IsCaptureComplete);
+    }
+
+    // oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §operations
+    [Fact]
+    public async Task Grant_channel_marks_capture_incomplete_after_read_cancellation()
+    {
+        var bytes = new EventFrame.Hello(1, 0).Encode().Concat(new EventFrame.Finish().Encode()).ToArray();
+        await using var channel = new OperationEventChannel(new FailAtEndStream(bytes, new OperationCanceledException()), completeCapture: true);
+
+        Assert.IsType<EventFrame.Hello>(await channel.ReadFrame());
+        Assert.IsType<EventFrame.Finish>(await channel.ReadFrame());
+        await Assert.ThrowsAsync<OperationCanceledException>(() => channel.ReadFrame());
+        Assert.False(channel.IsCaptureComplete);
+    }
+
+    private sealed class OneByteReadStream(byte[] bytes) : MemoryStream(bytes)
+    {
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+            => base.ReadAsync(buffer[..Math.Min(buffer.Length, 1)], cancellationToken);
+    }
+
+    private sealed class FailAtEndStream(byte[] bytes, Exception exception) : MemoryStream(bytes)
+    {
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+            => Position == Length
+                ? ValueTask.FromException<int>(exception)
+                : base.ReadAsync(buffer, cancellationToken);
+    }
+
     private static byte[] GrantFrames() =>
         new EventFrame.Hello(1, 0).Encode().AsEnumerable().Concat(new EventFrame.Finish().Encode()).ToArray();
 

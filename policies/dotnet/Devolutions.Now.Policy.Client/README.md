@@ -132,6 +132,7 @@ A 404 from an older broker throws `UnsupportedEndpoint`. The grant and response 
 `OpenGrantEventChannel(response)` checks the event pipe server PID and session against the submission pipe and calls the authenticator again; a mismatch throws `ServerAuthenticationFailed`.
 Output is complete only when `OperationEventChannel.IsCaptureComplete` is true, which requires a valid `Hello`, a `Finish`, and no overflow or malformed frame.
 A grant channel throws on end of stream before `Finish`.
+It rejects data observed after `Finish`, but cannot detect data arriving after the caller stops reading.
 A caller whose verdict depends on output must treat `!IsCaptureComplete`, or any exception, as an unknown outcome.
 
 Error handling and diagnostics

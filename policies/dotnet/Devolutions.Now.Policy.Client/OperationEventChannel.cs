@@ -44,6 +44,7 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
     /// <remarks>
     /// A caller whose verdict depends on the captured output must treat
     /// <c>!IsCaptureComplete</c>, or any exception from this channel, as an unknown outcome.
+    /// Data arriving after the caller stops reading cannot be detected.
     /// </remarks>
     public bool IsCaptureComplete => _helloReceived && _finishReceived && !_overflowReceived && !_faulted;
 
@@ -155,7 +156,7 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
         {
             return await ReadFrameCore(cancellationToken).ConfigureAwait(false);
         }
-        catch (EventFrameException)
+        catch (Exception ex) when (ex is EventFrameException or IOException or OperationCanceledException)
         {
             _faulted = true;
             throw;
@@ -169,6 +170,10 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
             if (_decoder.TryReadFrame(out var frame))
             {
                 EnforceHandshake(frame!);
+                if (_completeCapture && frame is EventFrame.Finish && _decoder.HasBufferedData)
+                {
+                    throw new EventFrameException("The event channel has data after Finish.");
+                }
                 Track(frame!);
                 return frame;
             }
@@ -187,6 +192,11 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
                 }
 
                 return null;
+            }
+
+            if (_completeCapture && _finishReceived)
+            {
+                throw new EventFrameException("The event channel has data after Finish.");
             }
 
             _decoder.Extend(_readBuffer.AsSpan(0, bytesRead));
@@ -210,6 +220,11 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
     {
         if (_helloReceived)
         {
+            if (_completeCapture && frame is EventFrame.Hello)
+            {
+                throw new EventFrameException("The event channel sent more than one Hello.");
+            }
+
             return;
         }
 
