@@ -15,41 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add grant execution route and client ([#130](https://github.com/Devolutions/now-libraries/issues/130)) ([59c2ad76be](https://github.com/Devolutions/now-libraries/commit/59c2ad76be879abb4efd09caaa48387c2d6a0f62)) 
 
-  Add a dedicated `POST /v1/package-operations/execute-grant` route and a
-  .NET client for package operations that a Gateway grant authorizes, so
-  the broker reports them as `RemoteGrant` instead of attributing them to
-  a local policy or rule.
-  
-  The server template validates the single `X-Devolutions-Package-Grant`
-  header, `Accept`, content type, grant syntax and request body before
-  calling `execute_grant`, so a rejected request starts no work and
-  consumes no grant. Its default implementation returns 501
-  `UnsupportedEndpoint`, so existing servers keep compiling. The legacy
-  `/execute` route rejects any request carrying the grant header, and its
-  responses are otherwise unchanged.
-  
-  `BrokerClient.ExecuteGrant` authenticates the pipe server before
-  writing, sends the grant only once to the grant route, and never retries
-  or falls back to `/execute`. It strictly validates the response and
-  structured errors, and it sets `NoWorkStarted` only for a request never
-  sent or a documented rejection; that says nothing about other requests
-  redeeming the same grant. `OpenGrantEventChannel` requires the event
-  pipe to belong to the same authenticated server and reports incomplete
-  capture when the stream lacks a valid `Hello` and `Finish`.
-  
-  Grant installs require a named execution feed. Updates may use an empty
-  `Source.Name` without a URL to bind the manager's default feed; grant
-  uninstalls require an empty name without a URL. The shared schema keeps
-  legacy named-source uninstall requests valid.
-  
-  Server authentication assumes the Service Control Manager does not
-  report a reused PID for a running service. Same-user redemption of a
-  delivered grant is accepted. Capture completeness cannot prove complete
-  or unaltered output, so callers must treat output-dependent outcomes as
-  unknown.
-
-
-
 ## [[0.7.0](https://github.com/Devolutions/now-libraries/compare/now-policy-api-v0.6.0...now-policy-api-v0.7.0)] - 2026-09-19
 
 ### <!-- 1 -->Features
