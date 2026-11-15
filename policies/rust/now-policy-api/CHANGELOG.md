@@ -13,25 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add broker GrantExecutionResponse model ([#129](https://github.com/Devolutions/now-libraries/issues/129)) ([a79fa305c3](https://github.com/Devolutions/now-libraries/commit/a79fa305c347706589299f55e9ca2701968fdd92)) 
 
-  Add the broker response for package operations authorized by a remote
-  grant, so a grant is never reported as a local policy decision.
-  
-  `GrantExecutionResponse` (version `1.0`) reports `Authorization.Kind`
-  `RemoteGrant` and carries no `Policy`, `Decision`, `RuleId` or
-  `Diagnostics`, even as null. Its `Operation` carries the operation ID,
-  status, submission time and optional event channel, and converts to
-  `OperationSubmission` for existing status, cancel and event-channel
-  code.
-  
-  Rust and .NET accept and reject the same documents: unknown, duplicate,
-  null-required and positional-array members are rejected at every level,
-  timestamps must be RFC 3339 UTC, and `RequestId` must be a lowercase
-  UUID. Both validate on serialization, so a broker cannot emit an invalid
-  response.
-  
-  No route, client method or event transport sends grants yet.
-  `ExecutionResponse` and local-policy behavior are unchanged.
-
 - Add grant execution route and client ([#130](https://github.com/Devolutions/now-libraries/issues/130)) ([59c2ad76be](https://github.com/Devolutions/now-libraries/commit/59c2ad76be879abb4efd09caaa48387c2d6a0f62)) 
 
   Add a dedicated `POST /v1/package-operations/execute-grant` route and a
