@@ -24,23 +24,12 @@ public static class BrokerSerializer
     public static string Serialize<T>(T value)
     {
         ValidateSemanticValue(value);
-        var json = JsonSerializer.Serialize(value, TypeInfo<T>());
-        if (value is GrantExecutionResponse)
-        {
-            GrantResponseValidator.Validate(json);
-        }
-
-        return json;
+        return JsonSerializer.Serialize(value, TypeInfo<T>());
     }
 
     public static T? Deserialize<T>(string json)
     {
         PolicyJsonInput.RejectDuplicatePropertyNames(json, BrokerSerializerContext.Default.Options);
-        if (typeof(T) == typeof(GrantExecutionResponse))
-        {
-            GrantResponseValidator.Validate(json);
-        }
-
         var value = JsonSerializer.Deserialize(json, TypeInfo<T>());
         ValidateSemanticValue(value);
         return value;
@@ -358,8 +347,7 @@ public static class BrokerSerializer
             BrokerSerializerContext.Default.EvaluationResponse));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ExecutionResponse>(
             BrokerSerializerContext.Default.ExecutionResponse));
-        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<GrantExecutionResponse>(
-            BrokerSerializerContext.Default.GrantExecutionResponse));
+        options.Converters.Add(new GrantExecutionResponseConverter());
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<GrantAuthorization>(
             BrokerSerializerContext.Default.GrantAuthorization));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ServerContext>(
