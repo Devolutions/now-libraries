@@ -1,112 +1,189 @@
+using System.ComponentModel;
 using System.IO.Pipes;
+using System.Runtime.Versioning;
 using System.Security.Principal;
-using System.Text;
 
 using Devolutions.Now.Policy.Api;
+
+using Microsoft.Win32.SafeHandles;
 
 namespace Devolutions.Now.Policy.Client;
 
 /// <summary>Package broker transport using HTTP/1.1 over a Windows named pipe.</summary>
+/// <remarks>
+/// Each request uses a new connection. On Windows, the pipe is opened with read and write-data access only and
+/// grants the server identification-level impersonation by default, and the server is verified before any
+/// request data is sent. <see cref="Send"/> retries busy replies; <see cref="SendAuthenticated"/> sends its request
+/// at most once. See <see cref="NamedPipeBrokerTransportOptions"/>.
+/// </remarks>
 public sealed class NamedPipeBrokerTransport : IAuthenticatedBrokerTransport
 {
-    private const int ConnectTimeoutMs = 5000;
-    private const int ReadTimeoutMs = 30000;
+    /// <summary>Access requested on the broker pipe: generic read access and write-data access only.</summary>
+    /// <remarks>
+    /// <see cref="PipeAccessRights.Read"/> with <see cref="PipeAccessRights.Synchronize"/> is <c>FILE_GENERIC_READ</c>.
+    /// Write-attributes access is not needed because the pipe read mode is never changed, and generic write access
+    /// is avoided because it includes the right to create pipe instances.
+    /// </remarks>
+    internal const PipeAccessRights BrokerPipeAccessRights =
+        PipeAccessRights.Read | PipeAccessRights.Synchronize | PipeAccessRights.WriteData;
 
+    private readonly NamedPipeBrokerTransportOptions _options;
     private readonly string _pipeName;
+    private readonly Func<TimeSpan, CancellationToken, Task> _delay;
 
+    /// <summary>Create a transport with default options for <paramref name="pipeName"/>.</summary>
     public NamedPipeBrokerTransport(string? pipeName = null)
+        : this(new NamedPipeBrokerTransportOptions { PipeName = pipeName })
     {
-        _pipeName = string.IsNullOrWhiteSpace(pipeName) ? BrokerApi.DefaultPipeName : pipeName;
+    }
+
+    /// <summary>Create a transport with the given options.</summary>
+    public NamedPipeBrokerTransport(NamedPipeBrokerTransportOptions options)
+        : this(options, Task.Delay)
+    {
+    }
+
+    internal NamedPipeBrokerTransport(NamedPipeBrokerTransportOptions options, Func<TimeSpan, CancellationToken, Task> delay)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        options.Validate();
+
+        _options = options with { ServerServiceNames = [.. options.ServerServiceNames] };
+        _pipeName = options.ResolvedPipeName;
+        _delay = delay;
     }
 
     public Transport Kind => Transport.HttpNamedPipe;
 
+    /// <summary>Optional diagnostic sink; receives human-readable trace lines.</summary>
+    public Action<string>? Trace { get; init; }
+
     public async Task<BrokerTransportResponse> Send(BrokerTransportRequest request, CancellationToken cancellationToken = default)
-        => (await Exchange(request, authenticator: null, cancellationToken).ConfigureAwait(false)).Response;
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        for (var attempt = 0; ; attempt++)
+        {
+            BrokerHttpResponse response;
+            try
+            {
+                (response, _) = await SendOnce(request, grantAuthenticator: null, cancellationToken).ConfigureAwait(false);
+            }
+            catch (BrokerConnectionClosedException ex)
+            {
+                // An overloaded broker may close a connection right after accepting it. Resend only when the broker
+                // cannot have processed the request, or when processing it again has no side effects.
+                if (attempt < _options.MaxBusyRetries && (!ex.RequestSent || BrokerBusyRetry.IsSafeToResend(request)))
+                {
+                    var retryDelay = BrokerBusyRetry.GetDisconnectRetryDelay(attempt, _options.MaxBusyRetryDelay);
+                    Trace?.Invoke($"Package broker closed the connection without responding; retrying {request.Path} in {retryDelay.TotalMilliseconds:0} ms.");
+                    await _delay(retryDelay, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
+                throw new BrokerClientException(
+                    BrokerClientErrorKind.BrokerUnavailable,
+                    $"The package broker closed the connection without responding to {request.Path}.",
+                    request.Path,
+                    innerException: ex.InnerException);
+            }
+
+            if (attempt < _options.MaxBusyRetries
+                && BrokerBusyRetry.GetRetryDelay(response, _options.MaxBusyRetryDelay, DateTimeOffset.UtcNow) is { } delay)
+            {
+                Trace?.Invoke($"Package broker is busy; retrying {request.Path} in {delay.TotalMilliseconds:0} ms.");
+                await _delay(delay, cancellationToken).ConfigureAwait(false);
+                continue;
+            }
+
+            return new BrokerTransportResponse { StatusCode = response.StatusCode, Body = response.Body };
+        }
+    }
 
     /// <summary>
-    /// Connect with identification-level impersonation, authenticate the server process, and only
-    /// then write the request.
+    /// Connect with identification-level impersonation, authenticate the server process, and only then write the
+    /// request. The request is sent at most once: busy replies and closed connections are never retried.
     /// </summary>
     public async Task<AuthenticatedBrokerTransportResponse> SendAuthenticated(
         BrokerTransportRequest request,
         IBrokerServerAuthenticator authenticator,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(authenticator);
-        var (response, server) = await Exchange(request, authenticator, cancellationToken).ConfigureAwait(false);
-        return new AuthenticatedBrokerTransportResponse { Response = response, Server = server };
+
+        var (response, server) = await SendOnce(request, authenticator, cancellationToken).ConfigureAwait(false);
+        return new AuthenticatedBrokerTransportResponse
+        {
+            Response = new BrokerTransportResponse { StatusCode = response.StatusCode, Body = response.Body },
+            Server = server,
+        };
     }
 
-    private async Task<(BrokerTransportResponse Response, BrokerPipeServerIdentity Server)> Exchange(
+    public void Dispose()
+    {
+        // No persistent resources to dispose.
+    }
+
+    /// <param name="grantAuthenticator">
+    /// When set, the exchange carries a grant: the pipe is opened with identification-level impersonation, the
+    /// authenticator must accept the server before any byte is written, and a failure after the write began
+    /// leaves the outcome unknown.
+    /// </param>
+    private async Task<(BrokerHttpResponse Response, BrokerPipeServerIdentity Server)> SendOnce(
         BrokerTransportRequest request,
-        IBrokerServerAuthenticator? authenticator,
+        IBrokerServerAuthenticator? grantAuthenticator,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(request);
-
-        // Only an authenticated exchange reports that nothing was sent; the legacy path never did.
+        var authenticated = grantAuthenticator is not null;
         var writeStarted = false;
+        BrokerPipeConnection? connection = null;
         try
         {
-            using var pipe = authenticator is null
-                ? new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous)
-                : new NamedPipeClientStream(
-                    ".",
-                    _pipeName,
-                    PipeDirection.InOut,
-                    PipeOptions.Asynchronous,
-                    TokenImpersonationLevel.Identification);
+            connection = await Connect(request.Path, grantAuthenticator, cancellationToken).ConfigureAwait(false);
 
-            using (var connectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
-            {
-                connectCts.CancelAfter(ConnectTimeoutMs);
-                await pipe.ConnectAsync(connectCts.Token).ConfigureAwait(false);
-            }
+            using var responseCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            responseCts.CancelAfter(_options.ResponseTimeout);
 
-            var server = default(BrokerPipeServerIdentity);
-            if (authenticator is not null)
-            {
-                server = AuthenticateServer(pipe, authenticator, request.Path);
-            }
-
-            var requestBuilder = new StringBuilder();
-            requestBuilder.Append($"{request.Method} {request.Path} HTTP/1.1\r\n");
-            requestBuilder.Append("Host: now-package-broker\r\n");
-            requestBuilder.Append("Connection: close\r\n");
-
-            foreach (var (key, value) in request.Headers)
-            {
-                if (!key.Equals("Host", StringComparison.OrdinalIgnoreCase))
-                {
-                    requestBuilder.Append($"{key}: {value}\r\n");
-                }
-            }
-
-            byte[]? bodyBytes = request.Body is not null ? Encoding.UTF8.GetBytes(request.Body) : null;
-            requestBuilder.Append($"Content-Length: {bodyBytes?.Length ?? 0}\r\n");
-            requestBuilder.Append("\r\n");
-
-            var headerBytes = Encoding.ASCII.GetBytes(requestBuilder.ToString());
             writeStarted = true;
-            await pipe.WriteAsync(headerBytes, cancellationToken).ConfigureAwait(false);
-            if (bodyBytes is not null)
-            {
-                await pipe.WriteAsync(bodyBytes, cancellationToken).ConfigureAwait(false);
-            }
-
-            await pipe.FlushAsync(cancellationToken).ConfigureAwait(false);
-
-            using var readCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            readCts.CancelAfter(ReadTimeoutMs);
-            return (await ReadHttpResponse(pipe, request.Path, authenticator is not null, readCts.Token).ConfigureAwait(false), server);
+            await BrokerHttp.WriteRequest(connection.Pipe, request, responseCts.Token).ConfigureAwait(false);
+            var response = await BrokerHttp.ReadResponse(
+                connection.Pipe,
+                request.Path,
+                _options.MaxResponseHeaderBytes,
+                _options.MaxResponseBodyBytes,
+                _options.IncompleteResponseErrorKind,
+                responseCts.Token).ConfigureAwait(false);
+            return (response, connection.Server);
+        }
+        catch (BrokerClientException ex) when (authenticated && !writeStarted && !ex.NoWorkStarted)
+        {
+            // Failures while connecting and verifying the server happen before any grant byte is written.
+            throw new BrokerClientException(
+                ex.Kind,
+                ex.Message,
+                noWorkStarted: true,
+                endpoint: ex.Endpoint,
+                statusCode: ex.StatusCode,
+                brokerError: ex.BrokerError,
+                innerException: ex.InnerException,
+                brokerErrorCode: ex.BrokerErrorCode);
+        }
+        catch (BrokerConnectionClosedException ex) when (authenticated)
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.BrokerUnavailable,
+                $"The package broker closed the connection without responding to {request.Path}.",
+                noWorkStarted: !writeStarted,
+                endpoint: request.Path,
+                innerException: ex.InnerException);
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
             throw new BrokerClientException(
                 BrokerClientErrorKind.Timeout,
-                $"Timed out communicating with the package broker at {request.Path} over named pipe '{_pipeName}'.",
-                noWorkStarted: authenticator is not null && !writeStarted,
+                $"Timed out communicating with the package broker at {request.Path}.",
+                noWorkStarted: authenticated && !writeStarted,
                 endpoint: request.Path,
                 innerException: ex);
         }
@@ -114,8 +191,8 @@ public sealed class NamedPipeBrokerTransport : IAuthenticatedBrokerTransport
         {
             throw new BrokerClientException(
                 BrokerClientErrorKind.BrokerUnavailable,
-                $"Unable to communicate with the package broker at {request.Path} over named pipe '{_pipeName}': {ex.Message}",
-                noWorkStarted: authenticator is not null && !writeStarted,
+                $"Unable to communicate with the package broker at {request.Path}.",
+                noWorkStarted: authenticated && !writeStarted,
                 endpoint: request.Path,
                 innerException: ex);
         }
@@ -123,17 +200,218 @@ public sealed class NamedPipeBrokerTransport : IAuthenticatedBrokerTransport
         {
             throw new BrokerClientException(
                 BrokerClientErrorKind.BrokerUnavailable,
-                $"Access to the package broker named pipe '{_pipeName}' was denied while calling {request.Path}.",
-                noWorkStarted: authenticator is not null && !writeStarted,
+                $"Access to the package broker pipe was denied while calling {request.Path}.",
+                noWorkStarted: authenticated && !writeStarted,
                 endpoint: request.Path,
                 innerException: ex);
         }
+        finally
+        {
+            connection?.Dispose();
+        }
     }
 
-    private static BrokerPipeServerIdentity AuthenticateServer(
+    /// <summary>Connect to the broker pipe, verify its server, and run the server authenticators.</summary>
+    private async Task<BrokerPipeConnection> Connect(
+        string endpoint,
+        IBrokerServerAuthenticator? grantAuthenticator,
+        CancellationToken cancellationToken)
+    {
+        var pipe = CreatePipe(identificationOnly: grantAuthenticator is not null);
+        SafeProcessHandle? serverProcess = null;
+        var ownershipTransferred = false;
+        try
+        {
+            using (var connectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+            {
+                connectCts.CancelAfter(_options.ConnectTimeout);
+                await pipe.ConnectAsync(connectCts.Token).ConfigureAwait(false);
+            }
+
+            int? serverProcessId = null;
+            if (OperatingSystem.IsWindows())
+            {
+                (serverProcessId, serverProcess) = InspectServer(pipe, endpoint);
+            }
+            else if (_options.VerifyServer)
+            {
+                throw BrokerServerVerifier.Failure(
+                    "server verification is only supported on Windows; disable VerifyServer to use a development broker",
+                    endpoint);
+            }
+
+            var server = default(BrokerPipeServerIdentity);
+            if (grantAuthenticator is not null)
+            {
+                server = AuthenticateGrantServer(pipe, grantAuthenticator, endpoint);
+            }
+
+            IDisposable? authentication = null;
+            if (_options.ServerAuthenticator is { } authenticator)
+            {
+                var context = new BrokerPipeServerContext(pipe, _pipeName, endpoint, serverProcessId, serverProcess);
+                authentication = await Authenticate(authenticator, context, endpoint, () => ownershipTransferred = true, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            var connection = new BrokerPipeConnection(pipe, serverProcess, authentication, server);
+            ownershipTransferred = true;
+            return connection;
+        }
+        finally
+        {
+            if (!ownershipTransferred)
+            {
+                serverProcess?.Dispose();
+                pipe.Dispose();
+            }
+        }
+    }
+
+    private NamedPipeClientStream CreatePipe(bool identificationOnly)
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return new NamedPipeClientStream(
+                ".",
+                _pipeName,
+                BrokerPipeAccessRights,
+                PipeOptions.Asynchronous,
+                identificationOnly ? TokenImpersonationLevel.Identification : _options.ImpersonationLevel,
+                HandleInheritability.None);
+        }
+
+        return new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+    }
+
+    [SupportedOSPlatform("windows")]
+    private (int? ServerProcessId, SafeProcessHandle? ServerProcess) InspectServer(NamedPipeClientStream pipe, string endpoint)
+    {
+        int serverProcessId;
+        SafeProcessHandle? serverProcess;
+        try
+        {
+            serverProcessId = WindowsBrokerServerInspector.GetServerProcessId(pipe.SafePipeHandle);
+            serverProcess = WindowsBrokerServerInspector.TryOpenServerProcess(serverProcessId);
+        }
+        catch (Win32Exception ex) when (WindowsBrokerServerInspector.IsPipeDisconnected(ex.NativeErrorCode))
+        {
+            // The broker closed the connection right after accepting it; nothing was sent yet.
+            throw new BrokerConnectionClosedException(requestSent: false, ex);
+        }
+        catch (Win32Exception ex)
+        {
+            if (_options.VerifyServer)
+            {
+                throw BrokerServerVerifier.Failure("the pipe server process could not be determined", endpoint, ex);
+            }
+
+            return (null, null);
+        }
+
+        if (!_options.VerifyServer)
+        {
+            return (serverProcessId, serverProcess);
+        }
+
+        try
+        {
+            BrokerServerVerifier.Verify(
+                serverProcessId,
+                _options.ServerServiceNames,
+                new WindowsBrokerServerInspector(serverProcess),
+                endpoint);
+            return (serverProcessId, serverProcess);
+        }
+        catch (Win32Exception ex)
+        {
+            serverProcess?.Dispose();
+            throw BrokerServerVerifier.Failure("the pipe server process or service could not be queried", endpoint, ex);
+        }
+        catch
+        {
+            serverProcess?.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Run the authenticator with a deadline. When the transport stops waiting for it, ownership of the pipe, the
+    /// server process handle and the late authentication result moves to a continuation that disposes them.
+    /// </summary>
+    private async Task<IDisposable?> Authenticate(
+        BrokerPipeServerAuthenticator authenticator,
+        BrokerPipeServerContext context,
+        string endpoint,
+        Action transferOwnership,
+        CancellationToken cancellationToken)
+    {
+        var authenticationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        authenticationCts.CancelAfter(_options.ServerAuthenticatorTimeout);
+        var authenticationToken = authenticationCts.Token;
+
+        // Run on the thread pool so that an authenticator blocking before its first await is bounded too.
+        var authentication = Task.Run(() => authenticator(context, authenticationToken).AsTask(), CancellationToken.None);
+
+        try
+        {
+            var result = await authentication.WaitAsync(authenticationCts.Token).ConfigureAwait(false);
+            authenticationCts.Dispose();
+            return result;
+        }
+        catch (OperationCanceledException) when (authenticationToken.IsCancellationRequested)
+        {
+            transferOwnership();
+            _ = authentication.ContinueWith(
+                static (completed, state) =>
+                {
+                    var (cts, ctx) = ((CancellationTokenSource, BrokerPipeServerContext))state!;
+                    try
+                    {
+                        if (completed.IsCompletedSuccessfully)
+                        {
+                            completed.Result?.Dispose();
+                        }
+                        else
+                        {
+                            // Observe the late failure; the caller already received a timeout or cancellation.
+                            _ = completed.Exception;
+                        }
+                    }
+                    catch
+                    {
+                        // The caller is gone; a failure disposing the late result must not surface as an unobserved exception.
+                    }
+                    finally
+                    {
+                        ctx.ServerProcess?.Dispose();
+                        ctx.Pipe.Dispose();
+                        cts.Dispose();
+                    }
+                },
+                (authenticationCts, context),
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new BrokerClientException(
+                BrokerClientErrorKind.Timeout,
+                $"Timed out verifying the package broker pipe server for {endpoint}.",
+                endpoint);
+        }
+        catch (Exception ex)
+        {
+            authenticationCts.Dispose();
+            cancellationToken.ThrowIfCancellationRequested();
+            throw AuthenticationFailure(ex, endpoint);
+        }
+    }
+
+    private static BrokerPipeServerIdentity AuthenticateGrantServer(
         NamedPipeClientStream pipe,
         IBrokerServerAuthenticator authenticator,
-        string path)
+        string endpoint)
     {
         try
         {
@@ -145,107 +423,38 @@ public sealed class NamedPipeBrokerTransport : IAuthenticatedBrokerTransport
         {
             throw new BrokerClientException(
                 BrokerClientErrorKind.ServerAuthenticationFailed,
-                $"The package broker pipe server could not be authenticated for {path}; nothing was sent.",
+                $"The package broker pipe server could not be authenticated for {endpoint}; nothing was sent.",
                 noWorkStarted: true,
-                endpoint: path,
+                endpoint: endpoint,
                 innerException: ex);
         }
     }
 
-    public void Dispose()
-    {
-        // No persistent resources to dispose.
-    }
+    private static BrokerClientException AuthenticationFailure(Exception ex, string endpoint) =>
+        ex as BrokerClientException
+        ?? BrokerServerVerifier.Failure("the server authenticator rejected the pipe server", endpoint, ex);
 
-    private static async Task<BrokerTransportResponse> ReadHttpResponse(Stream stream, string path, bool redactResponse, CancellationToken ct)
+    private sealed class BrokerPipeConnection(
+        NamedPipeClientStream pipe,
+        SafeProcessHandle? serverProcess,
+        IDisposable? authentication,
+        BrokerPipeServerIdentity server) : IDisposable
     {
-        var buffer = new byte[65536];
-        var totalRead = 0;
+        public NamedPipeClientStream Pipe { get; } = pipe;
 
-        while (totalRead < buffer.Length)
+        public BrokerPipeServerIdentity Server { get; } = server;
+
+        public void Dispose()
         {
-            var bytesRead = await stream.ReadAsync(buffer.AsMemory(totalRead, buffer.Length - totalRead), ct).ConfigureAwait(false);
-            if (bytesRead == 0)
+            try
             {
-                break;
+                authentication?.Dispose();
             }
-            totalRead += bytesRead;
-
-            var currentText = Encoding.ASCII.GetString(buffer, 0, totalRead);
-            var headerEnd = currentText.IndexOf("\r\n\r\n", StringComparison.Ordinal);
-            if (headerEnd < 0)
+            finally
             {
-                continue;
+                serverProcess?.Dispose();
+                Pipe.Dispose();
             }
-
-            var headerText = currentText[..headerEnd];
-            var bodyStart = headerEnd + 4;
-
-            var lines = headerText.Split("\r\n");
-            var statusParts = lines[0].Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
-            if (statusParts.Length < 2 || !int.TryParse(statusParts[1], out var statusCode))
-            {
-                throw new BrokerClientException(
-                    BrokerClientErrorKind.InvalidResponse,
-                    redactResponse
-                        ? $"Broker returned an invalid HTTP status line for {path}."
-                        : $"Broker returned an invalid HTTP status line for {path}: '{lines[0]}'.",
-                    path);
-            }
-
-            var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            for (var i = 1; i < lines.Length; i++)
-            {
-                var colonIdx = lines[i].IndexOf(':');
-                if (colonIdx > 0)
-                {
-                    headers[lines[i][..colonIdx].Trim()] = lines[i][(colonIdx + 1)..].Trim();
-                }
-            }
-
-            var contentLength = 0;
-            if (headers.TryGetValue("Content-Length", out var clStr))
-            {
-                if (!int.TryParse(clStr, out contentLength) || contentLength < 0)
-                {
-                    throw new BrokerClientException(
-                        BrokerClientErrorKind.InvalidResponse,
-                        redactResponse
-                            ? $"Broker returned an invalid Content-Length header for {path}."
-                            : $"Broker returned an invalid Content-Length header for {path}: '{clStr}'.",
-                        path);
-                }
-            }
-
-            var bodyBytesRead = totalRead - bodyStart;
-            while (bodyBytesRead < contentLength)
-            {
-                if (bodyStart + contentLength > buffer.Length)
-                {
-                    var newBuffer = new byte[bodyStart + contentLength];
-                    Buffer.BlockCopy(buffer, 0, newBuffer, 0, totalRead);
-                    buffer = newBuffer;
-                }
-
-                var read = await stream.ReadAsync(buffer.AsMemory(bodyStart + bodyBytesRead, contentLength - bodyBytesRead), ct).ConfigureAwait(false);
-                if (read == 0)
-                {
-                    throw new BrokerClientException(
-                        BrokerClientErrorKind.InvalidResponse,
-                        $"Broker closed the pipe before sending the complete response body for {path}.",
-                        path);
-                }
-                bodyBytesRead += read;
-                totalRead += read;
-            }
-
-            var bodyText = Encoding.UTF8.GetString(buffer, bodyStart, contentLength);
-            return new BrokerTransportResponse { StatusCode = statusCode, Body = bodyText };
         }
-
-        throw new BrokerClientException(
-            BrokerClientErrorKind.InvalidResponse,
-            $"Broker closed the pipe before sending a complete HTTP response for {path}.",
-            path);
     }
 }

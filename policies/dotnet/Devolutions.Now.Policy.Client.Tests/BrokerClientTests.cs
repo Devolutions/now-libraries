@@ -837,7 +837,7 @@ public class BrokerClientTests
             return requestLine;
         });
 
-        using var transport = new NamedPipeBrokerTransport(pipeName);
+        using var transport = new NamedPipeBrokerTransport(new NamedPipeBrokerTransportOptions { PipeName = pipeName, VerifyServer = false });
         var result = await transport.SendAuthenticated(
             new BrokerTransportRequest { Method = "POST", Path = "/probe", Body = "{}" },
             authenticator);
@@ -864,7 +864,7 @@ public class BrokerClientTests
             return await server.ReadAsync(new byte[4096]);
         });
 
-        using var transport = new NamedPipeBrokerTransport(pipeName);
+        using var transport = new NamedPipeBrokerTransport(new NamedPipeBrokerTransportOptions { PipeName = pipeName, VerifyServer = false });
         var ex = await Assert.ThrowsAsync<BrokerClientException>(() => transport.SendAuthenticated(
             new BrokerTransportRequest
             {
@@ -911,7 +911,7 @@ public class BrokerClientTests
             server.WaitForPipeDrain();
         });
 
-        using var transport = new NamedPipeBrokerTransport(pipeName);
+        using var transport = new NamedPipeBrokerTransport(new NamedPipeBrokerTransportOptions { PipeName = pipeName, VerifyServer = false });
         var ex = await Assert.ThrowsAsync<BrokerClientException>(() => transport.SendAuthenticated(
             new BrokerTransportRequest
             {

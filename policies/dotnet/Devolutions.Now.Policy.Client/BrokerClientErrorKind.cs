@@ -13,6 +13,9 @@ public enum BrokerClientErrorKind
     UnsupportedCapability,
     RequestTooLarge,
 
+    /// <summary>The named pipe server could not be verified as the package broker; no request data was sent.</summary>
+    ServerVerificationFailed,
+
     /// <summary>The pipe server could not be authenticated as the live broker service.</summary>
     ServerAuthenticationFailed,
 
