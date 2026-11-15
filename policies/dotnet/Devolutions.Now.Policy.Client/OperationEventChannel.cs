@@ -40,6 +40,7 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
     /// <summary>
     /// <c>true</c> only after a valid <c>Hello</c> and a <c>Finish</c> were read, with no
     /// stdout or stderr overflow frame and no malformed frame seen.
+    /// This does not detect complete frames consumed by another reader.
     /// </summary>
     /// <remarks>
     /// A caller whose verdict depends on the captured output must treat
