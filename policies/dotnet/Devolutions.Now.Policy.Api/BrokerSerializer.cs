@@ -24,12 +24,23 @@ public static class BrokerSerializer
     public static string Serialize<T>(T value)
     {
         ValidateSemanticValue(value);
-        return JsonSerializer.Serialize(value, TypeInfo<T>());
+        var json = JsonSerializer.Serialize(value, TypeInfo<T>());
+        if (value is GrantExecutionResponse)
+        {
+            GrantResponseValidator.Validate(json);
+        }
+
+        return json;
     }
 
     public static T? Deserialize<T>(string json)
     {
         PolicyJsonInput.RejectDuplicatePropertyNames(json, BrokerSerializerContext.Default.Options);
+        if (typeof(T) == typeof(GrantExecutionResponse))
+        {
+            GrantResponseValidator.Validate(json);
+        }
+
         var value = JsonSerializer.Deserialize(json, TypeInfo<T>());
         ValidateSemanticValue(value);
         return value;
@@ -38,6 +49,11 @@ public static class BrokerSerializer
     public static T? DeserializeStrict<T>(string json)
     {
         PolicyJsonInput.RejectDuplicatePropertyNames(json, BrokerStrictSerializerContext.Default.Options);
+        if (typeof(T) == typeof(GrantExecutionResponse))
+        {
+            GrantResponseValidator.Validate(json);
+        }
+
         var value = JsonSerializer.Deserialize(json, StrictTypeInfo<T>());
         ValidateSemanticValue(value);
         return value;
@@ -102,6 +118,7 @@ public static class BrokerSerializer
             || typeof(T) == typeof(PolicyReplacementResponse)
             || typeof(T) == typeof(EvaluationResponse)
             || typeof(T) == typeof(ExecutionResponse)
+            || typeof(T) == typeof(GrantExecutionResponse)
             || typeof(T) == typeof(StatusResponse)
             || typeof(T) == typeof(CancelResponse)
             || typeof(T) == typeof(ErrorResponse)
@@ -126,6 +143,7 @@ public static class BrokerSerializer
         typeof(T) == typeof(PolicyReplacementResponse) ? Cast<T>(BrokerPolicyStrictSerializerContext.Default.PolicyReplacementResponse) :
         typeof(T) == typeof(EvaluationResponse) ? Cast<T>(BrokerStrictSerializerContext.Default.EvaluationResponse) :
         typeof(T) == typeof(ExecutionResponse) ? Cast<T>(BrokerStrictSerializerContext.Default.ExecutionResponse) :
+        typeof(T) == typeof(GrantExecutionResponse) ? Cast<T>(BrokerStrictSerializerContext.Default.GrantExecutionResponse) :
         typeof(T) == typeof(StatusResponse) ? Cast<T>(BrokerStrictSerializerContext.Default.StatusResponse) :
         typeof(T) == typeof(CancelResponse) ? Cast<T>(BrokerStrictSerializerContext.Default.CancelResponse) :
         typeof(T) == typeof(ErrorResponse) ? Cast<T>(BrokerErrorStrictSerializerContext.Default.ErrorResponse) :
@@ -340,6 +358,10 @@ public static class BrokerSerializer
             BrokerSerializerContext.Default.EvaluationResponse));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ExecutionResponse>(
             BrokerSerializerContext.Default.ExecutionResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<GrantExecutionResponse>(
+            BrokerSerializerContext.Default.GrantExecutionResponse));
+        options.Converters.Add(new DuplicatePropertyNameRejectingConverter<GrantAuthorization>(
+            BrokerSerializerContext.Default.GrantAuthorization));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<ServerContext>(
             BrokerSerializerContext.Default.ServerContext));
         options.Converters.Add(new DuplicatePropertyNameRejectingConverter<RequestSummary>(
@@ -437,6 +459,7 @@ public static class BrokerSerializer
 [JsonSerializable(typeof(CapabilitiesResponse))]
 [JsonSerializable(typeof(EvaluationResponse))]
 [JsonSerializable(typeof(ExecutionResponse))]
+[JsonSerializable(typeof(GrantExecutionResponse))]
 [JsonSerializable(typeof(StatusResponse))]
 [JsonSerializable(typeof(CancelResponse))]
 [JsonSerializable(typeof(JsonNode))]
@@ -456,6 +479,7 @@ internal sealed partial class BrokerSerializerContext : JsonSerializerContext;
 [JsonSerializable(typeof(CapabilitiesResponse))]
 [JsonSerializable(typeof(EvaluationResponse))]
 [JsonSerializable(typeof(ExecutionResponse))]
+[JsonSerializable(typeof(GrantExecutionResponse))]
 [JsonSerializable(typeof(StatusResponse))]
 [JsonSerializable(typeof(CancelResponse))]
 [JsonSerializable(typeof(JsonNode))]
