@@ -829,14 +829,17 @@ public class BrokerClientTests
         Assert.Equal(authenticator.Seen, result.Server);
     }
 
+    // oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §operations
     [WindowsFact]
     public async Task SendAuthenticated_writes_nothing_when_authenticator_rejects()
     {
         var pipeName = $"nowgt-{Guid.NewGuid():N}"[..22];
         await using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        using var connected = new ManualResetEventSlim();
         var serving = Task.Run(async () =>
         {
             await server.WaitForConnectionAsync();
+            connected.Set();
             return await server.ReadAsync(new byte[4096]);
         });
 
@@ -849,7 +852,7 @@ public class BrokerClientTests
                 Body = "{}",
                 Headers = new Dictionary<string, string> { [BrokerApi.PackageGrantHeaderName] = Grant },
             },
-            new RejectingAuthenticator()));
+            new RejectingAuthenticator(connected)));
 
         Assert.Equal(BrokerClientErrorKind.ServerAuthenticationFailed, ex.Kind);
         Assert.True(ex.NoWorkStarted);
@@ -1088,9 +1091,17 @@ internal sealed class AcceptingAuthenticator : IBrokerServerAuthenticator
     }
 }
 
-internal sealed class RejectingAuthenticator : IBrokerServerAuthenticator
+internal sealed class RejectingAuthenticator(ManualResetEventSlim connected) : IBrokerServerAuthenticator
 {
-    public void Authenticate(BrokerPipeServerIdentity server) => throw new InvalidOperationException("rejected");
+    public void Authenticate(BrokerPipeServerIdentity server)
+    {
+        if (!connected.Wait(TimeSpan.FromSeconds(5)))
+        {
+            throw new TimeoutException("The pipe server did not observe the connection.");
+        }
+
+        throw new InvalidOperationException("rejected");
+    }
 }
 
 internal sealed class RecordingAuthenticator : IBrokerServerAuthenticator
