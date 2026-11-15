@@ -12,4 +12,10 @@ public enum BrokerClientErrorKind
     PolicyDenied,
     UnsupportedCapability,
     RequestTooLarge,
+
+    /// <summary>The pipe server could not be authenticated as the live broker service.</summary>
+    ServerAuthenticationFailed,
+
+    /// <summary>The broker does not offer the requested route.</summary>
+    UnsupportedEndpoint,
 }

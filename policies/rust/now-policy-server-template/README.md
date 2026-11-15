@@ -42,9 +42,13 @@ pub trait PackageBrokerServer: Send + Sync {
     async fn replace_policy(&self, request: PolicyReplacementRequest) -> Result<PolicyReplacementResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
+    async fn execute_grant(&self, request: PackageRequest, grant: PackageGrant) -> Result<GrantExecutionResponse, ErrorResponse>;
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
+    async fn cancel(&self, request: CancelRequest) -> Result<CancelResponse, ErrorResponse>;
 }
 ```
+
+`execute_grant` has a default body that returns `UnsupportedEndpoint` (HTTP 501), so existing implementations keep compiling.
 
 Implementations return the active policy from `active_policy`. A broker with no active policy may return a structured `NotFound` error.
 
@@ -58,7 +62,14 @@ Then they pass the implementation to `api_router` or `api_router_from_shared`. T
 - `PUT /v1/policy`
 - `POST /v1/package-operations/evaluate`
 - `POST /v1/package-operations/execute`
+- `POST /v1/package-operations/execute-grant`
 - `POST /v1/package-operations/get-status`
+
+`execute-grant` requires exactly one `X-Devolutions-Package-Grant` header and exactly one `Accept: application/json` header.
+The router validates both, the request body and the grant syntax before calling `execute_grant`, so a rejected request starts no work and consumes no grant.
+It replaces an `ErrorResponse` that carries `Validation` or `Management`, or exceeds the contract length limits, and a `GrantExecutionResponse` that fails `validate()`, with a generic 500 `InternalError`.
+The legacy `execute` route rejects any request that carries the grant header with 400 `BadRequest`.
+Implementations must never log the grant or include it in an error message.
 
 This keeps route dispatch, error responses, and OpenAPI operation metadata in one place.
 

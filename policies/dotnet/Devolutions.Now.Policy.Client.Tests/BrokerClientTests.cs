@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.IO.Pipes;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -9,7 +12,7 @@ namespace Devolutions.Now.Policy.Client.Tests;
 
 public class BrokerClientTests
 {
-    private const string CapabilitiesResponse = """
+    internal const string CapabilitiesResponse = """
         {"ResponseKind":"CapabilitiesResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"Transports":["HttpNamedPipe"],"Managers":[{"Manager":"Winget","Operations":["Install","Update","Uninstall"],"Scopes":["User","Machine"],"Architectures":["X86","X64","Arm64","Neutral"],"SupportsCustomParameters":true,"SupportsCustomInstallLocation":true,"SupportsCaptureOutput":true,"SupportsDetails":true},{"Manager":"PowerShell","Operations":["Install","Update","Uninstall"],"Scopes":["Machine"],"Architectures":["X64"],"SupportsCustomParameters":true,"SupportsCustomInstallLocation":false,"SupportsCaptureOutput":true,"SupportsDetails":false}],"MaxRequestBodyBytes":1048576}
         """;
 
@@ -534,6 +537,375 @@ public class BrokerClientTests
         });
     }
 
+    private const string Grant = "g-r4nt.secret_value~1:x";
+    private const string GrantRequestId = "0b3e6f0e-5d58-4a0e-9d2c-1f4f1c6c8a11";
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(".leading-dot")]
+    [InlineData("has space")]
+    [InlineData("na\u00efve")]
+    [InlineData("line\r\nbreak")]
+    [InlineData("tab\there")]
+    public async Task ExecuteGrant_sends_nothing_for_invalid_grant(string grant)
+    {
+        var transport = new FakeAuthenticatedTransport();
+        var client = CreateGrantClient(transport);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), grant));
+
+        Assert.Equal(BrokerClientErrorKind.InvalidRequest, ex.Kind);
+        Assert.True(ex.NoWorkStarted);
+        Assert.Empty(transport.AllRequests);
+    }
+
+    [Fact]
+    public async Task ExecuteGrant_rejects_grant_over_2048_characters_and_accepts_2048()
+    {
+        var transport = new FakeAuthenticatedTransport();
+        var client = CreateGrantClient(transport);
+
+        await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), new string('a', 2049)));
+        Assert.Empty(transport.AllRequests);
+
+        _ = await client.ExecuteGrant(GrantRequest(), new string('a', 2048));
+        Assert.Equal(new string('a', 2048), transport.GrantRequests.Single().Headers[BrokerApi.PackageGrantHeaderName]);
+    }
+
+    [Theory]
+    [InlineData("0B3E6F0E-5D58-4A0E-9D2C-1F4F1C6C8A11", true, false)]
+    [InlineData("{0b3e6f0e-5d58-4a0e-9d2c-1f4f1c6c8a11}", true, false)]
+    [InlineData("0b3e6f0e5d584a0e9d2c1f4f1c6c8a11", true, false)]
+    [InlineData(null, true, false)]
+    [InlineData(GrantRequestId, false, false)]
+    [InlineData(GrantRequestId, true, true)]
+    public async Task ExecuteGrant_sends_nothing_for_invalid_request(string? requestId, bool captureOutput, bool includeCommandPreview)
+    {
+        var transport = new FakeAuthenticatedTransport();
+        var client = CreateGrantClient(transport);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(
+            () => client.ExecuteGrant(GrantRequest(requestId, captureOutput, includeCommandPreview), Grant));
+
+        Assert.Equal(BrokerClientErrorKind.InvalidRequest, ex.Kind);
+        Assert.True(ex.NoWorkStarted);
+        Assert.Empty(transport.AllRequests);
+    }
+
+    [Fact]
+    public async Task ExecuteGrant_sends_nothing_without_server_authenticator()
+    {
+        var transport = new FakeAuthenticatedTransport();
+        var client = CreateGrantClient(transport, withAuthenticator: false);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), Grant));
+
+        Assert.Equal(BrokerClientErrorKind.UnsupportedCapability, ex.Kind);
+        Assert.True(ex.NoWorkStarted);
+        Assert.Empty(transport.AllRequests);
+    }
+
+    [Fact]
+    public async Task ExecuteGrant_sends_nothing_over_transport_that_cannot_authenticate_the_server()
+    {
+        var transport = new FakeBrokerTransport(CapabilitiesResponse);
+        var client = new BrokerClient(new BrokerClientOptions
+        {
+            Transport = transport,
+            EffectiveUser = "DEVOLUTIONS\\bob",
+            RequestedElevation = Elevation.Standard,
+            ClientExecutablePath = "C:\\Tools\\client.exe",
+            ClientVersion = "9.8.7",
+            ServerAuthenticator = new AcceptingAuthenticator(),
+        });
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), Grant));
+
+        Assert.Equal(BrokerClientErrorKind.UnsupportedCapability, ex.Kind);
+        Assert.True(ex.NoWorkStarted);
+        Assert.Empty(transport.Requests);
+    }
+
+    [Fact]
+    public async Task ExecuteGrant_posts_to_grant_route_with_one_grant_header_and_never_calls_execute()
+    {
+        var transport = new FakeAuthenticatedTransport();
+        var client = CreateGrantClient(transport);
+
+        _ = await client.ExecuteGrant(GrantRequest(), Grant);
+        var sent = transport.GrantRequests.Single();
+        using var body = JsonDocument.Parse(sent.Body!);
+
+        Assert.Equal("POST", sent.Method);
+        Assert.Equal("/v1/package-operations/execute-grant", sent.Path);
+        Assert.Equal("application/json", sent.Headers["Content-Type"]);
+        Assert.Equal("application/json", sent.Headers["Accept"]);
+        Assert.Single(sent.Headers, header => header.Key.Equals("X-Devolutions-Package-Grant", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(Grant, sent.Headers["X-Devolutions-Package-Grant"]);
+        Assert.DoesNotContain(Grant, sent.Body);
+        Assert.Equal(GrantRequestId, body.RootElement.GetProperty("RequestId").GetString());
+        Assert.True(body.RootElement.GetProperty("CaptureOutput").GetBoolean());
+        Assert.False(body.RootElement.GetProperty("IncludeCommandPreview").GetBoolean());
+        Assert.DoesNotContain(transport.AllRequests, request => request.Path.EndsWith("/execute", StringComparison.Ordinal));
+        Assert.DoesNotContain(transport.LegacyRequests, request => request.Headers.ContainsKey(BrokerApi.PackageGrantHeaderName));
+    }
+
+    [Fact]
+    public async Task ExecuteGrant_returns_validated_response()
+    {
+        var transport = new FakeAuthenticatedTransport();
+        var client = CreateGrantClient(transport);
+
+        var response = await client.ExecuteGrant(GrantRequest(), Grant);
+
+        Assert.Equal(GrantRequestId, response.RequestId);
+        Assert.Equal("op-7f3a", response.Operation.OperationId);
+        Assert.Equal(GrantAuthorizationKind.RemoteGrant, response.Authorization.Kind);
+    }
+
+    [Theory]
+    [InlineData("\"RequestId\": \"0b3e6f0e-5d58-4a0e-9d2c-1f4f1c6c8a11\"", "\"RequestId\": \"1b3e6f0e-5d58-4a0e-9d2c-1f4f1c6c8a11\"")]
+    [InlineData("\"Authorization\"", "\"Decision\": {\"Decision\": \"Allow\"}, \"Authorization\"")]
+    [InlineData("\"ResponseVersion\": \"1.0\"", "\"ResponseVersion\": \"2.0\"")]
+    public async Task ExecuteGrant_treats_mismatching_success_response_as_unknown_outcome(string find, string replace)
+    {
+        var body = GrantResponseJson().Replace(find, replace);
+        Assert.NotEqual(GrantResponseJson(), body);
+        var transport = new FakeAuthenticatedTransport(grantResponse: new BrokerTransportResponse { StatusCode = 200, Body = body });
+        var client = CreateGrantClient(transport);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), Grant));
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, ex.Kind);
+        Assert.False(ex.NoWorkStarted);
+    }
+
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("")]
+    public async Task ExecuteGrant_treats_404_as_unsupported_endpoint_without_fallback(string body)
+    {
+        var transport = new FakeAuthenticatedTransport(grantResponse: new BrokerTransportResponse { StatusCode = 404, Body = body });
+        var client = CreateGrantClient(transport);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), Grant));
+
+        Assert.Equal(BrokerClientErrorKind.UnsupportedEndpoint, ex.Kind);
+        Assert.True(ex.NoWorkStarted);
+        Assert.Equal(404, ex.StatusCode);
+        Assert.Single(transport.GrantRequests);
+        Assert.DoesNotContain(transport.AllRequests, request => request.Path.EndsWith("/execute", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(400, "BadRequest")]
+    [InlineData(401, "Unauthenticated")]
+    [InlineData(401, "Unauthorized")]
+    [InlineData(403, "Forbidden")]
+    [InlineData(409, "Conflict")]
+    [InlineData(413, "PayloadTooLarge")]
+    [InlineData(415, "UnsupportedMediaType")]
+    [InlineData(422, "ValidationFailed")]
+    [InlineData(501, "UnsupportedEndpoint")]
+    public async Task ExecuteGrant_maps_table_rejection_to_no_work_started(int status, string code)
+    {
+        var transport = new FakeAuthenticatedTransport(
+            grantResponse: new BrokerTransportResponse { StatusCode = status, Body = GrantErrorJson(code) });
+        var client = CreateGrantClient(transport);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), Grant));
+
+        Assert.Equal(BrokerClientErrorKind.BrokerError, ex.Kind);
+        Assert.True(ex.NoWorkStarted);
+        Assert.Equal(status, ex.StatusCode);
+        Assert.Equal(Enum.Parse<ErrorCode>(code), ex.BrokerErrorCode);
+        Assert.Null(ex.BrokerError);
+    }
+
+    [Theory]
+    [InlineData(403, "BadRequest", "")]
+    [InlineData(400, "BadRequest", ",\"Validation\":null")]
+    [InlineData(400, "BadRequest", ",\"Management\":null")]
+    [InlineData(400, "BadRequest", ",\"Unexpected\":1")]
+    [InlineData(400, "BadRequest", ",\"Details\":[{\"Message\":\"\"}]")]
+    [InlineData(400, "BadRequest", ",\"Code\":\"BadRequest\"")]
+    [InlineData(500, "InternalError", "")]
+    [InlineData(503, "InternalError", "")]
+    [InlineData(504, "BadRequest", "")]
+    public async Task ExecuteGrant_keeps_outcome_unknown_for_other_rejections(int status, string code, string extra)
+    {
+        var transport = new FakeAuthenticatedTransport(
+            grantResponse: new BrokerTransportResponse { StatusCode = status, Body = GrantErrorJson(code, extra) });
+        var client = CreateGrantClient(transport);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), Grant));
+
+        Assert.False(ex.NoWorkStarted);
+        Assert.Null(ex.BrokerErrorCode);
+    }
+
+    [Theory]
+    [InlineData(400)]
+    [InlineData(500)]
+    public async Task ExecuteGrant_never_copies_response_text_or_grant_into_exception_or_trace(int status)
+    {
+        var message = $"echo {Grant} from the broker";
+        var transport = new FakeAuthenticatedTransport(
+            grantResponse: new BrokerTransportResponse { StatusCode = status, Body = GrantErrorJson(status == 400 ? "BadRequest" : "InternalError", message: message) });
+        var trace = new List<string>();
+        var client = CreateGrantClient(transport, trace: trace);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), Grant));
+
+        Assert.DoesNotContain(Grant, ex.ToString());
+        Assert.DoesNotContain("from the broker", ex.ToString());
+        Assert.DoesNotContain(trace, line => line.Contains(Grant) || line.Contains("from the broker"));
+    }
+
+    [Fact]
+    public void ServiceBrokerServerAuthenticator_accepts_running_service_process_in_session_0()
+    {
+        var authenticator = new ServiceBrokerServerAuthenticator("Svc", _ => (4, 1234));
+
+        authenticator.Authenticate(new BrokerPipeServerIdentity(1234, 0));
+    }
+
+    [Theory]
+    [InlineData(1u, 1234, 1234, 0)]
+    [InlineData(4u, 1234, 4321, 0)]
+    [InlineData(4u, 1234, 1234, 1)]
+    [InlineData(4u, 0, 0, 0)]
+    public void ServiceBrokerServerAuthenticator_rejects_unproven_server(uint state, uint servicePid, int serverPid, int session)
+    {
+        var authenticator = new ServiceBrokerServerAuthenticator("Svc", _ => (state, servicePid));
+
+        Assert.ThrowsAny<Exception>(() => authenticator.Authenticate(new BrokerPipeServerIdentity(serverPid, session)));
+    }
+
+    [WindowsFact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    public async Task SendAuthenticated_authenticates_this_process_as_pipe_server_before_writing()
+    {
+        var pipeName = $"nowgt-{Guid.NewGuid():N}"[..22];
+        await using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        var authenticator = new RecordingAuthenticator();
+        var serving = Task.Run(async () =>
+        {
+            await server.WaitForConnectionAsync();
+            var buffer = new byte[4096];
+            var total = 0;
+            while (!Encoding.ASCII.GetString(buffer, 0, total).EndsWith("\r\n\r\n{}", StringComparison.Ordinal))
+            {
+                total += await server.ReadAsync(buffer.AsMemory(total));
+            }
+
+            var requestLine = Encoding.ASCII.GetString(buffer, 0, total);
+            await server.WriteAsync(Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}"));
+            await server.FlushAsync();
+            server.WaitForPipeDrain();
+            server.Disconnect();
+            return requestLine;
+        });
+
+        using var transport = new NamedPipeBrokerTransport(pipeName);
+        var result = await transport.SendAuthenticated(
+            new BrokerTransportRequest { Method = "POST", Path = "/probe", Body = "{}" },
+            authenticator);
+        var requestLine = await serving;
+
+        Assert.StartsWith("POST /probe HTTP/1.1", requestLine);
+        Assert.Equal(200, result.Response.StatusCode);
+        Assert.Equal(Environment.ProcessId, authenticator.Seen!.Value.ProcessId);
+        Assert.Equal(Process.GetCurrentProcess().SessionId, authenticator.Seen.Value.SessionId);
+        Assert.Equal(authenticator.Seen, result.Server);
+    }
+
+    [WindowsFact]
+    public async Task SendAuthenticated_writes_nothing_when_authenticator_rejects()
+    {
+        var pipeName = $"nowgt-{Guid.NewGuid():N}"[..22];
+        await using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        var serving = Task.Run(async () =>
+        {
+            await server.WaitForConnectionAsync();
+            return await server.ReadAsync(new byte[4096]);
+        });
+
+        using var transport = new NamedPipeBrokerTransport(pipeName);
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => transport.SendAuthenticated(
+            new BrokerTransportRequest
+            {
+                Method = "POST",
+                Path = "/probe",
+                Body = "{}",
+                Headers = new Dictionary<string, string> { [BrokerApi.PackageGrantHeaderName] = Grant },
+            },
+            new RejectingAuthenticator()));
+
+        Assert.Equal(BrokerClientErrorKind.ServerAuthenticationFailed, ex.Kind);
+        Assert.True(ex.NoWorkStarted);
+        Assert.Equal(0, await serving);
+    }
+
+    internal static PackageOperationRequest GrantRequest(
+        string? requestId = GrantRequestId,
+        bool captureOutput = true,
+        bool includeCommandPreview = false) => new()
+        {
+            RequestId = requestId,
+            Operation = Operation.Install,
+            Manager = ManagerName.Winget,
+            Source = new RequestSource { Name = "winget" },
+            Package = new RequestPackage { Id = "Microsoft.VisualStudioCode" },
+            CaptureOutput = captureOutput,
+            IncludeCommandPreview = includeCommandPreview,
+        };
+
+    internal static string GrantResponseJson(string? eventChannelPath = null)
+    {
+        var channel = eventChannelPath is null
+            ? ""
+            : $", \"EventChannel\": {{ \"Kind\": \"LocalPipe\", \"Path\": {JsonString(eventChannelPath)} }}";
+        return $$"""
+        {
+          "ResponseKind": "GrantExecutionResponse",
+          "ResponseVersion": "1.0",
+          "Server": { "ServerVersion": "1.2.3", "Transport": "HttpNamedPipe" },
+          "RequestId": "0b3e6f0e-5d58-4a0e-9d2c-1f4f1c6c8a11",
+          "ReceivedAt": "2026-11-15T05:07:42Z",
+          "CompletedAt": "2026-11-15T05:07:43Z",
+          "Request": { "Manager": "Winget", "Source": "winget", "PackageId": "Microsoft.VisualStudioCode", "Operation": "Install" },
+          "Authorization": { "Kind": "RemoteGrant" },
+          "Operation": {
+            "OperationId": "op-7f3a",
+            "Status": "Running",
+            "SubmittedAt": "2026-11-15T05:07:42Z"{{channel}}
+          }
+        }
+        """;
+    }
+
+    private static string JsonString(string value) => "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+
+    internal static string GrantErrorJson(string code, string extra = "", string message = "rejected") => $$"""
+        {"ResponseKind":"ErrorResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"1.2.3","Transport":"HttpNamedPipe"},"Code":"{{code}}","Message":{{JsonString(message)}}{{extra}}}
+        """;
+
+    internal static BrokerClient CreateGrantClient(
+        FakeAuthenticatedTransport transport,
+        List<string>? trace = null,
+        bool withAuthenticator = true) => new(new BrokerClientOptions
+        {
+            Transport = transport,
+            EffectiveUser = "DEVOLUTIONS\\bob",
+            RequestedElevation = Elevation.Standard,
+            ClientExecutablePath = "C:\\Tools\\client.exe",
+            ClientVersion = "9.8.7",
+            ServerAuthenticator = withAuthenticator ? new AcceptingAuthenticator() : null,
+        })
+        {
+            Trace = trace is null ? null : trace.Add,
+        };
     private static BrokerClient CreateClient(FakeBrokerTransport transport) => new(new BrokerClientOptions
     {
         Transport = transport,
@@ -641,5 +1013,76 @@ public class BrokerClientTests
         public void Dispose()
         {
         }
+    }
+}
+internal sealed class WindowsFactAttribute : FactAttribute
+{
+    public WindowsFactAttribute()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Skip = "Requires Windows named pipes.";
+        }
+    }
+}
+
+internal sealed class AcceptingAuthenticator : IBrokerServerAuthenticator
+{
+    public void Authenticate(BrokerPipeServerIdentity server)
+    {
+    }
+}
+
+internal sealed class RejectingAuthenticator : IBrokerServerAuthenticator
+{
+    public void Authenticate(BrokerPipeServerIdentity server) => throw new InvalidOperationException("rejected");
+}
+
+internal sealed class RecordingAuthenticator : IBrokerServerAuthenticator
+{
+    public BrokerPipeServerIdentity? Seen { get; private set; }
+
+    public void Authenticate(BrokerPipeServerIdentity server) => Seen = server;
+}
+
+/// <summary>Answers capabilities over the legacy path and the grant request over the authenticated path.</summary>
+internal sealed class FakeAuthenticatedTransport : IAuthenticatedBrokerTransport
+{
+    private readonly BrokerTransportResponse _grantResponse;
+    private readonly BrokerPipeServerIdentity _server;
+
+    public FakeAuthenticatedTransport(BrokerTransportResponse? grantResponse = null, BrokerPipeServerIdentity? server = null)
+    {
+        _grantResponse = grantResponse ?? new BrokerTransportResponse { StatusCode = 200, Body = BrokerClientTests.GrantResponseJson() };
+        _server = server ?? new BrokerPipeServerIdentity(Environment.ProcessId, 0);
+    }
+
+    public Transport Kind => Transport.HttpNamedPipe;
+
+    public List<BrokerTransportRequest> LegacyRequests { get; } = [];
+
+    public List<BrokerTransportRequest> GrantRequests { get; } = [];
+
+    public IEnumerable<BrokerTransportRequest> AllRequests => LegacyRequests.Concat(GrantRequests);
+
+    public Task<BrokerTransportResponse> Send(BrokerTransportRequest request, CancellationToken cancellationToken = default)
+    {
+        LegacyRequests.Add(request);
+        return request.Path == "/v1/capabilities"
+            ? Task.FromResult(new BrokerTransportResponse { StatusCode = 200, Body = BrokerClientTests.CapabilitiesResponse })
+            : throw new InvalidOperationException($"Unexpected legacy request to {request.Path}.");
+    }
+
+    public Task<AuthenticatedBrokerTransportResponse> SendAuthenticated(
+        BrokerTransportRequest request,
+        IBrokerServerAuthenticator authenticator,
+        CancellationToken cancellationToken = default)
+    {
+        GrantRequests.Add(request);
+        return Task.FromResult(new AuthenticatedBrokerTransportResponse { Response = _grantResponse, Server = _server });
+    }
+
+    public void Dispose()
+    {
     }
 }

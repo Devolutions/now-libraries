@@ -1,4 +1,5 @@
 using System.IO.Pipes;
+using System.Security.Principal;
 using System.Text;
 
 using Devolutions.Now.Policy.Api;
@@ -6,7 +7,7 @@ using Devolutions.Now.Policy.Api;
 namespace Devolutions.Now.Policy.Client;
 
 /// <summary>Package broker transport using HTTP/1.1 over a Windows named pipe.</summary>
-public sealed class NamedPipeBrokerTransport : IBrokerTransport
+public sealed class NamedPipeBrokerTransport : IAuthenticatedBrokerTransport
 {
     private const int ConnectTimeoutMs = 5000;
     private const int ReadTimeoutMs = 30000;
@@ -21,17 +22,52 @@ public sealed class NamedPipeBrokerTransport : IBrokerTransport
     public Transport Kind => Transport.HttpNamedPipe;
 
     public async Task<BrokerTransportResponse> Send(BrokerTransportRequest request, CancellationToken cancellationToken = default)
+        => (await Exchange(request, authenticator: null, cancellationToken).ConfigureAwait(false)).Response;
+
+    /// <summary>
+    /// Connect with identification-level impersonation, authenticate the server process, and only
+    /// then write the request.
+    /// </summary>
+    public async Task<AuthenticatedBrokerTransportResponse> SendAuthenticated(
+        BrokerTransportRequest request,
+        IBrokerServerAuthenticator authenticator,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(authenticator);
+        var (response, server) = await Exchange(request, authenticator, cancellationToken).ConfigureAwait(false);
+        return new AuthenticatedBrokerTransportResponse { Response = response, Server = server };
+    }
+
+    private async Task<(BrokerTransportResponse Response, BrokerPipeServerIdentity Server)> Exchange(
+        BrokerTransportRequest request,
+        IBrokerServerAuthenticator? authenticator,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        // Only an authenticated exchange reports that nothing was sent; the legacy path never did.
+        var writeStarted = false;
         try
         {
-            using var pipe = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+            using var pipe = authenticator is null
+                ? new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous)
+                : new NamedPipeClientStream(
+                    ".",
+                    _pipeName,
+                    PipeDirection.InOut,
+                    PipeOptions.Asynchronous,
+                    TokenImpersonationLevel.Identification);
 
             using (var connectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
             {
                 connectCts.CancelAfter(ConnectTimeoutMs);
                 await pipe.ConnectAsync(connectCts.Token).ConfigureAwait(false);
+            }
+
+            var server = default(BrokerPipeServerIdentity);
+            if (authenticator is not null)
+            {
+                server = AuthenticateServer(pipe, authenticator, request.Path);
             }
 
             var requestBuilder = new StringBuilder();
@@ -52,6 +88,7 @@ public sealed class NamedPipeBrokerTransport : IBrokerTransport
             requestBuilder.Append("\r\n");
 
             var headerBytes = Encoding.ASCII.GetBytes(requestBuilder.ToString());
+            writeStarted = true;
             await pipe.WriteAsync(headerBytes, cancellationToken).ConfigureAwait(false);
             if (bodyBytes is not null)
             {
@@ -62,7 +99,7 @@ public sealed class NamedPipeBrokerTransport : IBrokerTransport
 
             using var readCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             readCts.CancelAfter(ReadTimeoutMs);
-            return await ReadHttpResponse(pipe, request.Path, readCts.Token).ConfigureAwait(false);
+            return (await ReadHttpResponse(pipe, request.Path, readCts.Token).ConfigureAwait(false), server);
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
@@ -70,7 +107,8 @@ public sealed class NamedPipeBrokerTransport : IBrokerTransport
                 BrokerClientErrorKind.Timeout,
                 $"Timed out communicating with the package broker at {request.Path} over named pipe '{_pipeName}'.",
                 request.Path,
-                innerException: ex);
+                innerException: ex,
+                noWorkStarted: authenticator is not null && !writeStarted);
         }
         catch (IOException ex)
         {
@@ -78,7 +116,8 @@ public sealed class NamedPipeBrokerTransport : IBrokerTransport
                 BrokerClientErrorKind.BrokerUnavailable,
                 $"Unable to communicate with the package broker at {request.Path} over named pipe '{_pipeName}': {ex.Message}",
                 request.Path,
-                innerException: ex);
+                innerException: ex,
+                noWorkStarted: authenticator is not null && !writeStarted);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -86,7 +125,30 @@ public sealed class NamedPipeBrokerTransport : IBrokerTransport
                 BrokerClientErrorKind.BrokerUnavailable,
                 $"Access to the package broker named pipe '{_pipeName}' was denied while calling {request.Path}.",
                 request.Path,
-                innerException: ex);
+                innerException: ex,
+                noWorkStarted: authenticator is not null && !writeStarted);
+        }
+    }
+
+    private static BrokerPipeServerIdentity AuthenticateServer(
+        NamedPipeClientStream pipe,
+        IBrokerServerAuthenticator authenticator,
+        string path)
+    {
+        try
+        {
+            var server = PipeServerIdentityReader.Read(pipe);
+            authenticator.Authenticate(server);
+            return server;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.ServerAuthenticationFailed,
+                $"The package broker pipe server could not be authenticated for {path}; nothing was sent.",
+                path,
+                innerException: ex,
+                noWorkStarted: true);
         }
     }
 

@@ -1,5 +1,6 @@
 using System.IO.Pipes;
 using System.Runtime.CompilerServices;
+using System.Security.Principal;
 
 using Devolutions.Now.Policy.Api;
 
@@ -24,24 +25,64 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
     private readonly Stream _stream;
     private readonly EventFrameDecoder _decoder = new();
     private readonly byte[] _readBuffer = new byte[ReadBufferSize];
+    private readonly bool _completeCapture;
     private bool _helloReceived;
+    private bool _finishReceived;
+    private bool _overflowReceived;
+    private bool _faulted;
 
-    internal OperationEventChannel(Stream stream)
+    internal OperationEventChannel(Stream stream, bool completeCapture = false)
     {
         _stream = stream;
+        _completeCapture = completeCapture;
     }
 
-    internal static async Task<OperationEventChannel> ConnectLocalPipe(string path, CancellationToken cancellationToken)
+    /// <summary>
+    /// <c>true</c> only after a valid <c>Hello</c> and a <c>Finish</c> were read, with no
+    /// stdout or stderr overflow frame and no malformed frame seen.
+    /// </summary>
+    /// <remarks>
+    /// A caller whose verdict depends on the captured output must treat
+    /// <c>!IsCaptureComplete</c>, or any exception from this channel, as an unknown outcome.
+    /// </remarks>
+    public bool IsCaptureComplete => _helloReceived && _finishReceived && !_overflowReceived && !_faulted;
+
+    internal static Task<OperationEventChannel> ConnectLocalPipe(string path, CancellationToken cancellationToken)
+        => Connect(path, expectedServer: null, authenticator: null, cancellationToken);
+
+    internal static Task<OperationEventChannel> ConnectGrantPipe(
+        string path,
+        BrokerPipeServerIdentity expectedServer,
+        IBrokerServerAuthenticator authenticator,
+        CancellationToken cancellationToken)
+        => Connect(path, expectedServer, authenticator, cancellationToken);
+
+    private static async Task<OperationEventChannel> Connect(string path,
+        BrokerPipeServerIdentity? expectedServer,
+        IBrokerServerAuthenticator? authenticator,
+        CancellationToken cancellationToken)
     {
         var pipeName = NormalizePipeName(path);
-        var pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.In, PipeOptions.Asynchronous);
+        var pipe = expectedServer is null
+            ? new NamedPipeClientStream(".", pipeName, PipeDirection.In, PipeOptions.Asynchronous)
+            : new NamedPipeClientStream(
+                ".",
+                pipeName,
+                PipeDirection.In,
+                PipeOptions.Asynchronous,
+                TokenImpersonationLevel.Identification);
 
         try
         {
             using var connectCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             connectCts.CancelAfter(ConnectTimeoutMs);
             await pipe.ConnectAsync(connectCts.Token).ConfigureAwait(false);
-            return new OperationEventChannel(pipe);
+            if (expectedServer is { } expected)
+            {
+                AuthenticateSameServer(pipe, expected, authenticator!);
+            }
+
+            return new OperationEventChannel(pipe, completeCapture: expectedServer is not null);
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
@@ -50,6 +91,11 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
                 BrokerClientErrorKind.Timeout,
                 $"Timed out connecting to the operation event channel pipe '{pipeName}'.",
                 innerException: ex);
+        }
+        catch (BrokerClientException)
+        {
+            await pipe.DisposeAsync().ConfigureAwait(false);
+            throw;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -66,6 +112,30 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
         }
     }
 
+    private static void AuthenticateSameServer(
+        NamedPipeClientStream pipe,
+        BrokerPipeServerIdentity expected,
+        IBrokerServerAuthenticator authenticator)
+    {
+        try
+        {
+            var server = PipeServerIdentityReader.Read(pipe);
+            if (server != expected)
+            {
+                throw new InvalidOperationException("The event pipe server is not the broker instance that accepted the operation.");
+            }
+
+            authenticator.Authenticate(server);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.ServerAuthenticationFailed,
+                "The operation event pipe server could not be authenticated as the broker instance that accepted the operation.",
+                innerException: ex);
+        }
+    }
+
     /// <summary>
     /// Read the next frame from the channel. Returns <c>null</c> when the broker closed
     /// the channel. Frames with unknown kinds are returned as
@@ -74,16 +144,32 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
     /// <exception cref="EventFrameException">
     /// The frame stream is corrupt, the channel was closed mid-frame, the stream does
     /// not start with a <c>Hello</c> frame, or the advertised protocol major version is
-    /// unsupported; the channel should be disposed.
+    /// unsupported; the channel should be disposed. A channel opened by
+    /// <see cref="BrokerClient.OpenGrantEventChannel"/> also throws when the broker closes it
+    /// before <c>Finish</c>, instead of returning <c>null</c>.
     /// </exception>
     /// <exception cref="IOException">The transport failed.</exception>
     public async Task<EventFrame?> ReadFrame(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await ReadFrameCore(cancellationToken).ConfigureAwait(false);
+        }
+        catch (EventFrameException)
+        {
+            _faulted = true;
+            throw;
+        }
+    }
+
+    private async Task<EventFrame?> ReadFrameCore(CancellationToken cancellationToken)
     {
         while (true)
         {
             if (_decoder.TryReadFrame(out var frame))
             {
                 EnforceHandshake(frame!);
+                Track(frame!);
                 return frame;
             }
 
@@ -95,10 +181,28 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
                     throw new EventFrameException("The event channel was closed mid-frame; the frame stream is truncated.");
                 }
 
+                if (_completeCapture && !_finishReceived)
+                {
+                    throw new EventFrameException("The event channel was closed before Finish; captured output is incomplete.");
+                }
+
                 return null;
             }
 
             _decoder.Extend(_readBuffer.AsSpan(0, bytesRead));
+        }
+    }
+
+    private void Track(EventFrame frame)
+    {
+        switch (frame)
+        {
+            case EventFrame.Finish:
+                _finishReceived = true;
+                break;
+            case EventFrame.StdoutOverflow or EventFrame.StderrOverflow:
+                _overflowReceived = true;
+                break;
         }
     }
 

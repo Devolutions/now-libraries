@@ -648,6 +648,7 @@ dependencies = [
  "axum",
  "now-policy",
  "now-policy-api",
+ "rstest",
  "schemars",
  "serde",
  "serde_json",

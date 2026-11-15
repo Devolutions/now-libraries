@@ -171,6 +171,162 @@ public class OperationEventChannelTests
         Assert.Contains("major version", ex.Message);
     }
 
+    [Fact]
+    public async Task OpenGrantEventChannel_rejects_response_not_returned_by_execute_grant()
+    {
+        using var client = BrokerClientTests.CreateGrantClient(new FakeAuthenticatedTransport());
+        var forged = BrokerSerializer.DeserializeStrict<GrantExecutionResponse>(BrokerClientTests.GrantResponseJson("nowec-forged"))!;
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.OpenGrantEventChannel(forged));
+
+        Assert.Equal(BrokerClientErrorKind.InvalidRequest, ex.Kind);
+    }
+
+    [Fact]
+    public async Task OpenGrantEventChannel_reports_unavailable_output_capture_without_event_channel()
+    {
+        using var client = BrokerClientTests.CreateGrantClient(new FakeAuthenticatedTransport());
+        var response = await client.ExecuteGrant(BrokerClientTests.GrantRequest(), "grant-1");
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.OpenGrantEventChannel(response));
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, ex.Kind);
+        Assert.Contains("output capture is unavailable", ex.Message);
+    }
+
+    [Theory]
+    [InlineData(@"\\remote\pipe\nowec-x")]
+    [InlineData(@"\\.\pipe\nested\nowec-x")]
+    [InlineData("nested/nowec-x")]
+    public async Task OpenGrantEventChannel_rejects_non_local_pipe_paths(string path)
+    {
+        using var client = BrokerClientTests.CreateGrantClient(new FakeAuthenticatedTransport(GrantResponse(path)));
+        var response = await client.ExecuteGrant(BrokerClientTests.GrantRequest(), "grant-1");
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.OpenGrantEventChannel(response));
+
+        Assert.Equal(BrokerClientErrorKind.InvalidResponse, ex.Kind);
+    }
+
+    [WindowsFact]
+    public async Task OpenGrantEventChannel_rejects_event_pipe_served_by_another_process_before_reading()
+    {
+        var pipeName = RandomPipeName();
+        using var server = ServeFixtureBytes(pipeName, GrantFrames());
+        var authenticator = new RecordingAuthenticator();
+        var accepted = new BrokerPipeServerIdentity(Environment.ProcessId + 1, 0);
+        using var client = BrokerClientTests.CreateGrantClient(new FakeAuthenticatedTransport(GrantResponse(pipeName), accepted));
+        var response = await client.ExecuteGrant(BrokerClientTests.GrantRequest(), "grant-1");
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.OpenGrantEventChannel(response));
+
+        Assert.Equal(BrokerClientErrorKind.ServerAuthenticationFailed, ex.Kind);
+        Assert.Null(authenticator.Seen);
+    }
+
+    [WindowsFact]
+    public async Task OpenGrantEventChannel_reads_complete_capture_from_the_accepting_server()
+    {
+        var pipeName = RandomPipeName();
+        using var server = ServeFixtureBytes(pipeName, GrantFrames());
+        var accepted = new BrokerPipeServerIdentity(Environment.ProcessId, System.Diagnostics.Process.GetCurrentProcess().SessionId);
+        using var client = BrokerClientTests.CreateGrantClient(new FakeAuthenticatedTransport(GrantResponse(pipeName), accepted));
+        var response = await client.ExecuteGrant(BrokerClientTests.GrantRequest(), "grant-1");
+
+        await using var channel = await client.OpenGrantEventChannel(response);
+        await foreach (var _ in channel.ReadEvents())
+        {
+        }
+
+        Assert.True(channel.IsCaptureComplete);
+    }
+
+    [Fact]
+    public async Task IsCaptureComplete_is_true_only_after_hello_and_finish()
+    {
+        await using var channel = GrantChannel(new EventFrame.Hello(1, 0), new EventFrame.Stdout("out\n"));
+        await Drain(channel, expectEof: false);
+        Assert.False(channel.IsCaptureComplete);
+
+        await using var finished = GrantChannel(new EventFrame.Hello(1, 0), new EventFrame.Stdout("out\n"), new EventFrame.Finish());
+        await Drain(finished);
+        Assert.True(finished.IsCaptureComplete);
+    }
+
+    [Theory]
+    [InlineData("stdout")]
+    [InlineData("stderr")]
+    public async Task IsCaptureComplete_is_false_after_overflow(string stream)
+    {
+        EventFrame overflow = stream == "stdout" ? new EventFrame.StdoutOverflow(10) : new EventFrame.StderrOverflow(10);
+        await using var channel = GrantChannel(new EventFrame.Hello(1, 0), overflow, new EventFrame.Finish());
+
+        await Drain(channel);
+
+        Assert.False(channel.IsCaptureComplete);
+    }
+
+    [Fact]
+    public async Task Grant_channel_throws_on_eof_before_finish_but_legacy_channel_returns_null()
+    {
+        var bytes = new EventFrame.Hello(1, 0).Encode();
+
+        await using var grant = new OperationEventChannel(new MemoryStream(bytes), completeCapture: true);
+        Assert.IsType<EventFrame.Hello>(await grant.ReadFrame());
+        var ex = await Assert.ThrowsAsync<EventFrameException>(() => grant.ReadFrame());
+        Assert.Contains("incomplete", ex.Message);
+        Assert.False(grant.IsCaptureComplete);
+
+        await using var legacy = new OperationEventChannel(new MemoryStream(bytes));
+        Assert.IsType<EventFrame.Hello>(await legacy.ReadFrame());
+        Assert.Null(await legacy.ReadFrame());
+    }
+
+    [Fact]
+    public async Task IsCaptureComplete_is_false_after_malformed_frame()
+    {
+        var bytes = new EventFrame.Hello(1, 0).Encode().AsEnumerable().Concat(new EventFrame.Finish().Encode()).Concat(new byte[] { 0xff }).ToArray();
+        await using var channel = new OperationEventChannel(new MemoryStream(bytes), completeCapture: true);
+
+        await Assert.ThrowsAsync<EventFrameException>(async () =>
+        {
+            while (await channel.ReadFrame() is not null)
+            {
+            }
+        });
+
+        Assert.False(channel.IsCaptureComplete);
+    }
+
+    private static byte[] GrantFrames() =>
+        new EventFrame.Hello(1, 0).Encode().AsEnumerable().Concat(new EventFrame.Finish().Encode()).ToArray();
+
+    private static BrokerTransportResponse GrantResponse(string pipeName) =>
+        new() { StatusCode = 200, Body = BrokerClientTests.GrantResponseJson(pipeName) };
+
+    private static OperationEventChannel GrantChannel(params EventFrame[] frames) =>
+        new(new MemoryStream(frames.SelectMany(frame => frame.Encode()).ToArray()), completeCapture: true);
+
+    private static async Task Drain(OperationEventChannel channel, bool expectEof = true)
+    {
+        while (true)
+        {
+            EventFrame? frame;
+            try
+            {
+                frame = await channel.ReadFrame();
+            }
+            catch (EventFrameException) when (!expectEof)
+            {
+                return;
+            }
+
+            if (frame is null or EventFrame.Finish)
+            {
+                return;
+            }
+        }
+    }
     // Keep the name short: on macOS named pipes map to unix domain socket paths
     // (temp dir + "CoreFxPipe_" prefix) limited to 104 characters.
     private static string RandomPipeName() =>

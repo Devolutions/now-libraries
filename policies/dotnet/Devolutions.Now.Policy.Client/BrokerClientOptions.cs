@@ -25,4 +25,11 @@ public sealed class BrokerClientOptions
 
     /// <summary>Version of the client binary. Defaults to the client assembly version.</summary>
     public string? ClientVersion { get; init; }
+
+    /// <summary>
+    /// Proves that a pipe server is the live broker service. Grant execution is unavailable
+    /// while this is <c>null</c>; <see cref="ServiceBrokerServerAuthenticator"/> is the default
+    /// implementation.
+    /// </summary>
+    public IBrokerServerAuthenticator? ServerAuthenticator { get; init; }
 }

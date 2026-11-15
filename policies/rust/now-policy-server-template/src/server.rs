@@ -10,20 +10,25 @@ use async_trait::async_trait;
 use axum::Json;
 use axum::extract::State;
 use axum::extract::rejection::JsonRejection;
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 
 use now_policy_api::{
     API_VERSION_STR, CancelRequest, CancelResponse, CapabilitiesResponse, ErrorCode, ErrorResponse, EvaluationResponse,
-    ExecutionResponse, HealthResponse, PackageRequest, PolicyManagementResponse, PolicyReplacementRequest,
-    PolicyReplacementResponse, PolicyResponse, PolicyValidationRequest, PolicyValidationResponse, StatusRequest,
-    StatusResponse,
+    ExecutionResponse, GrantExecutionResponse, HealthResponse, PACKAGE_GRANT_HEADER, PackageGrant, PackageRequest,
+    PolicyManagementResponse, PolicyReplacementRequest, PolicyReplacementResponse, PolicyResponse,
+    PolicyValidationRequest, PolicyValidationResponse, ServerContext, StatusRequest, StatusResponse,
 };
 use schemars::SchemaGenerator;
 
 pub const MAX_REQUEST_BODY_BYTES: usize = 256 * 1024;
 pub const MAX_POLICY_MANAGEMENT_BODY_BYTES: usize = 16 * 1024 * 1024;
+
+const GRANT_EXECUTION_PATH: &str = "/v1/package-operations/execute-grant";
+const MAX_ERROR_MESSAGE_CHARS: usize = 2048;
+const MAX_ERROR_DETAIL_CODE_CHARS: usize = 128;
+const MAX_ERROR_DETAIL_PATH_CHARS: usize = 512;
 
 /// Implementation-neutral contract exposed by a package broker server.
 #[async_trait]
@@ -42,6 +47,25 @@ pub trait PackageBrokerServer: Send + Sync {
     ) -> Result<PolicyReplacementResponse, ErrorResponse>;
     async fn evaluate(&self, request: PackageRequest) -> Result<EvaluationResponse, ErrorResponse>;
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse>;
+
+    /// Executes a request authorized by a remote grant.
+    ///
+    /// The router has already validated the grant syntax and the request envelope.
+    /// Implementations must not log the grant or place it in any error message.
+    /// The default reports that the broker does not support grants.
+    async fn execute_grant(
+        &self,
+        request: PackageRequest,
+        grant: PackageGrant,
+    ) -> Result<GrantExecutionResponse, ErrorResponse> {
+        let _ = (request, grant);
+        Err(error_response(
+            self.capabilities().await.server,
+            ErrorCode::UnsupportedEndpoint,
+            "grant execution is not supported by this broker",
+        ))
+    }
+
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse>;
     async fn cancel(&self, request: CancelRequest) -> Result<CancelResponse, ErrorResponse>;
 }
@@ -92,6 +116,11 @@ fn api_routes() -> ApiRouter<SharedPackageBrokerServer> {
                 .layer(axum::extract::DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
         )
         .api_route(
+            GRANT_EXECUTION_PATH,
+            post_with(execute_grant_handler, execute_grant_docs)
+                .layer(axum::extract::DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
+        )
+        .api_route(
             "/v1/package-operations/get-status",
             post_with(status_handler, status_docs).layer(axum::extract::DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
         )
@@ -123,6 +152,7 @@ pub fn openapi() -> OpenApi {
 
     let _ = api_routes().finish_api(&mut api);
     register_policy_management_body_limits(&mut api);
+    register_grant_header(&mut api);
     register_policy_schema(&mut api);
     normalize_openapi_31_nullable(&mut api);
     api
@@ -155,6 +185,46 @@ fn register_policy_management_body_limits(api: &mut OpenApi) {
             serde_json::json!(MAX_POLICY_MANAGEMENT_BODY_BYTES),
         );
     }
+}
+
+fn register_grant_header(api: &mut OpenApi) {
+    use aide::openapi::{HeaderStyle, Parameter, ParameterData, ParameterSchemaOrContent, ReferenceOr, SchemaObject};
+
+    let operation = api
+        .paths
+        .as_mut()
+        .expect("BUG: API routes should generate paths")
+        .paths
+        .get_mut(GRANT_EXECUTION_PATH)
+        .and_then(ReferenceOr::as_item_mut)
+        .and_then(|path_item| path_item.post.as_mut())
+        .expect("BUG: missing generated OpenAPI operation for grant execution");
+
+    operation.parameters.push(ReferenceOr::Item(Parameter::Header {
+        parameter_data: ParameterData {
+            name: PACKAGE_GRANT_HEADER.to_owned(),
+            description: Some(
+                "Remote execution grant, 1 to 2,048 ASCII characters. The header must appear exactly once.".to_owned(),
+            ),
+            required: true,
+            deprecated: None,
+            format: ParameterSchemaOrContent::Schema(SchemaObject {
+                json_schema: schemars::json_schema!({
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2048,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9._~:-]*$"
+                }),
+                external_docs: None,
+                example: None,
+            }),
+            example: None,
+            examples: Default::default(),
+            explode: None,
+            extensions: Default::default(),
+        },
+        style: HeaderStyle::Simple,
+    }));
 }
 
 fn register_policy_schema(api: &mut OpenApi) {
@@ -338,12 +408,113 @@ async fn evaluate_handler(
 
 async fn execute_handler(
     State(server): State<SharedPackageBrokerServer>,
+    headers: HeaderMap,
     request: Result<Json<PackageRequest>, JsonRejection>,
 ) -> Response {
+    if headers.contains_key(PACKAGE_GRANT_HEADER) {
+        return rejection_response(
+            &server,
+            ErrorCode::BadRequest,
+            "the grant header is not accepted on this endpoint",
+        )
+        .await;
+    }
+
     match request {
         Ok(Json(request)) => broker_result(server.execute(request).await),
         Err(rejection) => request_rejection(&server, rejection, ErrorCode::BadRequest).await,
     }
+}
+
+async fn execute_grant_handler(
+    State(server): State<SharedPackageBrokerServer>,
+    headers: HeaderMap,
+    request: Result<Json<PackageRequest>, JsonRejection>,
+) -> Response {
+    let grant = match grant_from_headers(&headers) {
+        Ok(grant) => grant,
+        Err((code, message)) => return rejection_response(&server, code, message).await,
+    };
+
+    if !accepts_json(&headers) {
+        return rejection_response(
+            &server,
+            ErrorCode::BadRequest,
+            "Accept must be a single application/json header",
+        )
+        .await;
+    }
+
+    let request = match request {
+        Ok(Json(request)) => request,
+        Err(rejection) => return request_rejection(&server, rejection, ErrorCode::BadRequest).await,
+    };
+
+    match server.execute_grant(request, grant).await {
+        Ok(response) => match response.validate() {
+            Ok(()) => (StatusCode::OK, Json(response)).into_response(),
+            Err(_) => internal_error_response(&server).await,
+        },
+        Err(error) if is_valid_grant_error(&error) => (error_status(error.code), Json(error)).into_response(),
+        Err(_) => internal_error_response(&server).await,
+    }
+}
+
+fn grant_from_headers(headers: &HeaderMap) -> Result<PackageGrant, (ErrorCode, &'static str)> {
+    let mut values = headers.get_all(PACKAGE_GRANT_HEADER).iter();
+    let Some(value) = values.next() else {
+        return Err((ErrorCode::Unauthenticated, "the grant header is required"));
+    };
+    if values.next().is_some() {
+        return Err((ErrorCode::BadRequest, "the grant header must appear exactly once"));
+    }
+
+    value
+        .to_str()
+        .ok()
+        .and_then(|value| PackageGrant::parse(value).ok())
+        .ok_or((ErrorCode::BadRequest, "the grant header is malformed"))
+}
+
+fn accepts_json(headers: &HeaderMap) -> bool {
+    let mut values = headers.get_all(header::ACCEPT).iter();
+    match (values.next(), values.next()) {
+        (Some(value), None) => value
+            .to_str()
+            .is_ok_and(|value| value.trim().eq_ignore_ascii_case("application/json")),
+        _ => false,
+    }
+}
+
+/// Checks the `ErrorResponse` constraints of the grant route, which has no `Validation` or `Management` members.
+fn is_valid_grant_error(error: &ErrorResponse) -> bool {
+    let chars_within = |value: &str, max: usize| value.chars().take(max + 1).count() <= max;
+
+    error.validation.is_none()
+        && error.management.is_none()
+        && !error.message.is_empty()
+        && chars_within(&error.message, MAX_ERROR_MESSAGE_CHARS)
+        && error.details.iter().all(|detail| {
+            !detail.message.is_empty()
+                && chars_within(&detail.message, MAX_ERROR_MESSAGE_CHARS)
+                && detail
+                    .code
+                    .as_deref()
+                    .is_none_or(|code| chars_within(code, MAX_ERROR_DETAIL_CODE_CHARS))
+                && detail
+                    .path
+                    .as_deref()
+                    .is_none_or(|path| chars_within(path, MAX_ERROR_DETAIL_PATH_CHARS))
+        })
+}
+
+async fn internal_error_response(server: &SharedPackageBrokerServer) -> Response {
+    rejection_response(
+        server,
+        ErrorCode::InternalError,
+        "the broker could not produce a valid response",
+    )
+    .await
 }
 
 async fn status_handler(
@@ -380,17 +551,25 @@ async fn request_rejection(
         ),
         _ => (malformed_code, "request body is not a valid broker document"),
     };
-    let error = ErrorResponse {
+    rejection_response(server, code, message).await
+}
+
+async fn rejection_response(server: &SharedPackageBrokerServer, code: ErrorCode, message: &str) -> Response {
+    let error = error_response(server.capabilities().await.server, code, message);
+    (error_status(error.code), Json(error)).into_response()
+}
+
+fn error_response(server: ServerContext, code: ErrorCode, message: &str) -> ErrorResponse {
+    ErrorResponse {
         response_kind: now_policy_api::ErrorResponseKind,
         response_version: API_VERSION_STR.into(),
-        server: server.capabilities().await.server,
+        server,
         code,
         message: message.to_owned(),
         details: Vec::new(),
         validation: None,
         management: None,
-    };
-    (error_status(error.code), Json(error)).into_response()
+    }
 }
 
 fn broker_result<T: Serialize>(result: Result<T, ErrorResponse>) -> Response {
@@ -499,7 +678,10 @@ fn evaluate_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
 
 fn execute_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
     op.summary("Execute package operation")
-        .description("Evaluates a package operation and submits it to the implementation for execution when allowed.")
+        .description(
+            "Evaluates a package operation and submits it to the implementation for execution when allowed. \
+             Requests carrying the grant header are rejected with 400.",
+        )
         .response::<200, Json<ExecutionResponse>>()
         .response::<400, Json<ErrorResponse>>()
         .response::<409, Json<ErrorResponse>>()
@@ -507,6 +689,26 @@ fn execute_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
         .response::<415, Json<ErrorResponse>>()
         .response::<422, Json<ErrorResponse>>()
         .response::<503, Json<ErrorResponse>>()
+}
+
+fn execute_grant_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
+    op.summary("Execute package operation with a remote grant")
+        .description(
+            "Submits a package operation authorized by the grant in the required grant header. \
+             The request must carry exactly one grant header and exactly one Accept header \
+             whose value is application/json. These checks run before any work starts, \
+             so a rejected request never consumes the grant. \
+             Brokers that do not support grants return 501.",
+        )
+        .response::<200, Json<GrantExecutionResponse>>()
+        .response::<400, Json<ErrorResponse>>()
+        .response::<401, Json<ErrorResponse>>()
+        .response::<403, Json<ErrorResponse>>()
+        .response::<409, Json<ErrorResponse>>()
+        .response::<413, Json<ErrorResponse>>()
+        .response::<415, Json<ErrorResponse>>()
+        .response::<422, Json<ErrorResponse>>()
+        .response::<501, Json<ErrorResponse>>()
 }
 
 fn status_docs(op: TransformOperation<'_>) -> TransformOperation<'_> {
@@ -669,6 +871,32 @@ mod tests {
             assert!(property.get("items").is_none());
             assert!(property.get("maxItems").is_none());
             assert!(property.get("uniqueItems").is_none());
+        }
+    }
+
+    #[test]
+    fn grant_execution_openapi_requires_the_grant_header_and_documents_rejections() {
+        let api = serde_json::to_value(openapi()).expect("OpenAPI should serialize");
+        let operation = &api["paths"]["/v1/package-operations/execute-grant"]["post"];
+
+        let parameters = operation["parameters"].as_array().expect("parameters should exist");
+        let grant = parameters
+            .iter()
+            .find(|parameter| parameter["name"] == "X-Devolutions-Package-Grant")
+            .expect("the grant header should be declared");
+        assert_eq!(grant["in"], "header");
+        assert_eq!(grant["required"], true);
+
+        assert_eq!(
+            operation["responses"]["200"]["content"]["application/json"]["schema"]["$ref"],
+            "#/components/schemas/GrantExecutionResponse"
+        );
+        for status in ["400", "401", "403", "409", "413", "415", "422", "501"] {
+            assert_eq!(
+                operation["responses"][status]["content"]["application/json"]["schema"]["$ref"],
+                "#/components/schemas/ErrorResponse",
+                "missing structured {status} response"
+            );
         }
     }
 
