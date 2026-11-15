@@ -11,8 +11,19 @@ public sealed class BrokerClientException : Exception
         string? endpoint = null,
         int? statusCode = null,
         ErrorResponse? brokerError = null,
+        Exception? innerException = null)
+        : this(kind, message, false, endpoint, statusCode, brokerError, innerException)
+    {
+    }
+
+    internal BrokerClientException(
+        BrokerClientErrorKind kind,
+        string message,
+        bool noWorkStarted,
+        string? endpoint = null,
+        int? statusCode = null,
+        ErrorResponse? brokerError = null,
         Exception? innerException = null,
-        bool noWorkStarted = false,
         ErrorCode? brokerErrorCode = null)
         : base(message, innerException)
     {
@@ -33,9 +44,9 @@ public sealed class BrokerClientException : Exception
     public ErrorResponse? BrokerError { get; }
 
     /// <summary>
-    /// <c>true</c> only when the request was never sent, or the broker returned a contract rejection
-    /// that starts no work for it. <c>false</c> means the outcome may be unknown: the request may
-    /// have been sent and work may have started.
+    /// <c>true</c> only when this request was never sent or was rejected before starting work.
+    /// An earlier or concurrent request may still have started work.
+    /// <c>false</c> means this request may have been sent and may have started work.
     /// </summary>
     public bool NoWorkStarted { get; }
 

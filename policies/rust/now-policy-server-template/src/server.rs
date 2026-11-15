@@ -52,6 +52,8 @@ pub trait PackageBrokerServer: Send + Sync {
     ///
     /// The router has already validated the grant syntax and the request envelope.
     /// Implementations must not log the grant or place it in any error message.
+    /// Responses and errors must not include captured output, command previews or execution command lines.
+    /// Implementations must return a contract rejection code only when that request started no work.
     /// The default reports that the broker does not support grants.
     async fn execute_grant(
         &self,

@@ -109,6 +109,9 @@ Before sending package operation requests, the client fills missing request meta
 Grant execution
 ---------------
 
+**Do not use grant execution yet.**
+The server-authentication mechanism is unresolved, and the current PID and session checks do not prove a live broker instance across process exit and PID reuse.
+
 `BrokerClient.ExecuteGrant(request, grant)` runs a package operation that a Gateway grant authorizes.
 It posts to `/v1/package-operations/execute-grant` only, sends the grant in the single `X-Devolutions-Package-Grant` header, and never retries or falls back to `/execute`.
 The grant must be 1 to 2,048 ASCII characters matching `[A-Za-z0-9][A-Za-z0-9._~:-]*`.
@@ -117,14 +120,16 @@ Status and cancellation use the existing methods with the returned operation ID 
 
 The client authenticates the pipe server before writing any byte.
 Set `BrokerClientOptions.ServerAuthenticator` and use `NamedPipeBrokerTransport`, or another `IAuthenticatedBrokerTransport`; otherwise `ExecuteGrant` throws `UnsupportedCapability` without sending anything.
-`ServiceBrokerServerAuthenticator` is the default implementation. It requires the pipe server process to be the running `DevolutionsAgent` service, in session 0.
+`ServiceBrokerServerAuthenticator` compares the pipe server PID with the running `DevolutionsAgent` service PID and requires session 0.
+That comparison is not sufficient to authenticate the server across process exit and PID reuse.
 Implement `IBrokerServerAuthenticator` to use a different check.
 
 `BrokerClientException.NoWorkStarted` is true only when the request was never sent or the broker returned a documented rejection that starts no work.
+It says nothing about whether an earlier or concurrent submission started work.
 When it is false, including after a timeout, disconnect, malformed response or unexpected status, the outcome may be unknown.
 A 404 from an older broker throws `UnsupportedEndpoint`. The grant and response text are never copied into exceptions or `Trace`.
 
-`OpenGrantEventChannel(response)` connects to the response's event pipe and requires it to belong to the same authenticated broker instance that accepted the operation; a mismatch throws `ServerAuthenticationFailed`.
+`OpenGrantEventChannel(response)` checks the event pipe server PID and session against the submission pipe and calls the authenticator again; a mismatch throws `ServerAuthenticationFailed`.
 Output is complete only when `OperationEventChannel.IsCaptureComplete` is true, which requires a valid `Hello`, a `Finish`, and no overflow or malformed frame.
 A grant channel throws on end of stream before `Finish`.
 A caller whose verdict depends on output must treat `!IsCaptureComplete`, or any exception, as an unknown outcome.

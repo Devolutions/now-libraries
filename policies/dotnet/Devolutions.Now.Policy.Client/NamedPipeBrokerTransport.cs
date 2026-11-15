@@ -99,34 +99,34 @@ public sealed class NamedPipeBrokerTransport : IAuthenticatedBrokerTransport
 
             using var readCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             readCts.CancelAfter(ReadTimeoutMs);
-            return (await ReadHttpResponse(pipe, request.Path, readCts.Token).ConfigureAwait(false), server);
+            return (await ReadHttpResponse(pipe, request.Path, authenticator is not null, readCts.Token).ConfigureAwait(false), server);
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
             throw new BrokerClientException(
                 BrokerClientErrorKind.Timeout,
                 $"Timed out communicating with the package broker at {request.Path} over named pipe '{_pipeName}'.",
-                request.Path,
-                innerException: ex,
-                noWorkStarted: authenticator is not null && !writeStarted);
+                noWorkStarted: authenticator is not null && !writeStarted,
+                endpoint: request.Path,
+                innerException: ex);
         }
         catch (IOException ex)
         {
             throw new BrokerClientException(
                 BrokerClientErrorKind.BrokerUnavailable,
                 $"Unable to communicate with the package broker at {request.Path} over named pipe '{_pipeName}': {ex.Message}",
-                request.Path,
-                innerException: ex,
-                noWorkStarted: authenticator is not null && !writeStarted);
+                noWorkStarted: authenticator is not null && !writeStarted,
+                endpoint: request.Path,
+                innerException: ex);
         }
         catch (UnauthorizedAccessException ex)
         {
             throw new BrokerClientException(
                 BrokerClientErrorKind.BrokerUnavailable,
                 $"Access to the package broker named pipe '{_pipeName}' was denied while calling {request.Path}.",
-                request.Path,
-                innerException: ex,
-                noWorkStarted: authenticator is not null && !writeStarted);
+                noWorkStarted: authenticator is not null && !writeStarted,
+                endpoint: request.Path,
+                innerException: ex);
         }
     }
 
@@ -146,9 +146,9 @@ public sealed class NamedPipeBrokerTransport : IAuthenticatedBrokerTransport
             throw new BrokerClientException(
                 BrokerClientErrorKind.ServerAuthenticationFailed,
                 $"The package broker pipe server could not be authenticated for {path}; nothing was sent.",
-                path,
-                innerException: ex,
-                noWorkStarted: true);
+                noWorkStarted: true,
+                endpoint: path,
+                innerException: ex);
         }
     }
 
@@ -157,7 +157,7 @@ public sealed class NamedPipeBrokerTransport : IAuthenticatedBrokerTransport
         // No persistent resources to dispose.
     }
 
-    private static async Task<BrokerTransportResponse> ReadHttpResponse(Stream stream, string path, CancellationToken ct)
+    private static async Task<BrokerTransportResponse> ReadHttpResponse(Stream stream, string path, bool redactResponse, CancellationToken ct)
     {
         var buffer = new byte[65536];
         var totalRead = 0;
@@ -187,7 +187,9 @@ public sealed class NamedPipeBrokerTransport : IAuthenticatedBrokerTransport
             {
                 throw new BrokerClientException(
                     BrokerClientErrorKind.InvalidResponse,
-                    $"Broker returned an invalid HTTP status line for {path}: '{lines[0]}'.",
+                    redactResponse
+                        ? $"Broker returned an invalid HTTP status line for {path}."
+                        : $"Broker returned an invalid HTTP status line for {path}: '{lines[0]}'.",
                     path);
             }
 
@@ -208,7 +210,9 @@ public sealed class NamedPipeBrokerTransport : IAuthenticatedBrokerTransport
                 {
                     throw new BrokerClientException(
                         BrokerClientErrorKind.InvalidResponse,
-                        $"Broker returned an invalid Content-Length header for {path}: '{clStr}'.",
+                        redactResponse
+                            ? $"Broker returned an invalid Content-Length header for {path}."
+                            : $"Broker returned an invalid Content-Length header for {path}: '{clStr}'.",
                         path);
                 }
             }

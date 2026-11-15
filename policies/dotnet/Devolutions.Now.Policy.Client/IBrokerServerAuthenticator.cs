@@ -4,8 +4,8 @@ namespace Devolutions.Now.Policy.Client;
 public readonly record struct BrokerPipeServerIdentity(int ProcessId, int SessionId);
 
 /// <summary>
-/// Proves that the server of a connected pipe is the live broker service. The client calls it
-/// after connecting and before writing any byte, including the grant.
+/// Validates the server identity reported by a connected pipe.
+/// The client calls it after connecting and before writing any byte, including the grant.
 /// </summary>
 public interface IBrokerServerAuthenticator
 {

@@ -398,8 +398,8 @@ public sealed class BrokerClient : IDisposable
             throw new BrokerClientException(
                 BrokerClientErrorKind.UnsupportedCapability,
                 "Grant execution requires a server authenticator in the client options.",
-                endpoint,
-                noWorkStarted: true);
+                noWorkStarted: true,
+                endpoint: endpoint);
         }
 
         if (_transport is not IAuthenticatedBrokerTransport authenticatedTransport)
@@ -407,8 +407,8 @@ public sealed class BrokerClient : IDisposable
             throw new BrokerClientException(
                 BrokerClientErrorKind.UnsupportedCapability,
                 "Grant execution requires a transport that authenticates the broker server.",
-                endpoint,
-                noWorkStarted: true);
+                noWorkStarted: true,
+                endpoint: endpoint);
         }
 
         var packageRequest = BuildPackageRequest(request, requestId);
@@ -445,7 +445,8 @@ public sealed class BrokerClient : IDisposable
     /// Connect to the event channel of an operation accepted by <see cref="ExecuteGrant"/> and
     /// return a reader that treats captured output as complete only after <c>Hello</c> and
     /// <c>Finish</c> without overflow; see <see cref="OperationEventChannel.IsCaptureComplete"/>.
-    /// The event pipe must be served by the same live broker instance that accepted the operation.
+    /// The event pipe must report the same server PID and session as the submission pipe and pass the authenticator.
+    /// A matching PID and session alone do not prove that the original broker instance is still live.
     /// </summary>
     /// <exception cref="BrokerClientException">
     /// <paramref name="response"/> was not returned by this client, carries no event channel, names a
@@ -461,8 +462,7 @@ public sealed class BrokerClient : IDisposable
         {
             throw new BrokerClientException(
                 BrokerClientErrorKind.InvalidRequest,
-                "The response was not returned by ExecuteGrant on this client.",
-                noWorkStarted: true);
+                "The response was not returned by ExecuteGrant on this client.");
         }
 
         var descriptor = response.Operation?.EventChannel
@@ -516,8 +516,8 @@ public sealed class BrokerClient : IDisposable
             throw new BrokerClientException(
                 BrokerClientErrorKind.InvalidRequest,
                 "The grant must be 1 to 2,048 ASCII characters matching [A-Za-z0-9][A-Za-z0-9._~:-]*.",
-                endpoint,
-                noWorkStarted: true);
+                noWorkStarted: true,
+                endpoint: endpoint);
         }
     }
 
@@ -548,7 +548,7 @@ public sealed class BrokerClient : IDisposable
     }
 
     private static BrokerClientException GrantRequestRejected(string message, string endpoint)
-        => new(BrokerClientErrorKind.InvalidRequest, message, endpoint, noWorkStarted: true);
+        => new(BrokerClientErrorKind.InvalidRequest, message, noWorkStarted: true, endpoint: endpoint);
 
     private GrantExecutionResponse InterpretGrantResponse(BrokerTransportResponse response, string requestId, string endpoint)
     {
@@ -560,9 +560,9 @@ public sealed class BrokerClient : IDisposable
             throw new BrokerClientException(
                 BrokerClientErrorKind.UnsupportedEndpoint,
                 "The broker does not offer the grant execution route; the request was not retried on another route.",
-                endpoint,
-                status,
-                noWorkStarted: true);
+                noWorkStarted: true,
+                endpoint: endpoint,
+                statusCode: status);
         }
 
         if (status == 200)
@@ -578,10 +578,10 @@ public sealed class BrokerClient : IDisposable
             throw new BrokerClientException(
                 BrokerClientErrorKind.BrokerError,
                 $"Broker rejected the grant request with HTTP {status} ({code}).",
-                endpoint,
-                status,
-                brokerErrorCode: code,
-                noWorkStarted: true);
+                noWorkStarted: true,
+                endpoint: endpoint,
+                statusCode: status,
+                brokerErrorCode: code);
         }
 
         Trace?.Invoke($"Grant request failed with HTTP {status}; the outcome may be unknown.");

@@ -16,6 +16,16 @@ public class BrokerClientTests
         {"ResponseKind":"CapabilitiesResponse","ResponseVersion":"1.0","Server":{"ServerVersion":"mock","Transport":"HttpNamedPipe"},"Transports":["HttpNamedPipe"],"Managers":[{"Manager":"Winget","Operations":["Install","Update","Uninstall"],"Scopes":["User","Machine"],"Architectures":["X86","X64","Arm64","Neutral"],"SupportsCustomParameters":true,"SupportsCustomInstallLocation":true,"SupportsCaptureOutput":true,"SupportsDetails":true},{"Manager":"PowerShell","Operations":["Install","Update","Uninstall"],"Scopes":["Machine"],"Architectures":["X64"],"SupportsCustomParameters":true,"SupportsCustomInstallLocation":false,"SupportsCaptureOutput":true,"SupportsDetails":false}],"MaxRequestBodyBytes":1048576}
         """;
 
+    // oracle: reference Devolutions/now-libraries@27729ec917c4:policies/dotnet/Devolutions.Now.Policy.Client/BrokerClientException.cs
+    [Fact]
+    public void BrokerClientException_preserves_original_constructor_for_compiled_clients()
+    {
+        var constructor = typeof(BrokerClientException).GetConstructor(
+            [typeof(BrokerClientErrorKind), typeof(string), typeof(string), typeof(int?), typeof(ErrorResponse), typeof(Exception)]);
+
+        Assert.NotNull(constructor);
+    }
+
     [Fact]
     public void DefaultPipeName_uses_api_constant()
     {
@@ -844,6 +854,52 @@ public class BrokerClientTests
         Assert.Equal(BrokerClientErrorKind.ServerAuthenticationFailed, ex.Kind);
         Assert.True(ex.NoWorkStarted);
         Assert.Equal(0, await serving);
+    }
+
+    // oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §broker-grant-errors
+    [WindowsFact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    public async Task SendAuthenticated_does_not_expose_grant_in_invalid_status_line()
+        => await AssertAuthenticatedResponseErrorIsRedacted($"HTTP/1.1 {Grant}\r\nContent-Length: 0\r\n\r\n");
+
+    // oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §broker-grant-errors
+    [WindowsFact]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    public async Task SendAuthenticated_does_not_expose_grant_in_invalid_content_length()
+        => await AssertAuthenticatedResponseErrorIsRedacted($"HTTP/1.1 200 OK\r\nContent-Length: {Grant}\r\n\r\n");
+
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private static async Task AssertAuthenticatedResponseErrorIsRedacted(string response)
+    {
+        var pipeName = $"nowgt-{Guid.NewGuid():N}"[..22];
+        await using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+        var serving = Task.Run(async () =>
+        {
+            await server.WaitForConnectionAsync();
+            var buffer = new byte[4096];
+            var total = 0;
+            while (!Encoding.ASCII.GetString(buffer, 0, total).EndsWith("\r\n\r\n", StringComparison.Ordinal))
+            {
+                total += await server.ReadAsync(buffer.AsMemory(total));
+            }
+            await server.WriteAsync(Encoding.ASCII.GetBytes(response));
+            await server.FlushAsync();
+            server.WaitForPipeDrain();
+        });
+
+        using var transport = new NamedPipeBrokerTransport(pipeName);
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => transport.SendAuthenticated(
+            new BrokerTransportRequest
+            {
+                Method = "POST",
+                Path = "/probe",
+                Headers = new Dictionary<string, string> { [BrokerApi.PackageGrantHeaderName] = Grant },
+            },
+            new RecordingAuthenticator()));
+
+        await serving;
+        Assert.False(ex.NoWorkStarted);
+        Assert.DoesNotContain(Grant, ex.ToString(), StringComparison.Ordinal);
     }
 
     internal static PackageOperationRequest GrantRequest(

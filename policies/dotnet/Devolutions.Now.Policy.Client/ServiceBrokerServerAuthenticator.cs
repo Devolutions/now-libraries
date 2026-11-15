@@ -4,9 +4,9 @@ using System.Runtime.InteropServices;
 namespace Devolutions.Now.Policy.Client;
 
 /// <summary>
-/// Accepts a pipe server only when it runs in session 0 and its process is the running Windows
-/// service with a fixed name. The service name is never taken from the server. Off Windows every
-/// server is rejected.
+/// Compares the pipe server's PID and session to the running Windows service with a fixed name.
+/// This check alone does not establish a live service instance if the PID is reused.
+/// Off Windows every server is rejected.
 /// </summary>
 public sealed class ServiceBrokerServerAuthenticator : IBrokerServerAuthenticator
 {

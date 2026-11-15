@@ -171,15 +171,18 @@ public class OperationEventChannelTests
         Assert.Contains("major version", ex.Message);
     }
 
+    // oracle: contract Devolutions/devolutions-gateway@e0e75f634940:crates/agent-channel-proto/CONTRACT.package-management.md §operations
     [Fact]
-    public async Task OpenGrantEventChannel_rejects_response_not_returned_by_execute_grant()
+    public async Task OpenGrantEventChannel_does_not_claim_no_work_started_for_response_from_another_client()
     {
+        using var submittingClient = BrokerClientTests.CreateGrantClient(new FakeAuthenticatedTransport());
+        var response = await submittingClient.ExecuteGrant(BrokerClientTests.GrantRequest(), "grant-1");
         using var client = BrokerClientTests.CreateGrantClient(new FakeAuthenticatedTransport());
-        var forged = BrokerSerializer.DeserializeStrict<GrantExecutionResponse>(BrokerClientTests.GrantResponseJson("nowec-forged"))!;
 
-        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.OpenGrantEventChannel(forged));
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.OpenGrantEventChannel(response));
 
         Assert.Equal(BrokerClientErrorKind.InvalidRequest, ex.Kind);
+        Assert.False(ex.NoWorkStarted);
     }
 
     [Fact]
