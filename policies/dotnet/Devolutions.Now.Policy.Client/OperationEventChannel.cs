@@ -40,11 +40,12 @@ public sealed class OperationEventChannel : IAsyncDisposable, IDisposable
     /// <summary>
     /// <c>true</c> only after a valid <c>Hello</c> and a <c>Finish</c> were read, with no
     /// stdout or stderr overflow frame and no malformed frame seen.
-    /// This does not detect complete frames consumed by another reader.
+    /// This does not detect complete frames consumed by another reader, or output written or
+    /// held open by other processes that inherited the command's output handles.
     /// </summary>
     /// <remarks>
-    /// A caller whose verdict depends on the captured output must treat
-    /// <c>!IsCaptureComplete</c>, or any exception from this channel, as an unknown outcome.
+    /// Treat <c>!IsCaptureComplete</c>, or any exception from this channel, as an unknown outcome.
+    /// A <c>true</c> value alone does not prove an outcome that depends on the captured output.
     /// Data arriving after the caller stops reading cannot be detected.
     /// </remarks>
     public bool IsCaptureComplete => _helloReceived && _finishReceived && !_overflowReceived && !_faulted;

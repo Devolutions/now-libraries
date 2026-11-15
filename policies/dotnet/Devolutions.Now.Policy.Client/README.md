@@ -109,9 +109,11 @@ Before sending package operation requests, the client fills missing request meta
 Grant execution
 ---------------
 
-**Do not use grant execution yet.**
-The server-authentication mechanism is unresolved, and the current PID and session checks do not prove a live broker instance across process exit and PID reuse.
-The event protocol also cannot detect whole output frames consumed by another reader.
+Grant execution relies on these limits:
+
+- Server authentication assumes that the Service Control Manager reports a running service's PID only while that process lives, so another process cannot reuse it. This assumption is untested.
+- A grant binds the target user and the exact request, not one process; another process running as the same user can redeem a grant it obtains.
+- An outcome that depends on captured output is unknown, because the event stream cannot prove that output is complete or unaltered.
 
 `BrokerClient.ExecuteGrant(request, grant)` runs a package operation that a Gateway grant authorizes.
 It posts to `/v1/package-operations/execute-grant` only, sends the grant in the single `X-Devolutions-Package-Grant` header, and never retries or falls back to `/execute`.
@@ -122,20 +124,20 @@ Status and cancellation use the existing methods with the returned operation ID 
 The client authenticates the pipe server before writing any byte.
 Set `BrokerClientOptions.ServerAuthenticator` and use `NamedPipeBrokerTransport`, or another `IAuthenticatedBrokerTransport`; otherwise `ExecuteGrant` throws `UnsupportedCapability` without sending anything.
 `ServiceBrokerServerAuthenticator` compares the pipe server PID with the running `DevolutionsAgent` service PID and requires session 0.
-That comparison is not sufficient to authenticate the server across process exit and PID reuse.
-Implement `IBrokerServerAuthenticator` to use a different check.
+It relies on the PID-reuse assumption above; implement `IBrokerServerAuthenticator` to use a different check.
+An authentication failure after the request was sent leaves the outcome unknown.
 
 `BrokerClientException.NoWorkStarted` is true only when the request was never sent or the broker returned a documented rejection that starts no work.
-It says nothing about whether an earlier or concurrent submission started work.
+It applies to that request alone: an earlier, concurrent or later request may redeem the same grant, so it never proves that the operation failed.
 When it is false, including after a timeout, disconnect, malformed response or unexpected status, the outcome may be unknown.
 A 404 from an older broker throws `UnsupportedEndpoint`. The grant and response text are never copied into exceptions or `Trace`.
 
 `OpenGrantEventChannel(response)` checks the event pipe server PID and session against the submission pipe and calls the authenticator again; a mismatch throws `ServerAuthenticationFailed`.
-Output is complete only when `OperationEventChannel.IsCaptureComplete` is true, which requires a valid `Hello`, a `Finish`, and no overflow or malformed frame.
-This property cannot establish completeness when another reader can consume frames.
+`OperationEventChannel.IsCaptureComplete` is true only after a valid `Hello`, a `Finish`, and no overflow or malformed frame.
+It is necessary but not sufficient: it cannot detect frames consumed by another reader, or output written or held open by other processes that inherited the command's output handles.
 A grant channel throws on end of stream before `Finish`.
 It rejects data observed after `Finish`, but cannot detect data arriving after the caller stops reading.
-A caller whose verdict depends on output must treat `!IsCaptureComplete`, or any exception, as an unknown outcome.
+A caller must treat `!IsCaptureComplete` or any exception as an unknown outcome, and must not treat `IsCaptureComplete` alone as proof of an outcome that depends on output.
 
 Error handling and diagnostics
 ------------------------------
