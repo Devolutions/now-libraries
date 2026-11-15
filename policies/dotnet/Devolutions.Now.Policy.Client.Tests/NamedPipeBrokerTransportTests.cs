@@ -465,6 +465,61 @@ public class NamedPipeBrokerTransportTests
         Assert.Equal(level, observed);
     }
 
+    [Fact]
+    public async Task Authenticated_busy_reply_is_returned_without_retry()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        await using var server = TestPipeServer.Start(_ => BusyResponse);
+        var delays = new List<TimeSpan>();
+        using var transport = CreateTransport(server.PipeName, delays);
+
+        var result = await transport.SendAuthenticated(GrantRequest, new AcceptingAuthenticator());
+
+        Assert.Equal(503, result.Response.StatusCode);
+        Assert.Empty(delays);
+        Assert.Single(await server.Completed);
+    }
+
+    [Fact]
+    public async Task Authenticated_disconnect_without_response_is_not_resent_and_leaves_the_outcome_unknown()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        await using var server = TestPipeServer.Start(_ => TestPipeServer.CloseWithoutResponse);
+        var delays = new List<TimeSpan>();
+        using var transport = CreateTransport(server.PipeName, delays);
+
+        var ex = await Assert.ThrowsAsync<BrokerClientException>(
+            () => transport.SendAuthenticated(GrantRequest, new AcceptingAuthenticator()));
+
+        Assert.Equal(BrokerClientErrorKind.BrokerUnavailable, ex.Kind);
+        Assert.False(ex.NoWorkStarted);
+        Assert.Empty(delays);
+        Assert.Single(await server.Completed);
+    }
+
+    private static readonly BrokerTransportRequest GrantRequest = new()
+    {
+        Method = "POST",
+        Path = "/v1/package-operations/execute-grant",
+        Body = "{}",
+        Headers = new Dictionary<string, string> { ["X-Devolutions-Package-Grant"] = "grant-1" },
+    };
+
+    private sealed class AcceptingAuthenticator : IBrokerServerAuthenticator
+    {
+        public void Authenticate(BrokerPipeServerIdentity server)
+        {
+        }
+    }
+
     private static NamedPipeBrokerTransport CreateTransport(
         string pipeName,
         List<TimeSpan>? delays = null,

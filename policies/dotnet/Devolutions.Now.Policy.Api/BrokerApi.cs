@@ -12,6 +12,11 @@ public static class BrokerApi
     /// <summary>Maximum complete HTTP request-body size for policy validation and replacement.</summary>
     public const int MaxPolicyManagementBodyBytes = 16 * 1024 * 1024;
 
+    /// <summary>Header carrying the single-use grant; sent only to <see cref="ExecuteGrantPath"/>.</summary>
+    public const string PackageGrantHeaderName = "X-Devolutions-Package-Grant";
+
+    public const string ExecuteGrantPath = "/v1/package-operations/execute-grant";
+
     public const string PackageRequestKind = "PackageRequest";
     public const string StatusRequestKind = "StatusRequest";
     public const string CancelRequestKind = "CancelRequest";

@@ -11,6 +11,8 @@ use serde_json as _;
 use serde_yaml as _;
 
 #[cfg(test)]
+use rstest as _;
+#[cfg(test)]
 use tokio as _;
 #[cfg(test)]
 use tower as _;

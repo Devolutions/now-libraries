@@ -13,6 +13,7 @@ use super::{
 /// Canonical request sent by a package broker client to the elevated broker.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "PackageRequest")]
+#[schemars(transform = package_request_source_schema)]
 #[serde(rename_all = "PascalCase")]
 #[serde(deny_unknown_fields)]
 pub struct PackageRequest {
@@ -71,14 +72,40 @@ pub struct PackageRequest {
 #[serde(rename_all = "PascalCase")]
 #[serde(deny_unknown_fields)]
 pub struct RequestSource {
-    /// Source name.
-    #[schemars(length(min = 1, max = 128))]
+    /// Execution feed name, or empty for an update's default feed or an uninstall without a feed.
+    #[schemars(length(max = 128))]
     pub name: String,
 
     /// Optional source URL.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(length(max = 2048))]
     pub url: Option<String>,
+}
+
+fn package_request_source_schema(schema: &mut Schema) {
+    schema.insert(
+        "allOf".to_owned(),
+        serde_json::json!([{
+            "anyOf": [
+                {
+                    "properties": {
+                        "Source": { "properties": { "Name": { "minLength": 1 } } }
+                    }
+                },
+                {
+                    "properties": {
+                        "Operation": { "enum": ["Update", "Uninstall"] },
+                        "Source": {
+                            "properties": {
+                                "Name": { "maxLength": 0 },
+                                "Url": { "type": "null" }
+                            }
+                        }
+                    }
+                }
+            ]
+        }]),
+    );
 }
 
 /// Package information.

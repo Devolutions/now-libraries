@@ -10,6 +10,7 @@ pub mod enums;
 pub mod evaluate;
 pub mod event_channel;
 pub mod execute;
+pub mod grant;
 pub mod health;
 pub mod management;
 pub mod policy;
@@ -22,6 +23,7 @@ pub use enums::*;
 pub use evaluate::*;
 pub use event_channel::*;
 pub use execute::*;
+pub use grant::*;
 pub use health::*;
 pub use management::*;
 pub use policy::*;
@@ -29,6 +31,9 @@ pub use status::*;
 
 pub const API_VERSION_STR: &str = "1.0";
 pub const DEFAULT_PIPE_NAME: &str = "Devolutions.Now.PackageBroker.v1";
+
+/// Header carrying the remote execution grant on `POST /v1/package-operations/execute-grant`.
+pub const PACKAGE_GRANT_HEADER: &str = "X-Devolutions-Package-Grant";
 
 pub const PACKAGE_REQUEST_KIND: &str = "PackageRequest";
 pub const STATUS_REQUEST_KIND: &str = "StatusRequest";

@@ -1,19 +1,26 @@
 //! Fixture-backed mock implementation of the package broker server facade.
 
+// Each test binary uses a different subset of the mock.
+#![allow(dead_code)]
+
+use core::sync::atomic::{AtomicUsize, Ordering};
 use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 
 use now_policy_server_template::{
     API_VERSION_STR, Architecture, CancelRequest, CancelResponse, CapabilitiesResponse, CapabilitiesResponseKind,
-    ErrorCode, ErrorResponse, ErrorResponseKind, EvaluationResponse, ExecutionResponse, HealthResponse,
-    HealthResponseKind, HealthStatus, MAX_REQUEST_BODY_BYTES, ManagerCapability, ManagerName, Operation,
-    PackageBrokerServer, PackageRequest, PolicyManagementResponse, PolicyReplacementRequest, PolicyReplacementResponse,
-    PolicyResponse, PolicyValidationRequest, PolicyValidationResponse, Scope, ServerContext, StatusRequest,
-    StatusResponse, Transport,
+    ErrorCode, ErrorResponse, ErrorResponseKind, EvaluationResponse, ExecutionResponse, GrantExecutionResponse,
+    HealthResponse, HealthResponseKind, HealthStatus, MAX_REQUEST_BODY_BYTES, ManagerCapability, ManagerName,
+    Operation, PackageBrokerServer, PackageGrant, PackageRequest, PolicyManagementResponse, PolicyReplacementRequest,
+    PolicyReplacementResponse, PolicyResponse, PolicyValidationRequest, PolicyValidationResponse, Scope, ServerContext,
+    StatusRequest, StatusResponse, Transport,
 };
 
 /// Deterministic mock broker backed by caller-provided sample responses.
+///
+/// Clones share their call records, so a test can keep a handle after moving the mock into a router.
 #[derive(Debug, Clone)]
 pub(crate) struct MockPackageBrokerServer {
     health: HealthResponse,
@@ -25,8 +32,11 @@ pub(crate) struct MockPackageBrokerServer {
     policy_replacement_response: Option<PolicyReplacementResponse>,
     evaluation_responses: BTreeMap<String, EvaluationResponse>,
     execution_responses: BTreeMap<String, ExecutionResponse>,
+    grant_result: Option<Result<GrantExecutionResponse, ErrorResponse>>,
     status_responses: BTreeMap<String, StatusResponse>,
     cancel_responses: BTreeMap<String, CancelResponse>,
+    execute_calls: Arc<AtomicUsize>,
+    grants: Arc<Mutex<Vec<String>>>,
 }
 
 impl MockPackageBrokerServer {
@@ -55,9 +65,28 @@ impl MockPackageBrokerServer {
             policy_replacement_response: None,
             evaluation_responses: BTreeMap::new(),
             execution_responses: BTreeMap::new(),
+            grant_result: None,
             status_responses: BTreeMap::new(),
             cancel_responses: BTreeMap::new(),
+            execute_calls: Arc::default(),
+            grants: Arc::default(),
         }
+    }
+
+    #[must_use]
+    pub(crate) fn with_grant_result(mut self, result: Result<GrantExecutionResponse, ErrorResponse>) -> Self {
+        self.grant_result = Some(result);
+        self
+    }
+
+    /// Number of times the legacy `execute` operation was invoked.
+    pub(crate) fn execute_calls(&self) -> usize {
+        self.execute_calls.load(Ordering::SeqCst)
+    }
+
+    /// Grant values received by `execute_grant`, in call order.
+    pub(crate) fn grants(&self) -> Vec<String> {
+        self.grants.lock().unwrap().clone()
     }
 
     #[must_use]
@@ -210,10 +239,23 @@ impl PackageBrokerServer for MockPackageBrokerServer {
     }
 
     async fn execute(&self, request: PackageRequest) -> Result<ExecutionResponse, ErrorResponse> {
+        self.execute_calls.fetch_add(1, Ordering::SeqCst);
         self.execution_responses
             .get(&request.request_id.to_string())
             .cloned()
             .ok_or_else(|| self.missing_response(&request.request_id))
+    }
+
+    async fn execute_grant(
+        &self,
+        _request: PackageRequest,
+        grant: PackageGrant,
+    ) -> Result<GrantExecutionResponse, ErrorResponse> {
+        self.grants.lock().unwrap().push(grant.expose().to_owned());
+        match &self.grant_result {
+            Some(result) => result.clone(),
+            None => Err(self.unsupported_endpoint("grant execution")),
+        }
     }
 
     async fn status(&self, request: StatusRequest) -> Result<StatusResponse, ErrorResponse> {

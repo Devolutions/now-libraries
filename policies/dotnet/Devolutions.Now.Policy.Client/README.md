@@ -154,14 +154,48 @@ Before sending package operation requests, the client fills missing request meta
 - `RequestId` is generated with `BrokerClient.GenerateRequestId()` when empty. Request IDs are normalized to lowercase dashed GUIDs without braces.
 - `CreatedAt` is set to `DateTimeOffset.UtcNow` when left as the default value.
 
+Grant execution
+---------------
+
+Grant execution relies on these limits:
+
+- Server authentication assumes that the Service Control Manager reports a running service's PID only while that process lives, so another process cannot reuse it. This assumption is untested.
+- A grant binds the target user and the exact request, not one process; another process running as the same user can redeem a grant it obtains.
+- An outcome that depends on captured output is unknown, because the event stream cannot prove that output is complete or unaltered.
+
+`BrokerClient.ExecuteGrant(request, grant)` runs a package operation that a Gateway grant authorizes.
+It posts to `/v1/package-operations/execute-grant` only, sends the grant in the single `X-Devolutions-Package-Grant` header, and never retries or falls back to `/execute`.
+The grant must be 1 to 2,048 ASCII characters matching `[A-Za-z0-9][A-Za-z0-9._~:-]*`.
+`request.RequestId` must already be a lowercase hyphenated UUID and is sent unchanged, `CaptureOutput` must be true, and `IncludeCommandPreview` must be false.
+Status and cancellation use the existing methods with the returned operation ID and no grant.
+
+The client authenticates the pipe server before writing any byte.
+Set `BrokerClientOptions.ServerAuthenticator` and use `NamedPipeBrokerTransport`, or another `IAuthenticatedBrokerTransport`; otherwise `ExecuteGrant` throws `UnsupportedCapability` without sending anything.
+`ServiceBrokerServerAuthenticator` compares the pipe server PID with the running `DevolutionsAgent` service PID and requires session 0.
+It relies on the PID-reuse assumption above; implement `IBrokerServerAuthenticator` to use a different check.
+An authentication failure after the request was sent leaves the outcome unknown.
+
+`BrokerClientException.NoWorkStarted` is true only when the request was never sent or the broker returned a documented rejection that starts no work.
+It applies to that request alone: an earlier, concurrent or later request may redeem the same grant, so it never proves that the operation failed.
+When it is false, including after a timeout, disconnect, malformed response or unexpected status, the outcome may be unknown.
+A 404 from an older broker throws `UnsupportedEndpoint`. The grant and response text are never copied into exceptions or `Trace`.
+
+`OpenGrantEventChannel(response)` checks the event pipe server PID and session against the submission pipe and calls the authenticator again; a mismatch throws `ServerAuthenticationFailed`.
+`OperationEventChannel.IsCaptureComplete` is true only after a valid `Hello`, a `Finish`, and no overflow or malformed frame.
+It is necessary but not sufficient: it cannot detect frames consumed by another reader, or output written or held open by other processes that inherited the command's output handles.
+A grant channel throws on end of stream before `Finish`.
+It rejects data observed after `Finish`, but cannot detect data arriving after the caller stops reading.
+A caller must treat `!IsCaptureComplete` or any exception as an unknown outcome, and must not treat `IsCaptureComplete` alone as proof of an outcome that depends on output.
+
 Error handling and diagnostics
 ------------------------------
 
 Response-oriented methods return successful DTOs or throw `BrokerClientException`. The exception includes:
 
-- `Kind`, a `BrokerClientErrorKind` such as `BrokerUnavailable`, `Timeout`, `BrokerError`, `InvalidResponse`, `InvalidRequest`, `UnsupportedCapability`, `RequestTooLarge`, or `ServerVerificationFailed`.
+- `Kind`, a `BrokerClientErrorKind` such as `BrokerUnavailable`, `Timeout`, `BrokerError`, `InvalidResponse`, `InvalidRequest`, `UnsupportedCapability`, `RequestTooLarge`, `ServerVerificationFailed`, `ServerAuthenticationFailed`, or `UnsupportedEndpoint`.
 - `Endpoint`, when the failing broker endpoint is known.
 - `StatusCode` and `BrokerError`, when the broker returned a structured `ErrorResponse`.
+- `NoWorkStarted` and `BrokerErrorCode`, set by grant execution.
 
 `IsAvailable` remains a boolean probe and reports diagnostics through `BrokerClient.Trace`. Other methods do not silently convert failures into `null`.
 

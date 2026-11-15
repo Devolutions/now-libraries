@@ -15,4 +15,10 @@ public enum BrokerClientErrorKind
 
     /// <summary>The named pipe server could not be verified as the package broker; no request data was sent.</summary>
     ServerVerificationFailed,
+
+    /// <summary>The pipe server could not be authenticated as the live broker service.</summary>
+    ServerAuthenticationFailed,
+
+    /// <summary>The broker does not offer the requested route.</summary>
+    UnsupportedEndpoint,
 }

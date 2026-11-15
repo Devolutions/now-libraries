@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 
@@ -21,6 +22,8 @@ public sealed class BrokerClient : IDisposable
     private readonly Elevation _requestedElevation;
     private readonly string _clientExecutablePath;
     private readonly string _clientVersion;
+    private readonly IBrokerServerAuthenticator? _serverAuthenticator;
+    private readonly ConditionalWeakTable<GrantExecutionResponse, StrongBox<BrokerPipeServerIdentity>> _grantServers = new();
     private CapabilitiesResponse? _capabilities;
 
     /// <summary>Optional diagnostic sink; receives human-readable trace lines.</summary>
@@ -34,6 +37,7 @@ public sealed class BrokerClient : IDisposable
         _effectiveUser = string.IsNullOrWhiteSpace(options.EffectiveUser)
             ? ResolveEffectiveUser()
             : options.EffectiveUser;
+        _serverAuthenticator = options.ServerAuthenticator;
         _requestedElevation = options.RequestedElevation;
         _clientExecutablePath = string.IsNullOrWhiteSpace(options.ClientExecutablePath)
             ? ResolveClientExecutablePath()
@@ -359,6 +363,295 @@ public sealed class BrokerClient : IDisposable
         return await OperationEventChannel.ConnectLocalPipe(descriptor.Path, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Submit a remotely granted package operation to <c>POST /v1/package-operations/execute-grant</c>.
+    /// The grant is sent only on that route, and only after the pipe server was authenticated by
+    /// <see cref="BrokerClientOptions.ServerAuthenticator"/>. The request is never retried and never
+    /// falls back to the legacy execute route.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="PackageOperationRequest.RequestId"/> is the Agent-generated identifier and is sent
+    /// verbatim; it must be a lowercase hyphenated UUID. <see cref="PackageOperationRequest.CaptureOutput"/>
+    /// must be <c>true</c> and <see cref="PackageOperationRequest.IncludeCommandPreview"/> <c>false</c>.
+    /// Status and cancelation use <see cref="QueryStatus"/> and <see cref="Cancel"/> with the broker
+    /// operation ID and no grant.
+    /// </remarks>
+    /// <exception cref="BrokerClientException">
+    /// <see cref="BrokerClientException.NoWorkStarted"/> is <c>true</c> only when the request was never
+    /// sent or the broker returned a contract rejection that starts no work for it; otherwise the
+    /// outcome may be unknown. Exceptions of other types, including cancelation, also leave the
+    /// outcome unknown once the request may have been written.
+    /// </exception>
+    public async Task<GrantExecutionResponse> ExecuteGrant(
+        PackageOperationRequest request,
+        string grant,
+        CancellationToken cancellationToken = default)
+    {
+        const string endpoint = BrokerApi.ExecuteGrantPath;
+
+        ArgumentNullException.ThrowIfNull(request);
+        ValidateGrant(grant, endpoint);
+        var requestId = ValidateGrantRequest(request, endpoint);
+
+        if (_serverAuthenticator is null)
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.UnsupportedCapability,
+                "Grant execution requires a server authenticator in the client options.",
+                noWorkStarted: true,
+                endpoint: endpoint);
+        }
+
+        if (_transport is not IAuthenticatedBrokerTransport authenticatedTransport)
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.UnsupportedCapability,
+                "Grant execution requires a transport that authenticates the broker server.",
+                noWorkStarted: true,
+                endpoint: endpoint);
+        }
+
+        var packageRequest = BuildPackageRequest(request, requestId);
+        var capabilities = await GetGrantCapabilities(endpoint, cancellationToken).ConfigureAwait(false);
+        EnsurePackageRequestSupported(packageRequest, capabilities, endpoint);
+
+        var body = BrokerSerializer.Serialize(packageRequest);
+        EnsureRequestBodySize(body, capabilities, endpoint);
+
+        var transportRequest = new BrokerTransportRequest
+        {
+            Method = "POST",
+            Path = endpoint,
+            Body = body,
+            Headers = new Dictionary<string, string>
+            {
+                ["Content-Type"] = JsonMediaType,
+                ["Accept"] = JsonMediaType,
+                [BrokerApi.PackageGrantHeaderName] = grant,
+            },
+        };
+
+        var authenticated = await authenticatedTransport
+            .SendAuthenticated(transportRequest, _serverAuthenticator, cancellationToken)
+            .ConfigureAwait(false);
+        var response = authenticated.Response;
+
+        var result = InterpretGrantResponse(response, requestId, endpoint);
+        _grantServers.Add(result, new StrongBox<BrokerPipeServerIdentity>(authenticated.Server));
+        return result;
+    }
+
+    /// <summary>
+    /// Connect to the event channel of an operation accepted by <see cref="ExecuteGrant"/> and
+    /// return a reader that treats captured output as complete only after <c>Hello</c> and
+    /// <c>Finish</c> without overflow; see <see cref="OperationEventChannel.IsCaptureComplete"/>.
+    /// The event pipe must report the same server PID and session as the submission pipe and pass the authenticator.
+    /// A matching PID and session alone do not prove that the original broker instance is still live.
+    /// </summary>
+    /// <exception cref="BrokerClientException">
+    /// <paramref name="response"/> was not returned by this client, carries no event channel, names a
+    /// non-local pipe, or the pipe server is not the instance that accepted the operation.
+    /// </exception>
+    public async Task<OperationEventChannel> OpenGrantEventChannel(
+        GrantExecutionResponse response,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(response);
+
+        if (_serverAuthenticator is null || !_grantServers.TryGetValue(response, out var accepted))
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.InvalidRequest,
+                "The response was not returned by ExecuteGrant on this client.");
+        }
+
+        var descriptor = response.Operation?.EventChannel
+            ?? throw new BrokerClientException(
+                BrokerClientErrorKind.InvalidResponse,
+                "The grant response carries no event channel; output capture is unavailable.");
+
+        if (descriptor.Kind != EventChannelKind.LocalPipe)
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.UnsupportedCapability,
+                $"Unsupported event channel kind '{descriptor.Kind}'.");
+        }
+
+        if (!IsLocalPipePath(descriptor.Path))
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.InvalidResponse,
+                "The event channel path is not a local pipe name of 1 to 1,024 characters.");
+        }
+
+        Trace?.Invoke("Connecting to grant operation event channel.");
+        return await OperationEventChannel
+            .ConnectGrantPipe(descriptor.Path, accepted.Value, _serverAuthenticator, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private static bool IsLocalPipePath(string? path)
+    {
+        const string win32PipePrefix = @"\\.\pipe\";
+
+        if (string.IsNullOrEmpty(path) || path.EnumerateRunes().Count() > 1024)
+        {
+            return false;
+        }
+
+        var name = path.StartsWith(win32PipePrefix, StringComparison.OrdinalIgnoreCase)
+            ? path[win32PipePrefix.Length..]
+            : path;
+        return name.Length > 0 && name.IndexOfAny(['\\', '/']) < 0;
+    }
+
+    private static void ValidateGrant(string? grant, string endpoint)
+    {
+        var valid = !string.IsNullOrEmpty(grant)
+            && grant.Length <= 2048
+            && IsAsciiAlphanumeric(grant[0])
+            && grant.All(character => IsAsciiAlphanumeric(character) || character is '.' or '_' or '~' or ':' or '-');
+        if (!valid)
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.InvalidRequest,
+                "The grant must be 1 to 2,048 ASCII characters matching [A-Za-z0-9][A-Za-z0-9._~:-]*.",
+                noWorkStarted: true,
+                endpoint: endpoint);
+        }
+    }
+
+    private static bool IsAsciiAlphanumeric(char character)
+        => character is (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or (>= '0' and <= '9');
+
+    private static string ValidateGrantRequest(PackageOperationRequest request, string endpoint)
+    {
+        var requestId = request.RequestId;
+        if (requestId is null
+            || !Guid.TryParseExact(requestId, "D", out var parsed)
+            || requestId != parsed.ToString("D"))
+        {
+            throw GrantRequestRejected("RequestId must be a lowercase hyphenated UUID.", endpoint);
+        }
+
+        if (!request.CaptureOutput)
+        {
+            throw GrantRequestRejected("Grant execution requires CaptureOutput.", endpoint);
+        }
+
+        if (request.IncludeCommandPreview)
+        {
+            throw GrantRequestRejected("Grant execution does not allow IncludeCommandPreview.", endpoint);
+        }
+
+        var source = request.Source;
+        if (source?.Name is null
+            || (source.Name.Length == 0 && (request.Operation == Operation.Install || source.Url is not null))
+            || (request.Operation == Operation.Uninstall && (source.Name.Length != 0 || source.Url is not null)))
+        {
+            throw GrantRequestRejected(
+                "Grant execution requires a named install feed, a named or default update feed, and no uninstall feed.",
+                endpoint);
+        }
+
+        return requestId;
+    }
+
+    private static BrokerClientException GrantRequestRejected(string message, string endpoint)
+        => new(BrokerClientErrorKind.InvalidRequest, message, noWorkStarted: true, endpoint: endpoint);
+
+    private GrantExecutionResponse InterpretGrantResponse(BrokerTransportResponse response, string requestId, string endpoint)
+    {
+        var status = response.StatusCode;
+
+        // An older Broker answers the unknown route with an empty 404; a 404 with a body is not proof that nothing started.
+        if (status == 404 && string.IsNullOrEmpty(response.Body))
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.UnsupportedEndpoint,
+                "The broker does not offer the grant execution route; the request was not retried on another route.",
+                noWorkStarted: true,
+                endpoint: endpoint,
+                statusCode: status);
+        }
+
+        if (status == 200)
+        {
+            return ParseGrantSuccess(response.Body, requestId, endpoint);
+        }
+
+        if (GrantRejectionCodes(status) is { } expected
+            && GrantErrorBody.TryParse(response.Body, out var code)
+            && expected.Contains(code))
+        {
+            Trace?.Invoke($"Broker rejected the grant request: HTTP {status} ({code}).");
+            throw new BrokerClientException(
+                BrokerClientErrorKind.BrokerError,
+                $"Broker rejected the grant request with HTTP {status} ({code}).",
+                noWorkStarted: true,
+                endpoint: endpoint,
+                statusCode: status,
+                brokerErrorCode: code);
+        }
+
+        Trace?.Invoke($"Grant request failed with HTTP {status}; the outcome may be unknown.");
+        throw new BrokerClientException(
+            status >= 400 ? BrokerClientErrorKind.BrokerError : BrokerClientErrorKind.InvalidResponse,
+            $"Broker returned an unexpected response (HTTP {status}) to the grant request; the outcome may be unknown.",
+            endpoint,
+            status);
+    }
+
+    private static ErrorCode[]? GrantRejectionCodes(int status) => status switch
+    {
+        400 => [ErrorCode.BadRequest],
+        401 => [ErrorCode.Unauthenticated, ErrorCode.Unauthorized],
+        403 => [ErrorCode.Forbidden],
+        409 => [ErrorCode.Conflict],
+        413 => [ErrorCode.PayloadTooLarge],
+        415 => [ErrorCode.UnsupportedMediaType],
+        422 => [ErrorCode.ValidationFailed],
+        501 => [ErrorCode.UnsupportedEndpoint],
+        _ => null,
+    };
+
+    private GrantExecutionResponse ParseGrantSuccess(string body, string requestId, string endpoint)
+    {
+        GrantExecutionResponse? value;
+        try
+        {
+            value = string.IsNullOrWhiteSpace(body)
+                ? null
+                : BrokerSerializer.DeserializeStrict<GrantExecutionResponse>(body);
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or ArgumentException)
+        {
+            value = null;
+        }
+
+        if (value is null)
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.InvalidResponse,
+                "Broker returned a malformed grant execution response; the outcome may be unknown.",
+                endpoint,
+                200);
+        }
+
+        if (value.Authorization.Kind != GrantAuthorizationKind.RemoteGrant
+            || value.Operation is null
+            || !string.Equals(value.RequestId, requestId, StringComparison.Ordinal))
+        {
+            throw new BrokerClientException(
+                BrokerClientErrorKind.InvalidResponse,
+                "Broker returned a grant execution response that does not match the request; the outcome may be unknown.",
+                endpoint,
+                200);
+        }
+
+        return value;
+    }
+
     public void Dispose()
     {
         _transport.Dispose();
@@ -369,10 +662,14 @@ public sealed class BrokerClient : IDisposable
     private PackageRequest CreatePackageRequest(PackageOperationRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
+        return BuildPackageRequest(request, NormalizeRequestId(request.RequestId));
+    }
 
+    private PackageRequest BuildPackageRequest(PackageOperationRequest request, string requestId)
+    {
         return new PackageRequest
         {
-            RequestId = NormalizeRequestId(request.RequestId),
+            RequestId = requestId,
             RequestVersion = BrokerApi.Version,
             CreatedAt = request.CreatedAt ?? DateTimeOffset.UtcNow,
             Operation = request.Operation,
@@ -502,6 +799,25 @@ public sealed class BrokerClient : IDisposable
 
         _capabilities = await FetchCapabilities(cancellationToken).ConfigureAwait(false);
         return _capabilities;
+    }
+
+    // The capabilities preflight uses an unauthenticated connection, so a failure must not carry
+    // server-supplied text into the grant caller's exception.
+    private async Task<CapabilitiesResponse> GetGrantCapabilities(string endpoint, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await GetCachedCapabilities(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            var kind = ex is BrokerClientException brokerException ? brokerException.Kind : BrokerClientErrorKind.BrokerUnavailable;
+            throw new BrokerClientException(
+                kind,
+                "The broker capabilities could not be read before grant execution.",
+                noWorkStarted: true,
+                endpoint: endpoint);
+        }
     }
 
     private TResponse DeserializeResponse<TResponse>(

@@ -226,7 +226,7 @@ paths:
   /v1/package-operations/execute:
     post:
       summary: Execute package operation
-      description: Evaluates a package operation and submits it to the implementation for execution when allowed.
+      description: Evaluates a package operation and submits it to the implementation for execution when allowed. Requests carrying the grant header are rejected with 400.
       requestBody:
         description: Canonical request sent by a package broker client to the elevated broker.
         content:
@@ -272,6 +272,86 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '503':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/package-operations/execute-grant:
+    post:
+      summary: Execute package operation with a remote grant
+      description: Submits a package operation authorized by the grant in the required grant header. The request must carry exactly one grant header and exactly one Accept header whose value is application/json. These checks run before any work starts, so a rejected request never consumes the grant. Brokers that do not support grants return 501.
+      parameters:
+      - in: header
+        name: X-Devolutions-Package-Grant
+        description: Remote execution grant, 1 to 2,048 ASCII characters. The header must appear exactly once.
+        required: true
+        schema:
+          type: string
+          maxLength: 2048
+          minLength: 1
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._~:-]*$
+        style: simple
+      requestBody:
+        description: Canonical request sent by a package broker client to the elevated broker.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackageRequest'
+        required: true
+      responses:
+        '200':
+          description: |-
+            Response returned after a remotely granted operation is submitted.
+
+             It carries no policy decision, rule, diagnostics, grant value or captured output.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GrantExecutionResponse'
+        '400':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '501':
           description: ''
           content:
             application/json:
@@ -850,6 +930,114 @@ components:
     ExecutionResponseKind:
       type: string
       pattern: ^ExecutionResponse$
+    GrantAuthorization:
+      description: Authorization under which a grant-executed operation ran.
+      type: object
+      properties:
+        Kind:
+          description: Authorization kind.
+          allOf:
+          - $ref: '#/components/schemas/GrantAuthorizationKind'
+      additionalProperties: false
+      required:
+      - Kind
+    GrantAuthorizationKind:
+      description: Basis on which the broker executed an operation.
+      oneOf:
+      - description: The operation was authorized by a remote grant, not by local policy.
+        type: string
+        enum:
+        - RemoteGrant
+    GrantExecutionResponse:
+      description: |-
+        Response returned after a remotely granted operation is submitted.
+
+         It carries no policy decision, rule, diagnostics, grant value or captured output.
+      type: object
+      properties:
+        Authorization:
+          description: Authorization under which the operation ran.
+          allOf:
+          - $ref: '#/components/schemas/GrantAuthorization'
+        CompletedAt:
+          description: UTC timestamp when broker completed submission (RFC 3339).
+          type: string
+          format: date-time
+        Operation:
+          description: Submitted operation.
+          allOf:
+          - $ref: '#/components/schemas/GrantOperation'
+        ReceivedAt:
+          description: UTC timestamp when broker received the request (RFC 3339).
+          type: string
+          format: date-time
+        Request:
+          description: Parsed request summary.
+          allOf:
+          - $ref: '#/components/schemas/RequestSummary'
+        RequestId:
+          description: Echoed request id, a lowercase hyphenated UUID.
+          allOf:
+          - $ref: '#/components/schemas/ResourceId'
+        ResponseKind:
+          description: Response discriminator.
+          allOf:
+          - $ref: '#/components/schemas/GrantExecutionResponseKind'
+        ResponseVersion:
+          description: Response version, exactly `1.0`.
+          allOf:
+          - $ref: '#/components/schemas/GrantResponseVersion'
+        Server:
+          description: Server context.
+          allOf:
+          - $ref: '#/components/schemas/ServerContext'
+      additionalProperties: false
+      required:
+      - ResponseKind
+      - ResponseVersion
+      - Server
+      - RequestId
+      - ReceivedAt
+      - CompletedAt
+      - Request
+      - Authorization
+      - Operation
+    GrantExecutionResponseKind:
+      type: string
+      pattern: ^GrantExecutionResponse$
+    GrantOperation:
+      description: |-
+        Operation submitted by a grant execution.
+
+         Carries the same identifier, status, time and event channel as [`OperationSubmission`].
+      type: object
+      properties:
+        EventChannel:
+          description: Per-operation event channel descriptor. Absent when the broker offers none.
+          anyOf:
+          - $ref: '#/components/schemas/EventChannel'
+          - enum:
+            - null
+        OperationId:
+          description: Broker-issued stable operation identifier.
+          allOf:
+          - $ref: '#/components/schemas/ResourceId'
+        Status:
+          description: Initial operation status.
+          allOf:
+          - $ref: '#/components/schemas/OperationStatus'
+        SubmittedAt:
+          description: UTC timestamp when the operation was accepted.
+          type: string
+          format: date-time
+      additionalProperties: false
+      required:
+      - OperationId
+      - Status
+      - SubmittedAt
+    GrantResponseVersion:
+      type: string
+      pattern: ^1.0$
     HealthResponse:
       description: Response body for `GET /v1/health`.
       type: object
@@ -1131,6 +1319,25 @@ components:
           allOf:
           - $ref: '#/components/schemas/RequestSource'
       additionalProperties: false
+      allOf:
+      - anyOf:
+        - properties:
+            Source:
+              properties:
+                Name:
+                  minLength: 1
+        - properties:
+            Operation:
+              enum:
+              - Update
+              - Uninstall
+            Source:
+              properties:
+                Name:
+                  maxLength: 0
+                Url:
+                  enum:
+                  - null
       required:
       - RequestKind
       - RequestVersion
@@ -1743,10 +1950,9 @@ components:
       type: object
       properties:
         Name:
-          description: Source name.
+          description: Execution feed name, or empty for an update's default feed or an uninstall without a feed.
           type: string
           maxLength: 128
-          minLength: 1
         Url:
           description: Optional source URL.
           type:
