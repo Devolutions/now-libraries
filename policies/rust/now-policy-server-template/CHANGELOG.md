@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [[0.7.1](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.7.0...now-policy-server-template-v0.7.1)] - 2026-11-15
+
+### <!-- 1 -->Features
+
+- Add grant execution route and client ([#130](https://github.com/Devolutions/now-libraries/issues/130)) ([59c2ad76be](https://github.com/Devolutions/now-libraries/commit/59c2ad76be879abb4efd09caaa48387c2d6a0f62)) 
+
 ## [[0.7.0](https://github.com/Devolutions/now-libraries/compare/now-policy-server-template-v0.6.0...now-policy-server-template-v0.7.0)] - 2026-09-19
 
 ### <!-- 1 -->Features
