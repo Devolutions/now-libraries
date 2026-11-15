@@ -40,6 +40,7 @@ pub const HEALTH_RESPONSE_KIND: &str = "HealthResponse";
 pub const CAPABILITIES_RESPONSE_KIND: &str = "CapabilitiesResponse";
 pub const EVALUATION_RESPONSE_KIND: &str = "EvaluationResponse";
 pub const EXECUTION_RESPONSE_KIND: &str = "ExecutionResponse";
+pub const GRANT_EXECUTION_RESPONSE_KIND: &str = "GrantExecutionResponse";
 pub const STATUS_RESPONSE_KIND: &str = "StatusResponse";
 pub const CANCEL_RESPONSE_KIND: &str = "CancelResponse";
 pub const POLICY_RESPONSE_KIND: &str = "PolicyResponse";
@@ -104,6 +105,9 @@ fixed_string_marker!(HealthResponseKind, HEALTH_RESPONSE_KIND);
 fixed_string_marker!(CapabilitiesResponseKind, CAPABILITIES_RESPONSE_KIND);
 fixed_string_marker!(EvaluationResponseKind, EVALUATION_RESPONSE_KIND);
 fixed_string_marker!(ExecutionResponseKind, EXECUTION_RESPONSE_KIND);
+fixed_string_marker!(GrantExecutionResponseKind, GRANT_EXECUTION_RESPONSE_KIND);
+// Grant responses accept exactly version 1.0, unlike `ApiVersion`, which accepts any `major.minor`.
+fixed_string_marker!(GrantResponseVersion, API_VERSION_STR);
 fixed_string_marker!(StatusResponseKind, STATUS_RESPONSE_KIND);
 fixed_string_marker!(CancelResponseKind, CANCEL_RESPONSE_KIND);
 fixed_string_marker!(PolicyResponseKind, POLICY_RESPONSE_KIND);

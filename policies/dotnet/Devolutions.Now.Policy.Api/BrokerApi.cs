@@ -22,6 +22,7 @@ public static class BrokerApi
     public const string CapabilitiesResponseKind = "CapabilitiesResponse";
     public const string EvaluationResponseKind = "EvaluationResponse";
     public const string ExecutionResponseKind = "ExecutionResponse";
+    public const string GrantExecutionResponseKind = "GrantExecutionResponse";
     public const string StatusResponseKind = "StatusResponse";
     public const string CancelResponseKind = "CancelResponse";
     public const string PolicyResponseKind = "PolicyResponse";
