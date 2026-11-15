@@ -487,10 +487,27 @@ fn accepts_json(headers: &HeaderMap) -> bool {
 }
 
 /// Checks the `ErrorResponse` constraints of the grant route, which has no `Validation` or `Management` members.
+///
+/// Only grant-route error codes pass through; `NotFound` in particular would turn into the 404 that clients read as
+/// a Broker without the route.
 fn is_valid_grant_error(error: &ErrorResponse) -> bool {
     let chars_within = |value: &str, max: usize| value.chars().take(max + 1).count() <= max;
 
-    error.validation.is_none()
+    matches!(
+        error.code,
+        ErrorCode::BadRequest
+            | ErrorCode::Unauthenticated
+            | ErrorCode::Unauthorized
+            | ErrorCode::Forbidden
+            | ErrorCode::Conflict
+            | ErrorCode::PayloadTooLarge
+            | ErrorCode::UnsupportedMediaType
+            | ErrorCode::ValidationFailed
+            | ErrorCode::UnsupportedEndpoint
+            | ErrorCode::BrokerPaused
+            | ErrorCode::InternalError
+            | ErrorCode::Timeout
+    ) && error.validation.is_none()
         && error.management.is_none()
         && !error.message.is_empty()
         && chars_within(&error.message, MAX_ERROR_MESSAGE_CHARS)

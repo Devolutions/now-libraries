@@ -554,7 +554,8 @@ public sealed class BrokerClient : IDisposable
     {
         var status = response.StatusCode;
 
-        if (status == 404)
+        // An older Broker answers the unknown route with an empty 404; a 404 with a body is not proof that nothing started.
+        if (status == 404 && string.IsNullOrEmpty(response.Body))
         {
             throw new BrokerClientException(
                 BrokerClientErrorKind.UnsupportedEndpoint,

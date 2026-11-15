@@ -330,6 +330,8 @@ fn error_with(edit: impl FnOnce(&mut ErrorResponse)) -> ErrorResponse {
 #[case::empty_detail_message(error_with(|e| e.details = vec![detail(None, None, "")]))]
 #[case::oversized_detail_code(error_with(|e| e.details = vec![detail(Some("c".repeat(129)), None, "d")]))]
 #[case::oversized_detail_path(error_with(|e| e.details = vec![detail(None, Some("p".repeat(513)), "d")]))]
+#[case::not_found_reads_as_missing_route(error_with(|e| e.code = ErrorCode::NotFound))]
+#[case::management_code(error_with(|e| e.code = ErrorCode::AdministratorRequired))]
 #[tokio::test]
 async fn server_errors_that_break_the_error_body_rules_become_internal_errors(#[case] error: ErrorResponse) {
     let server = mock().with_grant_result(Err(error));

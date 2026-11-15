@@ -680,12 +680,10 @@ public class BrokerClientTests
         Assert.False(ex.NoWorkStarted);
     }
 
-    [Theory]
-    [InlineData("{}")]
-    [InlineData("")]
-    public async Task ExecuteGrant_treats_404_as_unsupported_endpoint_without_fallback(string body)
+    [Fact]
+    public async Task ExecuteGrant_treats_404_as_unsupported_endpoint_without_fallback()
     {
-        var transport = new FakeAuthenticatedTransport(grantResponse: new BrokerTransportResponse { StatusCode = 404, Body = body });
+        var transport = new FakeAuthenticatedTransport(grantResponse: new BrokerTransportResponse { StatusCode = 404, Body = "" });
         var client = CreateGrantClient(transport);
 
         var ex = await Assert.ThrowsAsync<BrokerClientException>(() => client.ExecuteGrant(GrantRequest(), Grant));
@@ -730,6 +728,7 @@ public class BrokerClientTests
     [InlineData(400, "BadRequest", ",\"Details\":[{\"Message\":\"\"}]")]
     [InlineData(400, "BadRequest", ",\"Code\":\"BadRequest\"")]
     [InlineData(500, "InternalError", "")]
+    [InlineData(404, "NotFound", "")]
     [InlineData(503, "InternalError", "")]
     [InlineData(504, "BadRequest", "")]
     public async Task ExecuteGrant_keeps_outcome_unknown_for_other_rejections(int status, string code, string extra)
